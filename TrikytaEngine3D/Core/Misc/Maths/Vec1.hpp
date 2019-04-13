@@ -32,6 +32,8 @@
 		return Vec<1, TYPE, proctype>(v1.x  opr  v2.x); \
 	} \
 
+TRE_NS_START
+
 template<typename TYPE>
 struct Vec<1, TYPE, normal>
 {
@@ -105,5 +107,7 @@ FORCEINLINE bool operator==(const Vec<1, double, normal>&, const Vec<1, double, 
 
 template<>
 FORCEINLINE bool operator!=(const Vec<1, double, normal>&, const Vec<1, double, normal>&);
+
+TRE_NS_END
 
 #include "Vec1.inl"

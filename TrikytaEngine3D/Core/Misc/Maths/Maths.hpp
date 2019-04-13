@@ -13,8 +13,12 @@
 #include "Matrix.hpp"
 #include "Matrix4x4.hpp"
 
+TRE_NS_START
+
 typedef Vec<1, float, normal> vec1;
 typedef Vec<2, float, normal> vec2;
 typedef Vec<3, float, normal> vec3;
 typedef Vec<4, float, normal> vec4;
 typedef Matrix<float, SIMD, 4, 4> mat4;
+
+TRE_NS_END

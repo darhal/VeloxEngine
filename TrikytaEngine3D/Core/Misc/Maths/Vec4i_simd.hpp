@@ -5,6 +5,8 @@
 #include "Vec3.hpp"
 #include <Core/Misc/Defines/PlatformSIMDInclude.hpp>
 
+TRE_NS_START
+
 template<typename TYPE>
 struct Vec<2, TYPE, normal>;
 template<typename TYPE>
@@ -222,5 +224,6 @@ static FORCEINLINE Vec4fb operator ! (Vec<4, int32, SIMD> const & a) {
 	return a == Vec<4, int32, SIMD>(0.0f);
 }*/
 
+TRE_NS_END
 
 #include "Vec4i_simd.inl"

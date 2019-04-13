@@ -1,5 +1,7 @@
 #include "Vec4f_simd.hpp"
 
+TRE_NS_START
+
 Vec<4, float, SIMD>::Vec(float f) 
 {
 	xmm = _mm_set1_ps(f);
@@ -371,3 +373,5 @@ static FORCEINLINE Vec4fb operator ! (const Vec<4, float, SIMD>& a) {
 }
 
 */
+
+TRE_NS_END

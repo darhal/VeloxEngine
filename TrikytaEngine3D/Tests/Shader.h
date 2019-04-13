@@ -9,6 +9,8 @@
 #include <sstream>
 #include <iostream>
 
+using namespace TRE;
+
 class Shader
 {
 public:

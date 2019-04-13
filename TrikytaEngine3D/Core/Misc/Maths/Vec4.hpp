@@ -5,6 +5,8 @@
 #include "Vec2.hpp"
 #include "Vec3.hpp"
 
+TRE_NS_START
+
 #define DECLARE_UNARY_VEC4_OPERATOR(opr, proctype) \
 	template<typename TYPE> \
 	template<typename U, proc_type P> \
@@ -137,6 +139,8 @@ FORCEINLINE bool operator==(const Vec<4, double, normal>&, const Vec<4, double, 
 
 template<>
 FORCEINLINE bool operator!=(const Vec<4, double, normal>&, const Vec<4, double, normal>&);
+
+TRE_NS_END
 
 #include "Vec4.inl"
 

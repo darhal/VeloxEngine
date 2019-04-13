@@ -11,6 +11,8 @@
 #undef near
 #undef far
 
+TRE_NS_START
+
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
 class Matrix;
 
@@ -710,3 +712,5 @@ FORCEINLINE Vec<3, float, proc> project(const Vec<4, float, proc>& vec, const Ma
 		(v.z + 1.0f) / 2.0f
 	);
 }
+
+TRE_NS_END

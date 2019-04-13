@@ -5,11 +5,9 @@
 #include <queue>
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Event/Event.hpp>
+#include <Core/Misc/Maths/Vec.hpp>
 #include <Core/Misc/Maths/Vec2.hpp>
 
-class Context;
-template<typename T>
-using Vec2 = Vec<2, T, normal>;
 
 namespace WindowStyle
 {
@@ -54,7 +52,9 @@ public:
 	bool isMouseButtonDown(MouseButton::mouse_button_t button);
 	bool isKeyDown(Key::key_t key);
 
-	Context& getContext(uint8 color = 32, uint8 depth = 24, uint8 stencil = 8, uint8 antialias = 1);
+	Context& getContext();
+	Context& initContext(uint8 vmajor, uint8 vminor, uint8 color = 32, uint8 depth = 24, uint8 stencil = 8, uint8 antialias = 1);
+
 	void Present();
 private:
 	Vec2<uint32> windowSize;

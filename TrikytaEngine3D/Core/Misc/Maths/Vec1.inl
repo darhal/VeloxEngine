@@ -1,6 +1,8 @@
 #include "Vec.hpp"
 #include "Vec1.hpp"
 
+TRE_NS_START
+
 template<typename TYPE>
 FORCEINLINE Vec<1, TYPE, normal>& Vec<1, TYPE, normal>::operator++(void)
 {
@@ -104,7 +106,7 @@ DECLARE_BINARY_VEC1_OPERATOR(^, normal)
 DECLARE_BINARY_VEC1_OPERATOR(<< , normal)
 DECLARE_BINARY_VEC1_OPERATOR(>> , normal)
 
-
+TRE_NS_END
 
 
 /*template<typename TYPE>

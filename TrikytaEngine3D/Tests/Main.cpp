@@ -3,15 +3,20 @@
 #include <Core/Window/Window.hpp>
 #include <iostream>
 #include <chrono>
+#include <Core/Misc/Maths/Matrix.hpp>
 
 // settings
 const unsigned int SCR_WIDTH = 1920/2;
 const unsigned int SCR_HEIGHT = 1080/2;
+
+using namespace TRE;
+
 int main()
 {
 	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "OpenGL Window", WindowStyle::Resize);
-	TRE::Context& gl = window.getContext();
+	TRE::Context& gl = window.initContext(3, 2);
 	Event ev;
+	printf("%s\n", glGetString(GL_VERSION));
 
 	// configure global opengl state
   	// -----------------------------
@@ -151,7 +156,6 @@ int main()
 		// -------------------------------------------------------------------------------
 		window.Present();
 	}
-
 
 	window.Present();
 }

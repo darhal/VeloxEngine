@@ -5,7 +5,6 @@
 
 namespace TRE
 {
-
 class Window;
 class Context
 {
@@ -29,14 +28,14 @@ private:
 	int defaultViewport[4];
 
 #if defined(OS_WINDOWS)
-	Context(uint8 color, uint8 depth, uint8 stencil, uint32 antialias, HDC dc);
+	Context(uint8 vmajor, uint8 vminor, uint8 color, uint8 depth, uint8 stencil, uint32 antialias, HDC dc);
 
 	HDC dc;
 	HGLRC context;
 
 	LARGE_INTEGER timeOffset;
 #elif defined(OS_LINUX)
-	Context(uint8 color, uint8 depth, uint8 stencil, uint antialias, Display* display, int screen, ::Window window);
+	Context(uint8 vmajor, uint8 vminor, uint8 color, uint8 depth, uint8 stencil, uint antialias, Display* display, int screen, ::Window window);
 
 	GLXWindow glxWindow;
 	GLXContext context;

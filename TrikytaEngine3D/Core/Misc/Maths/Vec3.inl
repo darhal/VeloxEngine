@@ -1,5 +1,7 @@
 #include "Vec3.hpp"
 
+TRE_NS_START
+
 template<typename TYPE>
 FORCEINLINE Vec<3, TYPE, normal>& Vec<3, TYPE, normal>::operator++(void)
 {
@@ -166,3 +168,5 @@ FORCEINLINE const TYPE Vec<3, TYPE, normal>::scalar_projection(const class_type&
 	return (dot_product(v) / length());
 }
 
+
+TRE_NS_END

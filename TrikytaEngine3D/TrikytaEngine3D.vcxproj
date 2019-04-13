@@ -175,6 +175,8 @@
     <None Include="Core\Misc\Maths\Vec4.inl" />
     <None Include="Core\Misc\Maths\Vec4f_simd.inl" />
     <None Include="Core\Misc\Maths\Vec4i_simd.inl" />
+    <None Include="Shader\cam.fs" />
+    <None Include="Shader\cam.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

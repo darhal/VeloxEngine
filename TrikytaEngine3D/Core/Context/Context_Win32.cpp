@@ -4,7 +4,7 @@
 
 #ifdef OS_WINDOWS
 
-TRE::Context::Context(uint8 color, uint8 depth, uint8 stencil, uint antialias, HDC dc)
+TRE::Context::Context(uint8 vmajor, uint8 vminor, uint8 color, uint8 depth, uint8 stencil, uint antialias, HDC dc)
 {
 	// Create dummy window
 	HWND dummyWindow = CreateWindowA("STATIC", "", WS_POPUP | WS_DISABLED, 0, 0, 1, 1, NULL, NULL, GetModuleHandle(NULL), NULL);
@@ -51,8 +51,8 @@ TRE::Context::Context(uint8 color, uint8 depth, uint8 stencil, uint antialias, H
 
 	// Create OpenGL 3.2 context		
 	int attribs[] = {
-		WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-		WGL_CONTEXT_MINOR_VERSION_ARB, 2,
+		WGL_CONTEXT_MAJOR_VERSION_ARB, vmajor,
+		WGL_CONTEXT_MINOR_VERSION_ARB, vminor,
 		WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 		0
 	};

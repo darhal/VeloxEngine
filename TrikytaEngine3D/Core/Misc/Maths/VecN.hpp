@@ -4,6 +4,8 @@
 #include "Vec.hpp"
 #include <initializer_list>
 
+TRE_NS_START
+
 #define DECLARE_BINARY_VECN_OPERATOR(opr) \
 	template<uint8 N, typename TYPE, proc_type proctype> \
 	static FORCEINLINE Vec<N, TYPE, proctype> operator opr (const Vec<N, TYPE, proctype>& v, TYPE scalar) { \
@@ -193,3 +195,6 @@ DECLARE_BINARY_VECN_OPERATOR(|)
 DECLARE_BINARY_VECN_OPERATOR(^)
 DECLARE_BINARY_VECN_OPERATOR(<<)
 DECLARE_BINARY_VECN_OPERATOR(>>)
+
+
+TRE_NS_END

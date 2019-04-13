@@ -1,5 +1,7 @@
 #include "Vec4i_simd.hpp"
 
+TRE_NS_START
+
 Vec<4, int32, SIMD>::Vec(int32 i)
 {
 	xmm = _mm_set1_epi32(i);
@@ -289,3 +291,5 @@ static FORCEINLINE Vec<4, int32, SIMD>& operator >>= (Vec<4, int32, SIMD>& a, in
 static FORCEINLINE Vec<4, int32, SIMD>operator~ (const Vec<4, int32, SIMD>& a) {
 	return Vec<4, int32, SIMD>(_mm_xor_si128(a, _mm_set1_epi32(-1)));
 }
+
+TRE_NS_END

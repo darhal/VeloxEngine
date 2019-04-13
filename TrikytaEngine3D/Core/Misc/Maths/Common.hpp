@@ -6,6 +6,8 @@
 
 #define PI_180 0.01745329251
 
+TRE_NS_START
+
 template<typename T>
 static FORCEINLINE float rad(T deg)
 {
@@ -16,3 +18,5 @@ FORCEINLINE bool isEqual(float x, float y)
 {
 	return fabs(x - y) <= FLT_EPSILON;
 }
+
+TRE_NS_END

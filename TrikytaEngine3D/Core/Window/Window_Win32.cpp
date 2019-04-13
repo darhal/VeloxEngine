@@ -148,12 +148,14 @@ bool TRE::Window::getEvent(Event& ev)
 	return true;
 }
 
-TRE::Context& TRE::Window::getContext(uint8 color, uint8 depth, uint8 stencil, uint8 antialias)
+TRE::Context& TRE::Window::getContext()
 {
-	if (context)
-		return *context;
-	else
-		return *(context = new Context(color, depth, stencil, antialias, GetDC(window)));
+	return *context;
+}
+
+TRE::Context& TRE::Window::initContext(uint8 vmajor, uint8 vminor, uint8 color, uint8 depth, uint8 stencil, uint8 antialias)
+{
+	return *(context = new Context(vmajor, vminor, color, depth, stencil, antialias, GetDC(window)));
 }
 
 void TRE::Window::Present()

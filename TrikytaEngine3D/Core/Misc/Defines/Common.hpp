@@ -102,3 +102,6 @@ typedef uintptr_t uintptr;
 	void operator=(const T& other) { (void)other; }
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+
+#define TRE_NS_START namespace TRE {
+#define TRE_NS_END	 }

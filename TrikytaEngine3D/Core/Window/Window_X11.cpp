@@ -213,12 +213,14 @@ void TRE::Window::EnableFullscreen(bool enabled, int width, int height)
 }
 
 
-TRE::Context& TRE::Window::getContext(uint8 color, uint8 depth, uint8 stencil, uint8 antialias)
+TRE::Context& TRE::Window::getContext()
 {
-	if (context)
-		return *context;
-	else
-		return *(context = new Context(color, depth, stencil, antialias, display, screen, window));
+	return *context;
+}
+
+TRE::Context& TRE::Window::initContext(uint8 vmajor, uint8 vminor, uint8 color, uint8 depth, uint8 stencil, uint8 antialias)
+{
+	return *(context = new Context(vmajor, vminor, color, depth, stencil, antialias, display, screen, window));
 }
 
 void TRE::Window::Present()

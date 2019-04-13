@@ -127,5 +127,7 @@
     <None Include="Core\Misc\Maths\Vec4i_simd.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="Shader\cam.fs" />
+    <None Include="Shader\cam.vs" />
   </ItemGroup>
 </Project>

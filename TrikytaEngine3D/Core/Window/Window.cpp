@@ -22,17 +22,17 @@ bool TRE::Window::isKeyDown(Key::key_t key)
 	return keys[key];
 }
 
-const Vec2<uint32>& TRE::Window::getSize() const
+const TRE::Vec2<uint32>& TRE::Window::getSize() const
 {
 	return windowSize;
 }
 
-const Vec2<int32>& TRE::Window::getPosition() const
+const TRE::Vec2<int32>& TRE::Window::getPosition() const
 {
 	return windowPosition;
 }
 
-const Vec2<int32>& TRE::Window::getMousePosition() const
+const TRE::Vec2<int32>& TRE::Window::getMousePosition() const
 {
 	return mousePosition;
 }

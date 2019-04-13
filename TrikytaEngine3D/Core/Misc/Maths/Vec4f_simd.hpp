@@ -5,6 +5,8 @@
 #include "Vec3.hpp"
 #include <Core/Misc/Defines/PlatformSIMDInclude.hpp>
 
+TRE_NS_START
+
 template<typename TYPE>
 struct Vec<2, TYPE, normal>;
 template<typename TYPE>
@@ -190,6 +192,7 @@ static FORCEINLINE Vec<4, float, SIMD> operator^(Vec<4, float, SIMD> const & a, 
 // vector operator ^= : bitwise xor
 static FORCEINLINE Vec<4, float, SIMD> & operator^=(Vec<4, float, SIMD> & a, Vec<4, float, SIMD> const & b);
 
+
 // vector operator == : returns true for elements for which a == b
 /*
 static FORCEINLINE Vec4fb operator == (Vec<4, float, SIMD> const & a, Vec<4, float, SIMD> const & b);
@@ -233,5 +236,6 @@ static FORCEINLINE Vec4fb operator ! (Vec<4, float, SIMD> const & a) {
 	return a == Vec<4, float, SIMD>(0.0f);
 }*/
 
+TRE_NS_END
 
 #include "Vec4f_simd.inl"

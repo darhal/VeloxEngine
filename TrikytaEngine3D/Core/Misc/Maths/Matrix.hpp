@@ -5,6 +5,8 @@
 #include "VecN.hpp"
 #include <iostream>
 
+TRE_NS_START
+
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
 class Matrix
 {
@@ -253,3 +255,5 @@ TYPE Matrix<TYPE, proc, R, C>::determinant() {
 	if (R != C) { return (TYPE)0; }
 	return determinant_helper(m, R);
 }
+
+TRE_NS_END

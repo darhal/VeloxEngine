@@ -3,6 +3,8 @@
 #include "Common.hpp"
 #include "Vec.hpp"
 
+TRE_NS_START
+
 #define DECLARE_UNARY_VEC2_OPERATOR(opr, proctype) \
 	template<typename TYPE> \
 	template<typename U, proc_type P> \
@@ -129,5 +131,7 @@ FORCEINLINE bool operator==(const Vec<2, double, normal>&, const Vec<2, double, 
 template<>
 FORCEINLINE bool operator!=(const Vec<2, double, normal>&, const Vec<2, double, normal>&);
 
+TRE_NS_END
 
 #include "Vec2.inl"
+
