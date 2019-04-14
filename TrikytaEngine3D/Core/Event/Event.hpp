@@ -53,10 +53,8 @@ struct WindowEvent
 	union { int Y; uint32 Height; };
 };
 
-struct Event
-{
-	enum event_t
-	{
+struct Event{
+	enum event_t{
 		TE_UNKNOWN,
 		TE_CLOSE,
 		TE_RESIZE,
@@ -73,8 +71,7 @@ struct Event
 
 	event_t Type;
 
-	union
-	{
+	union{
 		MouseEvent Mouse;
 		KeyEvent Key;
 		WindowEvent Window;

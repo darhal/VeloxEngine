@@ -171,8 +171,7 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 	ev.Type = Event::TE_UNKNOWN;
 
 	// Translate message to Event
-	switch (msg)
-	{
+	switch (msg){
 	case WM_CLOSE:
 		Close();
 		ev.Type = Event::TE_CLOSE;
@@ -220,10 +219,8 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 		ev.Key.Alt = HIWORD(GetAsyncKeyState(VK_MENU)) != 0;
 		ev.Key.Control = HIWORD(GetAsyncKeyState(VK_CONTROL)) != 0;
 		ev.Key.Shift = HIWORD(GetAsyncKeyState(VK_SHIFT)) != 0;
-
 		keys[ev.Key.Code] = true;
 		break;
-
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
 		ev.Type = Event::TE_KEY_UP;
@@ -231,7 +228,6 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 		ev.Key.Alt = HIWORD(GetAsyncKeyState(VK_MENU)) != 0;
 		ev.Key.Control = HIWORD(GetAsyncKeyState(VK_CONTROL)) != 0;
 		ev.Key.Shift = HIWORD(GetAsyncKeyState(VK_SHIFT)) != 0;
-
 		keys[ev.Key.Code] = false;
 		break;
 	case WM_LBUTTONDOWN:

@@ -81,7 +81,6 @@ typedef intptr_t intptr;
 typedef uintptr_t uintptr;
 
 
-
 #ifdef COMPILER_MSVC
 	#define FORCEINLINE __forceinline
 #elif defined(COMPILER_GCC) || defined(COMPILER_CLANG)
@@ -104,4 +103,4 @@ typedef uintptr_t uintptr;
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
 #define TRE_NS_START namespace TRE {
-#define TRE_NS_END	 }
+#define TRE_NS_END	 };

@@ -5,7 +5,7 @@
 #include "Platform.hpp"
 
 #ifdef _MSC_VER
-	#pragma warning(disable:4996) // DISABLE STUPID VS ERRORS
+	#pragma warning(disable:4996) // DISABLE VS WARNING
 #endif
 
 inline static void PrintDate()
