@@ -1,5 +1,6 @@
 #include <Renderer/Shader/ShaderProgram.hpp>
 #include <Renderer/Shader/Shader.hpp>
+#include <Renderer/Texture/Texture.hpp>
 #include <Core/Context/Extensions.hpp>
 #include <Core/Window/Window.hpp>
 #include <iostream>
@@ -10,8 +11,8 @@
 #include <future>
 
 // settings
-const unsigned int SCR_WIDTH = 1920/2;
-const unsigned int SCR_HEIGHT = 1080/2;
+const unsigned int SCR_WIDTH = 1920 / 2;
+const unsigned int SCR_HEIGHT = 1080 / 2;
 
 using namespace TRE;
 
@@ -25,18 +26,18 @@ int main()
 	printf("%s\n", glGetString(GL_VERSION));
 
 	// configure global opengl state
-  	// -----------------------------
+	// -----------------------------
 	glEnable(GL_DEPTH_TEST);
 
 	// build and compile our shader zprogram
 	// ------------------------------------
-	ShaderProgram ourShader({ 
+	ShaderProgram ourShader({
 		Shader("Shader/cam.vs", ShaderType::VERTEX),
-		Shader("Shader/cam.fs", ShaderType::FRAGMENT) 
-	});
+		Shader("Shader/cam.fs", ShaderType::FRAGMENT)
+		});
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
-   	// ------------------------------------------------------------------
+	// ------------------------------------------------------------------
 	float vertices[] = {
 		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 		 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
@@ -109,27 +110,13 @@ int main()
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	uint32 texture1;
-	glGenTextures(1, &texture1);
-	glBindTexture(GL_TEXTURE_2D, texture1);
-	// set the texture wrapping parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// set texture filtering parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// load image, create texture and generate mipmaps
-	int width, height;
-	Image img = Image("img/box1.jpg");
-	width = img.GetWidth(); height = img.GetHeight();
-	unsigned char* data = img.GetBytes();
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}else{
-		std::cout << "Failed to load texture" << std::endl;
-	}
+	Texture texture1 = Texture("img/box1.jpg", TexTarget::TEX2D, {
+		{TexParam::TEX_WRAP_S , TexWrapping::REPEAT},
+		{TexParam::TEX_WRAP_T, TexWrapping::REPEAT},
+		{TexParam::TEX_MIN_FILTER, TexFilter::LINEAR},
+		{TexParam::TEX_MAG_FILTER, TexFilter::LINEAR}
+	});
+
 
 	// tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
 	// -------------------------------------------------------------------------------------------
@@ -143,7 +130,7 @@ int main()
 
 	// render loop
 	// -----------
-	float timer = 0.f; 
+	float timer = 0.f;
 	glEnable(GL_MULTISAMPLE);
 	while (window.isOpen())
 	{
@@ -210,7 +197,8 @@ void handleEvent(const Event& e)
 	if (e.Type == Event::TE_RESIZE) {
 		glViewport(0, 0, e.Window.Width, e.Window.Height);
 		printf("DETECTING RESIZE EVENT(%d, %d)\n", e.Window.Width, e.Window.Height);
-	}else if (e.Type == Event::TE_KEY_DOWN) {
+	}
+	else if (e.Type == Event::TE_KEY_DOWN) {
 		if (e.Key.Code == Key::F11) {
 			PrintScreenshot();
 			printf("Taking screenshot...\n");

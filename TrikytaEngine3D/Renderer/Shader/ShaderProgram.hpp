@@ -3,6 +3,7 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Maths/Common.hpp>
 #include <Core/Misc/Defines/DataStructure.hpp>
+#include <Core/Context/GLDefines.hpp>
 #include <initializer_list>
 
 TRE_NS_START
@@ -10,9 +11,9 @@ TRE_NS_START
 namespace ShaderType{
 	enum shader_type_t
 	{
-		VERTEX = 0x8B31,
-		FRAGMENT = 0x8B30,
-		GEOMETRY = 0x8DD9
+		VERTEX = GL_VERTEX_SHADER,
+		FRAGMENT = GL_FRAGMENT_SHADER,
+		GEOMETRY = GL_GEOMETRY_SHADER
 	};
 	static FORCEINLINE const char* ToString(shader_type_t v) {
 		static const char* shadertype2str[] = { "VERTEX SHADER", " FRAGMENT SHADER", "GEOMETRY SHADER" };

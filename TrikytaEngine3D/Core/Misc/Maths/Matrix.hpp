@@ -22,25 +22,25 @@ public:
 	};
 	
 
-	Matrix();
+	FORCEINLINE Matrix();
 
-	Matrix(bool);
+	FORCEINLINE Matrix(bool);
 
 	template<typename U>
-	Matrix(U);
+	FORCEINLINE Matrix(U);
 
-	Matrix(const Matrix<TYPE, proc, R, C>&);
+	FORCEINLINE Matrix(const Matrix<TYPE, proc, R, C>&);
 
-	Matrix(const TYPE arr[R][C]);
+	FORCEINLINE Matrix(const TYPE arr[R][C]);
 
 	//Destructor
-	~Matrix() {};
+	FORCEINLINE ~Matrix() {};
 
-	TYPE determinant();
+	FORCEINLINE TYPE determinant();
 
-	void print();
+	FORCEINLINE void print();
 
-	Matrix<TYPE, proc, R, C>& operator=(const Matrix<TYPE, proc, R, C>&);
+	FORCEINLINE Matrix<TYPE, proc, R, C>& operator=(const Matrix<TYPE, proc, R, C>&);
 
 	FORCEINLINE Matrix<TYPE, proc, C, R> transpose(){
 		Matrix<TYPE, proc, C, R> tmat(false);
@@ -133,12 +133,12 @@ public:
 	}
 
 #if __cplusplus <= 201103L
-	Matrix(const std::initializer_list<std::initializer_list<TYPE>>&);
+	FORCEINLINE Matrix(const std::initializer_list<std::initializer_list<TYPE>>&);
 #endif
 };
 
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
-Matrix<TYPE, proc, R, C>::Matrix()
+FORCEINLINE Matrix<TYPE, proc, R, C>::Matrix()
 {
 	for (uint8 i = 0; i < R; i++) {
 		for (uint8 j = 0; j < C; j++) {
@@ -152,12 +152,12 @@ Matrix<TYPE, proc, R, C>::Matrix()
 }
 
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
-Matrix<TYPE, proc, R, C>::Matrix(bool)
+FORCEINLINE Matrix<TYPE, proc, R, C>::Matrix(bool)
 {
 }
 
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
-Matrix<TYPE, proc, R, C>::Matrix(const TYPE arr[R][C])
+FORCEINLINE Matrix<TYPE, proc, R, C>::Matrix(const TYPE arr[R][C])
 {
 	for (uint8 i = 0; i < R; i++) {
 		for (uint8 j = 0; j < C; j++) {
@@ -168,7 +168,7 @@ Matrix<TYPE, proc, R, C>::Matrix(const TYPE arr[R][C])
 
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
 template<typename U>
-Matrix<TYPE, proc, R, C>::Matrix(U scalar)
+FORCEINLINE Matrix<TYPE, proc, R, C>::Matrix(U scalar)
 {
 	TYPE s = static_cast<TYPE>(scalar);
 	for (uint8 i = 0; i < R; i++) {
@@ -180,7 +180,7 @@ Matrix<TYPE, proc, R, C>::Matrix(U scalar)
 
 #if __cplusplus <= 201103L
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
-Matrix<TYPE, proc, R, C>::Matrix(const std::initializer_list<std::initializer_list<TYPE>>& list)
+FORCEINLINE Matrix<TYPE, proc, R, C>::Matrix(const std::initializer_list<std::initializer_list<TYPE>>& list)
 {
 	uint8 i = 0, j;
 	for (const std::initializer_list<TYPE>& elm : list) {
@@ -195,7 +195,7 @@ Matrix<TYPE, proc, R, C>::Matrix(const std::initializer_list<std::initializer_li
 #endif
 
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
-void Matrix<TYPE, proc, R, C>::print()
+FORCEINLINE void Matrix<TYPE, proc, R, C>::print()
 {
 	for (uint8 i = 0; i < R; i++) {
 		for (uint8 j = 0; j < C; j++) {
@@ -207,14 +207,14 @@ void Matrix<TYPE, proc, R, C>::print()
 }
 
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
-Matrix<TYPE, proc, R, C>& Matrix<TYPE, proc, R, C>::operator=(const Matrix<TYPE, proc, R, C>& other)
+FORCEINLINE Matrix<TYPE, proc, R, C>& Matrix<TYPE, proc, R, C>::operator=(const Matrix<TYPE, proc, R, C>& other)
 {
 	memcpy(this, (const void*)(&other), sizeof(other));
 	return *this;
 }
 
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
-Matrix<TYPE, proc, R, C>::Matrix(const Matrix<TYPE, proc, R, C>& other) {
+FORCEINLINE Matrix<TYPE, proc, R, C>::Matrix(const Matrix<TYPE, proc, R, C>& other) {
 	memcpy(this, (const void*)(&other), sizeof(other));
 }
 
@@ -251,7 +251,7 @@ TYPE Matrix<TYPE, proc, R, C>::determinant_helper(TYPE m[R][C], uint8 n) {
 }
 
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
-TYPE Matrix<TYPE, proc, R, C>::determinant() {
+FORCEINLINE TYPE Matrix<TYPE, proc, R, C>::determinant() {
 	if (R != C) { return (TYPE)0; }
 	return determinant_helper(m, R);
 }

@@ -137,6 +137,7 @@
   <ItemGroup>
     <ClInclude Include="Core\Context\Context.hpp" />
     <ClInclude Include="Core\Context\Extensions.hpp" />
+    <ClInclude Include="Core\Context\GLDefines.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />
     <ClInclude Include="Core\Misc\Defines\Common.hpp" />
     <ClInclude Include="Core\Misc\Defines\DataStructure.hpp" />
@@ -187,7 +188,7 @@
     <ClInclude Include="Core\Window\Window.hpp" />
     <ClInclude Include="Renderer\Shader\Shader.hpp" />
     <ClInclude Include="Renderer\Shader\ShaderProgram.hpp" />
-    <ClInclude Include="Tests\Shader.h" />
+    <ClInclude Include="Renderer\Texture\Texture.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Context\Context.cpp" />
@@ -273,6 +274,7 @@
     <ClCompile Include="Core\Window\Window_X11.cpp" />
     <ClCompile Include="Renderer\Shader\Shader.cpp" />
     <ClCompile Include="Renderer\Shader\ShaderProgram.cpp" />
+    <ClCompile Include="Renderer\Texture\Texture.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
