@@ -32,17 +32,17 @@ public:
 		Vec<4, float, SIMD> v3; 
 	};
 
-	Matrix();
+	FORCEINLINE Matrix();
 
 	template<typename TYPE>
-	Matrix(TYPE);
+	FORCEINLINE Matrix(TYPE);
 
-	Matrix(bool);
+	FORCEINLINE Matrix(bool);
 
 	template<proc_type proc>
-	Matrix(const Vec<4, float, proc>& vec0, const Vec<4, float, proc>& vec1, const Vec<4, float, proc>& vec2, const Vec<4, float, proc>& vec3);
+	FORCEINLINE Matrix(const Vec<4, float, proc>& vec0, const Vec<4, float, proc>& vec1, const Vec<4, float, proc>& vec2, const Vec<4, float, proc>& vec3);
 
-	Matrix(
+	FORCEINLINE Matrix(
 		float x0, float y0, float z0, float w0,
 		float x1, float y1, float z1, float w1,
 		float x2, float y2, float z2, float w2,
@@ -50,11 +50,11 @@ public:
 	);
 
 	//Destructor
-	~Matrix() {};
+	FORCEINLINE ~Matrix() {};
 
-	float determinant();
+	FORCEINLINE float determinant();
 
-	class_type& operator=(const class_type&);
+	FORCEINLINE class_type& operator=(const class_type&);
 
 	template<typename T, proc_type Q>
 	FORCEINLINE class_type& scale(const Vec<3, T, Q>&);
@@ -103,14 +103,14 @@ public:
 	friend FORCEINLINE class_type operator*(const class_type& mat1, const class_type& mat2);
 	friend FORCEINLINE Vec<4, float, SIMD> operator*(const Vec<4, float, SIMD>&, const class_type&);
 
-	void print();
+	FORCEINLINE void print();
 #if __cplusplus <= 201103L
-	Matrix(const std::initializer_list<std::initializer_list<float>>&);
+	FORCEINLINE Matrix(const std::initializer_list<std::initializer_list<float>>&);
 #endif
 
 };
 
-Matrix<float, SIMD, 4, 4>::Matrix(
+FORCEINLINE Matrix<float, SIMD, 4, 4>::Matrix(
 	float x0, float y0, float z0, float w0,
 	float x1, float y1, float z1, float w1,
 	float x2, float y2, float z2, float w2,
@@ -123,7 +123,7 @@ Matrix<float, SIMD, 4, 4>::Matrix(
 }
 
 template<proc_type proc>
-Matrix<float, SIMD, 4, 4>::Matrix(const Vec<4, float, proc>& vec0, const Vec<4, float, proc>& vec1, const Vec<4, float, proc>& vec2, const Vec<4, float, proc>& vec3)
+FORCEINLINE Matrix<float, SIMD, 4, 4>::Matrix(const Vec<4, float, proc>& vec0, const Vec<4, float, proc>& vec1, const Vec<4, float, proc>& vec2, const Vec<4, float, proc>& vec3)
 {
 	rows[0] = _mm_setr_ps(vec0.x, vec0.y, vec0.z, vec0.w);
 	rows[1] = _mm_setr_ps(vec1.x, vec1.y, vec1.z, vec1.w);
@@ -131,7 +131,7 @@ Matrix<float, SIMD, 4, 4>::Matrix(const Vec<4, float, proc>& vec0, const Vec<4, 
 	rows[3] = _mm_setr_ps(vec3.x, vec3.y, vec3.z, vec3.w);
 }
 
-Matrix<float, SIMD, 4, 4>::Matrix()
+FORCEINLINE Matrix<float, SIMD, 4, 4>::Matrix()
 {
 	rows[0] = _mm_setr_ps(1.f, 0.f, 0.f, 0.f);
 	rows[1] = _mm_setr_ps(0.f, 1.f, 0.f, 0.f);
@@ -140,7 +140,7 @@ Matrix<float, SIMD, 4, 4>::Matrix()
 }
 
 template<typename TYPE>
-Matrix<float, SIMD, 4, 4>::Matrix(TYPE s)
+FORCEINLINE Matrix<float, SIMD, 4, 4>::Matrix(TYPE s)
 {
 	float v = static_cast<float>(s);
 	for (int i = 0; i < 4; i++) {
@@ -148,11 +148,11 @@ Matrix<float, SIMD, 4, 4>::Matrix(TYPE s)
 	}
 }
 
-Matrix<float, SIMD, 4, 4>::Matrix(bool)
+FORCEINLINE Matrix<float, SIMD, 4, 4>::Matrix(bool)
 {
 }
 
-Matrix<float, SIMD, 4, 4>& Matrix<float, SIMD, 4, 4>::operator=(const Matrix<float, SIMD, 4, 4>& v)
+FORCEINLINE Matrix<float, SIMD, 4, 4>& Matrix<float, SIMD, 4, 4>::operator=(const Matrix<float, SIMD, 4, 4>& v)
 {
 	for (int i = 0; i < 4; i++) {
 		rows[i] = v.rows[i];
@@ -191,7 +191,7 @@ FORCEINLINE Vec<4, float, SIMD> operator*(const Vec<4, float, SIMD>& v, const Ma
 	return Vec<4, float, SIMD>(result);
 }
 
-void Matrix<float, SIMD, 4, 4>::print()
+FORCEINLINE void Matrix<float, SIMD, 4, 4>::print()
 {
 	for (uint8 i = 0; i < 4; i++) {
 		_m128 x = rows[i];
@@ -202,7 +202,7 @@ void Matrix<float, SIMD, 4, 4>::print()
 	}
 }
 
-float Matrix<float, SIMD, 4, 4>::determinant() {
+FORCEINLINE float Matrix<float, SIMD, 4, 4>::determinant() {
 	__m128 Va, Vb, Vc;
 	__m128 r1, r2, r3, t1, t2, sum;
 	Vec<4, float, SIMD> Det;
@@ -229,7 +229,7 @@ float Matrix<float, SIMD, 4, 4>::determinant() {
 }
 
 #if __cplusplus <= 201103L
-	Matrix<float, SIMD, 4, 4>::Matrix(const std::initializer_list<std::initializer_list<float>>& list)
+	FORCEINLINE Matrix<float, SIMD, 4, 4>::Matrix(const std::initializer_list<std::initializer_list<float>>& list)
 	{
 		uint8 i = 0, j;
 		for (const std::initializer_list<float>& elm : list) {

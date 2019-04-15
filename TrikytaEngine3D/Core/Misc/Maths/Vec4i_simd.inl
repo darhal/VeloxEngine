@@ -2,17 +2,17 @@
 
 TRE_NS_START
 
-Vec<4, int32, SIMD>::Vec(int32 i)
+FORCEINLINE Vec<4, int32, SIMD>::Vec(int32 i)
 {
 	xmm = _mm_set1_epi32(i);
 }
 
-Vec<4, int32, SIMD>::Vec(int32 x, int32 y, int32 z, int32 w)
+FORCEINLINE Vec<4, int32, SIMD>::Vec(int32 x, int32 y, int32 z, int32 w)
 {
 	xmm = _mm_setr_epi32(x, y, z, w);
 }
 
-Vec<4, int32, SIMD>::Vec(const __m128i&  x)
+FORCEINLINE Vec<4, int32, SIMD>::Vec(const __m128i&  x)
 {
 	xmm = x;
 }

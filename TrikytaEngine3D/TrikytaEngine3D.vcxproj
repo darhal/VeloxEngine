@@ -139,6 +139,7 @@
     <ClInclude Include="Core\Context\Extensions.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />
     <ClInclude Include="Core\Misc\Defines\Common.hpp" />
+    <ClInclude Include="Core\Misc\Defines\DataStructure.hpp" />
     <ClInclude Include="Core\Misc\Defines\Debug.hpp" />
     <ClInclude Include="Core\Misc\Defines\Platform.hpp" />
     <ClInclude Include="Core\Misc\Defines\PlatformInclude.hpp" />
@@ -156,9 +157,9 @@
     <ClInclude Include="Core\Misc\Maths\Vec4f_simd.hpp" />
     <ClInclude Include="Core\Misc\Maths\Vec4i_simd.hpp" />
     <ClInclude Include="Core\Misc\Maths\VecN.hpp" />
-    <ClInclude Include="Core\Misc\Utils\ByteBuffer.h" />
+    <ClInclude Include="Core\Misc\Utils\ByteBuffer.hpp" />
     <ClInclude Include="Core\Misc\Utils\Color.hpp" />
-    <ClInclude Include="Core\Misc\Utils\Common.h" />
+    <ClInclude Include="Core\Misc\Utils\Common.hpp" />
     <ClInclude Include="Core\Misc\Utils\Image.hpp" />
     <ClInclude Include="Core\Misc\Utils\libjpeg\cderror.h" />
     <ClInclude Include="Core\Misc\Utils\libjpeg\jconfig.h" />
@@ -172,6 +173,7 @@
     <ClInclude Include="Core\Misc\Utils\libjpeg\jversion.h" />
     <ClInclude Include="Core\Misc\Utils\libpng\png.h" />
     <ClInclude Include="Core\Misc\Utils\libpng\pngconf.h" />
+    <ClInclude Include="Core\Misc\Utils\Logging.hpp" />
     <ClInclude Include="Core\Misc\Utils\zlib\crc32.h" />
     <ClInclude Include="Core\Misc\Utils\zlib\deflate.h" />
     <ClInclude Include="Core\Misc\Utils\zlib\inffast.h" />
@@ -183,6 +185,8 @@
     <ClInclude Include="Core\Misc\Utils\zlib\zlib.h" />
     <ClInclude Include="Core\Misc\Utils\zlib\zutil.h" />
     <ClInclude Include="Core\Window\Window.hpp" />
+    <ClInclude Include="Renderer\Shader\Shader.hpp" />
+    <ClInclude Include="Renderer\Shader\ShaderProgram.hpp" />
     <ClInclude Include="Tests\Shader.h" />
   </ItemGroup>
   <ItemGroup>
@@ -267,6 +271,8 @@
     <ClCompile Include="Core\Window\Window.cpp" />
     <ClCompile Include="Core\Window\Window_Win32.cpp" />
     <ClCompile Include="Core\Window\Window_X11.cpp" />
+    <ClCompile Include="Renderer\Shader\Shader.cpp" />
+    <ClCompile Include="Renderer\Shader\ShaderProgram.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -44,13 +44,13 @@ struct Vec<1, TYPE, normal>
 #else
 	union { TYPE x, r, s; TYPE data[1];};
 #endif
-	Vec() : x((TYPE)0)
+	FORCEINLINE Vec() : x((TYPE)0)
 	{}
 
-	explicit Vec(TYPE x) : x(static_cast<TYPE>(x))
+	FORCEINLINE explicit Vec(TYPE x) : x(static_cast<TYPE>(x))
 	{}
 
-	~Vec() {}
+	FORCEINLINE ~Vec() {}
 
 	//Vec(const Vec& v) = default;
 	//Vec(Vec&& v) = default;

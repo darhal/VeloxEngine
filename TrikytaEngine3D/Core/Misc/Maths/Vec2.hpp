@@ -51,13 +51,13 @@ struct Vec<2, TYPE, normal>
 		TYPE data[2];
 	};
 #endif
-	Vec() : x(static_cast<TYPE>(0)), y(static_cast<TYPE>(0))
+	FORCEINLINE Vec() : x(static_cast<TYPE>(0)), y(static_cast<TYPE>(0))
 	{}
 
-	explicit Vec(TYPE x, TYPE y) : x(static_cast<TYPE>(x)), y(static_cast<TYPE>(y))
+	FORCEINLINE explicit Vec(TYPE x, TYPE y) : x(static_cast<TYPE>(x)), y(static_cast<TYPE>(y))
 	{}
 
-	~Vec() {}
+	FORCEINLINE ~Vec() {}
 
 	//Vec(const Vec& v) = default;
 	//Vec(Vec&& v) = default;

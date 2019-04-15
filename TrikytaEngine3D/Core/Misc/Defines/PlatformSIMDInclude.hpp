@@ -104,7 +104,7 @@
 	// we use __m128 to represent 2x2 matrix as A = | A0  A1 |
 	//                                              | A2  A3 |
 	// 2x2 row major Matrix multiply A*B
-	FORCEINLINE __m128 Mat2Mul(__m128 vec1, __m128 vec2)
+	static FORCEINLINE __m128 Mat2Mul(__m128 vec1, __m128 vec2)
 	{
 		return
 			_mm_add_ps(_mm_mul_ps(vec1, VecSwizzle(vec2, 0, 3, 0, 3)),
@@ -112,7 +112,7 @@
 	}
 
 	// 2x2 row major Matrix adjugate multiply (A#)*B
-	FORCEINLINE __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
+	static FORCEINLINE __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
 	{
 		return
 			_mm_sub_ps(_mm_mul_ps(VecSwizzle(vec1, 3, 3, 0, 0), vec2),
@@ -121,7 +121,7 @@
 	}
 
 	// 2x2 row major Matrix multiply adjugate A*(B#)
-	FORCEINLINE __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
+	static FORCEINLINE __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
 	{
 		return
 			_mm_sub_ps(_mm_mul_ps(vec1, VecSwizzle(vec2, 3, 0, 3, 0)),
@@ -131,7 +131,7 @@
 	// Use dummy = a recently-dead variable that vec depends on,
 	//  so it doesn't introduce a false dependency,
 	//  and the compiler probably still has it in a register
-	__m128d _mm_highhalf_pd(__m128d dummy, __m128d vec) {
+	static FORCEINLINE  __m128d _mm_highhalf_pd(__m128d dummy, __m128d vec) {
 	#if SIMD_SUPPORTED_LEVEL >= 7
 			// With 3-operand AVX instructions, don't create an extra dependency on something we don't need anymore.
 			(void)dummy;
@@ -147,7 +147,7 @@
 	// Use dummy = a recently-dead variable that vec depends on,
 	//  so it doesn't introduce a false dependency,
 	//  and the compiler probably still has it in a register
-	__m128 _mm_highhalf_ps(__m128 dummy, __m128 vec) {
+	static FORCEINLINE __m128 _mm_highhalf_ps(__m128 dummy, __m128 vec) {
 	#if SIMD_SUPPORTED_LEVEL >= 7
 		// With 3-operand AVX instructions, don't create an extra dependency on something we don't need anymore.
 		(void)dummy;
@@ -172,7 +172,7 @@
 		uint16    m128_u16[8];
 		uint32    m128_u32[4];
 		_m128() {}
-		_m128(const __m128& x) {
+		FORCEINLINE _m128(const __m128& x) {
 			xmm = x;
 		}
 	} _m128;
@@ -188,7 +188,7 @@
 		uint32    m128i_u32[4];
 		uint64    m128i_u64[2];
 		_m128i() {}
-		_m128i(const __m128i& x) {
+		FORCEINLINE _m128i(const __m128i& x) {
 			xmm = x;
 		}
 	} _m128i;

@@ -1,9 +1,10 @@
-#include "Shader.h"
+#include <Renderer/Shader/ShaderProgram.hpp>
+#include <Renderer/Shader/Shader.hpp>
 #include <Core/Context/Extensions.hpp>
 #include <Core/Window/Window.hpp>
 #include <iostream>
 #include <chrono>
-#include <Core/Misc/Maths/Matrix.hpp>
+#include <Core/Misc/Maths/Maths.hpp>
 #include <Core/Misc/Utils/Image.hpp>
 #include <thread>
 #include <future>
@@ -29,7 +30,10 @@ int main()
 
 	// build and compile our shader zprogram
 	// ------------------------------------
-	Shader ourShader("Shader/cam.vs", "Shader/cam.fs");
+	ShaderProgram ourShader({ 
+		Shader("Shader/cam.vs", ShaderType::VERTEX),
+		Shader("Shader/cam.fs", ShaderType::FRAGMENT) 
+	});
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
    	// ------------------------------------------------------------------
@@ -129,13 +133,13 @@ int main()
 
 	// tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
 	// -------------------------------------------------------------------------------------------
-	ourShader.use();
-	ourShader.setInt("texture", 0);
+	ourShader.Use();
+	ourShader.SetInt("texture", 0);
 
 	// pass projection matrix to shader (as projection matrix rarely changes there's no need to do this per frame)
 	// -----------------------------------------------------------------------------------------------------------
 	mat4 projection = mat4::perspective(rad(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-	ourShader.setMat4("projection", projection);
+	ourShader.SetMat4("projection", projection);
 
 	// render loop
 	// -----------
@@ -159,14 +163,14 @@ int main()
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		// activate shader
-		ourShader.use();
+		ourShader.Use();
 		// camera/view transformation
 		mat4 view; // make sure to initialize matrix to identity matrix first
 		float radius = 10.0f;
 		float camX = sin(timer) * radius;
 		float camZ = cos(timer) * radius;
 		view = mat4::look_at(vec3(camX, 0.0f, camZ), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-		ourShader.setMat4("view", view);
+		ourShader.SetMat4("view", view);
 
 		// render boxes
 		glBindVertexArray(VAO);
@@ -177,7 +181,7 @@ int main()
 			model.translate(cubePositions[i]);
 			float angle = 20.0f * i;
 			model.rotate(vec3(1.0f, 0.3f, 0.5f), rad(angle));
-			ourShader.setMat4("model", model);
+			ourShader.SetMat4("model", model);
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
@@ -203,9 +207,6 @@ void PrintScreenshot()
 
 void handleEvent(const Event& e)
 {
-	/*uint8 pixels[3] = {255, 255, 0};
-	Image img = Image(SCR_WIDTH, SCR_HEIGHT, pixels);
-	img.Save("test.png", ImageFileFormat::PNG);*/
 	if (e.Type == Event::TE_RESIZE) {
 		glViewport(0, 0, e.Window.Width, e.Window.Height);
 		printf("DETECTING RESIZE EVENT(%d, %d)\n", e.Window.Width, e.Window.Height);

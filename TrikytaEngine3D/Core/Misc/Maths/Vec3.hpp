@@ -57,13 +57,13 @@ struct Vec<3, TYPE, normal>
 		Vec<2, TYPE, normal> st;
 	};
 #endif
-	Vec() : x(static_cast<TYPE>(0)), y(static_cast<TYPE>(0)), z(static_cast<TYPE>(0))
+	FORCEINLINE  Vec() : x(static_cast<TYPE>(0)), y(static_cast<TYPE>(0)), z(static_cast<TYPE>(0))
 	{}
 
-	explicit Vec(TYPE x, TYPE y, TYPE z) : x(static_cast<TYPE>(x)), y(static_cast<TYPE>(y)), z(static_cast<TYPE>(z))
+	FORCEINLINE explicit Vec(TYPE x, TYPE y, TYPE z) : x(static_cast<TYPE>(x)), y(static_cast<TYPE>(y)), z(static_cast<TYPE>(z))
 	{}
 
-	~Vec() {}
+	FORCEINLINE ~Vec() {}
 
 	//Vec(const Vec& v) = default;
 	//Vec(Vec&& v) = default;

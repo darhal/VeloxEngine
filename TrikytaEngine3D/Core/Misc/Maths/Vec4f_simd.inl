@@ -2,17 +2,17 @@
 
 TRE_NS_START
 
-Vec<4, float, SIMD>::Vec(float f) 
+FORCEINLINE Vec<4, float, SIMD>::Vec(float f)
 {
 	xmm = _mm_set1_ps(f);
 }
 
-Vec<4, float, SIMD>::Vec(float x, float y, float z, float w) 
+FORCEINLINE Vec<4, float, SIMD>::Vec(float x, float y, float z, float w)
 {
 	xmm = _mm_setr_ps(x, y, z, w);
 }
 
-Vec<4, float, SIMD>::Vec(const __m128&  x) 
+FORCEINLINE Vec<4, float, SIMD>::Vec(const __m128&  x)
 {
 	xmm = x;
 }

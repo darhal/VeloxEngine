@@ -32,19 +32,19 @@ public:
 	}; // Float vector
 
 	// Default constructor:
-	Vec() {}
+	FORCEINLINE  Vec() {}
 
 	// Constructor to broadcast the same value into all elements:
-	Vec(float f);
+	FORCEINLINE  Vec(float f);
 
 	// Constructor to build from all elements:
-	Vec(float, float, float, float);
+	FORCEINLINE  Vec(float, float, float, float);
 
 	// Constructor to convert from type __m128 used in intrinsics:
-	Vec(const __m128&);
+	FORCEINLINE  Vec(const __m128&);
 
 	//Destructor
-	~Vec() {};
+	FORCEINLINE  ~Vec() {};
 
 	// Assignment operator to convert from type __m128 used in intrinsics:
 	FORCEINLINE Vec& operator=(const __m128&);
