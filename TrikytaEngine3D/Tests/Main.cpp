@@ -1,5 +1,7 @@
 #include <Renderer/Shader/ShaderProgram.hpp>
 #include <Renderer/Shader/Shader.hpp>
+#include <Renderer/VertexArray/VAO.hpp>
+#include <Renderer/VertexBuffer/VBO.hpp>
 #include <Renderer/Texture/Texture.hpp>
 #include <Core/Context/Extensions.hpp>
 #include <Core/Window/Window.hpp>
@@ -28,13 +30,6 @@ int main()
 	// configure global opengl state
 	// -----------------------------
 	glEnable(GL_DEPTH_TEST);
-
-	// build and compile our shader zprogram
-	// ------------------------------------
-	ShaderProgram ourShader({
-		Shader("Shader/cam.vs", ShaderType::VERTEX),
-		Shader("Shader/cam.fs", ShaderType::FRAGMENT)
-		});
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
@@ -94,29 +89,25 @@ int main()
 		vec3(1.5f,  0.2f, -1.5f),
 		vec3(-1.3f,  1.0f, -1.5f)
 	};
-	unsigned int VBO, VAO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
 
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	// texture coord attribute
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
+	// build and compile our shader zprogram
+	// ------------------------------------
+	ShaderProgram ourShader({
+		Shader("Shader/cam.vs", ShaderType::VERTEX),
+		Shader("Shader/cam.fs", ShaderType::FRAGMENT)
+		});
+	VAO vao; //glGenVertexArrays(1, &VAO);
+	vao.Bind(); //glBindVertexArray(VAO);
+	VBO vbo(BufferTarget::ARRAY_BUFFER); // glGenBuffers(1, &VBO);
+	vbo.FillData(vertices); //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	vao.BindAttribute<float>(0, vbo, DataType::FLOAT, 3, 5, 0); // glEnableVertexAttribArray(0); && glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	vao.BindAttribute<float>(1, vbo, DataType::FLOAT, 2, 5, 3); //glEnableVertexAttribArray(1);  && glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
 	Texture texture1 = Texture("img/box1.jpg", TexTarget::TEX2D, {
 		{TexParam::TEX_WRAP_S , TexWrapping::REPEAT},
 		{TexParam::TEX_WRAP_T, TexWrapping::REPEAT},
 		{TexParam::TEX_MIN_FILTER, TexFilter::LINEAR},
 		{TexParam::TEX_MAG_FILTER, TexFilter::LINEAR}
 	});
-
 
 	// tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
 	// -------------------------------------------------------------------------------------------
@@ -160,7 +151,7 @@ int main()
 		ourShader.SetMat4("view", view);
 
 		// render boxes
-		glBindVertexArray(VAO);
+		glBindVertexArray(vao);
 		for (unsigned int i = 0; i < 10; i++)
 		{
 			// calculate the model matrix for each object and pass it to shader before drawing

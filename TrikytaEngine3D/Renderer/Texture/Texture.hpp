@@ -2,6 +2,7 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Context/GLDefines.hpp>
+#include <Renderer/Common.hpp>
 #include <initializer_list>
 
 TRE_NS_START
@@ -73,34 +74,6 @@ namespace TexFilter
 		LINEAR_MIPMAP_LINEAR = GL_LINEAR_MIPMAP_LINEAR
 	};
 }
-
-namespace DataType
-{
-	enum data_type_t
-	{
-		BYTE = GL_BYTE,
-		UBYTE = GL_UNSIGNED_BYTE,
-		SHORT = GL_SHORT,
-		USHORT = GL_UNSIGNED_SHORT,
-		INT = GL_INT,
-		UINT = GL_UNSIGNED_INT,
-		FLOAT = GL_FLOAT,
-		DOUBLE = GL_DOUBLE,
-
-		UBYTE332 = GL_UNSIGNED_BYTE_3_3_2,
-		UBYTE233REV = GL_UNSIGNED_BYTE_2_3_3_REV,
-		USHORT565 = GL_UNSIGNED_SHORT_5_6_5,
-		USHORT565REV = GL_UNSIGNED_SHORT_5_6_5,
-		USHORT4444 = GL_UNSIGNED_SHORT_4_4_4_4,
-		USHORT4444REV = GL_UNSIGNED_SHORT_4_4_4_4_REV,
-		USHORT5551 = GL_UNSIGNED_SHORT_5_5_5_1,
-		USHORT1555REV = GL_UNSIGNED_SHORT_1_5_5_5_REV,
-		UINT8888 = GL_UNSIGNED_INT_8_8_8_8,
-		UINT8888REV = GL_UNSIGNED_INT_8_8_8_8_REV,
-		UINT101010102 = GL_UNSIGNED_INT_10_10_10_2
-	};
-}
-
 namespace TexInternalFormat
 {
 	enum tex_internal_format_t
@@ -194,19 +167,37 @@ namespace TexFormat
 	};
 }
 
-struct TexConfig
+struct TexParamConfig
 {
 	TexParam::tex_param_t param;
 	int32 val;
-	TexConfig(TexParam::tex_param_t p, uint32 v) : param(p), val(v)
+	TexParamConfig(TexParam::tex_param_t p, uint32 v) : param(p), val(v)
 	{}
-	TexConfig(TexParam::tex_param_t p, TexWrapping::tex_wrapping_t v) : param(p), val((int32)v)
+	TexParamConfig(TexParam::tex_param_t p, TexWrapping::tex_wrapping_t v) : param(p), val((int32)v)
 	{}
-	TexConfig(TexParam::tex_param_t p, TexFilter::tex_filter_t v) : param(p), val((int32)v)
+	TexParamConfig(TexParam::tex_param_t p, TexFilter::tex_filter_t v) : param(p), val((int32)v)
 	{}
-	TexConfig(int32 p, int32 v) : param(TexParam::tex_param_t(p)), val(v)
+	TexParamConfig(int32 p, int32 v) : param(TexParam::tex_param_t(p)), val(v)
 	{}
-	~TexConfig() {}
+	~TexParamConfig() {}
+};
+
+struct TextureSettings
+{
+	TextureSettings(TexTarget::tex_target_t target = TexTarget::TEX2D,
+		std::initializer_list<TexParamConfig> paramList = {}, uint32 width = 0, uint32 height = 0,
+		DataType::data_type_t datatype = DataType::UBYTE, int32 lod = 0,
+		TexInternalFormat::tex_internal_format_t internalFormat = TexInternalFormat::RGBA,
+		TexFormat::tex_format_t format = TexFormat::RGBA) : 
+		target(target), paramList(paramList), datatype(datatype), internalFormat(internalFormat), format(format), lod(lod), width(width), height(height)
+	{}
+	std::initializer_list<TexParamConfig> paramList;
+	int32 width, height, lod;
+	TexTarget::tex_target_t target;
+	DataType::data_type_t datatype;
+	TexInternalFormat::tex_internal_format_t internalFormat;
+	TexFormat::tex_format_t format;
+	~TextureSettings() {}
 };
 
 class Image;
@@ -217,11 +208,15 @@ public:
 public:
 	Texture(
 		const char* path, TexTarget::tex_target_t target, 
-		std::initializer_list<TexConfig> paramList = {},
+		std::initializer_list<TexParamConfig> paramList = {},
 		DataType::data_type_t datatype = DataType::UBYTE,
 		TexInternalFormat::tex_internal_format_t internalFormat = TexInternalFormat::RGBA,
 		TexFormat::tex_format_t format = TexFormat::RGBA
 	);
+
+	Texture(const char* path, const TextureSettings& settings);
+
+	Texture(const TextureSettings& settings);
 
 	Texture();
 
@@ -243,6 +238,8 @@ public:
 	void SetBorderColor(const Color& color);
 
 	void GenerateMipmaps();
+
+	void Bind() const;
 
 	FORCEINLINE operator uint32() const {return m_texID;}
 	FORCEINLINE const uint32 GetID() const { return m_texID; }

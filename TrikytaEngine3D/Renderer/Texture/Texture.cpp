@@ -9,7 +9,7 @@ TRE_NS_START
 Texture::Texture
 (
 	const char* path, TexTarget::tex_target_t target, 
-	std::initializer_list<TexConfig> paramList, DataType::data_type_t datatype, 
+	std::initializer_list<TexParamConfig> paramList, DataType::data_type_t datatype,
 	TexInternalFormat::tex_internal_format_t internalFormat,
 	TexFormat::tex_format_t format
 ) : m_target(target)
@@ -17,7 +17,7 @@ Texture::Texture
 	glGenTextures(1, &m_texID);
 	glBindTexture(target, m_texID);
 	// set the texture parameters
-	for (const TexConfig& p : paramList) {
+	for (const TexParamConfig& p : paramList) {
 		glTexParameteri(target, p.param, p.val);
 	}
 	// load image, create texture and generate mipmaps
@@ -31,6 +31,40 @@ Texture::Texture
 	}else{
 		Log(LogType::ERR, "Failed to load texture\n");
 	}
+}
+
+Texture::Texture(const char* path, const TextureSettings& settings) : m_target(settings.target)
+{
+	glGenTextures(1, &m_texID);
+	glBindTexture(settings.target, m_texID);
+	// set the texture parameters
+	for (const TexParamConfig& p : settings.paramList) {
+		glTexParameteri(settings.target, p.param, p.val);
+	}
+	// load image, create texture and generate mipmaps
+	int width, height;
+	Image img = Image(path);
+	width = img.GetWidth(); height = img.GetHeight();
+	unsigned char* data = img.GetBytes();
+	if (data) {
+		glTexImage2D(settings.target, settings.lod, settings.internalFormat, width, height, 0, settings.format, settings.datatype, data);
+		glGenerateMipmap(settings.target);
+	}
+	else {
+		Log(LogType::ERR, "Failed to load texture\n");
+	}
+}
+
+Texture::Texture(const TextureSettings& settings) : m_target(settings.target)
+{
+	glGenTextures(1, &m_texID);
+	glBindTexture(settings.target, m_texID);
+	// set the texture parameters
+	for (const TexParamConfig& p : settings.paramList) {
+		glTexParameteri(settings.target, p.param, p.val);
+	}
+	// load image, create texture and generate mipmaps
+	glTexImage2D(settings.target, settings.lod, settings.internalFormat, settings.width, settings.height, 0, settings.format, settings.datatype, NULL);
 }
 
 Texture::Texture() : m_target(TexTarget::TEX2D)
@@ -86,6 +120,11 @@ void Texture::GenerateMipmaps()
 {
 	glBindTexture(m_target, m_texID);
 	glGenerateMipmap(m_target);
+}
+
+void Texture::Bind() const
+{
+	glBindTexture(m_target, m_texID);
 }
 
 Texture::~Texture()

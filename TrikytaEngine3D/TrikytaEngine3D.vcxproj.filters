@@ -177,6 +177,15 @@
     <ClInclude Include="Renderer\Texture\Texture.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\VertexArray\VAO.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\VertexBuffer\VBO.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Common.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Main.cpp">
@@ -432,6 +441,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\Texture\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\VertexArray\VAO.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\VertexBuffer\VBO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
