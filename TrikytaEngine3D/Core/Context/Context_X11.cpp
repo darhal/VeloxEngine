@@ -6,7 +6,8 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-using namespace TRE;
+
+TRE_NS_START
 
 // Stub error handler for surpressing undesired Xlib errors
 typedef int(*XERRORHANDLER) (Display*, XErrorEvent*);
@@ -15,7 +16,7 @@ int XErrorSurpressor(Display* display, XErrorEvent* ev)
 	return 0;
 }
 
-Context::Context(uint8 color, uint8 depth, uint8 stencil, uint antialias, Display* display, int screen, ::Window window)
+Context::Context(uint8 vmajor, uint8 vminor, uint8 color, uint8 depth, uint8 stencil, uint antialias, Display* display, int screen, ::Window window)
 {
 	//LoadGL();
 	// Load OpenGL extensions
@@ -44,8 +45,8 @@ Context::Context(uint8 color, uint8 depth, uint8 stencil, uint antialias, Displa
 
 	// Create OpenGL 3.2 context
 	int attribs[] = {
-		GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-		GLX_CONTEXT_MINOR_VERSION_ARB, 3,
+		GLX_CONTEXT_MAJOR_VERSION_ARB, vmajor,
+		GLX_CONTEXT_MINOR_VERSION_ARB, vminor,
 		GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
 		0
 	};
@@ -103,5 +104,6 @@ Context::Context()
 	gettimeofday(&timeOffset, NULL);
 }
 
+TRE_NS_END
 
 #endif

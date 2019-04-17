@@ -10,7 +10,7 @@
 #endif
 
 #include "libjpeg/jpeglib.h"
-#include "libpng/png.h""
+#include "libpng/png.h"
 
 TRE_NS_START
 

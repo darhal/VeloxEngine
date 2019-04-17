@@ -81,72 +81,6 @@
     <ClInclude Include="Core\Misc\Maths\Maths.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libjpeg\cderror.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libjpeg\jconfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libjpeg\jdct.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libjpeg\jerror.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libjpeg\jinclude.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libjpeg\jmemsys.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libjpeg\jmorecfg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libjpeg\jpegint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libjpeg\jpeglib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libjpeg\jversion.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libpng\png.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\libpng\pngconf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\zlib\crc32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\zlib\deflate.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\zlib\inffast.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\zlib\inffixed.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\zlib\inflate.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\zlib\inftrees.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\zlib\trees.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\zlib\zconf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\zlib\zlib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Misc\Utils\zlib\zutil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Misc\Utils\Image.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -189,6 +123,72 @@
     <ClInclude Include="Renderer\VertexArray\VAODef.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\zlib\crc32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\zlib\deflate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\zlib\inffast.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\zlib\inffixed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\zlib\inflate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\zlib\inftrees.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\zlib\trees.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\zlib\zconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\zlib\zlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\zlib\zutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libjpeg\cderror.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jconfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jdct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jerror.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jinclude.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jmemsys.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jmorecfg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jpegint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jpeglib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jversion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libpng\png.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utils\libpng\pngconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Main.cpp">
@@ -213,6 +213,54 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Core\Context\Context_X11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\Image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Shader\ShaderProgram.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Shader\Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Texture\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\VertexArray\VAO.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\VertexBuffer\VBO.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\zlib\adler32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\zlib\compress.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\zlib\crc32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\zlib\deflate.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\zlib\inffast.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\zlib\inflate.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\zlib\inftrees.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\zlib\trees.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\zlib\uncompr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\zlib\zutil.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Core\Misc\Utils\libjpeg\jaricom.c">
@@ -402,54 +450,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Core\Misc\Utils\libpng\pngwutil.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Misc\Utils\zlib\adler32.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Misc\Utils\zlib\compress.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Misc\Utils\zlib\crc32.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Misc\Utils\zlib\deflate.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Misc\Utils\zlib\inffast.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Misc\Utils\zlib\inflate.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Misc\Utils\zlib\inftrees.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Misc\Utils\zlib\trees.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Misc\Utils\zlib\uncompr.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Misc\Utils\zlib\zutil.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Misc\Utils\Image.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\Shader\ShaderProgram.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\Shader\Shader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\Texture\Texture.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\VertexArray\VAO.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\VertexBuffer\VBO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

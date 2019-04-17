@@ -1,5 +1,6 @@
 #pragma once
 
+#include <climits>
 #include <Core/Misc/Defines/Common.hpp>
 #include "Common.hpp"
 
