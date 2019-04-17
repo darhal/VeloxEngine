@@ -5,12 +5,12 @@
 
 TRE_NS_START
 
-VBO::VBO() : m_target(BufferTarget::UNKNOWN), m_dataSize(1)
+VBO::VBO() : m_target(BufferTarget::UNKNOWN)
 {
 	glGenBuffers(1, &m_ID);
 }
 
-VBO::VBO(BufferTarget::buffer_target_t target) : m_target(target), m_dataSize(1)
+VBO::VBO(BufferTarget::buffer_target_t target) : m_target(target)
 {
 	glGenBuffers(1, &m_ID);
 }

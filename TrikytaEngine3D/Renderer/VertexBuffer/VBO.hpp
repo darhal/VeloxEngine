@@ -47,6 +47,7 @@ class VBO
 {
 public:
 	VBO();
+
 	VBO(BufferTarget::buffer_target_t target);
 
 	template<typename T, uint64 N>
@@ -67,7 +68,6 @@ public:
 private:
 	uint32 m_ID;
 	BufferTarget::buffer_target_t m_target;
-	ssize_t m_dataSize;
 };
 
 FORCEINLINE const int32 VBO::GetID() const 

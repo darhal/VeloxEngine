@@ -100,8 +100,8 @@ int main()
 	vao.Bind(); //glBindVertexArray(VAO);
 	VBO vbo(BufferTarget::ARRAY_BUFFER); // glGenBuffers(1, &VBO);
 	vbo.FillData(vertices); //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	vao.BindAttribute<float>(0, vbo, DataType::FLOAT, 3, 5, 0); // glEnableVertexAttribArray(0); && glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	vao.BindAttribute<float>(1, vbo, DataType::FLOAT, 2, 5, 3); //glEnableVertexAttribArray(1);  && glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
+	vao.BindAttribute<DataType::FLOAT>(0, vbo, 3, 5, 0); // glEnableVertexAttribArray(0); && glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	vao.BindAttribute<DataType::FLOAT>(1, vbo, 2, 5, 3); //glEnableVertexAttribArray(1);  && glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
 	Texture texture1 = Texture("img/box1.jpg", TexTarget::TEX2D, {
 		{TexParam::TEX_WRAP_S , TexWrapping::REPEAT},
 		{TexParam::TEX_WRAP_T, TexWrapping::REPEAT},

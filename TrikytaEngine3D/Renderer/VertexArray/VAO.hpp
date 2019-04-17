@@ -4,6 +4,8 @@
 #include <Renderer/Common.hpp>
 #include <Core/Context/Extensions.hpp>
 #include <Renderer/VertexBuffer/VBO.hpp>
+#include <type_traits>
+#include "VAODef.hpp"
 
 TRE_NS_START
 
@@ -13,8 +15,12 @@ public:
 	VAO();
 	~VAO();
 
+	DECLARE_BIND_FUNCS
+
 	template<typename T>
 	void BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, uint32 stride, intptr offset);
+
+	void BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, ssize_t stride, const void* offset);
 
 	void Bind() const;
 

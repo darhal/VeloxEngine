@@ -186,6 +186,9 @@
     <ClInclude Include="Renderer\Common.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\VertexArray\VAODef.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Main.cpp">
