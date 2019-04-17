@@ -1,22 +1,22 @@
 #include <Core/Window/Window.hpp>
 
-bool TRE::Window::isOpen()
+bool TRE::Window::isOpen() const
 {
 	return open;
 }
 
-bool TRE::Window::hasFocus()
+bool TRE::Window::hasFocus() const
 {
 	return focus;
 }
 
-bool TRE::Window::isMouseButtonDown(MouseButton::mouse_button_t button)
+bool TRE::Window::isMouseButtonDown(MouseButton::mouse_button_t button) const
 {
 	if (button >= sizeof(mouse) / sizeof(bool)) return false;
 	return mouse[button];
 }
 
-bool TRE::Window::isKeyDown(Key::key_t key)
+bool TRE::Window::isKeyDown(Key::key_t key) const 
 {
 	if (key >= sizeof(keys) / sizeof(bool)) return false;
 	return keys[key];

@@ -19,7 +19,7 @@ public:
 
 	~Context();
 
-private:
+public:
 	friend class Window;
 
 	Context();

@@ -189,6 +189,9 @@
     <ClInclude Include="Core\Misc\Utils\libpng\pngconf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\GlobalState\GLState.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Main.cpp">
@@ -450,6 +453,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Core\Misc\Utils\libpng\pngwutil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\GlobalState\GLState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

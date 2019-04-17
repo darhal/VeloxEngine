@@ -207,7 +207,7 @@ class Texture
 public:
 public:
 	Texture(
-		const char* path, TexTarget::tex_target_t target, 
+		const char* path, TexTarget::tex_target_t target,
 		std::initializer_list<TexParamConfig> paramList = {},
 		DataType::data_type_t datatype = DataType::UBYTE,
 		TexInternalFormat::tex_internal_format_t internalFormat = TexInternalFormat::RGBA,
@@ -221,7 +221,7 @@ public:
 	Texture();
 
 	~Texture();
-	
+
 	void SetTextureTarget(TexTarget::tex_target_t target);
 	void LoadImg(const Image& img,
 		DataType::data_type_t datatype = DataType::UBYTE,
@@ -239,12 +239,17 @@ public:
 
 	void GenerateMipmaps();
 
-	void Bind() const;
+	FORCEINLINE operator uint32() const { return m_ID; }
+	FORCEINLINE const uint32 GetID() const { return m_ID; }
+	FORCEINLINE const TargetType::target_type_t GetBindingTarget() const {  return (TargetType::target_type_t)m_target;	}
 
-	FORCEINLINE operator uint32() const {return m_texID;}
-	FORCEINLINE const uint32 GetID() const { return m_texID; }
+	void Bind() const;
+	void Use() const;
+
+	void Unbind() const;
+	void Unuse() const;
 private:
-	uint32 m_texID;
+	uint32 m_ID;
 	TexTarget::tex_target_t m_target;
 };
 

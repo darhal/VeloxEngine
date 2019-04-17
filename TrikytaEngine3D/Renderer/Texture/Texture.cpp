@@ -3,6 +3,7 @@
 #include <Core/Misc/Utils/Image.hpp>
 #include <Core/Misc/Utils/Logging.hpp>
 #include <Core/Misc/Utils/Color.hpp>
+#include <Renderer/GlobalState/GLState.hpp>
 
 TRE_NS_START
 
@@ -14,8 +15,8 @@ Texture::Texture
 	TexFormat::tex_format_t format
 ) : m_target(target)
 {
-	glGenTextures(1, &m_texID);
-	glBindTexture(target, m_texID);
+	glGenTextures(1, &m_ID);
+	this->Use(); //glBindTexture(target, m_ID);
 	// set the texture parameters
 	for (const TexParamConfig& p : paramList) {
 		glTexParameteri(target, p.param, p.val);
@@ -35,8 +36,8 @@ Texture::Texture
 
 Texture::Texture(const char* path, const TextureSettings& settings) : m_target(settings.target)
 {
-	glGenTextures(1, &m_texID);
-	glBindTexture(settings.target, m_texID);
+	glGenTextures(1, &m_ID);
+	this->Use(); //glBindTexture(settings.target, m_ID);
 	// set the texture parameters
 	for (const TexParamConfig& p : settings.paramList) {
 		glTexParameteri(settings.target, p.param, p.val);
@@ -57,8 +58,8 @@ Texture::Texture(const char* path, const TextureSettings& settings) : m_target(s
 
 Texture::Texture(const TextureSettings& settings) : m_target(settings.target)
 {
-	glGenTextures(1, &m_texID);
-	glBindTexture(settings.target, m_texID);
+	glGenTextures(1, &m_ID);
+	this->Use(); //glBindTexture(settings.target, m_ID);
 	// set the texture parameters
 	for (const TexParamConfig& p : settings.paramList) {
 		glTexParameteri(settings.target, p.param, p.val);
@@ -69,19 +70,19 @@ Texture::Texture(const TextureSettings& settings) : m_target(settings.target)
 
 Texture::Texture() : m_target(TexTarget::TEX2D)
 {
-	glGenTextures(1, &m_texID);
+	glGenTextures(1, &m_ID);
 }
 
 void Texture::SetTextureTarget(TexTarget::tex_target_t target)
 {
 	m_target = target;
-	glBindTexture(target, m_texID);
+	this->Use(); //glBindTexture(target, m_ID);
 }
 
 void Texture::LoadImg(const Image& img, DataType::data_type_t datatype, TexInternalFormat::tex_internal_format_t internalFormat, TexFormat::tex_format_t format)
 {
 	// load image, create texture
-	glBindTexture(m_target, m_texID);
+	this->Use(); //glBindTexture(target, m_ID);
 	int width, height;
 	width = img.GetWidth(); height = img.GetHeight();
 	unsigned char* data = img.GetBytes();
@@ -94,13 +95,13 @@ void Texture::LoadImg(const Image& img, DataType::data_type_t datatype, TexInter
 
 void Texture::EmptyTexture(uint32 width, uint32 height, DataType::data_type_t datatype, TexInternalFormat::tex_internal_format_t internalFormat, TexFormat::tex_format_t format)
 {
-	glBindTexture(m_target, m_texID);
+	this->Use(); //glBindTexture(target, m_ID);
 	glTexImage2D(m_target, 0, internalFormat, width, height, 0, format, datatype, NULL);
 }
 
 void Texture::SetWrapping(TexParam::tex_param_t p, TexWrapping::tex_wrapping_t s)
 {
-	glBindTexture(m_target, m_texID);
+	this->Use(); //glBindTexture(target, m_ID);glBindTexture(m_target, m_ID);
 	glTexParameteri(m_target, p, s);
 }
 
@@ -111,25 +112,40 @@ void Texture::SetFilters(TexParam::tex_param_t p, TexFilter::tex_filter_t filter
 
 void Texture::SetBorderColor(const Color& color)
 {
-	glBindTexture(m_target, m_texID);
+	this->Use(); //glBindTexture(target, m_ID);
 	float col[4] = { color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f };
 	glTexParameterfv(m_target, GL_TEXTURE_BORDER_COLOR, col);
 }
 
 void Texture::GenerateMipmaps()
 {
-	glBindTexture(m_target, m_texID);
+	this->Use(); //glBindTexture(target, m_ID);
 	glGenerateMipmap(m_target);
 }
 
 void Texture::Bind() const
 {
-	glBindTexture(m_target, m_texID);
+	glBindTexture(m_target, m_ID);
+}
+
+void Texture::Use() const
+{
+	GLState::Bind(this);
+}
+
+void Texture::Unbind() const
+{
+	glBindTexture(m_target, 0);
+}
+
+void Texture::Unuse() const
+{
+	GLState::Unbind(this);
 }
 
 Texture::~Texture()
 {
-	glDeleteTextures(1, &m_texID);
+	glDeleteTextures(1, &m_ID);
 }
 
 TRE_NS_END

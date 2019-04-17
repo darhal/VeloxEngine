@@ -4,6 +4,7 @@
 #include <Core/Context/GLDefines.hpp>
 #include <Core/Context/Extensions.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
+#include <Renderer/Common.hpp>
 
 TRE_NS_START
 
@@ -59,12 +60,17 @@ public:
 
 	void GetSubData(void* data, ssize_t offset, ssize_t length);
 
-	void Bind() const;
-
 	~VBO();
 	FORCEINLINE const int32 GetID() const;
 	FORCEINLINE operator uint32() const;
 	FORCEINLINE const int32 GetTarget() const;
+	FORCEINLINE const TargetType::target_type_t GetBindingTarget() const { return (TargetType::target_type_t)m_target; }
+
+	void Bind() const;
+	void Use() const;
+
+	void Unbind() const;
+	void Unuse() const;
 private:
 	uint32 m_ID;
 	BufferTarget::buffer_target_t m_target;

@@ -42,21 +42,21 @@ public:
 	void setWindowPosition(int x, int y);
 	void setWindowSize(uint32 width, uint32 height);
 
-	bool isOpen();
-	bool hasFocus();
+	bool isOpen() const;
+	bool hasFocus() const;
 
 	void setWindowTitle(const std::string& title);
 	void setVisible(bool visible);
 	void Close();
 	bool getEvent(Event& ev);
-	bool isMouseButtonDown(MouseButton::mouse_button_t button);
-	bool isKeyDown(Key::key_t key);
+	bool isMouseButtonDown(MouseButton::mouse_button_t button) const;
+	bool isKeyDown(Key::key_t key) const;
 
 	Context& getContext();
 	Context& initContext(uint8 vmajor, uint8 vminor, uint8 color = 32, uint8 depth = 24, uint8 stencil = 8, uint8 antialias = 1);
 
 	void Present();
-private:
+public:
 	Vec2<uint32> windowSize;
 	Vec2<int32> windowPosition;
 	Vec2<int32> mousePosition;

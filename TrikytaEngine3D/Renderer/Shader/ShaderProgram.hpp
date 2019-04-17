@@ -5,6 +5,7 @@
 #include <Core/Misc/Defines/DataStructure.hpp>
 #include <Core/Context/GLDefines.hpp>
 #include <initializer_list>
+#include <Renderer/Common.hpp>
 
 TRE_NS_START
 
@@ -36,14 +37,11 @@ class Shader;
 class ShaderProgram
 {
 public:
-	uint32 ID;
+	uint32 m_ID;
 public:
 	ShaderProgram(uint32 vertex, uint32 fragment);
 	ShaderProgram(uint32 vertex, uint32 fragment, uint32 geometry);
 	ShaderProgram(std::initializer_list<Shader> shaderList);
-
-	// activate the shader
-	void Use();
 
 	// utility uniform functions
 	void SetBool(const char* name, bool value) const;
@@ -59,6 +57,14 @@ public:
 	void SetMat3(const char* name, const Matrix<float, normal, 3, 3>& mat) const;
 	void SetMat4(const char* name, const Matrix<float, SIMD, 4, 4>& mat) const;
 
+	FORCEINLINE const TargetType::target_type_t GetBindingTarget() const { return TargetType::target_type_t::SHADER; }
+	FORCEINLINE const uint32 GetID() const { return m_ID; }
+	void Use() const;
+	void Unuse() const;
+
+	// activate the shader
+	void Bind() const;
+	void Unbind() const;
 private:
 	// utility function for checking shader compilation/linking errors.
 	static void CheckCompileErrors(uint32 shader, const char* type);

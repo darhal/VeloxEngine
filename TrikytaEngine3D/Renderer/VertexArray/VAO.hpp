@@ -22,10 +22,15 @@ public:
 
 	void BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, ssize_t stride, const void* offset);
 
-	void Bind() const;
-
 	FORCEINLINE const int32 GetID() const { return m_ID; }
 	FORCEINLINE operator uint32() const { return m_ID; }
+	FORCEINLINE const TargetType::target_type_t GetBindingTarget() const { return TargetType::VAO; }
+
+	void Bind() const;
+	void Use() const;
+
+	void Unbind() const;
+	void Unuse() const;
 private:
 	uint32 m_ID;
 };
