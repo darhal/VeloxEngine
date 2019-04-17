@@ -135,4 +135,9 @@ FORCEINLINE static void DrawElements(Primitive::primitive_t mode, DataType::data
 	glDrawElements(mode, count, type, (const void*)offset);
 }
 
+FORCEINLINE static void ActivateTexture(uint8 i)
+{
+	glActiveTexture(GL_TEXTURE0 + i);
+}
+
 TRE_NS_END

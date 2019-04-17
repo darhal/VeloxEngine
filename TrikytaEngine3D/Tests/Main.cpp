@@ -144,7 +144,7 @@ int main()
 		ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
 		Clear();
 
-		glActiveTexture(GL_TEXTURE0);
+		ActivateTexture(0);
 		texture1.Use();
 		ourShader.Use(); // activate shader
 		float radius = 10.0f;
