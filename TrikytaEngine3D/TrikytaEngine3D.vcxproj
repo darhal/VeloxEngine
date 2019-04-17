@@ -187,6 +187,7 @@
     <ClInclude Include="Core\Misc\Utils\zlib\zutil.h" />
     <ClInclude Include="Core\Window\Window.hpp" />
     <ClInclude Include="Renderer\Common.hpp" />
+    <ClInclude Include="Renderer\General\GLContext.hpp" />
     <ClInclude Include="Renderer\GlobalState\GLState.hpp" />
     <ClInclude Include="Renderer\Shader\Shader.hpp" />
     <ClInclude Include="Renderer\Shader\ShaderProgram.hpp" />

@@ -17,8 +17,9 @@ inline static void PrintDate()
 	printf("%s", buffer);
 }
 
-#if defined(NDEBUG)
-	#define DEBUG_ASSERT
+#if not defined(_DEBUG) || defined(NDEBUG)
+	#define ASSERTF ;
+	#define ASSERT ;
 #else
 	#include <string.h>
 
@@ -38,8 +39,8 @@ inline static void PrintDate()
 	#if defined(assert)
 		#undef assert
 	#endif
-	#if defined(_ASSERT)
-		#undef _ASSERT
+	#if defined(ASSERT)
+		#undef ASSERT
 	#endif
 
 	#define ASSERTF(condition, ...) \
@@ -53,7 +54,7 @@ inline static void PrintDate()
 			DEBUG_BREAK(); \
 		}\
 
-	#define _ASSERT(condition) \
+	#define ASSERT(condition) \
 		if (!(bool)(condition)){ \
 			PrintDate(); \
 			fprintf(stderr, "[TrikytaEngine]"); \
@@ -64,6 +65,6 @@ inline static void PrintDate()
 		}\
 
 	#define assert ASSERT
-	#define _assert _ASSERT
+	#define _assert ASSERT
 
 #endif

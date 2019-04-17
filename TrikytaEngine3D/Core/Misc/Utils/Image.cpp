@@ -258,7 +258,7 @@ void Image::LoadTGA(ByteReader& data)
 	ASSERTF(!(depth != 24 && depth != 32), "Image file format not supported!"); // Not RGB(A)
 	uint8 bytesPerPixel = depth / 8;
 	uint8 descriptor = data.ReadUbyte();
-	ASSERTF(!((depth == 24 && descriptor != 0) || (depth == 32 && descriptor != 8)), "Image file format not supported!") // Check for alpha channel if bit depth is 32
+	ASSERTF(!((depth == 24 && descriptor != 0) || (depth == 32 && descriptor != 8)), "Image file format not supported!"); // Check for alpha channel if bit depth is 32
 	// If pixels are RLE encoded, they need to be unpacked first
 	if (type == 10)
 		DecodeRLE(data, width * height * bytesPerPixel, bytesPerPixel);
@@ -475,7 +475,7 @@ void Image::LoadJPEG(ByteReader& data)
 void Image::SaveJPEG(const String& filename)
 {
 	FILE* file = fopen(filename.c_str(), "wb");
-	ASSERTF(file, "File could not be opened!")
+	ASSERTF(file, "File could not be opened!");
 
 	// Initialize structures
 	jpeg_compress_struct cinfo;

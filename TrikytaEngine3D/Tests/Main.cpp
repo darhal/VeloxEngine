@@ -12,6 +12,7 @@
 #include <thread>
 #include <future>
 #include <Core/Context/Context.hpp>
+#include <Renderer/General/GLContext.hpp>
 
 using namespace TRE;
 
@@ -125,9 +126,9 @@ int main()
 	// -----------
 	
 	glEnable(GL_MULTISAMPLE);
-	wglMakeCurrent(GetDC(window.window), NULL);
-	std::thread t = std::thread(Render, &window, texture1, ourShader, vao);
-	t.detach();
+	//wglMakeCurrent(GetDC(window.window), NULL);
+	//std::thread t = std::thread(Render, &window, texture1, ourShader, vao);
+	//t.detach();
 	float timer = 0.f;
 	while (window.isOpen())
 	{
@@ -139,20 +140,17 @@ int main()
 
 		// render
 		// ------
-		/*printf("\rTIME = %f", timer);
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		printf("\rTIME = %f", timer);
+		ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
+		Clear();
 
 		glActiveTexture(GL_TEXTURE0);
 		texture1.Use();
-		// activate shader
-		ourShader.Use();
-		// camera/view transformation
-		mat4 view; // make sure to initialize matrix to identity matrix first
+		ourShader.Use(); // activate shader
 		float radius = 10.0f;
 		float camX = sin(timer) * radius;
 		float camZ = cos(timer) * radius;
-		view = mat4::look_at(vec3(camX, 0.0f, camZ), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+		mat4 view = mat4::look_at(vec3(camX, 0.0f, camZ), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 		ourShader.SetMat4("view", view);
 
 		// render boxes
@@ -166,10 +164,11 @@ int main()
 			model.rotate(vec3(1.0f, 0.3f, 0.5f), rad(angle));
 			ourShader.SetMat4("model", model);
 
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+			DrawArrays(Primitive::TRIANGLES, 0, 36);
 		}
+
 		timer += 0.0005f;
-		window.Present();*/
+		window.Present();
 	}
 
 	window.Present();
