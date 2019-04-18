@@ -201,6 +201,9 @@
     <ClInclude Include="Renderer\RenderBuffer\RBO.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Tests\Camera.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Main.cpp">

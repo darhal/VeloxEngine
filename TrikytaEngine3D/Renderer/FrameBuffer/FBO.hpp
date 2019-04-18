@@ -41,7 +41,7 @@ namespace FBOTexTarget
 class FBO
 {
 public:
-	FBO(FBOTarget::framebuffer_target_t t);
+	FBO(FBOTarget::framebuffer_target_t t = FBOTarget::FBO);
 	~FBO();
 
 	void AttachTexture(const Texture& tex, uint8 color_attachement_id = 0, uint8 mipmap_level = 0);

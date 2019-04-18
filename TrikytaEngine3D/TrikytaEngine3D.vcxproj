@@ -197,6 +197,7 @@
     <ClInclude Include="Renderer\VertexArray\VAO.hpp" />
     <ClInclude Include="Renderer\VertexArray\VAODef.hpp" />
     <ClInclude Include="Renderer\VertexBuffer\VBO.hpp" />
+    <ClInclude Include="Tests\Camera.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Context\Context.cpp" />

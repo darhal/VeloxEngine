@@ -40,7 +40,7 @@ void RBO::AttachToFBO(const FBO& fbo, FBOAttachement::framebuffer_attachement_t 
 
 void RBO::Bind() const
 {
-	glBindFramebuffer(GetTarget(), m_ID);
+	glBindRenderbuffer(GetTarget(), m_ID);
 }
 
 void RBO::Use() const
@@ -50,7 +50,7 @@ void RBO::Use() const
 
 void RBO::Unbind() const
 {
-	glBindFramebuffer(GetTarget(), 0);
+	glBindRenderbuffer(GetTarget(), 0);
 }
 
 void RBO::Unuse() const
