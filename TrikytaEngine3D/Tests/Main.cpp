@@ -3,6 +3,10 @@
 #include <Renderer/VertexArray/VAO.hpp>
 #include <Renderer/VertexBuffer/VBO.hpp>
 #include <Renderer/Texture/Texture.hpp>
+#include <Renderer/General/GLContext.hpp>
+#include <Renderer/RenderBuffer/RBO.hpp>
+#include <Renderer/Framebuffer/FBO.hpp>
+
 #include <Core/Context/Extensions.hpp>
 #include <Core/Window/Window.hpp>
 #include <iostream>
@@ -12,7 +16,6 @@
 #include <thread>
 #include <future>
 #include <Core/Context/Context.hpp>
-#include <Renderer/General/GLContext.hpp>
 
 using namespace TRE;
 
@@ -115,13 +118,8 @@ int main()
 	ourShader.Use();
 	ourShader.SetInt("texture", 0);
 
-	// pass projection matrix to shader (as projection matrix rarely changes there's no need to do this per frame)
-	// -----------------------------------------------------------------------------------------------------------
 	mat4 projection = mat4::perspective(rad(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 	ourShader.SetMat4("projection", projection);
-
-	// render loop
-	// -----------
 	
 	Enable(GL_MULTISAMPLE);
 	//wglMakeCurrent(GetDC(window.window), NULL);
@@ -160,7 +158,8 @@ int main()
 			model.translate(cubePositions[i]);
 			float angle = 20.0f * i;
 			model.rotate(vec3(1.0f, 0.3f, 0.5f), rad(angle));
-			ourShader.SetMat4("model", model);
+			mat4 MVP = projection * view * model;
+			ourShader.SetMat4("MVP", MVP);
 			DrawArrays(Primitive::TRIANGLES, 0, 36);
 		}
 

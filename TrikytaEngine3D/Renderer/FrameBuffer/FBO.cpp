@@ -2,6 +2,7 @@
 #include <Core/Context/Extensions.hpp>
 #include <Renderer/GlobalState/GLState.hpp>
 #include <Renderer/Texture/Texture.hpp>
+#include <Core/Misc/Utils/Logging.hpp>
 
 TRE_NS_START
 
@@ -13,6 +14,14 @@ FBO::FBO(FBOTarget::framebuffer_target_t t) : m_target(t)
 FBO::~FBO()
 {
 	glDeleteFramebuffers(1, &m_ID);
+}
+
+bool FBO::IsComplete() const
+{
+	this->Use();
+	if (glCheckFramebufferStatus(m_target) == GL_FRAMEBUFFER_COMPLETE) return true;
+	Log(LogType::ERR, "FRAMEBUFFER : Framebuffer is not complete! (ID = %d)", m_ID);
+	return false;
 }
 
 void FBO::AttachTexture(const Texture& tex, uint8 color_attachement_id, uint8 mipmap_level)

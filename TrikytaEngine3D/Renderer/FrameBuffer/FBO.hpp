@@ -20,7 +20,7 @@ namespace FBOAttachement
 	enum framebuffer_attachement_t {
 		DEPTH_ATTACH = GL_DEPTH_ATTACHMENT,
 		STENCIL_ATTACH = GL_STENCIL_ATTACHMENT,
-		DEPTH_ATTACH = GL_DEPTH_STENCIL_ATTACHMENT,
+		DEPTH_STENCIL_ATTACHMENT = GL_DEPTH_STENCIL_ATTACHMENT,
 		COLOR_ATTACH = GL_COLOR_ATTACHMENT0
 	};
 }
@@ -49,6 +49,7 @@ public:
 	void AttachTexture(const Texture& tex, FBOTexTarget::framebuffer_tex_target_t target, uint8 color_attachement_id = 0, uint8 mipmap_level = 0);
 	void AttachTexture(const Texture& tex, FBOTexTarget::framebuffer_tex_target_t target, FBOAttachement::framebuffer_attachement_t attachement, uint8 mipmap_level = 0);
 
+	bool IsComplete() const;
 
 	FORCEINLINE const int32 GetID() const;
 	FORCEINLINE operator uint32() const;
