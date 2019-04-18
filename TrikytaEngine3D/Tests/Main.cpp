@@ -89,8 +89,6 @@ int main()
 	Event ev;
 	printf("%s\n", glGetString(GL_VERSION));
 
-	// configure global opengl state
-	// -----------------------------
 	glEnable(GL_DEPTH_TEST);
 
 	// build and compile our shader zprogram
@@ -98,7 +96,7 @@ int main()
 	ShaderProgram ourShader({
 		Shader("Shader/cam.vs", ShaderType::VERTEX),
 		Shader("Shader/cam.fs", ShaderType::FRAGMENT)
-		});
+	});
 	VAO vao; //glGenVertexArrays(1, &VAO);
 	vao.Use(); //glBindVertexArray(VAO);
 	VBO vbo(BufferTarget::ARRAY_BUFFER); // glGenBuffers(1, &VBO);
@@ -125,7 +123,7 @@ int main()
 	// render loop
 	// -----------
 	
-	glEnable(GL_MULTISAMPLE);
+	Enable(GL_MULTISAMPLE);
 	//wglMakeCurrent(GetDC(window.window), NULL);
 	//std::thread t = std::thread(Render, &window, texture1, ourShader, vao);
 	//t.detach();
@@ -163,7 +161,6 @@ int main()
 			float angle = 20.0f * i;
 			model.rotate(vec3(1.0f, 0.3f, 0.5f), rad(angle));
 			ourShader.SetMat4("model", model);
-
 			DrawArrays(Primitive::TRIANGLES, 0, 36);
 		}
 

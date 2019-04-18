@@ -187,8 +187,10 @@
     <ClInclude Include="Core\Misc\Utils\zlib\zutil.h" />
     <ClInclude Include="Core\Window\Window.hpp" />
     <ClInclude Include="Renderer\Common.hpp" />
+    <ClInclude Include="Renderer\FrameBuffer\FBO.hpp" />
     <ClInclude Include="Renderer\General\GLContext.hpp" />
     <ClInclude Include="Renderer\GlobalState\GLState.hpp" />
+    <ClInclude Include="Renderer\RenderBuffer\RBO.hpp" />
     <ClInclude Include="Renderer\Shader\Shader.hpp" />
     <ClInclude Include="Renderer\Shader\ShaderProgram.hpp" />
     <ClInclude Include="Renderer\Texture\Texture.hpp" />
@@ -278,7 +280,9 @@
     <ClCompile Include="Core\Window\Window.cpp" />
     <ClCompile Include="Core\Window\Window_Win32.cpp" />
     <ClCompile Include="Core\Window\Window_X11.cpp" />
+    <ClCompile Include="Renderer\FrameBuffer\FBO.cpp" />
     <ClCompile Include="Renderer\GlobalState\GLState.cpp" />
+    <ClCompile Include="Renderer\RenderBuffer\RBO.cpp" />
     <ClCompile Include="Renderer\Shader\Shader.cpp" />
     <ClCompile Include="Renderer\Shader\ShaderProgram.cpp" />
     <ClCompile Include="Renderer\Texture\Texture.cpp" />

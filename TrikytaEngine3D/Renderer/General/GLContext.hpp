@@ -79,6 +79,11 @@ FORCEINLINE static void Enable(Capability::capability_t capability)
 	glEnable(capability);
 }
 
+FORCEINLINE static void Enable(int32 capability)
+{
+	glEnable(capability);
+}
+
 FORCEINLINE static void Disable(Capability::capability_t capability)
 {
 	glDisable(capability);

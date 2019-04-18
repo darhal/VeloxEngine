@@ -26,6 +26,8 @@ public:
 	FORCEINLINE operator uint32() const { return m_ID; }
 	FORCEINLINE const TargetType::target_type_t GetBindingTarget() const { return TargetType::VAO; }
 
+	void SetVertextAttribDivisor(uint32 attrib, uint32 div);
+
 	void Bind() const;
 	void Use() const;
 

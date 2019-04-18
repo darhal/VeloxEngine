@@ -67,6 +67,31 @@ namespace TargetType
 		TEX_CUBE_MAP = GL_TEXTURE_CUBE_MAP_ARRAY,
 		TEX_BUFFER = GL_TEXTURE_BUFFER,
 		TEX2D_MULTISAMPLE = GL_TEXTURE_2D_MULTISAMPLE,
-		TEX2D_MULTISAMPLE_ARRAY = GL_TEXTURE_2D_MULTISAMPLE_ARRAY
+		TEX2D_MULTISAMPLE_ARRAY = GL_TEXTURE_2D_MULTISAMPLE_ARRAY,
+
+		// Framebuffers:
+
+		FBO_DRAW = GL_DRAW_FRAMEBUFFER,
+		FBO_READ = GL_READ_FRAMEBUFFER,
+		FBO = GL_FRAMEBUFFER
+
 	};
 }
+
+TRE_NS_START
+
+class VAO;
+class VBO;
+class FBO;
+class RBO;
+class Texture;
+class Shader;
+class ShaderProgram;
+
+typedef VAO VertexArray;
+typedef VBO VertexBuffer;
+typedef FBO FrameBuffer;
+typedef RBO RenderBuffer;
+typedef Texture Tex;
+
+TRE_NS_END

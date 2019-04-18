@@ -43,5 +43,9 @@ void VAO::Unuse() const
 	GLState::Unbind(this);
 }
 
+void VAO::SetVertextAttribDivisor(uint32 attrib, uint32 div)
+{
+	glVertexAttribDivisor(attrib, div);
+}
 
 TRE_NS_END
