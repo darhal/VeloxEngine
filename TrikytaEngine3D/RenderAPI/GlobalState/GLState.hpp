@@ -1,7 +1,7 @@
 #pragma once
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Utils/Common.hpp>
-#include <Renderer/Common.hpp>
+#include <RenderAPI/Common.hpp>
 
 TRE_NS_START
 

@@ -1,6 +1,6 @@
 #include "RBO.hpp"
 #include <Core/Context/Extensions.hpp>
-#include <Renderer/GlobalState/GLState.hpp>
+#include <RenderAPI/GlobalState/GLState.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 
 TRE_NS_START

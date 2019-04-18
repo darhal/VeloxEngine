@@ -186,17 +186,18 @@
     <ClInclude Include="Core\Misc\Utils\zlib\zlib.h" />
     <ClInclude Include="Core\Misc\Utils\zlib\zutil.h" />
     <ClInclude Include="Core\Window\Window.hpp" />
-    <ClInclude Include="Renderer\Common.hpp" />
-    <ClInclude Include="Renderer\FrameBuffer\FBO.hpp" />
-    <ClInclude Include="Renderer\General\GLContext.hpp" />
-    <ClInclude Include="Renderer\GlobalState\GLState.hpp" />
-    <ClInclude Include="Renderer\RenderBuffer\RBO.hpp" />
-    <ClInclude Include="Renderer\Shader\Shader.hpp" />
-    <ClInclude Include="Renderer\Shader\ShaderProgram.hpp" />
-    <ClInclude Include="Renderer\Texture\Texture.hpp" />
-    <ClInclude Include="Renderer\VertexArray\VAO.hpp" />
-    <ClInclude Include="Renderer\VertexArray\VAODef.hpp" />
-    <ClInclude Include="Renderer\VertexBuffer\VBO.hpp" />
+    <ClInclude Include="RenderAPI\Common.hpp" />
+    <ClInclude Include="RenderAPI\FrameBuffer\FBO.hpp" />
+    <ClInclude Include="RenderAPI\General\GLContext.hpp" />
+    <ClInclude Include="RenderAPI\GlobalState\GLState.hpp" />
+    <ClInclude Include="RenderAPI\RenderBuffer\RBO.hpp" />
+    <ClInclude Include="RenderAPI\Shader\Shader.hpp" />
+    <ClInclude Include="RenderAPI\Shader\ShaderProgram.hpp" />
+    <ClInclude Include="RenderAPI\Texture\Texture.hpp" />
+    <ClInclude Include="RenderAPI\VertexArray\VAO.hpp" />
+    <ClInclude Include="RenderAPI\VertexArray\VAODef.hpp" />
+    <ClInclude Include="RenderAPI\VertexBuffer\VBO.hpp" />
+    <ClInclude Include="RenderUtils\MeshLoader.hpp" />
     <ClInclude Include="Tests\Camera.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -281,14 +282,15 @@
     <ClCompile Include="Core\Window\Window.cpp" />
     <ClCompile Include="Core\Window\Window_Win32.cpp" />
     <ClCompile Include="Core\Window\Window_X11.cpp" />
-    <ClCompile Include="Renderer\FrameBuffer\FBO.cpp" />
-    <ClCompile Include="Renderer\GlobalState\GLState.cpp" />
-    <ClCompile Include="Renderer\RenderBuffer\RBO.cpp" />
-    <ClCompile Include="Renderer\Shader\Shader.cpp" />
-    <ClCompile Include="Renderer\Shader\ShaderProgram.cpp" />
-    <ClCompile Include="Renderer\Texture\Texture.cpp" />
-    <ClCompile Include="Renderer\VertexArray\VAO.cpp" />
-    <ClCompile Include="Renderer\VertexBuffer\VBO.cpp" />
+    <ClCompile Include="RenderAPI\FrameBuffer\FBO.cpp" />
+    <ClCompile Include="RenderAPI\GlobalState\GLState.cpp" />
+    <ClCompile Include="RenderAPI\RenderBuffer\RBO.cpp" />
+    <ClCompile Include="RenderAPI\Shader\Shader.cpp" />
+    <ClCompile Include="RenderAPI\Shader\ShaderProgram.cpp" />
+    <ClCompile Include="RenderAPI\Texture\Texture.cpp" />
+    <ClCompile Include="RenderAPI\VertexArray\VAO.cpp" />
+    <ClCompile Include="RenderAPI\VertexBuffer\VBO.cpp" />
+    <ClCompile Include="RenderUtils\MeshLoader.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -299,6 +301,8 @@
     <None Include="Core\Misc\Maths\Vec4i_simd.inl" />
     <None Include="Shader\cam.fs" />
     <None Include="Shader\cam.vs" />
+    <None Include="Shader\screen.fs" />
+    <None Include="Shader\screen.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

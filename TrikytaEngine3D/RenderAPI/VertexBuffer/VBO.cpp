@@ -2,7 +2,7 @@
 #include <Core/Misc/Utils/Common.hpp>
 #include <Core/Context/Extensions.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
-#include <Renderer/GlobalState/GLState.hpp>
+#include <RenderAPI/GlobalState/GLState.hpp>
 
 TRE_NS_START
 

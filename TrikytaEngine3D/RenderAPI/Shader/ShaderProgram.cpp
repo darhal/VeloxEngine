@@ -3,7 +3,7 @@
 #include <Core/Misc/Maths/Maths.hpp>
 #include <Core/Misc/Utils/Logging.hpp>
 #include <Core/Context/Extensions.hpp>
-#include <Renderer/GlobalState/GLState.hpp>
+#include <RenderAPI/GlobalState/GLState.hpp>
 
 TRE_NS_START
 

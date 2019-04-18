@@ -2,7 +2,7 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Context/GLDefines.hpp>
-#include <Renderer/Common.hpp>
+#include <RenderAPI/Common.hpp>
 #include <initializer_list>
 
 TRE_NS_START

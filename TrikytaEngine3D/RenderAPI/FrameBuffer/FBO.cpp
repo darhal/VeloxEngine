@@ -1,7 +1,7 @@
 #include "FBO.hpp"
 #include <Core/Context/Extensions.hpp>
-#include <Renderer/GlobalState/GLState.hpp>
-#include <Renderer/Texture/Texture.hpp>
+#include <RenderAPI///GlobalState/GLState.hpp>
+#include <RenderAPI///Texture/Texture.hpp>
 #include <Core/Misc/Utils/Logging.hpp>
 
 TRE_NS_START

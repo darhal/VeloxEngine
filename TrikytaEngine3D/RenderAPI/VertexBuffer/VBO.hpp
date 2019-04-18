@@ -4,7 +4,7 @@
 #include <Core/Context/GLDefines.hpp>
 #include <Core/Context/Extensions.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
-#include <Renderer/Common.hpp>
+#include <RenderAPI/Common.hpp>
 
 TRE_NS_START
 

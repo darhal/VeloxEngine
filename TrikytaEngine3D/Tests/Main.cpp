@@ -1,11 +1,11 @@
-#include <Renderer/Shader/ShaderProgram.hpp>
-#include <Renderer/Shader/Shader.hpp>
-#include <Renderer/VertexArray/VAO.hpp>
-#include <Renderer/VertexBuffer/VBO.hpp>
-#include <Renderer/Texture/Texture.hpp>
-#include <Renderer/General/GLContext.hpp>
-#include <Renderer/RenderBuffer/RBO.hpp>
-#include <Renderer/Framebuffer/FBO.hpp>
+#include <RenderAPI/Shader/ShaderProgram.hpp>
+#include <RenderAPI/Shader/Shader.hpp>
+#include <RenderAPI/VertexArray/VAO.hpp>
+#include <RenderAPI/VertexBuffer/VBO.hpp>
+#include <RenderAPI/Texture/Texture.hpp>
+#include <RenderAPI/General/GLContext.hpp>
+#include <RenderAPI/RenderBuffer/RBO.hpp>
+#include <RenderAPI/Framebuffer/FBO.hpp>
 
 #include <Core/Context/Extensions.hpp>
 #include <Core/Window/Window.hpp>
@@ -17,6 +17,8 @@
 #include <future>
 #include <Core/Context/Context.hpp>
 #include "Camera.hpp"
+
+#include <RenderUtils/MeshLoader.hpp>
 
 using namespace TRE;
 
@@ -102,18 +104,20 @@ int main()
 	Event ev;
 	printf("%s\n", glGetString(GL_VERSION));
 
+	MeshLoader gun("res/obj/test.obj");
+
 	glEnable(GL_DEPTH_TEST);
 
 	// build and compile our shader zprogram
 	// ------------------------------------
 	ShaderProgram ourShader({
-		Shader("Shader/cam.vs", ShaderType::VERTEX),
-		Shader("Shader/cam.fs", ShaderType::FRAGMENT)
+		Shader("res/Shader/cam.vs", ShaderType::VERTEX),
+		Shader("res/Shader/cam.fs", ShaderType::FRAGMENT)
 	});
 
 	ShaderProgram screenShader({
-	Shader("Shader/screen.vs", ShaderType::VERTEX),
-	Shader("Shader/screen.fs", ShaderType::FRAGMENT)
+	Shader("res/Shader/screen.vs", ShaderType::VERTEX),
+	Shader("res/Shader/screen.fs", ShaderType::FRAGMENT)
 		});
 	VAO vao; //glGenVertexArrays(1, &VAO);
 	vao.Use(); //glBindVertexArray(VAO);
@@ -122,7 +126,7 @@ int main()
 	vao.BindAttribute<DataType::FLOAT>(0, vbo, 3, 5, 0); // glEnableVertexAttribArray(0); && glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	vao.BindAttribute<DataType::FLOAT>(1, vbo, 2, 5, 3); //glEnableVertexAttribArray(1);  && glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)))
 	
-	Texture texture1 = Texture("img/box1.jpg", TexTarget::TEX2D, {
+	Texture texture1 = Texture("res/img/box1.jpg", TexTarget::TEX2D, {
 		{TexParam::TEX_WRAP_S , TexWrapping::REPEAT},
 		{TexParam::TEX_WRAP_T, TexWrapping::REPEAT},
 		{TexParam::TEX_MIN_FILTER, TexFilter::LINEAR},

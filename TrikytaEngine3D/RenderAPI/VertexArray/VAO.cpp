@@ -1,7 +1,7 @@
 #include "VAO.hpp"
 #include <Core/Context/Extensions.hpp>
-#include <Renderer/VertexBuffer/VBO.hpp>
-#include <Renderer/GlobalState/GLState.hpp>
+#include <RenderAPI/VertexBuffer/VBO.hpp>
+#include <RenderAPI/GlobalState/GLState.hpp>
 
 TRE_NS_START
 

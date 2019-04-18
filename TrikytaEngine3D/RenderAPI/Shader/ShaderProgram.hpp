@@ -5,7 +5,7 @@
 #include <Core/Misc/Defines/DataStructure.hpp>
 #include <Core/Context/GLDefines.hpp>
 #include <initializer_list>
-#include <Renderer/Common.hpp>
+#include <RenderAPI/Common.hpp>
 
 TRE_NS_START
 

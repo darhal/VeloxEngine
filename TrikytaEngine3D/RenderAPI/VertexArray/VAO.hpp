@@ -1,9 +1,9 @@
 #pragma once
 
 #include <Core/Misc/Defines/Common.hpp>
-#include <Renderer/Common.hpp>
+#include <RenderAPI/Common.hpp>
 #include <Core/Context/Extensions.hpp>
-#include <Renderer/VertexBuffer/VBO.hpp>
+#include <RenderAPI/VertexBuffer/VBO.hpp>
 #include <type_traits>
 #include "VAODef.hpp"
 

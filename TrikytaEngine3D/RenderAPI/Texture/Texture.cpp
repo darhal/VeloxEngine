@@ -3,7 +3,7 @@
 #include <Core/Misc/Utils/Image.hpp>
 #include <Core/Misc/Utils/Logging.hpp>
 #include <Core/Misc/Utils/Color.hpp>
-#include <Renderer/GlobalState/GLState.hpp>
+#include <RenderAPI/GlobalState/GLState.hpp>
 
 TRE_NS_START
 

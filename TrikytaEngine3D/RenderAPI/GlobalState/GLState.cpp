@@ -1,8 +1,8 @@
 #include "GLState.hpp"
-#include <Renderer/Shader/ShaderProgram.hpp>
-#include <Renderer/Texture/Texture.hpp>
-#include <Renderer/VertexBuffer/VBO.hpp>
-#include <Renderer/VertexArray/VAO.hpp>
+#include <RenderAPI/Shader/ShaderProgram.hpp>
+#include <RenderAPI/Texture/Texture.hpp>
+#include <RenderAPI/VertexBuffer/VBO.hpp>
+#include <RenderAPI/VertexArray/VAO.hpp>
 
 TRE_NS_START
 
