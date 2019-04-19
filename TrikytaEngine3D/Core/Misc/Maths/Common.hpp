@@ -46,4 +46,22 @@ FORCEINLINE bool isEqual(float x, float y)
 	return fabs(x - y) <= FLT_EPSILON;
 }
 
+template<typename T>
+static T power(T base, int32 pow) {
+	if (pow == 0) { return 1; }
+	if (base == 0) { return 0; }
+	T result = 1;
+	if (pow > 0) {
+		for (int i = 0; i < pow; i++) {
+			result *= base;
+		}
+	}
+	else {
+		for (int i = 0; i < pow; i++) {
+			result /= base;
+		}
+	}
+	return result;
+}
+
 TRE_NS_END

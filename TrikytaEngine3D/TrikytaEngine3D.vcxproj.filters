@@ -482,6 +482,9 @@
     <ClCompile Include="RenderUtils\MeshLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\Main2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Core\Misc\Maths\Vec2.inl">

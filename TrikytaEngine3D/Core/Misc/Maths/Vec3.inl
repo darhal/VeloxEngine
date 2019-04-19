@@ -63,7 +63,7 @@ FORCEINLINE bool operator==(const Vec<3, TYPE, normal>& v1, const Vec<3, TYPE, n
 template<typename TYPE>
 FORCEINLINE bool operator!=(const Vec<3, TYPE, normal>& v1, const Vec<3, TYPE, normal>& v2)
 {
-	return !(v1 == v2) && !(v1.y == v2.y) && !(v1.z == v2.z);
+	return !(v1 == v2) || !(v1.y == v2.y) || !(v1.z == v2.z);
 }
 
 template<>

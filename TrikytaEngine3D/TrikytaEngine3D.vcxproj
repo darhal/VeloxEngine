@@ -292,6 +292,7 @@
     <ClCompile Include="RenderAPI\VertexBuffer\VBO.cpp" />
     <ClCompile Include="RenderUtils\MeshLoader.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
+    <ClCompile Include="Tests\Main2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Core\Misc\Maths\Vec2.inl" />
