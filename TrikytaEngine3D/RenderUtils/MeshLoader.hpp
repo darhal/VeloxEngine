@@ -25,4 +25,6 @@ private:
 	Vector<vec3> m_Faces;
 };
 
+int32 ParseUint64(char* str, uint64* x);
+
 TRE_NS_END

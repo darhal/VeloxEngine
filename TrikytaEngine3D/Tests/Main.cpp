@@ -102,9 +102,18 @@ int main()
 	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "OpenGL Window", WindowStyle::Resize);
 	TRE::Context& gl = window.initContext(3, 2);
 	Event ev;
-	printf("%s\n", glGetString(GL_VERSION));
+	Sleep(100);
+	printf("- GPU Vendor    : %s\n", glGetString(GL_VENDOR));
+	printf("- Graphics      : %s\n", glGetString(GL_RENDERER));
+	printf("- Version       : %s\n", glGetString(GL_VERSION));
+	printf("- GLSL Version  : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	MeshLoader gun("res/obj/lowpoly/Carrot.obj");
+	Sleep(1000);
+	printf("~BEGIN OF OBJ LOADING~\n");
+	//MeshLoader gun("res/obj/lowpoly/Carrot.obj");
+	MeshLoader gun("res/obj/Handgun_obj.obj");
+	Sleep(200);
+	printf("~END OF OBJ LOADING~\n");
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -342,7 +351,6 @@ void Render(Window* window, const Texture& texture1, const ShaderProgram& ourSha
 
 void clip(const Window& win)
 {
-	int a;
 	RECT _clip;
 	HWND _window = win.window;
 
