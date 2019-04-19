@@ -104,7 +104,7 @@ int main()
 	Event ev;
 	printf("%s\n", glGetString(GL_VERSION));
 
-	MeshLoader gun("res/obj/test.obj");
+	MeshLoader gun("res/obj/lowpoly/Carrot.obj");
 
 	glEnable(GL_DEPTH_TEST);
 
