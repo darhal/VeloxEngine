@@ -22,7 +22,7 @@ public:
 
 	void BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, ssize_t stride, const void* offset);
 
-	FORCEINLINE const int32 GetID() const { return m_ID; }
+	FORCEINLINE const uint32 GetID() const { return m_ID; }
 	FORCEINLINE operator uint32() const { return m_ID; }
 	FORCEINLINE const TargetType::target_type_t GetBindingTarget() const { return TargetType::VAO; }
 
@@ -33,8 +33,13 @@ public:
 
 	void Unbind() const;
 	void Unuse() const;
+
+	explicit FORCEINLINE VAO(const VAO& other);
+	FORCEINLINE VAO& operator=(const VAO& other);
 private:
 	uint32 m_ID;
+
+	AUTOCLEAN(VAO);
 };
 
 template<typename T>
@@ -44,6 +49,19 @@ void VAO::BindAttribute(const uint32 attribute, const VBO& buffer, DataType::dat
 	glBindBuffer(buffer.GetTarget(), buffer);
 	glEnableVertexAttribArray(attribute);
 	glVertexAttribPointer(attribute, count, type, GL_FALSE, stride * sizeof(T), (const void*)(offset * sizeof(T)));
+}
+
+FORCEINLINE VAO::VAO(const VAO& other) : m_ID(other.m_ID), m_AutoClean(true)
+{
+	const_cast<VAO&>(other).SetAutoClean(false);
+}
+
+FORCEINLINE VAO& VAO::operator=(const VAO& other)
+{
+	m_ID = other.m_ID;
+	const_cast<VAO&>(other).SetAutoClean(false);
+	this->SetAutoClean(true);
+	return *this;
 }
 
 TRE_NS_END

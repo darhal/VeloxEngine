@@ -6,14 +6,9 @@
 
 TRE_NS_START
 
-FBO::FBO(FBOTarget::framebuffer_target_t t) : m_target(t)
+FBO::FBO(FBOTarget::framebuffer_target_t t) : m_target(t), m_AutoClean(true)
 {
 	glGenFramebuffers(1, &m_ID);
-}
-
-FBO::~FBO()
-{
-	glDeleteFramebuffers(1, &m_ID);
 }
 
 bool FBO::IsComplete() const
@@ -66,6 +61,19 @@ void FBO::Unbind() const
 void FBO::Unuse() const
 {
 	GLState::Unbind(this);
+}
+
+FBO::~FBO()
+{
+	if (m_AutoClean) {
+		Clean();
+	}
+}
+
+void FBO::Clean()
+{
+	m_AutoClean = false;
+	glDeleteFramebuffers(1, &m_ID);
 }
 
 TRE_NS_END

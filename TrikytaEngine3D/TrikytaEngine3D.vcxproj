@@ -197,6 +197,8 @@
     <ClInclude Include="RenderAPI\VertexArray\VAO.hpp" />
     <ClInclude Include="RenderAPI\VertexArray\VAODef.hpp" />
     <ClInclude Include="RenderAPI\VertexBuffer\VBO.hpp" />
+    <ClInclude Include="RenderEngine\RawModel\RawModel.hpp" />
+    <ClInclude Include="RenderEngine\RawModel\RawModelSettings.hpp" />
     <ClInclude Include="RenderUtils\MeshLoader.hpp" />
     <ClInclude Include="Tests\Camera.hpp" />
   </ItemGroup>
@@ -290,6 +292,7 @@
     <ClCompile Include="RenderAPI\Texture\Texture.cpp" />
     <ClCompile Include="RenderAPI\VertexArray\VAO.cpp" />
     <ClCompile Include="RenderAPI\VertexBuffer\VBO.cpp" />
+    <ClCompile Include="RenderEngine\RawModel\RawModel.cpp" />
     <ClCompile Include="RenderUtils\MeshLoader.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
     <ClCompile Include="Tests\Main2.cpp" />

@@ -6,19 +6,15 @@
 
 TRE_NS_START
 
-VBO::VBO() : m_target(BufferTarget::UNKNOWN)
+void VBO::Generate(BufferTarget::buffer_target_t target)
 {
+	m_target = target;
 	glGenBuffers(1, &m_ID);
 }
 
-VBO::VBO(BufferTarget::buffer_target_t target) : m_target(target)
+VBO::VBO(BufferTarget::buffer_target_t target) : m_target(target), m_AutoClean(true)
 {
 	glGenBuffers(1, &m_ID);
-}
-
-VBO::~VBO()
-{
-	glDeleteBuffers(1, &m_ID);
 }
 
 void VBO::FillData(const void* data, ssize_t size, BufferUsage::buffer_usage_t usage)
@@ -44,6 +40,7 @@ void VBO::GetSubData(void* data, ssize_t offset, ssize_t length)
 
 void VBO::Bind() const
 {
+	ASSERTF(m_ID != 0, "Attempt to bind a vertex buffer without generating it (VBO ID = %d_n)", m_ID);
 	ASSERTF(m_target != BufferTarget::UNKNOWN, "Attempt to bind a vertex buffer object without setting the target (VBO ID = %d_n)", m_ID);
 	glBindBuffer(m_target, m_ID);
 }
@@ -55,6 +52,7 @@ void VBO::Use() const
 
 void VBO::Unbind() const
 {
+	ASSERTF(m_ID != 0, "Attempt to bind a vertex buffer without generating it (VBO ID = %d_n)", m_ID);
 	ASSERTF(m_target != BufferTarget::UNKNOWN, "Attempt to unbind a vertex buffer object without setting the target (VBO ID = %d_n)", m_ID);
 	glBindBuffer(m_target, 0);
 }
@@ -62,6 +60,21 @@ void VBO::Unbind() const
 void VBO::Unuse() const
 {
 	GLState::Unbind(this);
+}
+
+VBO::~VBO()
+{
+	if (m_ID != 0 && m_AutoClean) {
+		Clean();
+	}
+}
+
+void VBO::Clean()
+{
+	if (m_ID != 0) {
+		m_AutoClean = false;
+		glDeleteBuffers(1, &m_ID);
+	}
 }
 
 TRE_NS_END

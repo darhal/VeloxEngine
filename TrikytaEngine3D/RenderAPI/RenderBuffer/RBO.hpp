@@ -45,7 +45,7 @@ public:
 	void SetStorage(uint32 w, uint32 h, RBOInternal::rbo_internal_format_t internal_format = RBOInternal::rbo_internal_format_t::DEPTH24_STENCIL8);
 	void AttachToFBO(const FBO& fbo, FBOAttachement::framebuffer_attachement_t attchement = FBOAttachement::DEPTH_STENCIL_ATTACHMENT, uint8 color_index = 0);
 
-	FORCEINLINE const int32 GetID() const;
+	FORCEINLINE const uint32 GetID() const;
 	FORCEINLINE operator uint32() const;
 	FORCEINLINE const int32 GetTarget() const;
 	FORCEINLINE const TargetType::target_type_t GetBindingTarget() const { return TargetType::target_type_t::RBO; }
@@ -55,11 +55,16 @@ public:
 
 	void Unbind() const;
 	void Unuse() const;
+
+	explicit FORCEINLINE RBO(const RBO& other);
+	FORCEINLINE RBO& operator=(const RBO& other);
 private:
 	uint32 m_ID;
+
+	AUTOCLEAN(RBO);
 };
 
-FORCEINLINE const int32 RBO::GetID() const
+FORCEINLINE const uint32 RBO::GetID() const
 {
 	return m_ID;
 }
@@ -72,6 +77,20 @@ FORCEINLINE RBO::operator uint32() const
 FORCEINLINE const int32 RBO::GetTarget() const
 {
 	return TargetType::target_type_t::RBO;
+}
+
+FORCEINLINE RBO::RBO(const RBO& other) :
+	m_ID(other.m_ID), m_AutoClean(true)
+{
+	const_cast<RBO&>(other).SetAutoClean(false);
+}
+
+FORCEINLINE RBO& RBO::operator=(const RBO& other)
+{
+	m_ID = other.m_ID;
+	const_cast<RBO&>(other).SetAutoClean(false);
+	this->SetAutoClean(true);
+	return *this;
 }
 
 TRE_NS_END

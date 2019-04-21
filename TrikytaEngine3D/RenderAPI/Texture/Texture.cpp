@@ -13,7 +13,7 @@ Texture::Texture
 	std::initializer_list<TexParamConfig> paramList, DataType::data_type_t datatype,
 	TexInternalFormat::tex_internal_format_t internalFormat,
 	TexFormat::tex_format_t format
-) : m_target(target)
+) : m_target(target), m_AutoClean(true)
 {
 	glGenTextures(1, &m_ID);
 	this->Use(); //glBindTexture(target, m_ID);
@@ -34,7 +34,7 @@ Texture::Texture
 	}
 }
 
-Texture::Texture(const char* path, const TextureSettings& settings) : m_target(settings.target)
+Texture::Texture(const char* path, const TextureSettings& settings) : m_target(settings.target), m_AutoClean(true)
 {
 	glGenTextures(1, &m_ID);
 	this->Use(); //glBindTexture(settings.target, m_ID);
@@ -56,7 +56,7 @@ Texture::Texture(const char* path, const TextureSettings& settings) : m_target(s
 	}
 }
 
-Texture::Texture(const TextureSettings& settings) : m_target(settings.target)
+Texture::Texture(const TextureSettings& settings) : m_target(settings.target), m_AutoClean(true)
 {
 	glGenTextures(1, &m_ID);
 	this->Use(); //glBindTexture(settings.target, m_ID);
@@ -68,7 +68,7 @@ Texture::Texture(const TextureSettings& settings) : m_target(settings.target)
 	glTexImage2D(settings.target, settings.lod, settings.internalFormat, settings.width, settings.height, 0, settings.format, settings.datatype, NULL);
 }
 
-Texture::Texture() : m_target(TexTarget::TEX2D)
+Texture::Texture() : m_target(TexTarget::TEX2D), m_AutoClean(true)
 {
 	glGenTextures(1, &m_ID);
 }
@@ -145,6 +145,14 @@ void Texture::Unuse() const
 
 Texture::~Texture()
 {
+	if (m_AutoClean) {
+		Clean();
+	}
+}
+
+void Texture::Clean()
+{
+	m_AutoClean = false;
 	glDeleteTextures(1, &m_ID);
 }
 

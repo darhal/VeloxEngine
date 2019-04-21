@@ -19,54 +19,101 @@
 #include "Camera.hpp"
 
 #include <RenderUtils/MeshLoader.hpp>
+#include <RenderEngine/RawModel/RawModel.hpp>
+#include <RenderAPI/GlobalState/GLState.hpp>
 
 using namespace TRE;
 
 // set up vertex data (and buffer(s)) and configure vertex attributes
 // ------------------------------------------------------------------
 float vertices[] = {
-	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f, -0.5f, 
+	 0.5f, -0.5f, -0.5f, 
+	 0.5f,  0.5f, -0.5f,  
+	 0.5f,  0.5f, -0.5f, 
+	-0.5f,  0.5f, -0.5f,  
+	-0.5f, -0.5f, -0.5f, 
 
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f,  0.5f,  
+	 0.5f, -0.5f,  0.5f,  
+	 0.5f,  0.5f,  0.5f,  
+	 0.5f,  0.5f,  0.5f,  
+	-0.5f,  0.5f,  0.5f,  
+	-0.5f, -0.5f,  0.5f, 
 
-	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  
+	-0.5f,  0.5f, -0.5f, 
+	-0.5f, -0.5f, -0.5f,  
+	-0.5f, -0.5f, -0.5f,  
+	-0.5f, -0.5f,  0.5f, 
+	-0.5f,  0.5f,  0.5f,  
 
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  
+	 0.5f,  0.5f, -0.5f,  
+	 0.5f, -0.5f, -0.5f,  
+	 0.5f, -0.5f, -0.5f,  
+	 0.5f, -0.5f,  0.5f, 
+	 0.5f,  0.5f,  0.5f, 
 
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  
+	 0.5f, -0.5f, -0.5f,  
+	 0.5f, -0.5f,  0.5f,  
+	 0.5f, -0.5f,  0.5f,  
+	-0.5f, -0.5f,  0.5f,  
+	-0.5f, -0.5f, -0.5f,  
 
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+	-0.5f,  0.5f, -0.5f,  
+	 0.5f,  0.5f, -0.5f,  
+	 0.5f,  0.5f,  0.5f,  
+	 0.5f,  0.5f,  0.5f,  
+	-0.5f,  0.5f,  0.5f, 
+	-0.5f,  0.5f, -0.5f,  
 };
+
+float texCoord[] = {
+	0.0f, 0.0f,
+	1.0f, 0.0f,
+	1.0f, 1.0f,
+	1.0f, 1.0f,
+	0.0f, 1.0f,
+	0.0f, 0.0f,
+
+	0.0f, 0.0f,
+	1.0f, 0.0f,
+	1.0f, 1.0f,
+	1.0f, 1.0f,
+	0.0f, 1.0f,
+	0.0f, 0.0f,
+
+	1.0f, 0.0f,
+	1.0f, 1.0f,
+	0.0f, 1.0f,
+	0.0f, 1.0f,
+	0.0f, 0.0f,
+	1.0f, 0.0f,
+
+	1.0f, 0.0f,
+	1.0f, 1.0f,
+	0.0f, 1.0f,
+	0.0f, 1.0f,
+	0.0f, 0.0f,
+	1.0f, 0.0f,
+
+	0.0f, 1.0f,
+	1.0f, 1.0f,
+	1.0f, 0.0f,
+	1.0f, 0.0f,
+	0.0f, 0.0f,
+	0.0f, 1.0f,
+
+	0.0f, 1.0f,
+	1.0f, 1.0f,
+	1.0f, 0.0f,
+	.0f, 0.0f,
+	0.0f, 0.0f,
+	0.0f, 1.0f
+};
+
 // world space positions of our cubes
 vec3 cubePositions[] = {
 	vec3(0.0f,  0.0f,  0.0f),
@@ -96,6 +143,18 @@ float deltaTime = 0.f;
 void handleEvent(const Event&);
 void clip(const Window&);
 
+float vert[] = {
+	1.0, -1.000000, 0.282213,
+	1.0f, -1.000000, 2.282213,
+	-1.0f, -1.000000, 2.282213,
+	-1.000000, -1.000000, 0.282213,
+	1.000000, 1.000000, 0.282214,
+	0.999999, 1.000000, 2.282214,
+	-1.000000, 1.000000, 2.282213,
+	-1.000000, 1.000000, 0.282213
+};
+uint32 ind[] = { 1, 3, 0, 7, 5, 4, 4, 1, 0, 5, 2, 1, 2, 7, 3, 0, 7, 4, 1, 2, 3, 7, 6, 5, 4, 5, 1, 5, 6, 2, 2, 6, 7, 0, 3, 7 };
+
 int main()
 {
 	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "OpenGL Window", WindowStyle::Resize);
@@ -106,22 +165,18 @@ int main()
 	printf("- Version       : %s\n", glGetString(GL_VERSION));
 	printf("- GLSL Version  : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	Sleep(1000);
+	MeshLoader carrot("res/obj/lowpoly/carrot_box.obj");
+	Vector<RawModel<true>> carrotModel;
+	carrot.ProcessData(&carrotModel);
 
-	printf("~BEGIN OF OBJ LOADING~\n");
-	//MeshLoader gun("res/obj/lowpoly/Carrot.obj");
-	MeshLoader carrot("res/obj/lowpoly/carrot_tri.obj");
-	printf("~END OF OBJ LOADING~\n");
+	/*MeshLoader box("res/obj/lowpoly/cube.obj");
+	Vector<RawModel<true>> boxModel;
+	box.ProcessData(&boxModel);*/
 
 	ShaderProgram ourShader({
 		Shader("res/Shader/cam.vs", ShaderType::VERTEX),
 		Shader("res/Shader/cam.fs", ShaderType::FRAGMENT)
 	});
-
-	VAO vao;
-	VBO vbo(BufferTarget::ARRAY_BUFFER);
-	VBO ivbo(BufferTarget::ELEMENT_ARRAY_BUFFER);
-	carrot.ProcessData(&vao, &vbo, &ivbo);
 
 	mat4 projection = mat4::perspective(camera.Zoom, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 	float timer = 0.f;
@@ -141,29 +196,22 @@ int main()
 		lastFrame = timer;
 
 	
-		ourShader.Use(); // activate shader
 		mat4 view = camera.GetViewMatrix();
-		vao.Use();
-		for (unsigned int i = 0; i < 10; i++)
-		{
-			// calculate the model matrix for each object and pass it to shader before drawing
-			mat4 model;
-			model.translate(cubePositions[i]);
-			float angle = 20.0f * i;
-			model.rotate(vec3(1.0f, 0.3f, 0.5f), rad(angle));
-			model.scale(vec3(0.5f, 0.5f, 0.5f));
-			mat4 MVP = projection * view * model;
-			ourShader.SetMat4("MVP", MVP);
-			/*ivbo.Bind();
-			glDrawElements(
-				GL_TRIANGLES,      // mode
-				36,    // count
-				GL_UNSIGNED_INT,   // type
-				(void*)0           // element array buffer offset
-			);*/
-			DrawArrays(Primitive::TRIANGLES, 0, 1266);
+		for (const RawModel<true>& obj : carrotModel) {
+			obj.Use(ourShader);
+			uint8 i = 0;
+			//for (unsigned int i = 0; i < 10; i++){
+				// calculate the model matrix for each object and pass it to shader before drawing
+				mat4 model;
+				model.translate(cubePositions[i]);
+				float angle = 20.0f * i;
+				model.rotate(vec3(1.0f, 0.3f, 0.5f), rad(angle));
+				model.scale(vec3(0.5f, 0.5f, 0.5f));
+				mat4 MVP = projection * view * model;
+				ourShader.SetMat4("MVP", MVP);
+				obj.Render();
+			//}
 		}
-
 		window.Present();
 	}
 

@@ -5,7 +5,7 @@
 
 TRE_NS_START
 
-RBO::RBO()
+RBO::RBO() : m_AutoClean(true)
 {
 	glGenRenderbuffers(1, &m_ID);
 }
@@ -18,11 +18,6 @@ RBO::RBO(const RenderbufferSettings& settings)
 	settings.fbo->Use();
 	glRenderbufferStorage(GL_RENDERBUFFER, settings.internal_format, settings.w, settings.h);
 	glFramebufferRenderbuffer(settings.fbo->GetTarget(), settings.attachement + settings.color_index, GL_RENDERBUFFER, m_ID);
-}
-
-RBO::~RBO()
-{
-	glDeleteRenderbuffers(1, &m_ID);
 }
 
 void RBO::SetStorage(uint32 w, uint32 h, RBOInternal::rbo_internal_format_t internal_format)
@@ -56,6 +51,19 @@ void RBO::Unbind() const
 void RBO::Unuse() const
 {
 	GLState::Unbind(this);
+}
+
+RBO::~RBO()
+{
+	if (m_AutoClean) {
+		Clean();
+	}
+}
+
+void RBO::Clean()
+{
+	m_AutoClean = false;
+	glDeleteRenderbuffers(1, &m_ID);
 }
 
 TRE_NS_END

@@ -7,7 +7,7 @@
 
 TRE_NS_START
 
-ShaderProgram::ShaderProgram(uint32 vertex, uint32 fragment)
+ShaderProgram::ShaderProgram(uint32 vertex, uint32 fragment) : m_AutoClean(true)
 {
 	m_ID = glCreateProgram();
 	glAttachShader(m_ID, vertex);
@@ -20,7 +20,7 @@ ShaderProgram::ShaderProgram(uint32 vertex, uint32 fragment)
 	glDeleteShader(fragment);
 }
 
-ShaderProgram::ShaderProgram(uint32 vertex, uint32 fragment, uint32 geometry)
+ShaderProgram::ShaderProgram(uint32 vertex, uint32 fragment, uint32 geometry) : m_AutoClean(true)
 {
 	m_ID = glCreateProgram();
 	glAttachShader(m_ID, vertex);
@@ -35,7 +35,7 @@ ShaderProgram::ShaderProgram(uint32 vertex, uint32 fragment, uint32 geometry)
 	glDeleteShader(geometry);
 }
 
-ShaderProgram::ShaderProgram(std::initializer_list<Shader> shaderList)
+ShaderProgram::ShaderProgram(std::initializer_list<Shader> shaderList) : m_AutoClean(true)
 {
 	m_ID = glCreateProgram();
 	for (const Shader& shader : shaderList) {
@@ -50,6 +50,12 @@ ShaderProgram::ShaderProgram(std::initializer_list<Shader> shaderList)
 	}
 }
 
+ShaderProgram::~ShaderProgram()
+{
+	if (m_AutoClean){
+		glDeleteProgram(m_ID);
+	}
+}
 
 // activate the shader
 void ShaderProgram::Bind() const

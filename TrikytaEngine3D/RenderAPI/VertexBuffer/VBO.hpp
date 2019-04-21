@@ -47,11 +47,14 @@ namespace BufferUsage
 class VBO
 {
 public:
-	VBO();
+	VBO() : m_target(BufferTarget::UNKNOWN), m_ID(0)
+	{}
 
-	VBO(BufferTarget::buffer_target_t target);
+	explicit VBO(BufferTarget::buffer_target_t target);
 
-	template<typename T, uint64 N>
+	void Generate(BufferTarget::buffer_target_t target);
+
+	template<typename T, ssize_t N>
 	void FillData(T(&data)[N], BufferUsage::buffer_usage_t usage = BufferUsage::STATIC_DRAW);
 
 	void FillData(const void* data, ssize_t size, BufferUsage::buffer_usage_t usage = BufferUsage::STATIC_DRAW);
@@ -61,7 +64,7 @@ public:
 	void GetSubData(void* data, ssize_t offset, ssize_t length);
 
 	~VBO();
-	FORCEINLINE const int32 GetID() const;
+	FORCEINLINE const uint32 GetID() const;
 	FORCEINLINE operator uint32() const;
 	FORCEINLINE const int32 GetTarget() const;
 	FORCEINLINE const TargetType::target_type_t GetBindingTarget() const { return (TargetType::target_type_t)m_target; }
@@ -71,12 +74,17 @@ public:
 
 	void Unbind() const;
 	void Unuse() const;
+
+	explicit FORCEINLINE VBO(const VBO& other);
+	FORCEINLINE VBO& operator=(const VBO& other);
 private:
 	uint32 m_ID;
 	BufferTarget::buffer_target_t m_target;
+
+	AUTOCLEAN(VBO);
 };
 
-FORCEINLINE const int32 VBO::GetID() const 
+FORCEINLINE const uint32 VBO::GetID() const
 { 
 	return m_ID; 
 }
@@ -91,12 +99,26 @@ FORCEINLINE const int32 VBO::GetTarget() const
 	return (int32)m_target;
 }
 
-template<typename T, uint64 N>
+template<typename T, ssize_t N>
 void VBO::FillData(T(&data)[N], BufferUsage::buffer_usage_t usage)
 {
 	ASSERTF(m_target != BufferTarget::UNKNOWN, "Attempt to fill data of a vertex buffer object without setting the target (VBO ID = %d)", m_ID);
 	glBindBuffer(m_target, m_ID);
 	glBufferData(m_target, sizeof(data), data, usage);
+}
+
+FORCEINLINE VBO::VBO(const VBO& other) : m_ID(other.m_ID), m_target(other.m_target), m_AutoClean(true)
+{
+	const_cast<VBO&>(other).SetAutoClean(false);
+}
+
+FORCEINLINE VBO& VBO::operator=(const VBO& other)
+{
+	m_ID = other.m_ID;
+	m_target = other.m_target;
+	const_cast<VBO&>(other).SetAutoClean(false);
+	this->SetAutoClean(true);
+	return *this;
 }
 
 TRE_NS_END

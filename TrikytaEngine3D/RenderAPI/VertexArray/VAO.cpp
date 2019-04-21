@@ -5,14 +5,9 @@
 
 TRE_NS_START
 
-VAO::VAO()
+VAO::VAO() : m_AutoClean(true)
 {
 	glGenVertexArrays(1, &m_ID);
-}
-
-VAO::~VAO()
-{
-	glDeleteVertexArrays(1, &m_ID);
 }
 
 void VAO::BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, ssize_t stride, const void* offset)
@@ -47,5 +42,19 @@ void VAO::SetVertextAttribDivisor(uint32 attrib, uint32 div)
 {
 	glVertexAttribDivisor(attrib, div);
 }
+
+VAO::~VAO()
+{
+	if (m_AutoClean) {
+		Clean();
+	}
+}
+
+void VAO::Clean()
+{
+	m_AutoClean = false;
+	glDeleteVertexArrays(1, &m_ID);
+}
+
 
 TRE_NS_END

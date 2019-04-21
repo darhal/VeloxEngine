@@ -63,21 +63,28 @@ void MeshLoader::LoadFile(const char* path)
 	fseek(file, 0L, SEEK_SET);
 	char buffer[255];
 	int64 line_len = 0;
+	ssize vert_offset = 1;
+	ssize tex_offset = 1;
+	ssize norm_offset = 1;
 	while ((line_len = ReadLine(file, buffer, 255)) != EOF) {
 		if (line_len == 0) { continue; } // empty line
 		if(buffer[0] == 'o'){
-			m_Objects[m_ObjectCount] = String(buffer);
-			m_ObjectCount++;
+			if (m_ObjectCount > 0) {
+				vert_offset += m_Verticies[m_ObjectCount].size();
+				tex_offset += m_TextureCoord[m_ObjectCount].size();
+				norm_offset += m_Normals[m_ObjectCount].size();
+			}
+			m_Objects[m_ObjectCount++] = String(buffer);
 		}else if (buffer[0] == '#') {
-			printf("# Comment :)");
+			//printf("# Comment :)");
 			continue; // You dont wanna parse this :)
 		}else if (buffer[0] == 'v') {
 			if (buffer[1] == ' ') {
 				float x, y, z, w;
 				int32 nargs = sscanf(buffer+2, "%f %f %f %f", &x, &y, &z, &w);
 				if (nargs == 3) {
-					m_Verticies[m_ObjectCount-1].emplace_back(x, y, z);
-					printf("v %f %f %f", x, y, z);
+					m_Verticies[m_ObjectCount].emplace_back(x, y, z);
+					//printf("v %f %f %f [ObjectCount = %d]", x, y, z, m_ObjectCount);
 				}/*else if (nargs == 4) {
 					m_Verticies[m_ObjectCount].emplace_back(x, y, z, w);
 					printf("v %f %f %f %f", x, y, z, w);
@@ -86,19 +93,19 @@ void MeshLoader::LoadFile(const char* path)
 				vec3 tempVec;
 				int32 nargs = sscanf(buffer + 2, " %f %f %f", &tempVec.x, &tempVec.y, &tempVec.z);
 				if (nargs == 3) {
-					m_Normals[m_ObjectCount-1].push_back(tempVec);
-					printf("vn %f %f %f", tempVec.x, tempVec.y, tempVec.z);
+					m_Normals[m_ObjectCount].push_back(tempVec);
+					//printf("vn %f %f %f [ObjectCount = %d]", tempVec.x, tempVec.y, tempVec.z, m_ObjectCount);
 				}
 			}
 			else if (buffer[1] == 't') {
 				float x, y, z;
 				int32 nargs = sscanf(buffer + 2, " %f %f %f", &x, &y, &z);
 				if (nargs == 3) {
-					m_TextureCoord[m_ObjectCount-1].emplace_back(x, y, z);
-					printf("vt %f %f %f", x, y, z);
+					//m_TextureCoord[m_ObjectCount-1].emplace_back(x, y, z);
+					//printf("vt %f %f %f [ObjectCount = %d]", x, y, z, m_ObjectCount);
 				}if (nargs == 2) {
-					m_TextureCoord[m_ObjectCount-1].emplace_back(x, y, 0.f);
-					printf("vt %f %f", x, y);
+					m_TextureCoord[m_ObjectCount].emplace_back(x, y);
+					//printf("vt %f %f", x, y);
 				}
 			}
 		}else if (buffer[0] == 'f') {
@@ -108,7 +115,6 @@ void MeshLoader::LoadFile(const char* path)
 				printf("f ");
 				int64 buffer_index = 2;
 				char c = buffer[buffer_index];
-				//Vec<3, int64, normal> face(-1LL, -1LL, -1LL); // init to -1
 				while (c != '\0') {
 					if (c == '\n' || c == '#') {
 						printf("\n");
@@ -116,11 +122,10 @@ void MeshLoader::LoadFile(const char* path)
 					}else if (c >= '0' && c <= '9') {
 						int32 len = ParseUint64(buffer + buffer_index, &data);
 						if (len >= 1) {
-							printf("%d", data);
 							switch (indicator) {
 							case 0: // Vertex Position.
 								//face.x = data;
-								m_Indicies[m_ObjectCount-1].emplace_back(data);
+								m_Indicies[m_ObjectCount].emplace_back(data - vert_offset);
 								break;
 							case 1: // Vertex texture.
 								//face.y = data;
@@ -136,11 +141,6 @@ void MeshLoader::LoadFile(const char* path)
 					}else if (c == ' ') {
 						indicator = 0;
 						buffer_index++;
-						/*if (face != Vec<3, int64, normal>(-1LL, -1LL, -1LL)) {
-							printf(" [ Puttin it into the thing ] ");
-							m_Faces[m_ObjectCount].emplace_back(face);
-						}*/
-						//face = Vec<3, int64, normal>(-1LL, -1LL, -1LL);
 						printf(" ");
 					}else if (c == '/') {
 						indicator++;
@@ -151,30 +151,21 @@ void MeshLoader::LoadFile(const char* path)
 				}
 			}
 		}
-		printf("\n");
+		//printf("\n");
 	}
+	m_ObjectCount++;
 	fclose(file);
 }
 
-void MeshLoader::ProcessData(VAO* vao, VBO* vbo, VBO* ivbo)
+void MeshLoader::ProcessData(Vector<RawModel<true>>* arrayOfObjects)
 {
-	//ASSERTF((vao ~= NULL), "Null pointer of VAO is passed!");
-	for (uint8 i = 0; i < m_ObjectCount; i++) {
-		vao->Use();
-		Vector<vec3> vertices;
-		printf("Index = %d", i);
-		printf("float verticies[] = {\n");
-		for (int32 index : m_Indicies[i]) {
-			vertices.push_back(m_Verticies[i].at(index -1));
-			printf("%f, %f, %f, // ID = %d\n", m_Verticies[i].at(index - 1).x, m_Verticies[i].at(index - 1).y, m_Verticies[i].at(index - 1).z, index);
-		}
-		printf("};\n");
-		vbo->FillData(&vertices.at(0), vertices.size()*sizeof(vec3));
-		vao->BindAttribute<DataType::FLOAT>(0, *vbo, 3, 3, 0);
-		printf("vert size = %d\n", vertices.size());
-		//vao->Unuse();
-		//ivbo->FillData(&m_Indicies[0], m_Indicies[0].size()*sizeof(uint32));
-	}
+	ASSERTF(arrayOfObjects != NULL, "Argument passed to MeshLoader::ProcessData is NULL");
+	arrayOfObjects->reserve(m_ObjectCount);
+	int32 objectIndex = (m_ObjectCount > 1 ? 1 : 0);
+	do{
+		arrayOfObjects->emplace_back(m_Verticies[objectIndex], &m_TextureCoord[objectIndex], &m_Normals[objectIndex], m_Indicies[objectIndex]);
+		objectIndex++;
+	}while (objectIndex < m_ObjectCount);
 }
 
 TRE_NS_END

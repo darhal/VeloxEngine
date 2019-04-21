@@ -43,6 +43,8 @@ public:
 	ShaderProgram(uint32 vertex, uint32 fragment, uint32 geometry);
 	ShaderProgram(std::initializer_list<Shader> shaderList);
 
+	~ShaderProgram();
+
 	// utility uniform functions
 	void SetBool(const char* name, bool value) const;
 	void SetInt(const char* name, int value) const;
@@ -65,10 +67,30 @@ public:
 	// activate the shader
 	void Bind() const;
 	void Unbind() const;
+
+	explicit FORCEINLINE ShaderProgram(const ShaderProgram& other);
+	FORCEINLINE ShaderProgram& operator=(const ShaderProgram& other);
+
 private:
 	// utility function for checking shader compilation/linking errors.
 	static void CheckCompileErrors(uint32 shader, const char* type);
 	friend class Shader;
+
+	AUTOCLEAN(ShaderProgram);
 };
+
+FORCEINLINE ShaderProgram::ShaderProgram(const ShaderProgram& other) :
+	m_ID(other.m_ID), m_AutoClean(true)
+{
+	const_cast<ShaderProgram&>(other).SetAutoClean(false);
+}
+
+FORCEINLINE ShaderProgram& ShaderProgram::operator=(const ShaderProgram& other)
+{
+	m_ID = other.m_ID;
+	const_cast<ShaderProgram&>(other).SetAutoClean(false);
+	this->SetAutoClean(true);
+	return *this;
+}
 
 TRE_NS_END

@@ -51,7 +51,7 @@ public:
 
 	bool IsComplete() const;
 
-	FORCEINLINE const int32 GetID() const;
+	FORCEINLINE const uint32 GetID() const;
 	FORCEINLINE operator uint32() const;
 	FORCEINLINE const int32 GetTarget() const;
 	FORCEINLINE const TargetType::target_type_t GetBindingTarget() const { return (TargetType::target_type_t)m_target; }
@@ -61,13 +61,18 @@ public:
 
 	void Unbind() const;
 	void Unuse() const;
+
+	explicit FORCEINLINE FBO(const FBO& other);
+	FORCEINLINE FBO& operator=(const FBO& other);
 private:
 	uint32 m_ID;
 	int32 m_target;
+
+	AUTOCLEAN(FBO);
 };
 
 
-FORCEINLINE const int32 FBO::GetID() const
+FORCEINLINE const uint32 FBO::GetID() const
 {
 	return m_ID;
 }
@@ -80,6 +85,21 @@ FORCEINLINE FBO::operator uint32() const
 FORCEINLINE const int32 FBO::GetTarget() const
 {
 	return m_target;
+}
+
+FORCEINLINE FBO::FBO(const FBO& other) :
+	m_ID(other.m_ID), m_target(other.m_target), m_AutoClean(true)
+{
+	const_cast<FBO&>(other).SetAutoClean(false);
+}
+
+FORCEINLINE FBO& FBO::operator=(const FBO& other)
+{
+	m_ID = other.m_ID;
+	m_target = other.m_target;
+	const_cast<FBO&>(other).SetAutoClean(false);
+	this->SetAutoClean(true);
+	return *this;
 }
 
 TRE_NS_END
