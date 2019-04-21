@@ -153,9 +153,7 @@ FORCEINLINE RawModel<B>::RawModel(const RawModel<B>& other) :
 	normalVBO(other.normalVBO), indexVBO(other.indexVBO), m_VertexCount(other.m_VertexCount), m_AutoClean(true)
 {
 	const_cast<RawModel&>(other).SetAutoClean(false);
-	printf("Copy ctor called!\n");
 }
-
 
 template<bool B>
 FORCEINLINE RawModel<B>& RawModel<B>::operator=(const RawModel<B>& other) {
