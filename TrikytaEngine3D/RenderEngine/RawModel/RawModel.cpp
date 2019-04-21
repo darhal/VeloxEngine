@@ -5,7 +5,7 @@
 TRE_NS_START
 
 template<>
-RawModel<true>::RawModel(const Vector<vec3>& vertices, const Vector<vec2>* textures, const Vector<vec3>* normals, const Vector<uint32>& indices)
+RawModel<true>::RawModel(const Vector<vec3>& vertices, const Vector<uint32>& indices, const Vector<vec2>* textures, const Vector<vec3>* normals, const Vector<MatrialForRawModel>& mat_vec)
 {
 	ASSERTF(!(vertices.size() == 0 || indices.size() == 0), "Attempt to create a RawModel with empty vertecies or empty indices!");
 	LoadFromVector(vertices, textures, normals);
@@ -15,15 +15,24 @@ RawModel<true>::RawModel(const Vector<vec3>& vertices, const Vector<vec2>* textu
 	indexVBO.FillData(&indices.at(0), indices.size() * sizeof(uint32));
 	m_ModelVAO.Unuse();
 	indexVBO.Unuse();
+	m_Materials = mat_vec;
+	if (m_Materials.empty()) {
+		m_Materials.emplace_back(Material(), m_VertexCount); // default material
+	}
 }
 
 template<>
-RawModel<false>::RawModel(const Vector<vec3>& vertices, const Vector<vec2>* textures, const Vector<vec3>* normals)
+RawModel<false>::RawModel(const Vector<vec3>& vertices, const Vector<vec2>* textures, const Vector<vec3>* normals, const Vector<MatrialForRawModel>& mat_vec)
 {
 	ASSERTF(!(vertices.size() == 0), "Attempt to create a RawModel with empty vertecies!");
 	LoadFromVector(vertices, textures, normals);
 	m_VertexCount = vertices.size() / 3LLU; // Get the vertex Count!
 	m_ModelVAO.Unuse();
+	m_Materials = mat_vec;
+	if (m_Materials.empty()) {
+		Material default_material("Unknown");
+		m_Materials.emplace_back(default_material, m_VertexCount); // default material
+	}
 }
 
 template<>
@@ -36,20 +45,30 @@ RawModel<false>::RawModel(const RawModelSettings& settings)
 }
 
 template<>
-void RawModel<false>::Render() const
+void RawModel<false>::Render(const ShaderProgram& shader) const
 {
-	DrawArrays(Primitive::TRIANGLES, 0, m_VertexCount);
+	uint32 lastVertexCount = 0;
+	for (const MatrialForRawModel& mat : m_Materials) {
+		shader.SetVec3("color", mat.material.m_Diffuse);
+		DrawArrays(Primitive::TRIANGLES, lastVertexCount, mat.vcount);
+		lastVertexCount = mat.vcount;
+	}
 }
 
 template<>
-void RawModel<true>::Render() const
+void RawModel<true>::Render(const ShaderProgram& shader) const
 {
-	DrawElements(Primitive::TRIANGLES, DataType::UINT, m_VertexCount, 0);
+	uint32 lastVertexCount = 0;
+	for (const MatrialForRawModel& mat : m_Materials) {
+		shader.SetVec3("color", mat.material.m_Diffuse);
+		DrawElements(Primitive::TRIANGLES, DataType::UINT, mat.vcount, lastVertexCount*sizeof(uint32));
+		lastVertexCount = mat.vcount;
+	}
 }
 
 template<bool B>
-template<ssize_t V, ssize_t T, ssize_t N, ssize_t I>
-void RawModel<B>::LoadFromArray(float(&vert)[V], float(&tex)[T], float(&normal)[N], uint32(&indices)[I])
+template<ssize_t V, ssize_t T, ssize_t N>
+void RawModel<B>::LoadFromArray(float(&vert)[V], float(&tex)[T], float(&normal)[N])
 {
 	m_ModelVAO.Use();
 

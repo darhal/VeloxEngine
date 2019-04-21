@@ -64,4 +64,22 @@ static T power(T base, int32 pow) {
 	return result;
 }
 
+static int32 ParseUint64(char* str, uint32* x)
+{
+	*x = 0;
+	if (str[0] >= '0' && str[0] <= '9') {
+		uint8 data[21];
+		int32 len = 0;
+		while (str[len] >= '0' && str[len] <= '9' && len < 11) {
+			data[len] = str[len] - '0';
+			len++;
+		}
+		for (int32 i = 0; i < len; i++) {
+			*x += data[i] * power(10u, len - i - 1);
+		}
+		return len;
+	}
+	return -1;
+}
+
 TRE_NS_END

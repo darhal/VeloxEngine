@@ -143,18 +143,6 @@ float deltaTime = 0.f;
 void handleEvent(const Event&);
 void clip(const Window&);
 
-float vert[] = {
-	1.0, -1.000000, 0.282213,
-	1.0f, -1.000000, 2.282213,
-	-1.0f, -1.000000, 2.282213,
-	-1.000000, -1.000000, 0.282213,
-	1.000000, 1.000000, 0.282214,
-	0.999999, 1.000000, 2.282214,
-	-1.000000, 1.000000, 2.282213,
-	-1.000000, 1.000000, 0.282213
-};
-uint32 ind[] = { 1, 3, 0, 7, 5, 4, 4, 1, 0, 5, 2, 1, 2, 7, 3, 0, 7, 4, 1, 2, 3, 7, 6, 5, 4, 5, 1, 5, 6, 2, 2, 6, 7, 0, 3, 7 };
-
 int main()
 {
 	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "OpenGL Window", WindowStyle::Resize);
@@ -165,7 +153,7 @@ int main()
 	printf("- Version       : %s\n", glGetString(GL_VERSION));
 	printf("- GLSL Version  : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	MeshLoader carrot("res/obj/lowpoly/carrot_box.obj");
+	MeshLoader carrot("res/obj/lowpoly/Fir_Tree_tri.obj");
 	Vector<RawModel<true>> carrotModel;
 	carrot.ProcessData(&carrotModel);
 
@@ -182,6 +170,7 @@ int main()
 	float timer = 0.f;
 	float lastFrame = 0.f;
 	Enable(Capability::DEPTH_TEST);
+	Enable(GL_MULTISAMPLE);
 	while (window.isOpen())
 	{
 		if (window.getEvent(ev)) {
@@ -209,7 +198,8 @@ int main()
 				model.scale(vec3(0.5f, 0.5f, 0.5f));
 				mat4 MVP = projection * view * model;
 				ourShader.SetMat4("MVP", MVP);
-				obj.Render();
+				//obj.Render();
+				obj.Render(ourShader);
 			//}
 		}
 		window.Present();

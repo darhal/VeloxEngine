@@ -6,8 +6,17 @@
 #include <RenderAPI/General/GLContext.hpp>
 #include "RawModelSettings.hpp"
 #include <Core/Misc/Defines/DataStructure.hpp>
+#include <RenderEngine/Materials/Material.hpp>
 
 TRE_NS_START
+
+struct MatrialForRawModel
+{
+	Material material;
+	ssize vcount;
+	MatrialForRawModel(const Material& material, ssize vcount) : material(material), vcount(vcount)
+	{}
+};
 
 template<bool IsIndexed>
 class RawModel
@@ -18,31 +27,32 @@ public:
 	~RawModel();
 
 	template<ssize_t V, ssize_t T, ssize_t N>
-	RawModel(float(&vert)[V], float(&tex)[T], float(&normal)[N]);
+	RawModel(float(&vert)[V], float(&tex)[T], float(&normal)[N], const Vector<MatrialForRawModel>& mat_vec = {});
+
+	template<ssize_t V, ssize_t I, ssize_t T, ssize_t N>
+	RawModel(float(&vert)[V], uint32(&indices)[I], float(&tex)[T], float(&normal)[N], const Vector<MatrialForRawModel>& mat_vec = {});
 
 	RawModel(const RawModelSettings& settings);
-
-
-	template<ssize_t V, ssize_t T, ssize_t N, ssize_t I>
-	RawModel(float(&vert)[V], float(&tex)[T], float(&normal)[N], uint32(&indices)[I]);
 
 	template<ssize_t I>
 	RawModel(const RawModelSettings&, uint32(&indices)[I]);
 
-	RawModel(const Vector<vec3>& vertices, const Vector<vec2>* textures, const Vector<vec3>* normals, const Vector<uint32>& indices);
-	RawModel(const Vector<vec3>& vertices, const Vector<vec2>* textures = NULL, const Vector<vec3>* normals = NULL);
+	RawModel(const Vector<vec3>& vertices, const Vector<uint32>& indices, const Vector<vec2>* textures = NULL, const Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = NULL);
+	RawModel(const Vector<vec3>& vertices, const Vector<vec2>* textures = NULL, const Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = {});
 
-	void Render() const;
+	void Render(const ShaderProgram& shader) const;
 
 	FORCEINLINE void Use(const ShaderProgram& shader) const;
 	FORCEINLINE const VAO& GetVAO() const { return m_ModelVAO; }
 
 	explicit FORCEINLINE RawModel(const RawModel& other);
 	FORCEINLINE RawModel& operator=(const RawModel& other);
+
+	FORCEINLINE const ssize_t GetVertexCount() const;
 private:
 	// Utility Functions:
-	template<ssize_t V, ssize_t T, ssize_t N, ssize_t I>
-	void LoadFromArray(float(&vert)[V], float(&tex)[T], float(&normal)[N], uint32(&indices)[I]); 
+	template<ssize_t V, ssize_t T, ssize_t N>
+	void LoadFromArray(float(&vert)[V], float(&tex)[T], float(&normal)[N]);
 	void LoadFromSettings(const RawModelSettings& settings);
 	void LoadFromVector(const Vector<vec3>& vertices, const Vector<vec2>* textures, const Vector<vec3>* normals);
 
@@ -53,22 +63,28 @@ private:
 	VBO indexVBO;
 	ssize_t m_VertexCount;
 	const bool m_IsIndexed = IsIndexed;
+	Vector<MatrialForRawModel> m_Materials;
 
 	AUTO_CLEAN_WITH_CONTROL(RawModel);
 };
 
 template<>
 template<ssize_t V, ssize_t T, ssize_t N>
-RawModel<false>::RawModel(float(&vert)[V], float(&tex)[T], float(&normal)[N])
+RawModel<false>::RawModel(float(&vert)[V], float(&tex)[T], float(&normal)[N], const Vector<MatrialForRawModel>& mat_vec)
 {
 	LoadFromArray(vert, tex, normal);
 	m_VertexCount = V / 3LLU; // Get the vertex Count!
 	m_ModelVAO.Unuse();
+	m_Materials = mat_vec;
+	if (m_Materials.empty()) {
+		Material default_material("Unknown");
+		m_Materials.emplace_back(default_material, m_VertexCount); // default material
+	}
 }
 
 template<>
-template<ssize_t V, ssize_t T, ssize_t N, ssize_t I>
-RawModel<true>::RawModel(float(&vert)[V], float(&tex)[T], float(&normal)[N], uint32(&indices)[I])
+template<ssize_t V, ssize_t I, ssize_t T, ssize_t N>
+RawModel<true>::RawModel(float(&vert)[V], uint32(&indices)[I], float(&tex)[T], float(&normal)[N], const Vector<MatrialForRawModel>& mat_vec)
 {
 	LoadFromArray(vert, tex, normal);
 	m_VertexCount = I; // Get the vertex Count!
@@ -77,6 +93,11 @@ RawModel<true>::RawModel(float(&vert)[V], float(&tex)[T], float(&normal)[N], uin
 	indexVBO.FillData(indices);
 	m_ModelVAO.Unuse();
 	indexVBO.Unuse();
+	m_Materials = mat_vec;
+	if (m_Materials.empty()) {
+		Material default_material("Unknown");
+		m_Materials.emplace_back(default_material, m_VertexCount); // default material
+	}
 }
 
 
@@ -166,6 +187,12 @@ FORCEINLINE RawModel<B>& RawModel<B>::operator=(const RawModel<B>& other) {
 	indexVBO = other.indexVBO;
 	m_VertexCount = other.m_VertexCount;
 	return *this;
+}
+
+template<bool B>
+FORCEINLINE const ssize_t RawModel<B>::GetVertexCount() const
+{
+	return m_VertexCount;
 }
 
 template<bool B>

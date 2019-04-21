@@ -5,47 +5,12 @@
 #include <Core/Misc/Utils/Logging.hpp>
 #include <Core/Misc/Utils/Common.hpp>
 #include <fstream>
-#include <fstream>
 #include <iostream>
 
 #include <RenderAPI/VertexArray/VAO.hpp>
 #include <RenderAPI/VertexBuffer/VBO.hpp>
 
 TRE_NS_START
-
-//TODO: Move this to its own clas
-static int32 ParseUint64(char* str, uint32* x)
-{
-	*x = 0;
-	if (str[0] >= '0' && str[0] <= '9') {
-		uint8 data[21];
-		int32 len = 0;
-		while (str[len] >= '0' && str[len] <= '9' && len < 11) {
-			data[len] = str[len] - '0';
-			len++;
-		}
-		for (int32 i = 0; i < len; i++) {
-			*x += data[i] * power(10u, len - i - 1);
-		}
-		return len;
-	}
-	return -1;
-}
-
-static int64 ReadLine(FILE* file, char* line, int limit)
-{
-	int32 c = 0;
-	int64 line_len = 0;
-	c = fgetc(file);
-	if (c == EOF) { return EOF; }
-	while ((c != EOF && line_len < limit && c != '\n')) {
-		line[line_len] = c;
-		line_len++;
-		c = fgetc(file);
-	}
-	line[line_len] = '\0';
-	return line_len;
-}
 
 MeshLoader::MeshLoader(const char* path)
 {
@@ -57,15 +22,15 @@ void MeshLoader::LoadFile(const char* path)
 {
 	FILE* file = fopen(path, "r");
 	ASSERTF(file != NULL, "MeshLoader couldn't open the file %s.", path);
-
-	fseek(file, 0L, SEEK_END);
-	uint64 size = ftell(file);
-	fseek(file, 0L, SEEK_SET);
+	printf("Parsing the Mesh File : %s\n", path);
 	char buffer[255];
+	char m_MaterialName[25] = "\0";
 	int64 line_len = 0;
 	ssize vert_offset = 1;
 	ssize tex_offset = 1;
 	ssize norm_offset = 1;
+	uint64 current_line = 1;
+	ssize lastVertexCount = 0;
 	while ((line_len = ReadLine(file, buffer, 255)) != EOF) {
 		if (line_len == 0) { continue; } // empty line
 		if(buffer[0] == 'o'){
@@ -74,10 +39,15 @@ void MeshLoader::LoadFile(const char* path)
 				tex_offset += m_TextureCoord[m_ObjectCount].size();
 				norm_offset += m_Normals[m_ObjectCount].size();
 			}
+			if (m_MaterialName[0] != '\0') { //We have seen usemtl so lets dump it inside the array.
+				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_Indicies[m_ObjectCount].size() - lastVertexCount);
+				// Clear it
+				m_MaterialName[0] = '\0';
+				lastVertexCount = 0;
+			}
 			m_Objects[m_ObjectCount++] = String(buffer);
-		}else if (buffer[0] == '#') {
-			//printf("# Comment :)");
-			continue; // You dont wanna parse this :)
+		}else if (buffer[0] == '#') {// You dont wanna parse this :)
+			continue; 
 		}else if (buffer[0] == 'v') {
 			if (buffer[1] == ' ') {
 				float x, y, z, w;
@@ -112,12 +82,12 @@ void MeshLoader::LoadFile(const char* path)
 			if (buffer[1] == ' ') {
 				uint32 data;
 				uint8 indicator = 0;
-				printf("f ");
+				//printf("f ");
 				int64 buffer_index = 2;
 				char c = buffer[buffer_index];
 				while (c != '\0') {
 					if (c == '\n' || c == '#') {
-						printf("\n");
+						//printf("\n");
 						break;
 					}else if (c >= '0' && c <= '9') {
 						int32 len = ParseUint64(buffer + buffer_index, &data);
@@ -141,17 +111,44 @@ void MeshLoader::LoadFile(const char* path)
 					}else if (c == ' ') {
 						indicator = 0;
 						buffer_index++;
-						printf(" ");
+						//printf(" ");
 					}else if (c == '/') {
 						indicator++;
 						buffer_index++;
-						printf("/");
+						//printf("/");
 					}
 					c = buffer[buffer_index];
 				}
 			}
+		}else if (IsEqual(buffer, "mtllib")) { // Material
+			char mtrl_name[64];
+			char mtrl_path[512];
+			char dir[255];
+			ssize buffer_i = 0;
+			ssize i = strlen("mtllib")+1;
+			while (buffer[i] != '\0' && buffer[i] != '\n' && buffer[i] != ' ') {
+				mtrl_name[buffer_i] = buffer[i];
+				i++; buffer_i++;
+			}
+			mtrl_name[buffer_i] = '\0';
+			Directory(path, dir, 255);
+			strcpy(mtrl_path, dir);
+			strcat(mtrl_path, mtrl_name);
+			m_MaterialLoader.LoadFileMTL(mtrl_path);
+		}else if (IsEqual(buffer, "usemtl")) {
+			if (m_MaterialName[0] != '\0') {
+				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_Indicies[m_ObjectCount].size() - lastVertexCount);
+				lastVertexCount = m_Indicies[m_ObjectCount].size();
+			}
+			int32 res = sscanf(buffer, "usemtl %s", m_MaterialName);
+			ASSERTF(res == 1, "Attempt to parse a corrupted OBJ file 'usemtl' is being used without material name (Line : %llu).", current_line);
 		}
 		//printf("\n");
+		current_line++;
+	}
+	if (m_MaterialName[0] != '\0') {
+		m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_Indicies[m_ObjectCount].size());
+		lastVertexCount = m_Indicies[m_ObjectCount].size();
 	}
 	m_ObjectCount++;
 	fclose(file);
@@ -163,7 +160,7 @@ void MeshLoader::ProcessData(Vector<RawModel<true>>* arrayOfObjects)
 	arrayOfObjects->reserve(m_ObjectCount);
 	int32 objectIndex = (m_ObjectCount > 1 ? 1 : 0);
 	do{
-		arrayOfObjects->emplace_back(m_Verticies[objectIndex], &m_TextureCoord[objectIndex], &m_Normals[objectIndex], m_Indicies[objectIndex]);
+		arrayOfObjects->emplace_back(m_Verticies[objectIndex], m_Indicies[objectIndex], &m_TextureCoord[objectIndex], &m_Normals[objectIndex], m_Materials[objectIndex]);
 		objectIndex++;
 	}while (objectIndex < m_ObjectCount);
 }

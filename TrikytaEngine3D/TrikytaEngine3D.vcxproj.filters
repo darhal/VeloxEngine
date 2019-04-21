@@ -213,6 +213,12 @@
     <ClInclude Include="RenderEngine\RawModel\RawModelSettings.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RenderUtils\MaterialLoader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEngine\Materials\Material.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Main.cpp">
@@ -492,6 +498,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RenderEngine\RawModel\RawModel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\Misc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Misc\Utils\Common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderUtils\MaterialLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderEngine\Materials\Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

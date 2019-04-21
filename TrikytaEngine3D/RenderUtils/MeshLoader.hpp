@@ -4,7 +4,8 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Utils/Common.hpp>
 #include <Core/Misc/Maths/Common.hpp>
-
+#include "MaterialLoader.hpp"
+#include <RenderEngine/RawModel/RawModel.hpp>
 
 TRE_NS_START
 
@@ -17,6 +18,7 @@ namespace MeshFormat
 
 class VAO;
 class VBO;
+class MaterialLoader;
 
 class MeshLoader
 {
@@ -30,9 +32,9 @@ private:
 	HashMap<uint8, Vector<vec2>> m_TextureCoord;
 	HashMap<uint8, Vector<uint32>> m_Indicies;
 	HashMap<uint8, String> m_Objects;
+	HashMap<uint8, Vector<MatrialForRawModel>> m_Materials;
+	MaterialLoader m_MaterialLoader;
 	uint8 m_ObjectCount;
 };
-
-int32 ParseUint64(char* str, uint64* x);
 
 TRE_NS_END

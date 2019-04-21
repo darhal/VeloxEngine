@@ -197,8 +197,10 @@
     <ClInclude Include="RenderAPI\VertexArray\VAO.hpp" />
     <ClInclude Include="RenderAPI\VertexArray\VAODef.hpp" />
     <ClInclude Include="RenderAPI\VertexBuffer\VBO.hpp" />
+    <ClInclude Include="RenderEngine\Materials\Material.hpp" />
     <ClInclude Include="RenderEngine\RawModel\RawModel.hpp" />
     <ClInclude Include="RenderEngine\RawModel\RawModelSettings.hpp" />
+    <ClInclude Include="RenderUtils\MaterialLoader.hpp" />
     <ClInclude Include="RenderUtils\MeshLoader.hpp" />
     <ClInclude Include="Tests\Camera.hpp" />
   </ItemGroup>
@@ -207,6 +209,7 @@
     <ClCompile Include="Core\Context\Context_Win32.cpp" />
     <ClCompile Include="Core\Context\Context_X11.cpp" />
     <ClCompile Include="Core\Context\Extensions.cpp" />
+    <ClCompile Include="Core\Misc\Utils\Common.cpp" />
     <ClCompile Include="Core\Misc\Utils\Image.cpp" />
     <ClCompile Include="Core\Misc\Utils\libjpeg\jaricom.c" />
     <ClCompile Include="Core\Misc\Utils\libjpeg\jcapimin.c" />
@@ -271,6 +274,7 @@
     <ClCompile Include="Core\Misc\Utils\libpng\pngwrite.c" />
     <ClCompile Include="Core\Misc\Utils\libpng\pngwtran.c" />
     <ClCompile Include="Core\Misc\Utils\libpng\pngwutil.c" />
+    <ClCompile Include="Core\Misc\Utils\Misc.cpp" />
     <ClCompile Include="Core\Misc\Utils\zlib\adler32.c" />
     <ClCompile Include="Core\Misc\Utils\zlib\compress.c" />
     <ClCompile Include="Core\Misc\Utils\zlib\crc32.c" />
@@ -292,7 +296,9 @@
     <ClCompile Include="RenderAPI\Texture\Texture.cpp" />
     <ClCompile Include="RenderAPI\VertexArray\VAO.cpp" />
     <ClCompile Include="RenderAPI\VertexBuffer\VBO.cpp" />
+    <ClCompile Include="RenderEngine\Materials\Material.cpp" />
     <ClCompile Include="RenderEngine\RawModel\RawModel.cpp" />
+    <ClCompile Include="RenderUtils\MaterialLoader.cpp" />
     <ClCompile Include="RenderUtils\MeshLoader.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
     <ClCompile Include="Tests\Main2.cpp" />
