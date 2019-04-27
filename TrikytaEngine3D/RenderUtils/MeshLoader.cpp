@@ -6,6 +6,7 @@
 #include <Core/Misc/Utils/Common.hpp>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 
 #include <RenderAPI/VertexArray/VAO.hpp>
 #include <RenderAPI/VertexBuffer/VBO.hpp>
@@ -40,12 +41,14 @@ void MeshLoader::LoadFile(const char* path)
 				norm_offset += m_Normals[m_ObjectCount].size();
 			}
 			if (m_MaterialName[0] != '\0') { //We have seen usemtl so lets dump it inside the array.
-				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_Indicies[m_ObjectCount].size() - lastVertexCount);
+				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_DataIndex[m_ObjectCount].size() - lastVertexCount);
 				// Clear it
 				m_MaterialName[0] = '\0';
 				lastVertexCount = 0;
 			}
-			m_Objects[m_ObjectCount++] = String(buffer);
+			m_IndiciesOfVData[m_ObjectCount] = 0;
+			m_Objects[m_ObjectCount] = String(buffer);
+			m_ObjectCount++;
 		}else if (buffer[0] == '#') {// You dont wanna parse this :)
 			continue; 
 		}else if (buffer[0] == 'v') {
@@ -82,6 +85,9 @@ void MeshLoader::LoadFile(const char* path)
 			if (buffer[1] == ' ') {
 				uint32 data;
 				uint8 indicator = 0;
+				ssize vi = -1, ni = -1, ti = -1;
+				vec3 pos, norm = vec3(0.f, 0.f, 0.f);
+				vec2 tex = vec2(0.f, 0.f);
 				//printf("f ");
 				int64 buffer_index = 2;
 				char c = buffer[buffer_index];
@@ -95,13 +101,24 @@ void MeshLoader::LoadFile(const char* path)
 							switch (indicator) {
 							case 0: // Vertex Position.
 								//face.x = data;
-								m_Indicies[m_ObjectCount].emplace_back(data - vert_offset);
+								//m_Indicies[m_ObjectCount].emplace_back(data - vert_offset);
+								vi = data - vert_offset;
+								pos = m_Verticies[m_ObjectCount].at(vi);
 								break;
 							case 1: // Vertex texture.
 								//face.y = data;
+								ti = data - tex_offset;
+								tex = m_TextureCoord[m_ObjectCount].at(ti);
 								break;
 							case 2: // Vertex normal.
 								//face.z = data;
+								/*if (std::find(m_NormalIndicies[m_ObjectCount].begin(), m_NormalIndicies[m_ObjectCount].end(), data - norm_offset) == m_NormalIndicies[m_ObjectCount].end()) {
+									m_NormalIndicies[m_ObjectCount].emplace_back(data - norm_offset);
+									m_OrderedNormals[m_ObjectCount].emplace_back(m_Normals[m_ObjectCount].at(data - norm_offset));
+									//printf("I : %d | N (%f, %f, %f)\n", data - norm_offset, m_Normals[m_ObjectCount].at(data - norm_offset).x, m_Normals[m_ObjectCount].at(data - norm_offset).y, m_Normals[m_ObjectCount].at(data - norm_offset).z);
+								}*/
+								ni = data - norm_offset;
+								norm = m_Normals[m_ObjectCount].at(ni);
 								break;
 							}
 							buffer_index += len;
@@ -110,7 +127,18 @@ void MeshLoader::LoadFile(const char* path)
 						}
 					}else if (c == ' ') {
 						indicator = 0;
+						if (vi != -1) {
+							if (!m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)]) { // if v/vn/vt	isnt already exist and indexed
+								m_VerteciesData[m_ObjectCount].emplace_back(pos, norm, tex);
+								m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)] = m_IndiciesOfVData[m_ObjectCount];
+								m_IndiciesOfVData[m_ObjectCount]++;
+							}else {
+								//printf("Index (%ld, %ld, %ld) already exist and its i = %d\n", (long)vi, (long)ni, (long)ti, m_VertexDataIndex[m_ObjectCount][std::tuple<int64, int64, int64>(vi, ni, ti)]);
+							}
+							m_DataIndex[m_ObjectCount].emplace_back(m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)]);
+						}
 						buffer_index++;
+						vi = -1; ni = -1; ti = -1;
 						//printf(" ");
 					}else if (c == '/') {
 						indicator++;
@@ -118,6 +146,16 @@ void MeshLoader::LoadFile(const char* path)
 						//printf("/");
 					}
 					c = buffer[buffer_index];
+				}
+				if (vi != -1) {
+					if (!m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)]) { // if v/vn/vt	isnt already exist and indexed
+						m_VerteciesData[m_ObjectCount].emplace_back(pos, norm, tex);
+						m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)] = m_IndiciesOfVData[m_ObjectCount];
+						m_IndiciesOfVData[m_ObjectCount]++;
+					}else {
+						//printf("Index (%ld, %ld, %ld) already exist and its i = %d\n", (long)vi, (long)ni, (long)ti, m_VertexDataIndex[m_ObjectCount][std::tuple<int64, int64, int64>(vi, ni, ti)]);
+					}
+					m_DataIndex[m_ObjectCount].emplace_back(m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)]);
 				}
 			}
 		}else if (IsEqual(buffer, "mtllib")) { // Material
@@ -137,8 +175,8 @@ void MeshLoader::LoadFile(const char* path)
 			m_MaterialLoader.LoadFileMTL(mtrl_path);
 		}else if (IsEqual(buffer, "usemtl")) {
 			if (m_MaterialName[0] != '\0') {
-				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_Indicies[m_ObjectCount].size() - lastVertexCount);
-				lastVertexCount = m_Indicies[m_ObjectCount].size();
+				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_DataIndex[m_ObjectCount].size() - lastVertexCount);
+				lastVertexCount = m_DataIndex[m_ObjectCount].size();
 			}
 			int32 res = sscanf(buffer, "usemtl %s", m_MaterialName);
 			ASSERTF(res == 1, "Attempt to parse a corrupted OBJ file 'usemtl' is being used without material name (Line : %llu).", current_line);
@@ -147,8 +185,8 @@ void MeshLoader::LoadFile(const char* path)
 		current_line++;
 	}
 	if (m_MaterialName[0] != '\0') {
-		m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_Indicies[m_ObjectCount].size());
-		lastVertexCount = m_Indicies[m_ObjectCount].size();
+		m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_DataIndex[m_ObjectCount].size() - lastVertexCount);
+		lastVertexCount = m_DataIndex[m_ObjectCount].size();
 	}
 	m_ObjectCount++;
 	fclose(file);
@@ -160,9 +198,41 @@ void MeshLoader::ProcessData(Vector<RawModel<true>>* arrayOfObjects)
 	arrayOfObjects->reserve(m_ObjectCount);
 	int32 objectIndex = (m_ObjectCount > 1 ? 1 : 0);
 	do{
-		arrayOfObjects->emplace_back(m_Verticies[objectIndex], m_Indicies[objectIndex], &m_TextureCoord[objectIndex], &m_Normals[objectIndex], m_Materials[objectIndex]);
+		arrayOfObjects->emplace_back(m_VerteciesData[objectIndex], m_DataIndex[objectIndex], m_Materials[objectIndex]);
+		/*printf("index = {");
+		for (uint32 i : m_DataIndex[objectIndex]) {
+			printf("%d ", i);
+		}
+		printf("}\n");
+		printf("----------------------------\n");
+		printf("data = {\n");
+		for (const auto& data : m_VerteciesData[objectIndex]) {
+			printf("[V(%f, %f, %f) / N(%f, %f, %f) / T(%f, %f)]\n",
+				data.pos.x, data.pos.y, data.pos.z,
+				data.normal.x, data.normal.y, data.normal.z,
+				data.texture.x, data.texture.y
+			);
+		}
+		printf("}\n");
+		printf("----------------------------\n");
+		for (uint32 i : m_DataIndex[objectIndex]) {
+			const auto& data = m_VerteciesData[objectIndex].at(i);
+			printf("{V(%f, %f, %f) / N(%f, %f, %f) / T(%f, %f)}\n",
+				data.pos.x, data.pos.y, data.pos.z,
+				data.normal.x, data.normal.y, data.normal.z,
+				data.texture.x, data.texture.y
+			);
+		}*/
+		//arrayOfObjects->emplace_back(m_Verticies[objectIndex], m_Indicies[objectIndex], &m_TextureCoord[objectIndex], &m_OrderedNormals[objectIndex], m_Materials[objectIndex]);
 		objectIndex++;
 	}while (objectIndex < m_ObjectCount);
 }
+
+/*printf("Indexing (%ld, %ld, %ld) DATA=[V(%f, %f, %f) / N(%f, %f, %f) / T(%f, %f)]\n",
+	(long)vi, (long)ni, (long)ti,
+	m_VerteciesData[m_ObjectCount].back().pos.x, m_VerteciesData[m_ObjectCount].back().pos.y, m_VerteciesData[m_ObjectCount].back().pos.z,
+	m_VerteciesData[m_ObjectCount].back().normal.x, m_VerteciesData[m_ObjectCount].back().normal.y, m_VerteciesData[m_ObjectCount].back().normal.z,
+	m_VerteciesData[m_ObjectCount].back().texture.x, m_VerteciesData[m_ObjectCount].back().texture.y
+);*/
 
 TRE_NS_END

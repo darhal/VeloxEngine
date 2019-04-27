@@ -17,6 +17,7 @@ public:
 	vec3 m_Ambient;
 	vec3 m_Diffuse;
 	vec3 m_Specular;
+	float m_Shininess;
 
 	friend class MaterialLoader;
 };

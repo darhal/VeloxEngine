@@ -18,6 +18,14 @@ struct MatrialForRawModel
 	{}
 };
 
+struct VertexData
+{
+	VertexData(const vec3& p, const vec3& n, const vec2& t) : pos(p), normal(n), texture(t)
+	{}
+	vec3 pos, normal;
+	vec2 texture;
+};
+
 template<bool IsIndexed>
 class RawModel
 {
@@ -40,6 +48,9 @@ public:
 	RawModel(const Vector<vec3>& vertices, const Vector<uint32>& indices, const Vector<vec2>* textures = NULL, const Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = NULL);
 	RawModel(const Vector<vec3>& vertices, const Vector<vec2>* textures = NULL, const Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = {});
 
+	RawModel(const Vector<VertexData>& ver_data, const Vector<uint32>& indices, const Vector<MatrialForRawModel>& mat_vec);
+	RawModel(const Vector<VertexData>& ver_data, const Vector<MatrialForRawModel>& mat_vec);
+
 	void Render(const ShaderProgram& shader) const;
 
 	FORCEINLINE void Use(const ShaderProgram& shader) const;
@@ -55,6 +66,7 @@ private:
 	void LoadFromArray(float(&vert)[V], float(&tex)[T], float(&normal)[N]);
 	void LoadFromSettings(const RawModelSettings& settings);
 	void LoadFromVector(const Vector<vec3>& vertices, const Vector<vec2>* textures, const Vector<vec3>* normals);
+	void LoadFromVertexData(const Vector<VertexData>& ver_data);
 
 	VAO m_ModelVAO;
 	VBO vertexVBO;
@@ -134,18 +146,18 @@ void RawModel<B>::LoadFromSettings(const RawModelSettings& settings)
 	vertexVBO.FillData(settings.vertices, settings.vertexSize * sizeof(float));
 	m_ModelVAO.BindAttribute<DataType::FLOAT>(0, vertexVBO, 3, 0, 0);
 
-	if (settings.textureSize != 0 && settings.textures != NULL) { //Fill Texture if availble
-		textureVBO.Generate(BufferTarget::ARRAY_BUFFER);
-		textureVBO.FillData(settings.textures, settings.textureSize * sizeof(float));
-		m_ModelVAO.BindAttribute<DataType::FLOAT>(1, textureVBO, 2, 0, 0);
-	}
-
 	if (settings.normalSize != 0 && settings.normals != NULL) { // Fill normals if availble
 		//Fill normals:
 		normalVBO.Generate(BufferTarget::ARRAY_BUFFER);
 		normalVBO.FillData(settings.normals, settings.normalSize * sizeof(float));
-		m_ModelVAO.BindAttribute<DataType::FLOAT>(2, normalVBO, 3, 0, 0);
+		m_ModelVAO.BindAttribute<DataType::FLOAT>(1, normalVBO, 3, 0, 0);
 		normalVBO.Unuse();
+	}
+
+	if (settings.textureSize != 0 && settings.textures != NULL) { //Fill Texture if availble
+		textureVBO.Generate(BufferTarget::ARRAY_BUFFER);
+		textureVBO.FillData(settings.textures, settings.textureSize * sizeof(float));
+		m_ModelVAO.BindAttribute<DataType::FLOAT>(2, textureVBO, 2, 0, 0);
 	}
 }
 

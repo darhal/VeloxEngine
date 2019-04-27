@@ -30,11 +30,16 @@ private:
 	HashMap<uint8, Vector<vec3>> m_Verticies;
 	HashMap<uint8, Vector<vec3>> m_Normals;
 	HashMap<uint8, Vector<vec2>> m_TextureCoord;
-	HashMap<uint8, Vector<uint32>> m_Indicies;
+	HashMap<uint8, Vector<uint32>> m_NormalIndicies;
 	HashMap<uint8, String> m_Objects;
 	HashMap<uint8, Vector<MatrialForRawModel>> m_Materials;
 	MaterialLoader m_MaterialLoader;
 	uint8 m_ObjectCount;
+
+	HashMap<uint8, HashMap<std::tuple<ssize, ssize, ssize>, uint32>> m_VertexDataIndex;
+	HashMap<uint8, uint32> m_IndiciesOfVData;
+	HashMap<uint8, Vector<uint32>> m_DataIndex;
+	HashMap<uint8, Vector<VertexData>> m_VerteciesData;
 };
 
 TRE_NS_END

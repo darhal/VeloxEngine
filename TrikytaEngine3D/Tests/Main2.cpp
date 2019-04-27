@@ -153,7 +153,7 @@ int main()
 	printf("- Version       : %s\n", glGetString(GL_VERSION));
 	printf("- GLSL Version  : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	MeshLoader carrot("res/obj/lowpoly/Fir_Tree_tri.obj");
+	MeshLoader carrot("res/obj/lowpoly/all_combined_hard.obj");
 	Vector<RawModel<true>> carrotModel;
 	carrot.ProcessData(&carrotModel);
 
@@ -169,8 +169,17 @@ int main()
 	mat4 projection = mat4::perspective(camera.Zoom, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 	float timer = 0.f;
 	float lastFrame = 0.f;
+
 	Enable(Capability::DEPTH_TEST);
 	Enable(GL_MULTISAMPLE);
+
+	ourShader.Use();
+	ourShader.SetVec3("light.ambient", 0.12f, 0.12f, 0.12f);
+	ourShader.SetVec3("light.diffuse", 0.7f, 0.7f, 0.7f);
+	ourShader.SetVec3("light.specular", 1.0f, 1.0f, 1.0f);
+	ourShader.SetVec3("light.position", 15.f, 15.f, 15.f);
+	ourShader.SetVec3("ViewPos", camera.Position);
+
 	while (window.isOpen())
 	{
 		if (window.getEvent(ev)) {
@@ -183,7 +192,6 @@ int main()
 		timer += 0.0005f;
 		deltaTime = timer - lastFrame;
 		lastFrame = timer;
-
 	
 		mat4 view = camera.GetViewMatrix();
 		for (const RawModel<true>& obj : carrotModel) {
@@ -193,11 +201,12 @@ int main()
 				// calculate the model matrix for each object and pass it to shader before drawing
 				mat4 model;
 				model.translate(cubePositions[i]);
-				float angle = 20.0f * i;
-				model.rotate(vec3(1.0f, 0.3f, 0.5f), rad(angle));
+				float angle = timer * 1.f;
+				model.rotate(vec3(.0f, 1.0f, 0.f), angle);
 				model.scale(vec3(0.5f, 0.5f, 0.5f));
 				mat4 MVP = projection * view * model;
 				ourShader.SetMat4("MVP", MVP);
+				ourShader.SetMat4("model", model);
 				//obj.Render();
 				obj.Render(ourShader);
 			//}

@@ -44,6 +44,12 @@ void MaterialLoader::LoadFileMTL(const char* path)
 			ASSERTF(res == 3, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the specular component (Line : %llu).", current_line);
 			m_NameToMaterial[current_name].m_Specular = specular;
 			//printf("Ks %f %f %f\n", specular.x, specular.y, specular.z);
+		}else if (IsEqual(buffer, "Ns")) {
+			float shininess;
+			int32 res = sscanf(buffer, "Ns %f", &shininess);
+			ASSERTF(res == 1, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the shininess component (Line : %llu).", current_line);
+			m_NameToMaterial[current_name].m_Shininess = shininess;
+			//printf("Ks %f %f %f\n", specular.x, specular.y, specular.z);
 		}
 		current_line++;
 	}
