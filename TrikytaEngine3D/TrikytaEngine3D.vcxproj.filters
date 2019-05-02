@@ -204,19 +204,19 @@
     <ClInclude Include="RenderAPI\Common.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RenderUtils\MeshLoader.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RenderEngine\RawModel\RawModel.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RenderEngine\RawModel\RawModelSettings.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RenderUtils\MaterialLoader.hpp">
+    <ClInclude Include="RenderEngine\Materials\Material.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RenderEngine\Materials\Material.hpp">
+    <ClInclude Include="RenderEngine\Loader\MaterialLoader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEngine\Loader\MeshLoader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -491,9 +491,6 @@
     <ClCompile Include="RenderAPI\VertexBuffer\VBO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderUtils\MeshLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\Main2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -506,10 +503,13 @@
     <ClCompile Include="Core\Misc\Utils\Common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderUtils\MaterialLoader.cpp">
+    <ClCompile Include="RenderEngine\Materials\Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderEngine\Materials\Material.cpp">
+    <ClCompile Include="RenderEngine\Loader\MaterialLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderEngine\Loader\MeshLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

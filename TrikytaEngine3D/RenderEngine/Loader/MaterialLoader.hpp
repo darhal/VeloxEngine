@@ -10,7 +10,7 @@ class MaterialLoader
 {
 public:
 	MaterialLoader();
-	void LoadFileMTL(const char* path);
+	void LoadFileMTL(const char* mtrl_path, const char* obj_path);
 	Material& GetMaterialFromName(const char* name);
 private:
 	HashMap<String, Material> m_NameToMaterial;

@@ -10,13 +10,13 @@ MaterialLoader::MaterialLoader()
 {
 }
 
-void MaterialLoader::LoadFileMTL(const char* path)
+void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 {
-	FILE* file = fopen(path, "r");
-	ASSERTF(file != NULL, "MaterialLoader couldn't open the file %s.", path);
+	FILE* file = fopen(mtrl_path, "r");
+	ASSERTF(file != NULL, "MaterialLoader couldn't open the file %s.", mtrl_path);
 	char buffer[255];
 	int64 line_len = 0;
-	printf("Parsing the materials: %s\n", path);
+	printf("Parsing the materials: %s\n", mtrl_path);
 	uint64 current_line = 1;
 	String current_name;
 	while ((line_len = ReadLine(file, buffer, 255)) != EOF) {
@@ -50,6 +50,22 @@ void MaterialLoader::LoadFileMTL(const char* path)
 			ASSERTF(res == 1, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the shininess component (Line : %llu).", current_line);
 			m_NameToMaterial[current_name].m_Shininess = shininess;
 			//printf("Ks %f %f %f\n", specular.x, specular.y, specular.z);
+		}else if (IsEqual(buffer, "map_Kd")) {
+			char tex_file[255];
+			char tex_path[512];
+			int32 res = sscanf(buffer, "map_Kd %s", &tex_file);
+			ASSERTF(res == 1, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the diffuse map component (Line : %llu).", current_line);
+			strcpy(tex_path, obj_path);
+			strcat(tex_path, tex_file);
+			m_NameToMaterial[current_name].AddTexture(Material::DIFFUSE, tex_path);
+		}else if (IsEqual(buffer, "map_Ks")) {
+			char tex_file[255];
+			char tex_path[512];
+			int32 res = sscanf(buffer, "map_Ks %s", &tex_file);
+			ASSERTF(res == 1, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the specular map component (Line : %llu).", current_line);
+			strcpy(tex_path, obj_path);
+			strcat(tex_path, tex_file);
+			m_NameToMaterial[current_name].AddTexture(Material::SPECULAR, tex_path);
 		}
 		current_line++;
 	}

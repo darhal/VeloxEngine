@@ -2,19 +2,20 @@
 
 TRE_NS_START
 
-Material::Material(const vec3& ambient, const vec3& diffuse, const vec3& specular) : 
-	m_Ambient(ambient), m_Diffuse(diffuse), m_Specular(specular)
+void Material::AddTexture(const TextureMap& type, const char* tex_path)
 {
-}
-
-Material::Material(const String& name) : m_Name(name)
-{
-}
-
-Material::Material() : 
-	m_Name("Default"), m_Ambient(vec3{1.f, 1.f, 1.f}), 
-	m_Diffuse(vec3(0.64f, 0.64f, 0.64f)), m_Specular(vec3(1.f, 1.f, 1.f))
-{
+	printf("Loading the texture : %s\n", tex_path);
+	m_Textures.emplace(
+		std::make_pair(
+			type, 
+			Texture(tex_path, TexTarget::TEX2D, {
+				{TexParam::TEX_WRAP_S , TexWrapping::REPEAT},
+				{TexParam::TEX_WRAP_T, TexWrapping::REPEAT},
+				{TexParam::TEX_MIN_FILTER, TexFilter::LINEAR},
+				{TexParam::TEX_MAG_FILTER, TexFilter::LINEAR}
+			})
+		)
+	);
 }
 
 TRE_NS_END

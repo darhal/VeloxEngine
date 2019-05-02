@@ -18,7 +18,7 @@
 #include <Core/Context/Context.hpp>
 #include "Camera.hpp"
 
-#include <RenderUtils/MeshLoader.hpp>
+#include <RenderEngine/Loader/MeshLoader.hpp>
 #include <RenderEngine/RawModel/RawModel.hpp>
 #include <RenderAPI/GlobalState/GLState.hpp>
 
@@ -153,7 +153,7 @@ int main()
 	printf("- Version       : %s\n", glGetString(GL_VERSION));
 	printf("- GLSL Version  : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	MeshLoader carrot("res/obj/lowpoly/all_combined_hard.obj");
+	MeshLoader carrot("res/obj/girl/girl.obj");
 	Vector<RawModel<true>> carrotModel;
 	carrot.ProcessData(&carrotModel);
 
@@ -172,6 +172,9 @@ int main()
 
 	Enable(Capability::DEPTH_TEST);
 	Enable(GL_MULTISAMPLE);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+	glFrontFace(GL_CW);
 
 	ourShader.Use();
 	ourShader.SetVec3("light.ambient", 0.12f, 0.12f, 0.12f);
@@ -179,6 +182,8 @@ int main()
 	ourShader.SetVec3("light.specular", 1.0f, 1.0f, 1.0f);
 	ourShader.SetVec3("light.position", 15.f, 15.f, 15.f);
 	ourShader.SetVec3("ViewPos", camera.Position);
+	ourShader.SetInt("material.diffuse_tex", 0);
+	ourShader.SetInt("material.specular_tex", 1);
 
 	while (window.isOpen())
 	{
@@ -203,7 +208,7 @@ int main()
 				model.translate(cubePositions[i]);
 				float angle = timer * 1.f;
 				model.rotate(vec3(.0f, 1.0f, 0.f), angle);
-				model.scale(vec3(0.5f, 0.5f, 0.5f));
+				model.scale(vec3(0.9f, 0.9f, 0.9f));
 				mat4 MVP = projection * view * model;
 				ourShader.SetMat4("MVP", MVP);
 				ourShader.SetMat4("model", model);

@@ -251,6 +251,9 @@ public:
 
 	explicit FORCEINLINE Texture(const Texture& other);
 	FORCEINLINE Texture& operator=(const Texture& other);
+
+	explicit FORCEINLINE Texture(Texture&& other);
+	FORCEINLINE Texture& operator=(Texture&& other);
 private:
 	uint32 m_ID;
 	TexTarget::tex_target_t m_target;
@@ -265,6 +268,21 @@ FORCEINLINE Texture::Texture(const Texture& other) :
 }
 
 FORCEINLINE Texture& Texture::operator=(const Texture& other)
+{
+	m_ID = other.m_ID;
+	m_target = other.m_target;
+	const_cast<Texture&>(other).SetAutoClean(false);
+	this->SetAutoClean(true);
+	return *this;
+}
+
+FORCEINLINE Texture::Texture(Texture&& other) :
+	m_ID(other.m_ID), m_target(other.m_target), m_AutoClean(true)
+{
+	const_cast<Texture&>(other).SetAutoClean(false);
+}
+
+FORCEINLINE Texture& Texture::operator=(Texture&& other)
 {
 	m_ID = other.m_ID;
 	m_target = other.m_target;

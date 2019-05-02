@@ -30,13 +30,13 @@ private:
 };
 
 template<typename T>
-FORCEINLINE static bool GLState::IsBound(const T& obj)
+FORCEINLINE bool GLState::IsBound(const T& obj)
 {
 	return m_bindings[obj.GetBindingTarget()] == obj.GetID();
 }
 
 template<typename T>
-FORCEINLINE static void GLState::Bind(const T& obj)
+FORCEINLINE void GLState::Bind(const T& obj)
 {
 	if (GLState::IsBound(obj)) return;
 	m_bindings[obj.GetBindingTarget()] = obj.GetID();
@@ -44,13 +44,13 @@ FORCEINLINE static void GLState::Bind(const T& obj)
 }
 
 template<typename T>
-FORCEINLINE static bool GLState::IsBound(const T* obj)
+FORCEINLINE bool GLState::IsBound(const T* obj)
 {
 	return m_bindings[obj->GetBindingTarget()] == obj->GetID();
 }
 
 template<typename T>
-FORCEINLINE static void GLState::Bind(const T* obj)
+FORCEINLINE void GLState::Bind(const T* obj)
 {
 	if (GLState::IsBound(obj)) return;
 	m_bindings[obj->GetBindingTarget()] = obj->GetID();
@@ -58,7 +58,7 @@ FORCEINLINE static void GLState::Bind(const T* obj)
 }
 
 template<typename T>
-FORCEINLINE static void GLState::Unbind(const T* obj)
+FORCEINLINE void GLState::Unbind(const T* obj)
 {
 	if (!GLState::IsBound(obj)) return;
 	obj->Unbind();
@@ -66,7 +66,7 @@ FORCEINLINE static void GLState::Unbind(const T* obj)
 }
 
 template<typename T>
-FORCEINLINE static void GLState::Unbind(const T& obj)
+FORCEINLINE void GLState::Unbind(const T& obj)
 {
 	if (!GLState::IsBound(obj)) return;
 	obj.Unbind();

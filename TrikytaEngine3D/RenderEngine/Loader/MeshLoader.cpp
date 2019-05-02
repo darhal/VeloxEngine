@@ -73,13 +73,13 @@ void MeshLoader::LoadFile(const char* path)
 			else if (buffer[1] == 't') {
 				float x, y, z;
 				int32 nargs = sscanf(buffer + 2, " %f %f %f", &x, &y, &z);
-				if (nargs == 3) {
+				/*if (nargs == 3) {
 					//m_TextureCoord[m_ObjectCount-1].emplace_back(x, y, z);
 					//printf("vt %f %f %f [ObjectCount = %d]", x, y, z, m_ObjectCount);
-				}if (nargs == 2) {
-					m_TextureCoord[m_ObjectCount].emplace_back(x, y);
+				}*///if (nargs == 2) {
+					m_TextureCoord[m_ObjectCount].emplace_back(x, 1.f-y);
 					//printf("vt %f %f", x, y);
-				}
+				//}
 			}
 		}else if (buffer[0] == 'f') {
 			if (buffer[1] == ' ') {
@@ -172,7 +172,7 @@ void MeshLoader::LoadFile(const char* path)
 			Directory(path, dir, 255);
 			strcpy(mtrl_path, dir);
 			strcat(mtrl_path, mtrl_name);
-			m_MaterialLoader.LoadFileMTL(mtrl_path);
+			m_MaterialLoader.LoadFileMTL(mtrl_path, dir);
 		}else if (IsEqual(buffer, "usemtl")) {
 			if (m_MaterialName[0] != '\0') {
 				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_DataIndex[m_ObjectCount].size() - lastVertexCount);

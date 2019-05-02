@@ -84,6 +84,10 @@ void RawModel<false>::Render(const ShaderProgram& shader) const
 		shader.SetVec3("material.ambient", mat.material.m_Ambient);
 		shader.SetVec3("material.specular", mat.material.m_Specular);
 		shader.SetFloat("material.shininess", mat.material.m_Shininess);
+		for (const auto& tex : mat.material.m_Textures) {
+			glActiveTexture(GL_TEXTURE0 + tex.first);
+			tex.second.Use();
+		}
 		DrawArrays(Primitive::TRIANGLES, lastVertexCount, mat.vcount);
 		lastVertexCount += mat.vcount;
 	}
@@ -98,6 +102,10 @@ void RawModel<true>::Render(const ShaderProgram& shader) const
 		shader.SetVec3("material.ambient", mat.material.m_Ambient);
 		shader.SetVec3("material.specular", mat.material.m_Specular);
 		shader.SetFloat("material.shininess", mat.material.m_Shininess);
+		for (const auto& tex : mat.material.m_Textures) {
+			glActiveTexture(GL_TEXTURE0 + tex.first);
+			tex.second.Use();
+		}
 		DrawElements(Primitive::TRIANGLES, DataType::UINT, mat.vcount, lastVertexCount*sizeof(uint32));
 		lastVertexCount += mat.vcount;
 	}
