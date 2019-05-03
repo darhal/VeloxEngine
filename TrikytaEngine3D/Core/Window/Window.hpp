@@ -89,7 +89,7 @@ public:
 	Window(const Window&);
 	const Window& operator=(const Window&);
 
-	FORCEINLINE Key::key_t TranslateKey(uint32 code);
+	FORCEINLINE Key::key_t TranslateKey(ssize code);
 };
 
 }

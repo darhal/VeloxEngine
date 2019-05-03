@@ -289,10 +289,22 @@ LRESULT CALLBACK TRE::Window::WindowEventHandler(HWND hwnd, UINT msg, WPARAM wPa
 		// Store pointer to associated Window class as userdata in Win32 window
 		window = reinterpret_cast<Window*>(((LPCREATESTRUCT)lParam)->lpCreateParams);
 		window->window = hwnd;
-		SetWindowLong(hwnd, GWL_USERDATA, reinterpret_cast<long>(window));
+
+#if (CPU_ARCH == CPU_ARCH_x86)
+		SetWindowLong(hwnd, GWL_USERDATA, reinterpret_cast<DWORD_PTR>(window));
+#elif (CPU_ARCH == CPU_ARCH_x86_64)
+		SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<DWORD_PTR>(window));
+#endif
+
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}else{
+
+#if (CPU_ARCH == CPU_ARCH_x86)
 		window = reinterpret_cast<Window*>(GetWindowLong(hwnd, GWL_USERDATA));
+#elif (CPU_ARCH == CPU_ARCH_x86_64)
+		window = reinterpret_cast<Window*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+#endif
+
 		if (window != nullptr)
 			return window->WindowEvent(msg, wParam, lParam);
 		else
@@ -300,7 +312,7 @@ LRESULT CALLBACK TRE::Window::WindowEventHandler(HWND hwnd, UINT msg, WPARAM wPa
 	}
 }
 
-FORCEINLINE Key::key_t TRE::Window::TranslateKey(uint code)
+FORCEINLINE Key::key_t TRE::Window::TranslateKey(ssize code)
 {
 	switch (code)
 	{

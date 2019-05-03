@@ -78,7 +78,7 @@ RawModel<false>::RawModel(const Vector<VertexData>& ver_data, const Vector<Matri
 template<>
 void RawModel<false>::Render(const ShaderProgram& shader) const
 {
-	uint32 lastVertexCount = 0;
+	int32 lastVertexCount = 0;
 	for (const MatrialForRawModel& mat : m_Materials) {
 		shader.SetVec3("material.diffuse", mat.material.m_Diffuse);
 		shader.SetVec3("material.ambient", mat.material.m_Ambient);
@@ -96,7 +96,7 @@ void RawModel<false>::Render(const ShaderProgram& shader) const
 template<>
 void RawModel<true>::Render(const ShaderProgram& shader) const
 {
-	uint32 lastVertexCount = 0;
+	int32 lastVertexCount = 0;
 	for (const MatrialForRawModel& mat : m_Materials) {
 		shader.SetVec3("material.diffuse", mat.material.m_Diffuse);
 		shader.SetVec3("material.ambient", mat.material.m_Ambient);

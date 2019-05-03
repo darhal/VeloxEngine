@@ -10,7 +10,7 @@ VAO::VAO() : m_AutoClean(true)
 	glGenVertexArrays(1, &m_ID);
 }
 
-void VAO::BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, ssize_t stride, const void* offset)
+void VAO::BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, int32 stride, const void* offset)
 {
 	this->Use(); //glBindVertexArray(m_ID);
 	buffer.Use(); //glBindBuffer(buffer.GetTarget(), buffer);

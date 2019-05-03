@@ -20,10 +20,13 @@
 //Detect CPU architecture
 #if (defined(_M_AMD64) || defined(_M_X64) || defined(__amd64) ) || defined(__x86_64__) || defined(__amd64__) || defined(__x86_64) // AMD64 / x86
 	#define SIMD_CPU_ARCH CPU_ARCH_x86_64
+	#define CPU_ARCH CPU_ARCH_x86_64
 #elif defined(_M_X86) || defined(__i386__) || defined(_X86_) || defined(_M_IX86) // Intel x86
 	#define SIMD_CPU_ARCH CPU_ARCH_x86
+	#define CPU_ARCH CPU_ARCH_x86
 #else
 	#define SIMD_CPU_ARCH CPU_ARCH_OTHER
+	#define CPU_ARCH CPU_ARCH_OTHER
 #endif
 
 //Detect supported SIMD features

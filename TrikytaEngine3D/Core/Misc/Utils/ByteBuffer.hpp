@@ -95,7 +95,7 @@ public:
 	ByteWriter(bool littleEndian) : littleEndian(littleEndian) {};
 
 	uint8* Data() { return &buffer[0]; }
-	uint Length() { return buffer.size(); }
+	ssize Length() { return buffer.size(); }
 
 	void Pad(uint count)
 	{

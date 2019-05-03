@@ -135,7 +135,7 @@ FORCEINLINE static void DrawArrays(Primitive::primitive_t mode, int32 start, int
 	glDrawArrays(mode, start, end);
 }
 
-FORCEINLINE static void DrawElements(Primitive::primitive_t mode, DataType::data_type_t type, uint32 count, intptr offset) // only unsigned int, unsinged char and unsigned short allowed here
+FORCEINLINE static void DrawElements(Primitive::primitive_t mode, DataType::data_type_t type, int32 count, intptr offset) // only unsigned int, unsinged char and unsigned short allowed here
 {
 	glDrawElements(mode, count, type, (const void*)offset);
 }

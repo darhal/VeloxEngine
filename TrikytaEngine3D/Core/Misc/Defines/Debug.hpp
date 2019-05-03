@@ -23,11 +23,12 @@ inline static void PrintDate()
 #else
 	#include <string.h>
 
-	#if defined(COMPILER_MSVC)
+	#if defined(COMPILER_MSVC) && (CPU_ARCH == CPU_ARCH_x86)
 		#define DEBUG_BREAK() __asm { int 3 }
+	#elif defined(COMPILER_GCC)
+		#define DEBUG_BREAK() asm ("int 3");
 	#else
-		//#define DEBUG_BREAK() __asm ( "int 3" );
-		#define DEBUG_BREAK();
+		#define DEBUG_BREAK()
 	#endif
 	
 	#if defined(OS_WINDOWS)

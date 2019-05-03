@@ -13,8 +13,8 @@ TRE_NS_START
 struct MatrialForRawModel
 {
 	Material material;
-	ssize vcount;
-	MatrialForRawModel(const Material& material, ssize vcount) : material(material), vcount(vcount)
+	int32 vcount;
+	MatrialForRawModel(const Material& material, int32 vcount) : material(material), vcount(vcount)
 	{}
 };
 

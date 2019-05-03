@@ -20,7 +20,7 @@ public:
 	template<typename T>
 	void BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, uint32 stride, intptr offset);
 
-	void BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, ssize_t stride, const void* offset);
+	void BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, int32 stride, const void* offset);
 
 	FORCEINLINE const uint32 GetID() const { return m_ID; }
 	FORCEINLINE operator uint32() const { return m_ID; }

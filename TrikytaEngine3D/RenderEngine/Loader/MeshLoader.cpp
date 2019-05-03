@@ -41,7 +41,7 @@ void MeshLoader::LoadFile(const char* path)
 				norm_offset += m_Normals[m_ObjectCount].size();
 			}
 			if (m_MaterialName[0] != '\0') { //We have seen usemtl so lets dump it inside the array.
-				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_DataIndex[m_ObjectCount].size() - lastVertexCount);
+				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), (int32)(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
 				// Clear it
 				m_MaterialName[0] = '\0';
 				lastVertexCount = 0;
@@ -175,7 +175,7 @@ void MeshLoader::LoadFile(const char* path)
 			m_MaterialLoader.LoadFileMTL(mtrl_path, dir);
 		}else if (IsEqual(buffer, "usemtl")) {
 			if (m_MaterialName[0] != '\0') {
-				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_DataIndex[m_ObjectCount].size() - lastVertexCount);
+				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), (int32)(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
 				lastVertexCount = m_DataIndex[m_ObjectCount].size();
 			}
 			int32 res = sscanf(buffer, "usemtl %s", m_MaterialName);
@@ -185,7 +185,7 @@ void MeshLoader::LoadFile(const char* path)
 		current_line++;
 	}
 	if (m_MaterialName[0] != '\0') {
-		m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), m_DataIndex[m_ObjectCount].size() - lastVertexCount);
+		m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), (int32)(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
 		lastVertexCount = m_DataIndex[m_ObjectCount].size();
 	}
 	m_ObjectCount++;
