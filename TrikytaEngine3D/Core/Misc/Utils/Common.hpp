@@ -64,7 +64,7 @@ static void Directory(const char* path, char* dst, ssize size)
 	Basepath(path, strlen(path), dst, size, seprator);
 }
 
-static int64 ReadLine(FILE* file, char* line, int limit)
+static int64 ReadLine(FILE* file, char* line, uint32 limit)
 {
 	int32 c = 0;
 	int64 line_len = 0;

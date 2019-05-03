@@ -153,7 +153,7 @@ int main()
 	printf("- Version       : %s\n", glGetString(GL_VERSION));
 	printf("- GLSL Version  : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	MeshLoader carrot("res/obj/lowpoly/deagle.obj");
+	MeshLoader carrot("res/obj/girl/girl.obj");
 	Vector<RawModel<true>> carrotModel;
 	carrot.ProcessData(&carrotModel);
 

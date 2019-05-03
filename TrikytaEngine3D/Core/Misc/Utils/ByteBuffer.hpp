@@ -82,7 +82,7 @@ public:
 private:
 	uint8* buffer;
 	uint length;
-	uint ptr;
+	ssize ptr;
 	bool littleEndian;
 
 	ByteReader(const ByteReader&);

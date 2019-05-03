@@ -61,11 +61,11 @@ typedef int32_t intptr_t;
  * to be the only LLP64 architecture in current use.
 */
 #ifdef _WIN64
-typedef signed   long long int ssize_t;
-typedef unsigned long long int usize_t;
+typedef signed	 long long ssize_t;
+typedef unsigned long long usize_t;
 #else
-typedef signed   long  int     ssize_t;
-typedef unsigned long  int     usize_t;
+typedef signed   int     ssize_t;
+typedef unsigned int     usize_t;
 #endif
 
 typedef int8_t int8;
@@ -82,7 +82,6 @@ typedef ssize_t ssize;
 typedef usize_t usize;
 typedef intptr_t intptr;
 typedef uintptr_t uintptr;
-
 
 #ifdef COMPILER_MSVC
 #define FORCEINLINE __forceinline

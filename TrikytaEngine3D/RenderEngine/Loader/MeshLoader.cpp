@@ -27,11 +27,11 @@ void MeshLoader::LoadFile(const char* path)
 	char buffer[255];
 	char m_MaterialName[25] = "\0";
 	int64 line_len = 0;
-	ssize vert_offset = 1;
-	ssize tex_offset = 1;
-	ssize norm_offset = 1;
+	usize vert_offset = 1;
+	usize tex_offset = 1;
+	usize norm_offset = 1;
+	usize lastVertexCount = 0;
 	uint64 current_line = 1;
-	ssize lastVertexCount = 0;
 	while ((line_len = ReadLine(file, buffer, 255)) != EOF) {
 		if (line_len == 0) { continue; } // empty line
 		if(buffer[0] == 'o'){
@@ -41,7 +41,7 @@ void MeshLoader::LoadFile(const char* path)
 				norm_offset += m_Normals[m_ObjectCount].size();
 			}
 			if (m_MaterialName[0] != '\0') { //We have seen usemtl so lets dump it inside the array.
-				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), (int32)(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
+				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
 				// Clear it
 				m_MaterialName[0] = '\0';
 				lastVertexCount = 0;
@@ -173,9 +173,10 @@ void MeshLoader::LoadFile(const char* path)
 			strcpy(mtrl_path, dir);
 			strcat(mtrl_path, mtrl_name);
 			m_MaterialLoader.LoadFileMTL(mtrl_path, dir);
+			printf("* Finished loading the material file... Resuming the obj..\n");
 		}else if (IsEqual(buffer, "usemtl")) {
 			if (m_MaterialName[0] != '\0') {
-				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), (int32)(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
+				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
 				lastVertexCount = m_DataIndex[m_ObjectCount].size();
 			}
 			int32 res = sscanf(buffer, "usemtl %s", m_MaterialName);
@@ -185,7 +186,7 @@ void MeshLoader::LoadFile(const char* path)
 		current_line++;
 	}
 	if (m_MaterialName[0] != '\0') {
-		m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), (int32)(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
+		m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
 		lastVertexCount = m_DataIndex[m_ObjectCount].size();
 	}
 	m_ObjectCount++;
