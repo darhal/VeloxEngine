@@ -9,13 +9,10 @@ LinearAllocator::LinearAllocator(usize total_size) : m_TotalSize(total_size), m_
 
 LinearAllocator::~LinearAllocator()
 {
-	if (m_Start != NULL) {
-		delete m_Start;
-		m_Start = NULL;
-	}
+	this->Free();
 }
 
-LinearAllocator& LinearAllocator::Allocate()
+LinearAllocator& LinearAllocator::Init()
 {
 	if (m_Start != NULL)
 		delete m_Start;
@@ -29,17 +26,19 @@ LinearAllocator& LinearAllocator::Reset()
 	return *this;
 }
 
-void* LinearAllocator::Adress(ssize size)
+void* LinearAllocator::Allocate(ssize size, usize alignement)
 {
-	if (m_Offset + size > m_TotalSize) { // Doesnt have enough size
+	char* curr_adr = (char*)m_Start + m_Offset;
+	const usize padding = CalculatePadding((usize)curr_adr, alignement);
+	if (m_Offset + size + padding > m_TotalSize) { // Doesnt have enough size
 		return NULL;
 	}
-	ssize old_off = m_Offset;
-	m_Offset += size;
+	ssize old_off = m_Offset + padding;
+	m_Offset += size + padding;
 	return (void*)((char*)m_Start + old_off);
 }
 
-void LinearAllocator::Deallocate()
+void LinearAllocator::Free()
 {
 	if (m_Start != NULL) {
 		delete m_Start;

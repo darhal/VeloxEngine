@@ -37,6 +37,11 @@ public:
 	FORCEINLINE T			At(usize i) const;
 	FORCEINLINE T			Back()		const;
 	FORCEINLINE T			Front()		const;
+
+	friend bool operator== (BasicString<T>&& a, BasicString<T>&& b);
+	friend bool operator!= (BasicString<T>&& a, BasicString<T>&& b);
+	friend bool operator== (const BasicString<T>& a, const BasicString<T>& b);
+	friend bool operator!= (const BasicString<T>& a, const BasicString<T>& b);
 private:
 	T*		m_Buffer;
 	usize	m_Length;
@@ -52,6 +57,42 @@ BasicString<T>::BasicString(const T(&str)[S]) : m_Capacity(S), m_Length(S-1)
 	for (usize i = 0; i < S; i++) {
 		m_Buffer[i] = str[i];
 	}
+}
+
+template<typename T>
+static bool operator==(BasicString<T>&& a, BasicString<T>&& b)
+{
+	if (a.m_Length != b.m_Length) return false;
+	for (usize i = 0; i < a.m_Length; i++) {
+		if (a.m_Buffer[i] != b.m_Buffer[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+template<typename T>
+static bool operator!=(BasicString<T>&& a, BasicString<T>&& b)
+{
+	return !(a == b);
+}
+
+template<typename T>
+static bool operator==(const BasicString<T>& a, const BasicString<T>& b)
+{
+	if (a.m_Length != b.m_Length) return false;
+	for (usize i = 0; i < a.m_Length; i++) {
+		if (a.m_Buffer[i] != b.m_Buffer[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+template<typename T>
+static bool operator!=(const BasicString<T>& a, const BasicString<T>& b)
+{
+	return !(a == b);
 }
 
 typedef BasicString<char> String;

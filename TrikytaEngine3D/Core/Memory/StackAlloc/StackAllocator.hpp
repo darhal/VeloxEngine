@@ -2,6 +2,7 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
+#include <Core/Memory/Utils/Utils.hpp>
 
 TRE_NS_START
 
@@ -12,21 +13,26 @@ public:
 
 	~StackAllocator();
 
-	StackAllocator& Allocate();
+	StackAllocator& Init();
 
 	StackAllocator& Reset();
+
+	void Free();
+
+	void* Allocate(ssize size);
+
+	void RollBack();
 
 	template<typename U, typename... Args>
 	U* Construct(Args&&... arg);
 
-	void* Adress(ssize size);
-
-	void Deallocate();
-
-	void RollBack();
-
 	template<typename T>
 	void Destroy(T* obj);
+
+	void FreeToMarker();
+	void SetCurrentOffsetAsMarker();
+	void SetMarker(usize marker = 0);
+	const usize GetMarker() const;
 
 	const void* GetTop() const;
 	const void* GetBottom() const;
@@ -35,8 +41,8 @@ private:
 	void* m_Start;
 	usize m_Offset;
 	usize m_TotalSize;
+	usize m_Marker;
 };
-
 
 template<typename U, typename... Args>
 U* StackAllocator::Construct(Args&&... args)

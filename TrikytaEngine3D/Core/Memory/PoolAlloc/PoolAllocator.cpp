@@ -9,13 +9,10 @@ PoolAllocator::PoolAllocator(usize chunk_size, usize chunk_num) :
 
 PoolAllocator::~PoolAllocator()
 {
-	if (m_Start != NULL) {
-		delete m_Start;
-		m_Start = NULL;
-	}
+	this->Free();
 }
 
-PoolAllocator& PoolAllocator::Allocate()
+PoolAllocator& PoolAllocator::Init()
 {
 	if (m_Start != NULL)
 		delete m_Start;
@@ -34,7 +31,7 @@ PoolAllocator& PoolAllocator::Reset()
 	return *this;
 }
 
-void* PoolAllocator::Adress(usize size)
+void* PoolAllocator::Allocate(usize size)
 {
 	if (size >= m_ChunkSize) return NULL;
 	Node* freePosition = m_FreeList.Pop();
@@ -42,12 +39,12 @@ void* PoolAllocator::Adress(usize size)
 	return (void*)freePosition;
 }
 
-void PoolAllocator::Free(void* ptr)
+void PoolAllocator::Deallocate(void* ptr)
 {
 	m_FreeList.Push((Node*) ptr);
 }
 
-void PoolAllocator::Deallocate()
+void PoolAllocator::Free()
 {
 	if (m_Start != NULL) {
 		delete m_Start;

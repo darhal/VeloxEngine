@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core/Misc/Defines/Common.hpp>
-#include "StackLinkedList.h"
+#include "StackLinkedList.hpp"
 #include <Core/Misc/Defines/Debug.hpp>
 
 TRE_NS_START
@@ -13,21 +13,21 @@ public:
 
 	~PoolAllocator();
 
-	PoolAllocator& Allocate();
+	PoolAllocator& Init();
 
 	PoolAllocator& Reset();
 
-	void* Adress(usize size);
+	void Free();
 
-	void Deallocate();
+	void* Allocate(usize size);
 
-	void Free(void* ptr);
-
-	template<typename T>
-	void Destroy(T* obj);
+	void Deallocate(void* ptr);
 
 	template<typename U, typename... Args>
 	U* Construct(Args&&... arg);
+
+	template<typename T>
+	void Destroy(T* obj);
 private:
 	void* m_Start;
 	usize m_ChunkSize;

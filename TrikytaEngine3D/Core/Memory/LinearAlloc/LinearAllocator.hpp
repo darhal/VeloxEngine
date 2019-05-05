@@ -2,6 +2,7 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
+#include <Core/Memory/Utils/Utils.hpp>
 
 TRE_NS_START
 
@@ -12,17 +13,17 @@ public:
 
 	~LinearAllocator();
 
-	LinearAllocator& Allocate();
+	LinearAllocator& Init();
 
 	LinearAllocator& Reset();
 
+	void Free();
+
+	void* Allocate(ssize size, usize alignement = 1);
+	
 	template<typename U, typename... Args>
 	U* Construct(Args&&... arg);
 
-	void* Adress(ssize size);
-
-	void Deallocate();
-	
 	template<typename T>
 	void Destroy(T* obj);
 
@@ -38,13 +39,15 @@ private:
 template<typename U, typename... Args>
 U* LinearAllocator::Construct(Args&&... args)
 {
-	if (m_Offset + sizeof(U) > m_TotalSize) { // Doesnt have enough size
+	U* curr_adr = (U*)((char*)m_Start + m_Offset);
+	const usize padding = CalculatePadding<U>(curr_adr);
+	if (m_Offset + padding + sizeof(U) > m_TotalSize) { // Doesnt have enough size
 		return NULL;
 	}
-	U* curr = (U*)((char*)m_Start + m_Offset);
-	new (curr) U(std::forward<Args>(args)...);
-	m_Offset += sizeof(U);
-	return curr;
+	curr_adr += padding;
+	new (curr_adr) U(std::forward<Args>(args)...);
+	m_Offset += padding + sizeof(U);
+	return curr_adr;
 }
 
 template<typename T>
