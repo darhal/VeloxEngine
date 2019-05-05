@@ -291,7 +291,7 @@ LRESULT CALLBACK TRE::Window::WindowEventHandler(HWND hwnd, UINT msg, WPARAM wPa
 		window->window = hwnd;
 
 #if (CPU_ARCH == CPU_ARCH_x86)
-		SetWindowLong(hwnd, GWL_USERDATA, reinterpret_cast<DWORD_PTR>(window));
+		SetWindowLong(hwnd, GWL_USERDATA, reinterpret_cast<long>(window));
 #elif (CPU_ARCH == CPU_ARCH_x86_64)
 		SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<DWORD_PTR>(window));
 #endif
