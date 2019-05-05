@@ -19,7 +19,7 @@ int main()
 	printf("%s | Length = %d\n", str.Buffer(), str.Length());*/
 	String text("Hey");
 	String text2("Hey");
-	printf("%d \n", text == "hello");
+	printf("%d \n", (text == String("hello")));
 	getchar();
 	return 0;
 }

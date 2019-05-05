@@ -38,10 +38,19 @@ public:
 	FORCEINLINE T			Back()		const;
 	FORCEINLINE T			Front()		const;
 
-	friend bool operator== (BasicString<T>&& a, BasicString<T>&& b);
-	friend bool operator!= (BasicString<T>&& a, BasicString<T>&& b);
-	friend bool operator== (const BasicString<T>& a, const BasicString<T>& b);
-	friend bool operator!= (const BasicString<T>& a, const BasicString<T>& b);
+	template<typename U>
+	friend bool operator== (const BasicString<U>& a, const BasicString<U>& b);
+	template<typename U>
+	friend bool operator!= (const BasicString<U>& a, const BasicString<U>& b);
+	/*template<typename U>
+	friend bool operator== (const BasicString<U>& a, const char* b);
+	template<typename U>
+	friend bool operator== (const char* b, const BasicString<U>& a);
+
+	template<typename U>
+	friend bool operator== (const BasicString<U>& a, const char* b);
+	template<typename U>
+	friend bool operator== (const char* b, const BasicString<U>& a);*/
 private:
 	T*		m_Buffer;
 	usize	m_Length;
@@ -59,8 +68,8 @@ BasicString<T>::BasicString(const T(&str)[S]) : m_Capacity(S), m_Length(S-1)
 	}
 }
 
-template<typename T>
-static bool operator==(BasicString<T>&& a, BasicString<T>&& b)
+template<typename U>
+static bool operator==(BasicString<U>&& a, BasicString<U>&& b)
 {
 	if (a.m_Length != b.m_Length) return false;
 	for (usize i = 0; i < a.m_Length; i++) {
@@ -71,14 +80,14 @@ static bool operator==(BasicString<T>&& a, BasicString<T>&& b)
 	return true;
 }
 
-template<typename T>
-static bool operator!=(BasicString<T>&& a, BasicString<T>&& b)
+template<typename U>
+static bool operator!=(BasicString<U>&& a, BasicString<U>&& b)
 {
 	return !(a == b);
 }
 
-template<typename T>
-static bool operator==(const BasicString<T>& a, const BasicString<T>& b)
+template<typename U>
+static bool operator==(const BasicString<U>& a, const BasicString<U>& b)
 {
 	if (a.m_Length != b.m_Length) return false;
 	for (usize i = 0; i < a.m_Length; i++) {
@@ -89,8 +98,8 @@ static bool operator==(const BasicString<T>& a, const BasicString<T>& b)
 	return true;
 }
 
-template<typename T>
-static bool operator!=(const BasicString<T>& a, const BasicString<T>& b)
+template<typename U>
+static bool operator!=(const BasicString<U>& a, const BasicString<U>& b)
 {
 	return !(a == b);
 }
