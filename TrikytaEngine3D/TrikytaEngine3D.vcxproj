@@ -146,6 +146,7 @@
     <ClInclude Include="Core\Context\Context.hpp" />
     <ClInclude Include="Core\Context\Extensions.hpp" />
     <ClInclude Include="Core\Context\GLDefines.hpp" />
+    <ClInclude Include="Core\DataStructure\String\FBString.h" />
     <ClInclude Include="Core\DataStructure\String\String.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />
     <ClInclude Include="Core\Memory\Common.hpp" />
@@ -164,6 +165,7 @@
     <ClInclude Include="Core\Misc\Maths\Maths.hpp" />
     <ClInclude Include="Core\Misc\Maths\Matrix.hpp" />
     <ClInclude Include="Core\Misc\Maths\Matrix4x4.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Utils.hpp" />
     <ClInclude Include="Core\Misc\Maths\Vec.hpp" />
     <ClInclude Include="Core\Misc\Maths\Vec1.hpp" />
     <ClInclude Include="Core\Misc\Maths\Vec1.inl" />

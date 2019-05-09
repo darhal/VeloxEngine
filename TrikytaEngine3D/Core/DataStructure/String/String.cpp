@@ -7,8 +7,15 @@ TRE_NS_START
 template<typename T>
 BasicString<T>::BasicString() : m_Capacity(1), m_Length(0)
 {
-	m_Buffer = (T*) operator new (sizeof(T) * 1); // allocate empty storage
-	*m_Buffer = T(0); // init to 0 
+	m_Buffer = (T*) operator new (sizeof(T) * m_Capacity); // allocate empty storage
+	*(m_Buffer) = T(0); // init to 0 
+}
+
+template<typename T>
+BasicString<T>::BasicString(usize capacity) : m_Capacity(capacity), m_Length(0)
+{
+	m_Buffer = (T*) operator new (sizeof(T) * capacity); // allocate empty storage
+	m_Buffer[0] = T(0); // init to 0 
 }
 
 template<typename T>
@@ -153,7 +160,7 @@ void BasicString<T>::Insert(usize pos, const BasicString<T>& str)
 	usize old_len = m_Length + 1;
 	m_Length += str.m_Length;
 	//Shift the last part to the end
-	BasicString<T> temp_str;
+	BasicString<T> temp_str(old_len);
 	temp_str.Copy(*this, pos, old_len);
 	for (usize i = pos, j = 0; j < str.m_Length; i++, j++) {
 		m_Buffer[i] = str.m_Buffer[j];
@@ -167,16 +174,41 @@ template<typename T>
 void BasicString<T>::Copy(const BasicString<T>& str, usize pos, usize offset)
 {
 	ASSERTF(!(offset > str.m_Length), "Bad usage of String::Copy() pos or offset is out of bound.");
-	this->Reserve(offset);
 	m_Length = offset;
 	for (usize i = pos, j = 0; i <= offset; i++, j++) {
 		m_Buffer[j] = str.m_Buffer[i];
 	}
 }
 
+template<typename T>
+FORCEINLINE ssize BasicString<T>::Find(const BasicString<T>& pattren) const
+{
+	return SearchBoyerMoore(*this, pattren);
+}
+
+/*template<typename T>
+FORCEINLINE ssize BasicString<T>::Find(const BasicString<T>& pattren) const {
+	T current = pattren[0];
+	bool find = false;
+	int i = 0, needleIdx = 0;
+	while (!find && i < Length()) {
+		if ((*this)[i] == current) {
+			needleIdx++;
+			if (needleIdx == pattren.Length()) {
+				find = true;
+			}
+		}else {
+			needleIdx = 0;
+		}
+		current = pattren[needleIdx];
+		i++;
+	}
+	return i - pattren.Length();
+}*/
+
 template class BasicString<char>;
-template class BasicString<int8>;
-template class BasicString<int16>;
-template class BasicString<int32>;
+template class BasicString<char16_t>;
+template class BasicString<wchar_t>;
+//template class BasicString<int>; //char32_t
 
 TRE_NS_END

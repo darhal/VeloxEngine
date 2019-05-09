@@ -1,9 +1,11 @@
 #include "AlignedStackAllocator.hpp"
+#include <Windows.h>
 
 TRE_NS_START
 
 AlignedStackAllocator::AlignedStackAllocator(usize total_size) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL), m_Marker(0)
 {
+	far
 };
 
 AlignedStackAllocator::~AlignedStackAllocator()

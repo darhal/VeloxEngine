@@ -128,3 +128,7 @@ typedef uintptr_t uintptr;
 
 #define TRE_NS_START namespace TRE {
 #define TRE_NS_END	 };
+
+#define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+#define ABS(a)	 ((a < 0) ? -a : a)

@@ -163,7 +163,7 @@ void Image::LoadBMP(ByteReader& data)
 	// DIB header
 	ASSERTF(!(data.ReadUint() != 40), "Image file format not supported!"); // Only version 1 is currently supported
 	uint width = data.ReadUint();
-	int rawHeight = data.ReadInt();
+	int32 rawHeight = data.ReadInt();
 	uint height = abs(rawHeight);
 	ASSERTF(!(width == 0 || height == 0), "Image file format not supported!");
 	ASSERTF(!(width > USHRT_MAX || height > USHRT_MAX), "Image file format not supported!"); 
