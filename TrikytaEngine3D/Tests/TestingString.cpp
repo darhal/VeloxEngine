@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <stdlib.h>
 #include <chrono>
+#include <bitset>
 
 using namespace TRE;
 
@@ -23,6 +24,11 @@ int main()
 	BenchmarkStdString();
 	printf("\n\n\n");
 	BenchmarkString();
+	/*String small("Hi");
+	printf("IsSmall = %s\n", small.IsSmall() ? "true" : "false");
+	std::cout << "Bits : " << std::bitset<8>(small.m_Data[String::SSO_SIZE]) << std::endl;
+	std::cout << "Bits of length : " << std::bitset<32>(small.m_Length) << std::endl;
+	printf("small = %s | IsSmall = %s | Len = %d | Cap = %d\n", small.Buffer(), small.IsSmall() ? "true" : "false", small.Length(), small.Capacity());*/
 	getchar();
 	return 0;
 }

@@ -5,7 +5,6 @@
 #include <Core/Misc/Maths/Utils.hpp>
 #include <limits>
 
-
 TRE_NS_START
 
 template<typename T>
@@ -31,7 +30,7 @@ public:
 	void PushBack(T c);
 	void Erase(usize pos, usize offset);
 	void Insert(usize pos, const BasicString<T>& str);
-	void Copy(const BasicString<T>& str, usize pos, usize offset);
+	void Copy(BasicString<T>& str, usize pos, usize offset);
 	/*template<usize S>
 	void Insert(usize pos, const T(&str)[S]);
 	template<usize S>
@@ -39,6 +38,7 @@ public:
 
 	FORCEINLINE const T*	Buffer()	const;
 	FORCEINLINE const usize	Length()	const;
+	FORCEINLINE const usize	Size()		const;
 	FORCEINLINE const usize	Capacity()	const;
 	FORCEINLINE T			At(usize i) const;
 	FORCEINLINE T			Back()		const;
@@ -50,34 +50,49 @@ public:
 
 	template<typename NUMERIC_TYPE>
 	const T& operator[](const NUMERIC_TYPE i) const;
-
-	template<typename U>
-	friend bool operator== (const BasicString<U>& a, const BasicString<U>& b);
-	template<typename U>
-	friend bool operator!= (const BasicString<U>& a, const BasicString<U>& b);
-	/*template<typename U>
-	friend bool operator== (const BasicString<U>& a, const char* b);
-	template<typename U>
-	friend bool operator== (const char* b, const BasicString<U>& a);
-
-	template<typename U>
-	friend bool operator== (const BasicString<U>& a, const char* b);
-	template<typename U>
-	friend bool operator== (const char* b, const BasicString<U>& a);*/
 private:
-	T*		m_Buffer;
-	usize	m_Length;
-	usize	m_Capacity;
+public:
+	typedef BasicString<T> CLASS_TYPE;
+
+	CONSTEXPR static usize SSO_SIZE = (sizeof(T*) + 2 * sizeof(usize)) / sizeof(T) - 1; // remove the one because we start at 0.
+
+	union {
+		struct {
+			T*		m_Buffer;
+			usize	m_Capacity;
+			usize	m_Length;
+		};
+		struct {
+			T m_Data[SSO_SIZE]; //SSO optimization
+		};
+	};
+
+	FORCEINLINE bool IsSmall() const;
+	FORCEINLINE void SetLength(usize nlen);
+	FORCEINLINE void SetSmallLength(usize nlen);
+	FORCEINLINE void SetNormalLength(usize nlen);
+	FORCEINLINE void SetCapacity(usize ncap);
+	FORCEINLINE T*   EditableBuffer();
 };
 
 
 template<typename T>
 template<usize S>
-BasicString<T>::BasicString(const T(&str)[S]) : m_Capacity(S), m_Length(S-1)
+BasicString<T>::BasicString(const T(&str)[S])
 {
-	m_Buffer = (T*) operator new (sizeof(T)*S); // allocate empty storage
-	for (usize i = 0; i < S; i++) {
-		m_Buffer[i] = str[i];
+	if (S <= SSO_SIZE) { // here its <= because we will count the trailing null
+		for (usize i = 0; i < S; i++) {
+			m_Data[i] = str[i];
+		}
+		m_Data[SSO_SIZE] = T((SSO_SIZE - S) << 1);
+	}else{
+		m_Buffer = (T*) operator new (sizeof(T)*S); // allocate empty storage
+		for (usize i = 0; i < S; i++) {
+			m_Buffer[i] = str[i];
+		}
+		m_Capacity = S;
+		m_Length = S << 1 | 0x01;
+						     //^ bit to indicate that its not small string
 	}
 }
 
@@ -86,7 +101,7 @@ template<typename NUMERIC_TYPE>
 T& BasicString<T>::operator[] (const NUMERIC_TYPE i)
 {
 	ASSERTF(!(Absolute(i) > (ssize)m_Length), "Bad usage of [] with BasicString class, given index out of bounds.");
-	return m_Buffer[i];
+	return this->EditableBuffer[i];
 }
 
 template<typename T>
@@ -94,45 +109,8 @@ template<typename NUMERIC_TYPE>
 const T& BasicString<T>::operator[] (const NUMERIC_TYPE i) const
 {
 	ASSERTF(!(Absolute(i) > (ssize)m_Length), "Bad usage of [] with BasicString class, given index out of bounds.");
-	return m_Buffer[i];
+	return this->Buffer[i];
 }
-
-template<typename U>
-static bool operator==(BasicString<U>&& a, BasicString<U>&& b)
-{
-	if (a.m_Length != b.m_Length) return false;
-	for (usize i = 0; i < a.m_Length; i++) {
-		if (a.m_Buffer[i] != b.m_Buffer[i]) {
-			return false;
-		}
-	}
-	return true;
-}
-
-template<typename U>
-static bool operator!=(BasicString<U>&& a, BasicString<U>&& b)
-{
-	return !(a == b);
-}
-
-template<typename U>
-static bool operator==(const BasicString<U>& a, const BasicString<U>& b)
-{
-	if (a.m_Length != b.m_Length) return false;
-	for (usize i = 0; i < a.m_Length; i++) {
-		if (a.m_Buffer[i] != b.m_Buffer[i]) {
-			return false;
-		}
-	}
-	return true;
-}
-
-template<typename U>
-static bool operator!=(const BasicString<U>& a, const BasicString<U>& b)
-{
-	return !(a == b);
-}
-
 
 // The preprocessing function for Boyer Moore's  
 // bad character heuristic  
@@ -146,8 +124,9 @@ void BadCharHeuristic(const BasicString<T>& str, ssize size, int32(&badchar)[NB_
 
 	// Fill the actual value of last occurrence  
 	// of a character  
+	const T* str_buffer = str.Buffer();
 	for (i = 0; i < size; i++)
-		badchar[(int)str[i]] = i;
+		badchar[(int)str_buffer[i]] = i;
 }
 
 /* A pattern searching function that uses Bad
@@ -157,6 +136,8 @@ ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat)
 {
 	ssize m = (ssize)pat.Length();
 	ssize n = (ssize)txt.Length();
+	const T* txt_buffer = txt.Buffer();
+	const T* pat_buffer = pat.Buffer();
 
 	const usize NB_OF_CHARS = std::numeric_limits<T>::max() + ABS(std::numeric_limits<T>::min()) + 1;
 	int32 badchar[NB_OF_CHARS];
@@ -175,7 +156,7 @@ ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat)
 		/* Keep reducing index j of pattern while
 		characters of pattern and text are
 		matching at this shift s */
-		while (j >= 0 && pat[j] == txt[s + j])
+		while (j >= 0 && pat_buffer[j] == txt_buffer[s + j])
 			j--;
 
 		/* If the pattern is present at current
@@ -190,7 +171,7 @@ ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat)
 			the case when pattern occurs at the end
 			of text */
 			return s;
-			s += (s + m < n) ? m - badchar[txt[s + m]] : 1;
+			s += (s + m < n) ? m - badchar[txt_buffer[s + m]] : 1;
 
 		} else {
 			/* Shift the pattern so that the bad character
@@ -201,10 +182,53 @@ ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat)
 			occurrence of bad character in pattern
 			is on the right side of the current
 			character. */
-			s += MAX(1, j - badchar[txt[s + j]]);
+			s += MAX(1, j - badchar[txt_buffer[s + j]]);
 		}
 	}
 	return -1;
+}
+
+/********************NON CLASS OPS********************/
+template<typename T>
+static bool operator==(BasicString<T>&& a, BasicString<T>&& b)
+{
+	usize alen = a.Length();
+	const T* a_buffer = a.Buffer();
+	const T* b_buffer = b.Buffer();
+	if (alen != b.Length()) return false;
+	for (usize i = 0; i < alen - 1; i++) {
+		if (a_buffer[i] != b_buffer[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+template<typename T>
+static bool operator!=(BasicString<T>&& a, BasicString<T>&& b)
+{
+	return !(a == b);
+}
+
+template<typename T>
+static bool operator==(const BasicString<T>& a, const BasicString<T>& b)
+{
+	usize alen = a.Length();
+	const T* a_buffer = a.Buffer();
+	const T* b_buffer = b.Buffer();
+	if (alen != b.Length()) return false;
+	for (usize i = 0; i < alen - 1; i++) {
+		if (a_buffer[i] != b_buffer[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+template<typename T>
+static bool operator!=(const BasicString<T>& a, const BasicString<T>& b)
+{
+	return !(a == b);
 }
 
 typedef BasicString<char> String;
