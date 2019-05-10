@@ -1,8 +1,7 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include "String.hpp"
-#include <iostream>
-#include <bitset>
+#include <cstdio>
 
 TRE_NS_START
 
@@ -71,15 +70,20 @@ template<typename T>
 FORCEINLINE void BasicString<T>::Reserve(usize s)
 {
 	if (s < SSO_SIZE) return; // force using the local buffer!
-	if (s <= m_Capacity) return;
+	if (s <= this->Capacity()) return;
 	const T* buffer_ptr = this->Buffer();
 	T* temp_buffer = (T*) operator new (sizeof(T)*s);
-	for (usize i = 0; i < this->Length(); i++) {
+	usize len = this->Length();
+	for (usize i = 0; i < len; i++) {
 		temp_buffer[i] = buffer_ptr[i];
 	}
-	if (this->IsSmall()) delete[] m_Buffer;
+	if (!this->IsSmall()) {
+		delete[] m_Buffer;
+	}else{
+		SetNormalLength(len);
+	}
 	m_Buffer = temp_buffer;
-	m_Capacity = s;
+	this->SetCapacity(s); // we can use this because its no longer small string at this point.
 }
 
 template<typename T>
@@ -135,18 +139,19 @@ FORCEINLINE void BasicString<T>::Clear()
 template<typename T>
 void BasicString<T>::Append(const BasicString<T>& str)
 {
-	usize tlen        = this->Length() - 1; // remove the trailing null
+	usize tlen        = this->Length() - 1; // -1 is to remove the trailing null terminator
 	usize slen	      = str.Length();
 	usize finalLen	  = tlen + slen;
 	const T* str_buffer_ptr = str.Buffer();
-	T* buffer_ptr     = this->EditableBuffer();
 	if (finalLen - 1 > this->Capacity()) { // -1 is to remove the trailing null terminator
-		this->Reserve(finalLen - 1);
+		this->Reserve(finalLen);
+		T* buffer_ptr = this->EditableBuffer();
 		for (usize i = 0; i < slen; i++) {
 			buffer_ptr[tlen++] = str_buffer_ptr[i];
 		}
 		this->SetNormalLength(tlen);
 	}else{
+		T* buffer_ptr = this->EditableBuffer();
 		for (usize i = 0; i < slen; i++) {
 			buffer_ptr[tlen++] = str_buffer_ptr[i];
 		}
@@ -282,7 +287,7 @@ FORCEINLINE bool BasicString<T>::IsSmall() const
 template<typename T>
 FORCEINLINE void BasicString<T>::SetLength(usize nlen)
 {
-	if (this->IsSmall() && nlen < SSO_SIZE) {
+	if (this->IsSmall() && nlen <= SSO_SIZE) {
 		m_Data[SSO_SIZE] = (SSO_SIZE - nlen) << 1;
 	}else{
 		m_Length = nlen << 1 | 0x01;

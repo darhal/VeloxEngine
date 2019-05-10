@@ -146,7 +146,6 @@
     <ClInclude Include="Core\Context\Context.hpp" />
     <ClInclude Include="Core\Context\Extensions.hpp" />
     <ClInclude Include="Core\Context\GLDefines.hpp" />
-    <ClInclude Include="Core\DataStructure\String\FBString.h" />
     <ClInclude Include="Core\DataStructure\String\String.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />
     <ClInclude Include="Core\Memory\Common.hpp" />

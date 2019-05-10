@@ -24,10 +24,13 @@ int main()
 	BenchmarkStdString();
 	printf("\n\n\n");
 	BenchmarkString();
+	//TODO check : text.Insert(8, String(" XBC")); and Append Sometimes it wont work well on release mode
 	/*String small("Hi");
-	printf("IsSmall = %s\n", small.IsSmall() ? "true" : "false");
-	std::cout << "Bits : " << std::bitset<8>(small.m_Data[String::SSO_SIZE]) << std::endl;
-	std::cout << "Bits of length : " << std::bitset<32>(small.m_Length) << std::endl;
+	printf("sizeof(String) = %d\n", sizeof(String));
+	printf("small = %s | IsSmall = %s | Len = %d | Cap = %d\n", small.Buffer(), small.IsSmall() ? "true" : "false", small.Length(), small.Capacity());
+	small.Insert(2, String(" There.."));
+	printf("small = %s | IsSmall = %s | Len = %d | Cap = %d\n", small.Buffer(), small.IsSmall() ? "true" : "false", small.Length(), small.Capacity());
+	small.Append(String(" Thanks.."));
 	printf("small = %s | IsSmall = %s | Len = %d | Cap = %d\n", small.Buffer(), small.IsSmall() ? "true" : "false", small.Length(), small.Capacity());*/
 	getchar();
 	return 0;
@@ -74,6 +77,16 @@ void BenchmarkString()
 	diff = end - start;
 	std::cout << "TRE::String benchmark of text == text3 :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 	printf("Result : %s\n", (slot) ? "true" : "false");
+
+	
+	printf("Appending ' XBC'\n");
+	start = std::chrono::steady_clock::now();
+	//text.Append(String(" XBC"));
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "TRE::String benchmark of Append(' XBC'); :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	printf("Text = %s\n", text.Buffer());
+
 }
 
 void BenchmarkStdString()
@@ -118,6 +131,13 @@ void BenchmarkStdString()
 	std::cout << "STD::String benchmark of text == text3 :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 	printf("Result : %s\n", (slot) ? "true" : "false");
 
+	printf("Appending ' XBC'\n");
+	start = std::chrono::steady_clock::now();
+	text.append(" XBC");
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "STD::String benchmark of Append(' XBC'); :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	printf("Text = %s\n", text.c_str());
 }
 
 void TestStackAlloc()
