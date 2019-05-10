@@ -21,9 +21,15 @@ int main()
 	printf("%s | Length = %d\n", str.Buffer(), str.Length());
 	str.Insert(5, " there");
 	printf("%s | Length = %d\n", str.Buffer(), str.Length());*/
-	BenchmarkStdString();
+	/*BenchmarkStdString();
 	printf("\n\n\n");
-	BenchmarkString();
+	BenchmarkString();*/
+	String text("HELLO");
+	text.Erase(1, 4);
+	printf("%s", text.Buffer());
+	//printf("text = %s | IsSmall = %s | Len = %llu | Cap = %llu\n", text.Buffer(), text.IsSmall() ? "true" : "false", text.Length(), text.Capacity());
+	//text.Append(String(" Im here"));
+	//printf("text = %s | IsSmall = %s | Len = %llu | Cap = %llu\n", text.Buffer(), text.IsSmall() ? "true" : "false", text.Length(), text.Capacity());
 	//TODO check : text.Insert(8, String(" XBC")); and Append Sometimes it wont work well on release mode
 	/*String small("Hi");
 	printf("sizeof(String) = %d\n", sizeof(String));
@@ -113,7 +119,7 @@ void BenchmarkStdString()
 	end = std::chrono::steady_clock::now();
 	diff = end - start;
 	std::cout << "STD::String benchmark of text.find(text2) :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
-	printf("Pattren found at : %d\n", slot);
+	printf("Pattren found at : %llu\n", slot);
 
 	printf("----------------- STD STRING -----------------\n");
 	start = std::chrono::steady_clock::now();

@@ -95,7 +95,7 @@ FORCEINLINE void BasicString<T>::Resize(usize s)
 		ASSERTF(!(len - s < 0), "String::Resize function is used with bad parameter.");
 		if (isSmall) {
 			usize nlen = (len - s); // new len remmber that len does represent whats rest in the buffer (when SSO is enabled)
-			m_Data[SSO_SIZE] = (SSO_SIZE - (nlen)) << 1;
+			m_Data[SSO_SIZE] = T((SSO_SIZE - (nlen)) << 1);
 			m_Data[nlen] = T(0);
 		}else {
 			m_Length -= s;
@@ -204,7 +204,7 @@ void BasicString<T>::Erase(usize pos, usize offset)
 		buffer_ptr[i] = buffer_ptr[j];
 	}
 	this->SetLength(len - offset);
-	m_Buffer[this->Length()] = T(0);
+	buffer_ptr[this->Length()] = T(0);
 }
 
 template<typename T>
@@ -288,7 +288,7 @@ template<typename T>
 FORCEINLINE void BasicString<T>::SetLength(usize nlen)
 {
 	if (this->IsSmall() && nlen <= SSO_SIZE) {
-		m_Data[SSO_SIZE] = (SSO_SIZE - nlen) << 1;
+		m_Data[SSO_SIZE] = T((SSO_SIZE - nlen) << 1);
 	}else{
 		m_Length = nlen << 1 | 0x01;
 	}
@@ -297,7 +297,7 @@ FORCEINLINE void BasicString<T>::SetLength(usize nlen)
 template<typename T>
 FORCEINLINE void BasicString<T>::SetSmallLength(usize nlen)
 {
-	m_Data[SSO_SIZE] = (SSO_SIZE - nlen) << 1;
+	m_Data[SSO_SIZE] = T((SSO_SIZE - nlen) << 1);
 }
 
 template<typename T>

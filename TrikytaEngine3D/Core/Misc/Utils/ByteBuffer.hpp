@@ -12,7 +12,7 @@ public:
 	ByteReader(uint length, bool littleEndian) : buffer(new uint8[length]), length(length), ptr(0), littleEndian(littleEndian) {}
 	~ByteReader() { delete[] buffer; }
 
-	void Reuse(uint length)
+	void Reuse(usize length)
 	{
 		delete[] buffer;
 		buffer = new uint8[length];
@@ -21,12 +21,12 @@ public:
 	}
 
 	uint8* Data() { return buffer; }
-	uint Length() { return length; }
+	usize Length() { return length; }
 
-	void Advance(uint count) { ptr += count; }
-	void Move(uint location) { ptr = location; }
+	void Advance(usize count) { ptr += count; }
+	void Move(usize location) { ptr = location; }
 
-	bool Compare(uint location, uint length, const uint8* data)
+	bool Compare(usize location, usize length, const uint8* data)
 	{
 		if (location + length > this->length) return false;
 
@@ -72,16 +72,16 @@ public:
 			return INT_MIN + val - INT_MAX - 1;
 	}
 
-	void Read(uint8* dest, uint length)
+	void Read(uint8* dest, usize length)
 	{
-		for (uint i = 0; i < length; i++)
+		for (usize i = 0; i < length; i++)
 			dest[i] = buffer[ptr + i];
 		ptr += length;
 	}
 
 private:
 	uint8* buffer;
-	uint length;
+	usize length;
 	ssize ptr;
 	bool littleEndian;
 

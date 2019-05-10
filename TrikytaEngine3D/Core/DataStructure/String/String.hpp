@@ -151,7 +151,7 @@ ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat)
 				// respect to text  
 	while (s <= (n - m))
 	{
-		int32 j = m - 1;
+		ssize j = m - 1;
 
 		/* Keep reducing index j of pattern while
 		characters of pattern and text are
