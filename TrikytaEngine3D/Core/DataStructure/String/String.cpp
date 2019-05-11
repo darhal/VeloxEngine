@@ -3,9 +3,6 @@
 #include "String.hpp"
 #include <cstdio>
 
-#include <iostream>
-#include <bitset>
-
 TRE_NS_START
 
 template<typename T>
@@ -13,7 +10,6 @@ BasicString<T>::BasicString()
 {
 	m_Data[0] = T(0);
 	SetSmallLength(1);
-	printf("Default ctor\n");
 }
 
 template<typename T>
@@ -50,7 +46,6 @@ BasicString<T>::BasicString(const BasicString<T>& other)
 		m_Capacity = cap;
 		SetNormalLength(len);
 	}
-	printf("Copy ctor of %s (NORMAL)\n", Buffer());
 }
 
 template<typename T>
@@ -74,7 +69,6 @@ BasicString<T>& BasicString<T>::operator=(const BasicString<T>& other)
 		}
 		SetLength(len);
 	}
-	printf("Copy = of %s\n", other.Buffer());
 	return *this;
 }
 
@@ -96,7 +90,6 @@ BasicString<T>::BasicString(BasicString<T>&& other)
 		SetNormalLength(len);
 		other.m_Buffer = NULL; // Pervent the other string from deleting when it go out of scope
 	}
-	printf("Using mov ctor of small string\n");
 }
 
 template<typename T>
@@ -118,7 +111,6 @@ BasicString<T>& BasicString<T>::operator=(BasicString<T>&& other)
 		SetNormalLength(len);
 		other.m_Buffer = NULL; // Pervent the other string from deleting when it go out of scope
 	}
-	printf("Move = of %s\n", other.Buffer());
 	return *this;
 }
 

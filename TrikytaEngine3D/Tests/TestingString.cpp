@@ -28,18 +28,7 @@ int main()
 	String text = "Hello....";
 	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", text.Buffer(), text.IsSmall() ? "true" : "false", text.Length(), text.Capacity());
 	String lol = text.SubString(5, 11);
-	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", lol.Buffer(), lol.IsSmall() ? "true" : "false", lol.Length(), lol.Capacity());
-
-	/*String hi = String("Hi");
-	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", hi.Buffer(), hi.IsSmall() ? "true" : "false", hi.Length(), hi.Capacity());
-	hi += String(" There");
-	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", hi.Buffer(), hi.IsSmall() ? "true" : "false", hi.Length(), hi.Capacity());
-	String otherHi = hi;
-	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", otherHi.Buffer(), otherHi.IsSmall() ? "true" : "false", otherHi.Length(), otherHi.Capacity());
-
-	String test = hi + String("How are you ?");
-	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", test.Buffer(), test.IsSmall() ? "true" : "false", test.Length(), test.Capacity());*/
-	
+	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", lol.Buffer(), lol.IsSmall() ? "true" : "false", lol.Length(), lol.Capacity());	
 	//text.Append(String(" Im here"));
 	//printf("text = %s | IsSmall = %s | Len = %llu | Cap = %llu\n", text.Buffer(), text.IsSmall() ? "true" : "false", text.Length(), text.Capacity());
 	//TODO check : text.Insert(8, String(" XBC")); and Append Sometimes it wont work well on release mode
