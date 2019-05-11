@@ -21,13 +21,25 @@ int main()
 	printf("%s | Length = %d\n", str.Buffer(), str.Length());
 	str.Insert(5, " there");
 	printf("%s | Length = %d\n", str.Buffer(), str.Length());*/
-	/*BenchmarkStdString();
+	BenchmarkStdString();
 	printf("\n\n\n");
-	BenchmarkString();*/
-	String text("HELLO");
-	text.Erase(1, 4);
-	printf("%s", text.Buffer());
-	//printf("text = %s | IsSmall = %s | Len = %llu | Cap = %llu\n", text.Buffer(), text.IsSmall() ? "true" : "false", text.Length(), text.Capacity());
+	BenchmarkString();
+
+	String text = "Hello ....";
+	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", text.Buffer(), text.IsSmall() ? "true" : "false", text.Length(), text.Capacity());
+	String lol = text.SubString(5, 4);
+	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", lol.Buffer(), lol.IsSmall() ? "true" : "false", lol.Length(), lol.Capacity());
+
+	/*String hi = String("Hi");
+	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", hi.Buffer(), hi.IsSmall() ? "true" : "false", hi.Length(), hi.Capacity());
+	hi += String(" There");
+	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", hi.Buffer(), hi.IsSmall() ? "true" : "false", hi.Length(), hi.Capacity());
+	String otherHi = hi;
+	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", otherHi.Buffer(), otherHi.IsSmall() ? "true" : "false", otherHi.Length(), otherHi.Capacity());
+
+	String test = hi + String("How are you ?");
+	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", test.Buffer(), test.IsSmall() ? "true" : "false", test.Length(), test.Capacity());*/
+	
 	//text.Append(String(" Im here"));
 	//printf("text = %s | IsSmall = %s | Len = %llu | Cap = %llu\n", text.Buffer(), text.IsSmall() ? "true" : "false", text.Length(), text.Capacity());
 	//TODO check : text.Insert(8, String(" XBC")); and Append Sometimes it wont work well on release mode
@@ -87,10 +99,18 @@ void BenchmarkString()
 	
 	printf("Appending ' XBC'\n");
 	start = std::chrono::steady_clock::now();
-	//text.Append(String(" XBC"));
+	text.Append(String(" XBC"));
 	end = std::chrono::steady_clock::now();
 	diff = end - start;
 	std::cout << "TRE::String benchmark of Append(' XBC'); :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	printf("Text = %s\n", text.Buffer());
+
+	printf("text = %s (Erease(%d, %d))\n", text.Buffer(), 4, 6);
+	start = std::chrono::steady_clock::now();
+	text.Erase(4, 6);
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "TRE::String benchmark of Erease(4, 6); :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 	printf("Text = %s\n", text.Buffer());
 
 }
@@ -143,6 +163,14 @@ void BenchmarkStdString()
 	end = std::chrono::steady_clock::now();
 	diff = end - start;
 	std::cout << "STD::String benchmark of Append(' XBC'); :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	printf("Text = %s\n", text.c_str());
+
+	printf("text = %s (Erease(%d, %d))\n", text.c_str(), 4, 6);
+	start = std::chrono::steady_clock::now();
+	text.erase(4, 6);
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "STD::String benchmark of Erease(4, 6); :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 	printf("Text = %s\n", text.c_str());
 }
 

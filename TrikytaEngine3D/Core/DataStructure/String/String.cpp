@@ -3,29 +3,130 @@
 #include "String.hpp"
 #include <cstdio>
 
+#include <iostream>
+#include <bitset>
+
 TRE_NS_START
 
 template<typename T>
 BasicString<T>::BasicString()
 {
-	/*m_Buffer = (T*) operator new (sizeof(T) * m_Capacity); // allocate empty storage
-	*(m_Buffer) = T(0); // init to 0*/
 	m_Data[0] = T(0);
-	m_Data[SSO_SIZE] = (SSO_SIZE) << 1;
+	SetSmallLength(1);
+	printf("Default ctor\n");
 }
 
 template<typename T>
 BasicString<T>::BasicString(usize capacity)
 {
-	if (capacity < SSO_SIZE) {
+	if (capacity <= SSO_SIZE) {
 		m_Data[0] = T(0);
-		m_Data[SSO_SIZE] = (SSO_SIZE) << 1;
+		SetSmallLength(1);
 	}else {
 		m_Buffer    = (T*) operator new (sizeof(T) * capacity); // allocate empty storage
 		m_Buffer[0] = T(0); // init to 0
-		m_Capacity  = capacity;
-		m_Length    = capacity << 1 | 0x01;
+		m_Capacity = capacity;
+		SetNormalLength(1);
 	}
+}
+
+//Copy ctor copy assignement
+template<typename T>
+BasicString<T>::BasicString(const BasicString<T>& other)
+{
+	bool IsOtherSmall = other.IsSmall();
+	usize len = other.Length();
+	if (IsOtherSmall) {
+		for (usize i = 0; i < len; i++) {
+			m_Data[i] = other.m_Data[i];
+		}
+		SetSmallLength(len);
+	}else{
+		usize cap = other.m_Capacity;
+		m_Buffer = (T*) operator new (sizeof(T) * cap); // allocate empty storage
+		for (usize i = 0; i < len; i++) {
+			m_Buffer[i] = other.m_Buffer[i];
+		}
+		m_Capacity = cap;
+		SetNormalLength(len);
+	}
+	printf("Copy ctor of %s (NORMAL)\n", Buffer());
+}
+
+template<typename T>
+BasicString<T>& BasicString<T>::operator=(const BasicString<T>& other)
+{
+	bool IsOtherSmall = other.IsSmall();
+	usize cap = other.Capacity();
+	usize len = other.Length();
+	if (IsOtherSmall && this->Capacity() <= cap) {
+		for (usize i = 0; i < len; i++) {
+			m_Data[i] = other.m_Data[i];
+		}
+		SetSmallLength(len);
+	}else{
+		if (this->IsSmall()) {
+			m_Buffer = (T*) operator new (sizeof(T) * cap); // allocate empty storage
+		}
+		const T* other_buffer = other.Buffer();
+		for (usize i = 0; i < len; i++) {
+			m_Buffer[i] = other_buffer[i];
+		}
+		SetLength(len);
+	}
+	printf("Copy = of %s\n", other.Buffer());
+	return *this;
+}
+
+//Move ctor move assignement
+template<typename T>
+BasicString<T>::BasicString(BasicString<T>&& other)
+{
+	bool IsOtherSmall = other.IsSmall();
+	usize len = other.Length();
+	if (IsOtherSmall) {
+		for (usize i = 0; i < len; i++) {
+			m_Data[i] = other.m_Data[i];
+		}
+		SetSmallLength(len);
+		
+	}else{
+		m_Buffer = other.m_Buffer;
+		m_Capacity = other.m_Capacity;
+		SetNormalLength(len);
+		other.m_Buffer = NULL; // Pervent the other string from deleting when it go out of scope
+	}
+	printf("Using mov ctor of small string\n");
+}
+
+template<typename T>
+BasicString<T>& BasicString<T>::operator=(BasicString<T>&& other)
+{
+	bool IsOtherSmall = other.IsSmall();
+	usize len = other.Length();
+	if (!this->IsSmall() && m_Buffer != NULL) {
+		delete[] m_Buffer;
+	}
+	if (IsOtherSmall) {
+		for (usize i = 0; i < len; i++) {
+			m_Data[i] = other.m_Data[i];
+		}
+		SetSmallLength(len);
+	}else {
+		m_Buffer = other.m_Buffer;
+		m_Capacity = other.m_Capacity;
+		SetNormalLength(len);
+		other.m_Buffer = NULL; // Pervent the other string from deleting when it go out of scope
+	}
+	printf("Move = of %s\n", other.Buffer());
+	return *this;
+}
+
+template<typename T>
+FORCEINLINE BasicString<T>& BasicString<T>::operator+=(const BasicString<T>& other)
+{
+	this->Append(other);
+	return *this;
 }
 
 template<typename T>
@@ -45,7 +146,7 @@ FORCEINLINE const T* BasicString<T>::Buffer() const
 template<typename T>
 FORCEINLINE const usize BasicString<T>::Length() const
 {
-	return this->IsSmall() ? SSO_SIZE - (T)(m_Data[SSO_SIZE] >> 1) : m_Length >> 1;
+	return this->IsSmall() ? SSO_SIZE - (T)(m_Data[SSO_MI] >> 1) : m_Length >> 1;
 }
 
 template<typename T>
@@ -57,7 +158,7 @@ FORCEINLINE const usize BasicString<T>::Size() const
 template<typename T>
 FORCEINLINE const usize BasicString<T>::Capacity() const
 {
-	return this->IsSmall() ? SSO_SIZE : m_Capacity;
+	return this->IsSmall() ? SSO_MI : m_Capacity;
 }
 
 template<typename T>
@@ -77,7 +178,7 @@ FORCEINLINE void BasicString<T>::Reserve(usize s)
 	for (usize i = 0; i < len; i++) {
 		temp_buffer[i] = buffer_ptr[i];
 	}
-	if (!this->IsSmall()) {
+	if (!this->IsSmall() && m_Buffer != NULL) {
 		delete[] m_Buffer;
 	}else{
 		SetNormalLength(len);
@@ -95,7 +196,7 @@ FORCEINLINE void BasicString<T>::Resize(usize s)
 		ASSERTF(!(len - s < 0), "String::Resize function is used with bad parameter.");
 		if (isSmall) {
 			usize nlen = (len - s); // new len remmber that len does represent whats rest in the buffer (when SSO is enabled)
-			m_Data[SSO_SIZE] = T((SSO_SIZE - (nlen)) << 1);
+			m_Data[SSO_MI] = T((SSO_SIZE - (nlen)) << 1);
 			m_Data[nlen] = T(0);
 		}else {
 			m_Length -= s;
@@ -128,7 +229,7 @@ FORCEINLINE void BasicString<T>::Clear()
 	bool isSmall = this->IsSmall();
 	if (isSmall) {
 		m_Data[0] = T(0);
-		m_Data[SSO_SIZE] = (SSO_SIZE) << 1;
+		m_Data[SSO_MI] = (SSO_SIZE) << 1;
 	}else{
 		m_Buffer[0] = T(0);
 		m_Length = 0x01;
@@ -144,7 +245,7 @@ void BasicString<T>::Append(const BasicString<T>& str)
 	usize finalLen	  = tlen + slen;
 	const T* str_buffer_ptr = str.Buffer();
 	if (finalLen - 1 > this->Capacity()) { // -1 is to remove the trailing null terminator
-		this->Reserve(finalLen);
+		this->Reserve(finalLen*SPARE_RATE);
 		T* buffer_ptr = this->EditableBuffer();
 		for (usize i = 0; i < slen; i++) {
 			buffer_ptr[tlen++] = str_buffer_ptr[i];
@@ -182,11 +283,21 @@ template<typename T>
 void BasicString<T>::PushBack(T c)
 {
 	usize len = this->Length();
-	this->Reserve(len + 1);
+	this->Reserve((len + 1*SPARE_RATE));
 	T* buffer_ptr = this->EditableBuffer();
 	buffer_ptr[len++] = c;
 	buffer_ptr[len] = T(0);
 	this->SetLength(len);
+}
+
+template<typename T>
+void BasicString<T>::PopBack()
+{
+	usize len = this->Length();
+	if (len <= 1) return;
+	T* buffer_ptr = this->EditableBuffer();
+	buffer_ptr[len - 1] = T(0);
+	this->SetLength(len - 1);
 }
 
 template<typename T>
@@ -196,15 +307,17 @@ void BasicString<T>::Erase(usize pos, usize offset)
 	if (pos >= len) return;
 	if (offset == 0) return;
 	usize end = pos + offset;
-	if (pos + offset > len) {
-		end = len;
-	}
 	T* buffer_ptr = this->EditableBuffer();
+	if (pos + offset >= len) {
+		end = len;
+		buffer_ptr[pos] = T(0);
+		this->SetLength(len - offset);
+		return;
+	}
 	for (usize i = pos, j = end; i < len && j < len; i++, j++) {
 		buffer_ptr[i] = buffer_ptr[j];
 	}
 	this->SetLength(len - offset);
-	buffer_ptr[this->Length()] = T(0);
 }
 
 template<typename T>
@@ -230,11 +343,11 @@ void BasicString<T>::Insert(usize pos, const BasicString<T>& str)
 }
 
 template<typename T>
-void BasicString<T>::Copy(BasicString<T>& str, usize pos, usize offset)
+void BasicString<T>::Copy(const BasicString<T>& str, usize pos, usize offset)
 {
 	usize slen = str.Length();
 	ASSERTF(!(offset > slen), "Bad usage of String::Copy() pos or offset is out of bound.");
-	T* buffer_ptr = str.EditableBuffer();
+	const T* buffer_ptr = str.Buffer();
 	if (offset < SSO_SIZE) {
 		SetSmallLength(offset);
 		for (usize i = pos, j = 0; i <= offset; i++, j++) {
@@ -247,7 +360,15 @@ void BasicString<T>::Copy(BasicString<T>& str, usize pos, usize offset)
 			m_Buffer[j] = buffer_ptr[i];
 		}
 	}
-	
+}
+
+template<typename T>
+FORCEINLINE BasicString<T> BasicString<T>::SubString(usize pos, usize off) const
+{
+	BasicString<T> temp_str(off);
+	temp_str.Copy(*this, pos, off);
+	printf("SubStr = %s", temp_str.Buffer());
+	return temp_str;
 }
 
 template<typename T>
@@ -256,31 +377,12 @@ FORCEINLINE ssize BasicString<T>::Find(const BasicString<T>& pattren) const
 	return SearchBoyerMoore(*this, pattren);
 }
 
-/*template<typename T>
-FORCEINLINE ssize BasicString<T>::Find(const BasicString<T>& pattren) const {
-	T current = pattren[0];
-	bool find = false;
-	int i = 0, needleIdx = 0;
-	while (!find && i < Length()) {
-		if ((*this)[i] == current) {
-			needleIdx++;
-			if (needleIdx == pattren.Length()) {
-				find = true;
-			}
-		}else {
-			needleIdx = 0;
-		}
-		current = pattren[needleIdx];
-		i++;
-	}
-	return i - pattren.Length();
-}*/
 
 /********** PRIVATE FUNCTIONS **********/
 
 template<typename T>
 FORCEINLINE bool BasicString<T>::IsSmall() const
-{
+{  
 	return !(char)((m_Length & 0xFF) << (sizeof(T)*BITS_PER_BYTE - 1)); // if the bit is 0 then its small string otherwise its normal
 }
 
@@ -288,7 +390,7 @@ template<typename T>
 FORCEINLINE void BasicString<T>::SetLength(usize nlen)
 {
 	if (this->IsSmall() && nlen <= SSO_SIZE) {
-		m_Data[SSO_SIZE] = T((SSO_SIZE - nlen) << 1);
+		m_Data[SSO_MI] = T((SSO_SIZE - nlen) << 1);
 	}else{
 		m_Length = nlen << 1 | 0x01;
 	}
@@ -297,7 +399,7 @@ FORCEINLINE void BasicString<T>::SetLength(usize nlen)
 template<typename T>
 FORCEINLINE void BasicString<T>::SetSmallLength(usize nlen)
 {
-	m_Data[SSO_SIZE] = T((SSO_SIZE - nlen) << 1);
+	m_Data[SSO_MI] = T((SSO_SIZE - nlen) << 1);
 }
 
 template<typename T>
@@ -309,6 +411,7 @@ FORCEINLINE void BasicString<T>::SetNormalLength(usize nlen)
 template<typename T>
 FORCEINLINE void BasicString<T>::SetCapacity(usize ncap)
 {
+	if (this->IsSmall()) return;
 	m_Capacity = ncap;
 }
 
