@@ -25,9 +25,9 @@ int main()
 	printf("\n\n\n");
 	BenchmarkString();
 
-	String text = "Hello ....";
+	String text = "Hello....";
 	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", text.Buffer(), text.IsSmall() ? "true" : "false", text.Length(), text.Capacity());
-	String lol = text.SubString(5, 4);
+	String lol = text.SubString(5, 11);
 	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", lol.Buffer(), lol.IsSmall() ? "true" : "false", lol.Length(), lol.Capacity());
 
 	/*String hi = String("Hi");

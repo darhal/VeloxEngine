@@ -346,17 +346,19 @@ template<typename T>
 void BasicString<T>::Copy(const BasicString<T>& str, usize pos, usize offset)
 {
 	usize slen = str.Length();
-	ASSERTF(!(offset > slen), "Bad usage of String::Copy() pos or offset is out of bound.");
+	//ASSERTF(!(offset > slen), "Bad usage of String::Copy() pos or offset is out of bound.");
 	const T* buffer_ptr = str.Buffer();
+	usize end = pos + offset;
+	if (end >= slen) end = slen - 1;
 	if (offset < SSO_SIZE) {
-		SetSmallLength(offset);
-		for (usize i = pos, j = 0; i <= offset; i++, j++) {
+		SetSmallLength(end - pos + 1);
+		for (usize i = pos, j = 0; i < end; i++, j++) {
 			m_Data[j] = buffer_ptr[i];
 		}
 	}else{
 		this->Reserve(offset);
-		SetNormalLength(offset);
-		for (usize i = pos, j = 0; i <= offset; i++, j++) {
+		SetNormalLength(end - pos + 1);
+		for (usize i = pos, j = 0; i < end; i++, j++) {
 			m_Buffer[j] = buffer_ptr[i];
 		}
 	}
@@ -367,7 +369,6 @@ FORCEINLINE BasicString<T> BasicString<T>::SubString(usize pos, usize off) const
 {
 	BasicString<T> temp_str(off);
 	temp_str.Copy(*this, pos, off);
-	printf("SubStr = %s", temp_str.Buffer());
 	return temp_str;
 }
 
