@@ -560,9 +560,6 @@
     <ClCompile Include="Core\Memory\StackAlloc\AlignedStackAllocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\DataStructure\Array\Array.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Core\Misc\Maths\Vec2.inl">

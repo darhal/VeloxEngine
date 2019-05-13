@@ -15,7 +15,7 @@ private:
 public:
 	typedef T* Iterator;
 	typedef T& RefIterator;
-	typedef const T* RefIterator;
+	typedef const T* CIterator;
 
 	BasicString();
 	BasicString(usize capacity);
@@ -52,7 +52,7 @@ public:
 	FORCEINLINE T			   Front()								const;
 	FORCEINLINE ssize		   Find(const BasicString<T>& pattren)  const;
 	FORCEINLINE BasicString<T> SubString(usize pos, usize off)	    const;
-	FORCEINLINE bool		   Empty()								const;
+	FORCEINLINE bool		   IsEmpty()							const;
 
 
 	FORCEINLINE Iterator begin() noexcept;

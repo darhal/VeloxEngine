@@ -10,6 +10,7 @@ BasicString<T>::BasicString()
 {
 	m_Data[0] = T(0);
 	SetSmallLength(1);
+	printf("default ctor\n");
 }
 
 template<typename T>
@@ -60,7 +61,7 @@ FORCEINLINE const usize BasicString<T>::Capacity() const
 }
 
 template<typename T>
-FORCEINLINE bool BasicString<T>::Empty() const
+FORCEINLINE bool BasicString<T>::IsEmpty() const
 {
 	return this->Size() == 0;
 }
@@ -109,7 +110,7 @@ void BasicString<T>::Resize(usize s)
 			usize nlen = (len - s); // new len remmber that len does represent whats rest in the buffer (when SSO is enabled)
 			SetSmallLength(nlen);
 			m_Data[nlen] = T(0);
-		}else {
+		}else{
 			SetNormalLength(len - s);
 			m_Buffer[len - s] = T(0);
 		}
@@ -300,8 +301,7 @@ BasicString<T>::BasicString(const BasicString<T>& other)
 			m_Data[i] = other.m_Data[i];
 		}
 		SetSmallLength(len);
-	}
-	else {
+	}else {
 		usize cap = other.m_Capacity;
 		m_Buffer = (T*) operator new (sizeof(T) * cap); // allocate empty storage
 		for (usize i = 0; i < len; i++) {
@@ -315,16 +315,18 @@ BasicString<T>::BasicString(const BasicString<T>& other)
 template<typename T>
 BasicString<T>& BasicString<T>::operator=(const BasicString<T>& other)
 {
+	if (this == &other) {
+		return *this;
+	}
 	bool IsOtherSmall = other.IsSmall();
 	usize cap = other.Capacity();
 	usize len = other.Length();
-	if (IsOtherSmall && this->Capacity() <= cap) {
+	if (IsOtherSmall && Capacity() <= cap) {
 		for (usize i = 0; i < len; i++) {
 			m_Data[i] = other.m_Data[i];
 		}
 		SetSmallLength(len);
-	}
-	else {
+	}else{
 		if (this->IsSmall()) {
 			m_Buffer = (T*) operator new (sizeof(T) * cap); // allocate empty storage
 		}

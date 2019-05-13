@@ -1,4 +1,5 @@
 #include <Core/DataStructure/String/String.hpp>
+#include <Core/DataStructure/Array/Array.hpp>
 #include <Core/Memory/Common.hpp>
 #include <iostream>
 #include <cstdio>
@@ -24,6 +25,13 @@ int main()
 	/*BenchmarkStdString();
 	printf("\n\n\n");
 	BenchmarkString();*/
+
+	Array<int32, 5> strArray = { { 5, 3, 1 } };
+	for (int32 s : strArray) {
+		printf("%d\n", s);
+	}
+
+	printf("\n\n");
 
 	String test("Hello");
 	for (const auto& c : test) {
