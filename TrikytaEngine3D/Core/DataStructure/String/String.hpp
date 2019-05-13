@@ -13,6 +13,9 @@ class BasicString
 private:
 	typedef BasicString<T> CLASS_TYPE;
 public:
+	typedef T* Iterator;
+	typedef T& RefIterator;
+	typedef const T* RefIterator;
 
 	BasicString();
 	BasicString(usize capacity);
@@ -29,22 +32,16 @@ public:
 	BasicString(BasicString<T>&& other);
 	BasicString<T>& operator=(BasicString<T>&& other);
 
-	FORCEINLINE bool Empty();
 	FORCEINLINE void Reserve(usize s);
-	FORCEINLINE void Resize(usize s);
 	FORCEINLINE void Clear();
+	void Resize(usize s);
 	
-
 	void Append(const BasicString<T>& str);
 	void PushBack(T c);
 	void PopBack();
 	void Erase(usize pos, usize offset);
 	void Insert(usize pos, const BasicString<T>& str);
 	void Copy(const BasicString<T>& str, usize pos, usize offset);
-	/*template<usize S>
-	void Insert(usize pos, const T(&str)[S]);
-	template<usize S>
-	void Insert(usize pos, const char* str, usize str_len);*/
 
 	FORCEINLINE const T*	   Buffer()							    const;
 	FORCEINLINE const usize	   Length()							    const;
@@ -55,6 +52,11 @@ public:
 	FORCEINLINE T			   Front()								const;
 	FORCEINLINE ssize		   Find(const BasicString<T>& pattren)  const;
 	FORCEINLINE BasicString<T> SubString(usize pos, usize off)	    const;
+	FORCEINLINE bool		   Empty()								const;
+
+
+	FORCEINLINE Iterator begin() noexcept;
+	FORCEINLINE Iterator end() noexcept;
 
 	template<typename NUMERIC_TYPE>
 	T& operator[](const NUMERIC_TYPE i);
@@ -62,11 +64,13 @@ public:
 	const T& operator[](const NUMERIC_TYPE i) const;
 
 	FORCEINLINE BasicString<T>& operator+=(const BasicString<T>& other);
+public:
+	CONSTEXPR static usize SPARE_RATE = 2;
 private:
 public:
 	CONSTEXPR static usize SSO_SIZE	  = (sizeof(T*) + 2 * sizeof(usize)) / sizeof(T); 
 	CONSTEXPR static usize SSO_MI	  = SSO_SIZE - 1;  // MI stands for Max Index.
-	CONSTEXPR static usize SPARE_RATE = 2;
+	
 
 	union {
 		struct {
@@ -92,19 +96,19 @@ template<typename T>
 template<usize S>
 BasicString<T>::BasicString(const T(&str)[S])
 {
-	if (S < SSO_SIZE) { // here its <= because we will count the trailing null
+	if (S <= SSO_SIZE) { // here its <= because we will count the trailing null
 		for (usize i = 0; i < S; i++) {
 			m_Data[i] = str[i];
 		}
-		m_Data[SSO_MI] = T((SSO_SIZE - S) << 1);
+		SetSmallLength(S);
 	}else{
-		m_Buffer = (T*) operator new (sizeof(T)*S); // allocate empty storage
+		usize real_cap = S * SPARE_RATE;
+		m_Buffer = (T*) operator new (sizeof(T)* real_cap); // allocate empty storage
 		for (usize i = 0; i < S; i++) {
 			m_Buffer[i] = str[i];
 		}
-		m_Capacity = S;
-		m_Length = S << 1 | 0x01;
-						     //^ bit to indicate that its not small string
+		m_Capacity = real_cap;
+		SetNormalLength(S); //bit to indicate that its not small string
 	}
 }
 
@@ -246,7 +250,7 @@ static bool operator!=(const BasicString<T>& a, const BasicString<T>& b)
 template<typename T>
 static BasicString<T> operator+(const BasicString<T>& lhs, const BasicString<T>& rhs)
 {
-	usize rlen = lhs.Length() + rhs.Length();
+	usize rlen = (lhs.Length() + rhs.Length()) * BasicString<T>::SPARE_RATE;
 	BasicString<T> res(rlen);
 	res = lhs;
 	res.Append(rhs);

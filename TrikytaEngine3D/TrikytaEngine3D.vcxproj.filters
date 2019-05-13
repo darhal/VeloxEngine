@@ -246,6 +246,9 @@
     <ClInclude Include="Core\Misc\Maths\Utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Core\DataStructure\Array\Array.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Main.cpp">
@@ -555,6 +558,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Core\Memory\StackAlloc\AlignedStackAllocator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\DataStructure\Array\Array.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

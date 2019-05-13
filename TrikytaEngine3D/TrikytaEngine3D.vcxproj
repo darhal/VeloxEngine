@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Core\DataStructure\Array\Array.hpp" />
     <ClInclude Include="Core\Context\Context.hpp" />
     <ClInclude Include="Core\Context\Extensions.hpp" />
     <ClInclude Include="Core\Context\GLDefines.hpp" />
@@ -222,6 +223,7 @@
     <ClInclude Include="Tests\Camera.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\DataStructure\Array\Array.cpp" />
     <ClCompile Include="Core\Context\Context.cpp" />
     <ClCompile Include="Core\Context\Context_Win32.cpp" />
     <ClCompile Include="Core\Context\Context_X11.cpp" />

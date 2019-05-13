@@ -21,24 +21,14 @@ int main()
 	printf("%s | Length = %d\n", str.Buffer(), str.Length());
 	str.Insert(5, " there");
 	printf("%s | Length = %d\n", str.Buffer(), str.Length());*/
-	BenchmarkStdString();
+	/*BenchmarkStdString();
 	printf("\n\n\n");
-	BenchmarkString();
+	BenchmarkString();*/
 
-	String text = "Hello....";
-	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", text.Buffer(), text.IsSmall() ? "true" : "false", text.Length(), text.Capacity());
-	String lol = text.SubString(5, 11);
-	printf("text = %s | IsSmall = %s | Len = %d | Cap = %d\n", lol.Buffer(), lol.IsSmall() ? "true" : "false", lol.Length(), lol.Capacity());	
-	//text.Append(String(" Im here"));
-	//printf("text = %s | IsSmall = %s | Len = %llu | Cap = %llu\n", text.Buffer(), text.IsSmall() ? "true" : "false", text.Length(), text.Capacity());
-	//TODO check : text.Insert(8, String(" XBC")); and Append Sometimes it wont work well on release mode
-	/*String small("Hi");
-	printf("sizeof(String) = %d\n", sizeof(String));
-	printf("small = %s | IsSmall = %s | Len = %d | Cap = %d\n", small.Buffer(), small.IsSmall() ? "true" : "false", small.Length(), small.Capacity());
-	small.Insert(2, String(" There.."));
-	printf("small = %s | IsSmall = %s | Len = %d | Cap = %d\n", small.Buffer(), small.IsSmall() ? "true" : "false", small.Length(), small.Capacity());
-	small.Append(String(" Thanks.."));
-	printf("small = %s | IsSmall = %s | Len = %d | Cap = %d\n", small.Buffer(), small.IsSmall() ? "true" : "false", small.Length(), small.Capacity());*/
+	String test("Hello");
+	for (const auto& c : test) {
+		printf("%c\n", c);
+	}
 	getchar();
 	return 0;
 }
@@ -47,11 +37,11 @@ void BenchmarkString()
 {
 	printf("----------------- TRE STRING -----------------\n");
 	auto start = std::chrono::steady_clock::now();
-	String text("ABAAABCD");
+	String text("ABCDEF");
 	auto end = std::chrono::steady_clock::now();
 	auto diff = end - start;
 	printf("text = %s\n", text.Buffer());
-	std::cout << "TRE::String benchmark of declartion of text(ABAAABCD) :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	std::cout << "TRE::String benchmark of declartion of text(ABCDEF) :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 
 	printf("----------------- TRE STRING -----------------\n");
 	start = std::chrono::steady_clock::now();
@@ -108,11 +98,11 @@ void BenchmarkStdString()
 {
 	printf("----------------- STD STRING -----------------\n");
 	auto start = std::chrono::steady_clock::now();
-	std::string text("ABAAABCD");
+	std::string text("ABCDEF");
 	auto end = std::chrono::steady_clock::now();
 	auto diff = end - start;
 	printf("text = %s\n", text.c_str());
-	std::cout << "STD::String benchmark of declartion of text(ABAAABCD) :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	std::cout << "STD::String benchmark of declartion of text(ABCDEF) :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 
 	printf("----------------- STD STRING -----------------\n");
 	start = std::chrono::steady_clock::now();

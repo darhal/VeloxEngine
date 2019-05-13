@@ -19,106 +19,12 @@ BasicString<T>::BasicString(usize capacity)
 		m_Data[0] = T(0);
 		SetSmallLength(1);
 	}else {
-		m_Buffer    = (T*) operator new (sizeof(T) * capacity); // allocate empty storage
+		usize real_cap = capacity * SPARE_RATE;
+		m_Buffer    = (T*) operator new (sizeof(T) * real_cap); // allocate empty storage
 		m_Buffer[0] = T(0); // init to 0
 		m_Capacity = capacity;
 		SetNormalLength(1);
 	}
-}
-
-//Copy ctor copy assignement
-template<typename T>
-BasicString<T>::BasicString(const BasicString<T>& other)
-{
-	bool IsOtherSmall = other.IsSmall();
-	usize len = other.Length();
-	if (IsOtherSmall) {
-		for (usize i = 0; i < len; i++) {
-			m_Data[i] = other.m_Data[i];
-		}
-		SetSmallLength(len);
-	}else{
-		usize cap = other.m_Capacity;
-		m_Buffer = (T*) operator new (sizeof(T) * cap); // allocate empty storage
-		for (usize i = 0; i < len; i++) {
-			m_Buffer[i] = other.m_Buffer[i];
-		}
-		m_Capacity = cap;
-		SetNormalLength(len);
-	}
-}
-
-template<typename T>
-BasicString<T>& BasicString<T>::operator=(const BasicString<T>& other)
-{
-	bool IsOtherSmall = other.IsSmall();
-	usize cap = other.Capacity();
-	usize len = other.Length();
-	if (IsOtherSmall && this->Capacity() <= cap) {
-		for (usize i = 0; i < len; i++) {
-			m_Data[i] = other.m_Data[i];
-		}
-		SetSmallLength(len);
-	}else{
-		if (this->IsSmall()) {
-			m_Buffer = (T*) operator new (sizeof(T) * cap); // allocate empty storage
-		}
-		const T* other_buffer = other.Buffer();
-		for (usize i = 0; i < len; i++) {
-			m_Buffer[i] = other_buffer[i];
-		}
-		SetLength(len);
-	}
-	return *this;
-}
-
-//Move ctor move assignement
-template<typename T>
-BasicString<T>::BasicString(BasicString<T>&& other)
-{
-	bool IsOtherSmall = other.IsSmall();
-	usize len = other.Length();
-	if (IsOtherSmall) {
-		for (usize i = 0; i < len; i++) {
-			m_Data[i] = other.m_Data[i];
-		}
-		SetSmallLength(len);
-		
-	}else{
-		m_Buffer = other.m_Buffer;
-		m_Capacity = other.m_Capacity;
-		SetNormalLength(len);
-		other.m_Buffer = NULL; // Pervent the other string from deleting when it go out of scope
-	}
-}
-
-template<typename T>
-BasicString<T>& BasicString<T>::operator=(BasicString<T>&& other)
-{
-	bool IsOtherSmall = other.IsSmall();
-	usize len = other.Length();
-	if (!this->IsSmall() && m_Buffer != NULL) {
-		delete[] m_Buffer;
-	}
-	if (IsOtherSmall) {
-		for (usize i = 0; i < len; i++) {
-			m_Data[i] = other.m_Data[i];
-		}
-		SetSmallLength(len);
-	}else {
-		m_Buffer = other.m_Buffer;
-		m_Capacity = other.m_Capacity;
-		SetNormalLength(len);
-		other.m_Buffer = NULL; // Pervent the other string from deleting when it go out of scope
-	}
-	return *this;
-}
-
-template<typename T>
-FORCEINLINE BasicString<T>& BasicString<T>::operator+=(const BasicString<T>& other)
-{
-	this->Append(other);
-	return *this;
 }
 
 template<typename T>
@@ -150,13 +56,25 @@ FORCEINLINE const usize BasicString<T>::Size() const
 template<typename T>
 FORCEINLINE const usize BasicString<T>::Capacity() const
 {
-	return this->IsSmall() ? SSO_MI : m_Capacity;
+	return this->IsSmall() ? SSO_SIZE : m_Capacity;
 }
 
 template<typename T>
-FORCEINLINE bool BasicString<T>::Empty()
+FORCEINLINE bool BasicString<T>::Empty() const
 {
-	return this->Length() == 0;
+	return this->Size() == 0;
+}
+
+template<typename T>
+FORCEINLINE typename BasicString<T>::Iterator BasicString<T>::begin() noexcept
+{ 
+	return this->EditableBuffer(); 
+}
+
+template<typename T>
+FORCEINLINE typename BasicString<T>::Iterator BasicString<T>::end() noexcept
+{
+	return this->EditableBuffer() + this->Size(); 
 }
 
 template<typename T>
@@ -180,31 +98,30 @@ FORCEINLINE void BasicString<T>::Reserve(usize s)
 }
 
 template<typename T>
-FORCEINLINE void BasicString<T>::Resize(usize s)
+void BasicString<T>::Resize(usize s)
 {
 	usize len = this->Length();
+	if (s == len) return;
 	bool isSmall = this->IsSmall();
-	if (s <= len) {
+	if (s < len) {
 		ASSERTF(!(len - s < 0), "String::Resize function is used with bad parameter.");
 		if (isSmall) {
 			usize nlen = (len - s); // new len remmber that len does represent whats rest in the buffer (when SSO is enabled)
-			m_Data[SSO_MI] = T((SSO_SIZE - (nlen)) << 1);
+			SetSmallLength(nlen);
 			m_Data[nlen] = T(0);
 		}else {
-			m_Length -= s;
-			m_Buffer[m_Length] = T(0);
+			SetNormalLength(len - s);
+			m_Buffer[len - s] = T(0);
 		}
 	}else if (s > this->Capacity()){
+		T* temp_buffer = (T*) operator new (sizeof(T)*s);
 		if (isSmall) { // String was small and now it gonna convert to normal.
-			T* temp_buffer = (T*) operator new (sizeof(T)*s);
 			for (usize i = 0; i < len; i++) {
 				temp_buffer[i] = m_Data[i];
 			}
 			m_Buffer = temp_buffer;
 			m_Capacity = s;
-			m_Length = len << 1 | 0x01;
 		}else{
-			T* temp_buffer = (T*) operator new (sizeof(T)*s);
 			for (usize i = 0; i < len; i++) {
 				temp_buffer[i] = m_Buffer[i];
 			}
@@ -212,6 +129,8 @@ FORCEINLINE void BasicString<T>::Resize(usize s)
 			m_Buffer = temp_buffer;
 			m_Capacity = s;
 		}
+		m_Buffer[s - 1] = T(0);
+		SetNormalLength(s);
 	}
 }
 
@@ -221,10 +140,10 @@ FORCEINLINE void BasicString<T>::Clear()
 	bool isSmall = this->IsSmall();
 	if (isSmall) {
 		m_Data[0] = T(0);
-		m_Data[SSO_MI] = (SSO_SIZE) << 1;
+		SetSmallLength(1);
 	}else{
 		m_Buffer[0] = T(0);
-		m_Length = 0x01;
+		SetNormalLength(1);
 	}
 	
 }
@@ -237,7 +156,7 @@ void BasicString<T>::Append(const BasicString<T>& str)
 	usize finalLen	  = tlen + slen;
 	const T* str_buffer_ptr = str.Buffer();
 	if (finalLen - 1 > this->Capacity()) { // -1 is to remove the trailing null terminator
-		this->Reserve(finalLen*SPARE_RATE);
+		this->Reserve(finalLen * SPARE_RATE);
 		T* buffer_ptr = this->EditableBuffer();
 		for (usize i = 0; i < slen; i++) {
 			buffer_ptr[tlen++] = str_buffer_ptr[i];
@@ -255,7 +174,7 @@ void BasicString<T>::Append(const BasicString<T>& str)
 template<typename T>
 FORCEINLINE T BasicString<T>::At(usize i) const
 {
-	ASSERTF(!(i > m_Length), "Bad usage of String::At (index out of bound).");
+	ASSERTF(!(i > Length()), "Bad usage of String::At (index out of bound).");
 	return this->Buffer()[i];
 }
 
@@ -370,22 +289,122 @@ FORCEINLINE ssize BasicString<T>::Find(const BasicString<T>& pattren) const
 	return SearchBoyerMoore(*this, pattren);
 }
 
+//Copy ctor copy assignement
+template<typename T>
+BasicString<T>::BasicString(const BasicString<T>& other)
+{
+	bool IsOtherSmall = other.IsSmall();
+	usize len = other.Length();
+	if (IsOtherSmall) {
+		for (usize i = 0; i < len; i++) {
+			m_Data[i] = other.m_Data[i];
+		}
+		SetSmallLength(len);
+	}
+	else {
+		usize cap = other.m_Capacity;
+		m_Buffer = (T*) operator new (sizeof(T) * cap); // allocate empty storage
+		for (usize i = 0; i < len; i++) {
+			m_Buffer[i] = other.m_Buffer[i];
+		}
+		m_Capacity = cap;
+		SetNormalLength(len);
+	}
+}
+
+template<typename T>
+BasicString<T>& BasicString<T>::operator=(const BasicString<T>& other)
+{
+	bool IsOtherSmall = other.IsSmall();
+	usize cap = other.Capacity();
+	usize len = other.Length();
+	if (IsOtherSmall && this->Capacity() <= cap) {
+		for (usize i = 0; i < len; i++) {
+			m_Data[i] = other.m_Data[i];
+		}
+		SetSmallLength(len);
+	}
+	else {
+		if (this->IsSmall()) {
+			m_Buffer = (T*) operator new (sizeof(T) * cap); // allocate empty storage
+		}
+		const T* other_buffer = other.Buffer();
+		for (usize i = 0; i < len; i++) {
+			m_Buffer[i] = other_buffer[i];
+		}
+		SetLength(len);
+	}
+	return *this;
+}
+
+//Move ctor move assignement
+template<typename T>
+BasicString<T>::BasicString(BasicString<T>&& other)
+{
+	bool IsOtherSmall = other.IsSmall();
+	usize len = other.Length();
+	if (IsOtherSmall) {
+		for (usize i = 0; i < len; i++) {
+			m_Data[i] = other.m_Data[i];
+		}
+		SetSmallLength(len);
+
+	}
+	else {
+		m_Buffer = other.m_Buffer;
+		m_Capacity = other.m_Capacity;
+		SetNormalLength(len);
+		other.SetSmallLength(1);
+		other.m_Buffer = NULL; // Pervent the other string from deleting when it go out of scope
+	}
+}
+
+template<typename T>
+BasicString<T>& BasicString<T>::operator=(BasicString<T>&& other)
+{
+	bool IsOtherSmall = other.IsSmall();
+	usize len = other.Length();
+	if (!this->IsSmall() && m_Buffer != NULL) {
+		delete[] m_Buffer;
+	}
+	if (IsOtherSmall) {
+		for (usize i = 0; i < len; i++) {
+			m_Data[i] = other.m_Data[i];
+		}
+		SetSmallLength(len);
+	}
+	else {
+		m_Buffer = other.m_Buffer;
+		m_Capacity = other.m_Capacity;
+		SetNormalLength(len);
+		other.SetSmallLength(1);
+		other.m_Buffer = NULL; // Pervent the other string from deleting when it go out of scope
+	}
+	return *this;
+}
+
+template<typename T>
+FORCEINLINE BasicString<T>& BasicString<T>::operator+=(const BasicString<T>& other)
+{
+	this->Append(other);
+	return *this;
+}
 
 /********** PRIVATE FUNCTIONS **********/
 
 template<typename T>
 FORCEINLINE bool BasicString<T>::IsSmall() const
 {  
-	return !(char)((m_Length & 0xFF) << (sizeof(T)*BITS_PER_BYTE - 1)); // if the bit is 0 then its small string otherwise its normal
+	return !((m_Length) & 0b1); // if the bit is 0 then its small string otherwise its normal
 }
 
 template<typename T>
 FORCEINLINE void BasicString<T>::SetLength(usize nlen)
 {
 	if (this->IsSmall() && nlen <= SSO_SIZE) {
-		m_Data[SSO_MI] = T((SSO_SIZE - nlen) << 1);
+		SetSmallLength(nlen);
 	}else{
-		m_Length = nlen << 1 | 0x01;
+		SetNormalLength(nlen);
 	}
 }
 
@@ -398,7 +417,7 @@ FORCEINLINE void BasicString<T>::SetSmallLength(usize nlen)
 template<typename T>
 FORCEINLINE void BasicString<T>::SetNormalLength(usize nlen)
 {
-	m_Length = nlen << 1 | 0x01;
+	m_Length = (nlen << 1) | 0b1;
 }
 
 template<typename T>
