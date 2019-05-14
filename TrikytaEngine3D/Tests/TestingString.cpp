@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <chrono>
 #include <bitset>
+#include <array>
 
 using namespace TRE;
 
@@ -26,17 +27,25 @@ int main()
 	printf("\n\n\n");
 	BenchmarkString();*/
 
-	Array<int32, 5> strArray = { { 5, 3, 1 } };
-	for (int32 s : strArray) {
+	//std::array<String, 5> arr = { "Hi", "Hello there i love you.", "I love you too" } ;
+
+	Array<String, 5> strArray = {String("Hi"), String("Hello there i love you."), String("I love you too")};
+	strArray.EmplaceBack("Fuck you");
+	for (const String& s : strArray) {
+		printf("%s\n", s.Buffer());
+	}
+	printf("Len = %d\n", strArray.Length());
+	strArray.Clear();
+
+	Array<int, 5> intArr = { 5, 6, 8, 7 };
+	for (const int& s : intArr) {
 		printf("%d\n", s);
 	}
+	printf("Len = %d\n", intArr.Length());
+	strArray.Clear();
+	intArr.Clear();
 
 	printf("\n\n");
-
-	String test("Hello");
-	for (const auto& c : test) {
-		printf("%c\n", c);
-	}
 	getchar();
 	return 0;
 }
