@@ -26,11 +26,22 @@ int main()
 	/*BenchmarkStdString();
 	printf("\n\n\n");
 	BenchmarkString();*/
+	auto start = std::chrono::steady_clock::now();
+	std::array<std::string, 5> arr = { "Hi", "Hello How are you .?", "I'm Fine thank you." } ;
+	auto end = std::chrono::steady_clock::now();
+	auto diff = end - start;
+	std::cout << "std::array benchmark of declartion of std::string { Hi, Hello How are you .?, I'm Fine thank you. } :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 
-	//std::array<String, 5> arr = { "Hi", "Hello there i love you.", "I love you too" } ;
+	start = std::chrono::steady_clock::now();
+	Array<String, 5> strArray = { "Hi", "Hello How are you .?", "I'm Fine thank you." };
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "TRE::Array benchmark of declartion of TRE::String { Hi, Hello How are you .?, I'm Fine thank you. } :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 
-	Array<String, 5> strArray = {String("Hi"), String("Hello there i love you."), String("I love you too")};
 	strArray.EmplaceBack("Fuck you");
+
+	arr.assign()
+	strArray.PopBack();
 	for (const String& s : strArray) {
 		printf("%s\n", s.Buffer());
 	}
@@ -44,7 +55,7 @@ int main()
 	printf("Len = %d\n", intArr.Length());
 	strArray.Clear();
 	intArr.Clear();
-
+	
 	printf("\n\n");
 	getchar();
 	return 0;

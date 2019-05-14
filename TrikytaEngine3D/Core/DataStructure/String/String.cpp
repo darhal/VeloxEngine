@@ -10,7 +10,6 @@ BasicString<T>::BasicString()
 {
 	m_Data[0] = T(0);
 	SetSmallLength(1);
-	printf("default ctor\n");
 }
 
 template<typename T>

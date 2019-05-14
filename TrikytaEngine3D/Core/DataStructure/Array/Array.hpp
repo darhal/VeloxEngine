@@ -16,9 +16,9 @@ public:
 	typedef const T* CIterator;
 public:
 	Array();
-	//Array(const std::initializer_list<T>& list);
 	template<typename... Args>
 	Array(Args&&... args);
+	//Array(const std::initializer_list<T>& list);
 	~Array();
 
 	FORCEINLINE T& At(usize i);
@@ -90,7 +90,6 @@ Array<T, S>::Array() : m_Length(0)
 Array<T, S>::Array(const std::initializer_list<T>& list) : m_Length(list.size())
 {
 	//m_Data = list;
-	printf("Hi\n");
 }*/
 
 template<typename T, usize S>
@@ -134,14 +133,15 @@ inline void Array<T, S>::EmplaceBack(Args && ...args)
 
 template<typename T, usize S>
 FORCEINLINE bool Array<T, S>::PopBack() {
-	if (m_Length > 0) return false;
-	Details::Destroy(m_Data[m_Length]); // Call dtor
+	if (m_Length <= 0) return false;
 	m_Length--;
+	Details::Destroy(m_Data[m_Length]); // Call dtor
 	return true;
 }
 
 template<typename T, usize S>
 FORCEINLINE void Array<T, S>::Clear() {
+	if (m_Length == 0) return;
 	Details::DestroyAll(*this);
 	m_Length = 0;
 }
