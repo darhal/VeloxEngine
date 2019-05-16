@@ -23,39 +23,10 @@ int main()
 	printf("%s | Length = %d\n", str.Buffer(), str.Length());
 	str.Insert(5, " there");
 	printf("%s | Length = %d\n", str.Buffer(), str.Length());*/
-	/*BenchmarkStdString();
+	BenchmarkStdString();
 	printf("\n\n\n");
-	BenchmarkString();*/
-	auto start = std::chrono::steady_clock::now();
-	std::array<std::string, 5> arr = { "Hi", "Hello How are you .?", "I'm Fine thank you." } ;
-	auto end = std::chrono::steady_clock::now();
-	auto diff = end - start;
-	std::cout << "std::array benchmark of declartion of std::string { Hi, Hello How are you .?, I'm Fine thank you. } :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	BenchmarkString();
 
-	start = std::chrono::steady_clock::now();
-	Array<String, 5> strArray = { "Hi", "Hello How are you .?", "I'm Fine thank you." };
-	end = std::chrono::steady_clock::now();
-	diff = end - start;
-	std::cout << "TRE::Array benchmark of declartion of TRE::String { Hi, Hello How are you .?, I'm Fine thank you. } :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
-
-	strArray.EmplaceBack("Fuck you");
-
-	arr.assign()
-	strArray.PopBack();
-	for (const String& s : strArray) {
-		printf("%s\n", s.Buffer());
-	}
-	printf("Len = %d\n", strArray.Length());
-	strArray.Clear();
-
-	Array<int, 5> intArr = { 5, 6, 8, 7 };
-	for (const int& s : intArr) {
-		printf("%d\n", s);
-	}
-	printf("Len = %d\n", intArr.Length());
-	strArray.Clear();
-	intArr.Clear();
-	
 	printf("\n\n");
 	getchar();
 	return 0;

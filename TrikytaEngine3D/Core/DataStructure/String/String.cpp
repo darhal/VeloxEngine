@@ -1,7 +1,6 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include "String.hpp"
-#include <cstdio>
 
 TRE_NS_START
 
@@ -18,7 +17,7 @@ BasicString<T>::BasicString(usize capacity)
 	if (capacity <= SSO_SIZE) {
 		m_Data[0] = T(0);
 		SetSmallLength(1);
-	}else {
+	}else{
 		usize real_cap = capacity * SPARE_RATE;
 		m_Buffer    = (T*) operator new (sizeof(T) * real_cap); // allocate empty storage
 		m_Buffer[0] = T(0); // init to 0
@@ -30,7 +29,7 @@ BasicString<T>::BasicString(usize capacity)
 template<typename T>
 BasicString<T>::~BasicString()
 {
-	if (!this->IsSmall()) {
+	if (!this->IsSmall() && m_Buffer != NULL) {
 		delete[] m_Buffer;
 	}
 }
@@ -39,12 +38,6 @@ template<typename T>
 FORCEINLINE const T* BasicString<T>::Buffer() const
 {
 	return this->IsSmall() ? m_Data : m_Buffer;
-}
-
-template<typename T>
-FORCEINLINE const usize BasicString<T>::Length() const
-{
-	return this->IsSmall() ? SSO_SIZE - (T)(m_Data[SSO_MI] >> 1) : m_Length >> 1;
 }
 
 template<typename T>
@@ -355,8 +348,7 @@ BasicString<T>::BasicString(BasicString<T>&& other)
 		m_Buffer = other.m_Buffer;
 		m_Capacity = other.m_Capacity;
 		SetNormalLength(len);
-		other.SetSmallLength(1);
-		other.m_Buffer = NULL; // Pervent the other string from deleting when it go out of scope
+		other.SetSmallLength(1); // Pervent the other string from deleting when it go out of scope
 	}
 }
 
@@ -373,13 +365,11 @@ BasicString<T>& BasicString<T>::operator=(BasicString<T>&& other)
 			m_Data[i] = other.m_Data[i];
 		}
 		SetSmallLength(len);
-	}
-	else {
+	}else{
 		m_Buffer = other.m_Buffer;
 		m_Capacity = other.m_Capacity;
 		SetNormalLength(len);
-		other.SetSmallLength(1);
-		other.m_Buffer = NULL; // Pervent the other string from deleting when it go out of scope
+		other.SetSmallLength(1); // Pervent the other string from deleting when it go out of scope
 	}
 	return *this;
 }
@@ -391,12 +381,26 @@ FORCEINLINE BasicString<T>& BasicString<T>::operator+=(const BasicString<T>& oth
 	return *this;
 }
 
+template<typename T>
+FORCEINLINE const usize BasicString<T>::Length() const
+{
+#if ENDIANNESS == LITTLE_ENDIAN
+	return this->IsSmall() ? SSO_SIZE - m_Data[SSO_MI] : (m_Length << 1) >> 1;
+#else
+	return this->IsSmall() ? SSO_SIZE - (m_Data[SSO_MI] >> 1) : m_Length >> 1;
+#endif
+}
+
 /********** PRIVATE FUNCTIONS **********/
 
 template<typename T>
 FORCEINLINE bool BasicString<T>::IsSmall() const
 {  
-	return !((m_Length) & 0b1); // if the bit is 0 then its small string otherwise its normal
+#if ENDIANNESS == LITTLE_ENDIAN
+	return !(m_Data[SSO_MI] & hight_bit_mask_normal_str); // if the bit is 0 then its small string otherwise its normal
+#else
+	return !(m_Data[SSO_MI] & 0b1); // if the bit is 0 then its small string otherwise its normal
+#endif
 }
 
 template<typename T>
@@ -412,13 +416,22 @@ FORCEINLINE void BasicString<T>::SetLength(usize nlen)
 template<typename T>
 FORCEINLINE void BasicString<T>::SetSmallLength(usize nlen)
 {
-	m_Data[SSO_MI] = T((SSO_SIZE - nlen) << 1);
+#if ENDIANNESS == LITTLE_ENDIAN
+	m_Data[SSO_MI] = T(SSO_SIZE - nlen); // Highest bit must be 0!
+										 // We can use (T(SSO_SIZE - nlen) << 1) >> 1 to enforce it but it wont reach the maximum anyways!
+#else
+	m_Data[SSO_MI] = (T(SSO_SIZE - nlen) << 1);
+#endif
 }
 
 template<typename T>
 FORCEINLINE void BasicString<T>::SetNormalLength(usize nlen)
 {
+#if ENDIANNESS == LITTLE_ENDIAN
+	m_Length = nlen | hight_bit_mask_normal_str;
+#else
 	m_Length = (nlen << 1) | 0b1;
+#endif
 }
 
 template<typename T>

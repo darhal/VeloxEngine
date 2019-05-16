@@ -4,6 +4,7 @@
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/Misc/Maths/Utils.hpp>
 #include <limits>
+#include <type_traits>
 
 TRE_NS_START
 
@@ -12,6 +13,7 @@ class BasicString
 {
 private:
 	typedef BasicString<T> CLASS_TYPE;
+	typedef typename std::make_unsigned<T>::type UT;
 public:
 	typedef T* Iterator;
 	typedef T& RefIterator;
@@ -71,6 +73,10 @@ public:
 	CONSTEXPR static usize SSO_SIZE	  = (sizeof(T*) + 2 * sizeof(usize)) / sizeof(T); 
 	CONSTEXPR static usize SSO_MI	  = SSO_SIZE - 1;  // MI stands for Max Index.
 	
+#if ENDIANNESS == LITTLE_ENDIAN
+	CONSTEXPR static usize hight_bit_mask_normal_str = usize(1) << (sizeof(usize)*BITS_PER_BYTE - 1);
+#else
+#endif
 
 	union {
 		struct {
@@ -101,6 +107,13 @@ BasicString<T>::BasicString(const T(&str)[S])
 			m_Data[i] = str[i];
 		}
 		SetSmallLength(S);
+		/*for (usize i = 0; i < sizeof(*this); i++) {
+			std::cout << std::bitset<8>(m_Data[i]) << std::endl;
+		}
+		printf("--------------------------------------------\n");
+		std::cout << std::bitset<64>((usize)m_Buffer) << std::endl;
+		std::cout << std::bitset<64>((usize)m_Capacity) << std::endl;
+		std::cout << std::bitset<64>((usize)m_Length) << std::endl;*/
 	}else{
 		usize real_cap = S * SPARE_RATE;
 		m_Buffer = (T*) operator new (sizeof(T)* real_cap); // allocate empty storage
@@ -108,7 +121,9 @@ BasicString<T>::BasicString(const T(&str)[S])
 			m_Buffer[i] = str[i];
 		}
 		m_Capacity = real_cap;
-		SetNormalLength(S); //bit to indicate that its not small string
+		SetNormalLength(S); // bit to indicate that its not small string 
+							// (the bit is located always at the end of the bit stream, 
+							// works both on little and big endian architectures)
 	}
 }
 

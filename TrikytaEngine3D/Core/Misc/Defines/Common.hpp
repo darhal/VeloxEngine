@@ -134,3 +134,24 @@ typedef uintptr_t uintptr;
 #define ABS(a)	 ((a < 0) ? -a : a)
 
 #define BITS_PER_BYTE 8
+
+
+/******************* BIT ENDIANNESS *******************/
+#define LITTLE_ENDIAN 0x41424344UL 
+#define BIG_ENDIAN    0x44434241UL
+#define PDP_ENDIAN    0x42414443UL
+#define ENDIAN_ORDER  ('ABCD') 
+#define ENDIANNESS	  0
+
+#if ENDIAN_ORDER == LITTLE_ENDIAN
+	#undef ENDIANNESS
+	#define ENDIANNESS LITTLE_ENDIAN
+#elif ENDIAN_ORDER == BIG_ENDIAN
+	#undef ENDIANNESS
+	#define ENDIANNESS BIG_ENDIAN
+#elif ENDIAN_ORDER == PDP_ENDIAN
+	#undef ENDIANNESS
+	#define ENDIANNESS PDP_ENDIAN
+#else
+	#error "Can't determine the endianness."
+#endif

@@ -94,7 +94,7 @@ Array<T, S>::Array(const std::initializer_list<T>& list) : m_Length(list.size())
 
 template<typename T, usize S>
 template<typename... Args>
-Array<T, S>::Array(Args&&... args) : m_Length(sizeof...(Args)), m_Data{ std::forward<Args>(args)... }
+Array<T, S>::Array(Args&&... args) : m_Length(sizeof...(Args)), m_Data{ static_cast<T>(std::forward<Args>(args))... }
 {
 }
 
@@ -123,7 +123,7 @@ FORCEINLINE void Array<T, S>::ConstructAt(usize i, Args&& ...args)
 
 template<typename T, usize S>
 template<typename ...Args>
-inline void Array<T, S>::EmplaceBack(Args && ...args)
+FORCEINLINE void Array<T, S>::EmplaceBack(Args&& ...args)
 {
 	ASSERTF(!(m_Length > CAPACITY), "Usage of PutAt with bad parameter index out of bound.");
 	if (m_Length > CAPACITY) return;
