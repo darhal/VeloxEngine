@@ -24,6 +24,8 @@ public:
 	template<usize S>
 	BasicString(const T(&str)[S]);
 
+	BasicString(const char* str, usize S);
+
 	~BasicString();
 
 	//Copy ctor copy assignement
@@ -46,9 +48,9 @@ public:
 	void Copy(const BasicString<T>& str, usize pos, usize offset);
 
 	FORCEINLINE const T*	   Buffer()							    const;
-	FORCEINLINE const usize	   Length()							    const;
-	FORCEINLINE const usize	   Size()								const;
-	FORCEINLINE const usize	   Capacity()							const;
+	FORCEINLINE usize	   Length()							    const;
+	FORCEINLINE usize	   Size()								const;
+	FORCEINLINE usize	   Capacity()							const;
 	FORCEINLINE T			   At(usize i)							const;
 	FORCEINLINE T			   Back()								const;
 	FORCEINLINE T			   Front()								const;
@@ -69,7 +71,6 @@ public:
 public:
 	CONSTEXPR static usize SPARE_RATE = 2;
 private:
-public:
 	CONSTEXPR static usize SSO_SIZE	  = (sizeof(T*) + 2 * sizeof(usize)) / sizeof(T); 
 	CONSTEXPR static usize SSO_MI	  = SSO_SIZE - 1;  // MI stands for Max Index.
 	
@@ -107,14 +108,29 @@ BasicString<T>::BasicString(const T(&str)[S])
 			m_Data[i] = str[i];
 		}
 		SetSmallLength(S);
-		/*for (usize i = 0; i < sizeof(*this); i++) {
-			std::cout << std::bitset<8>(m_Data[i]) << std::endl;
-		}
-		printf("--------------------------------------------\n");
-		std::cout << std::bitset<64>((usize)m_Buffer) << std::endl;
-		std::cout << std::bitset<64>((usize)m_Capacity) << std::endl;
-		std::cout << std::bitset<64>((usize)m_Length) << std::endl;*/
 	}else{
+		usize real_cap = S * SPARE_RATE;
+		m_Buffer = (T*) operator new (sizeof(T)* real_cap); // allocate empty storage
+		for (usize i = 0; i < S; i++) {
+			m_Buffer[i] = str[i];
+		}
+		m_Capacity = real_cap;
+		SetNormalLength(S); // bit to indicate that its not small string 
+							// (the bit is located always at the end of the bit stream, 
+							// works both on little and big endian architectures)
+	}
+}
+
+template<typename T>
+BasicString<T>::BasicString(const char* str, usize S)
+{
+	if (S <= SSO_SIZE) { // here its <= because we will count the trailing null
+		for (usize i = 0; i < S; i++) {
+			m_Data[i] = str[i];
+		}
+		SetSmallLength(S);
+	}
+	else {
 		usize real_cap = S * SPARE_RATE;
 		m_Buffer = (T*) operator new (sizeof(T)* real_cap); // allocate empty storage
 		for (usize i = 0; i < S; i++) {

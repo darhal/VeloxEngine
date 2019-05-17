@@ -41,13 +41,13 @@ FORCEINLINE const T* BasicString<T>::Buffer() const
 }
 
 template<typename T>
-FORCEINLINE const usize BasicString<T>::Size() const
+FORCEINLINE usize BasicString<T>::Size() const
 {
 	return this->Length() - 1;
 }
 
 template<typename T>
-FORCEINLINE const usize BasicString<T>::Capacity() const
+FORCEINLINE usize BasicString<T>::Capacity() const
 {
 	return this->IsSmall() ? SSO_SIZE : m_Capacity;
 }
@@ -382,7 +382,7 @@ FORCEINLINE BasicString<T>& BasicString<T>::operator+=(const BasicString<T>& oth
 }
 
 template<typename T>
-FORCEINLINE const usize BasicString<T>::Length() const
+FORCEINLINE usize BasicString<T>::Length() const
 {
 #if ENDIANNESS == LITTLE_ENDIAN
 	return this->IsSmall() ? SSO_SIZE - m_Data[SSO_MI] : (m_Length << 1) >> 1;

@@ -19,14 +19,6 @@ void BenchmarkString();
 
 int main()
 {
-	/*TRE::BasicString<char> str("Hello friend.");
-	printf("%s | Length = %d\n", str.Buffer(), str.Length());
-	str.Insert(5, " there");
-	printf("%s | Length = %d\n", str.Buffer(), str.Length());*/
-	BenchmarkStdString();
-	printf("\n\n\n");
-	BenchmarkString();
-
 	printf("\n\n");
 	getchar();
 	return 0;
