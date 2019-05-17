@@ -10,31 +10,22 @@ template<typename T>
 class UniquePointer
 {
 public:
-	UniquePointer(T* ptr);
-	virtual ~UniquePointer();
-
-	UniquePointer(const UniquePointer<T>& other);
-
-	FORCEINLINE UniquePointer<T>& operator=(const UniquePointer<T>& other);
+	FORCEINLINE UniquePointer(T* ptr) : m_Ptr(ptr) {};
+	FORCEINLINE virtual ~UniquePointer();
 
 	FORCEINLINE T& operator*();
 	FORCEINLINE T* operator->();
+
+	UniquePointer(const UniquePointer<T>& other) = delete;
+	UniquePointer<T>& operator=(const UniquePointer<T>& other) = delete;
 private:
-	RefCounter& m_RefCounter;
 	T* m_Ptr;
 };
 
 template<typename T>
-UniquePointer<T>::UniquePointer(T* ptr) : m_Ptr(ptr)
+FORCEINLINE UniquePointer<T>::~UniquePointer()
 {
-}
-
-template<typename T>
-FORCEINLINE UniquePointer<T>& UniquePointer<T>::operator=(const UniquePointer<T>& other)
-{
-	m_Ptr = other.m_Ptr;
-	m_RefCounter = &other.m_RefCounter;
-	return *this;
+	delete m_Ptr;
 }
 
 template<typename T>

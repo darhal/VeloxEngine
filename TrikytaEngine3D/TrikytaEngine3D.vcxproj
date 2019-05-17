@@ -154,10 +154,12 @@
     <ClInclude Include="Core\DataStructure\String\String.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />
     <ClInclude Include="Core\Memory\Common.hpp" />
-    <ClInclude Include="Core\Memory\LinearAlloc\LinearAllocator.hpp" />
-    <ClInclude Include="Core\Memory\PoolAlloc\PoolAllocator.hpp" />
-    <ClInclude Include="Core\Memory\PoolAlloc\StackLinkedList.hpp" />
-    <ClInclude Include="Core\Memory\StackAlloc\StackAllocator.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\LinearAlloc\LinearAllocator.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\PoolAlloc\PoolAllocator.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\PoolAlloc\StackLinkedList.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\StackAlloc\StackAllocator.hpp" />
+    <ClInclude Include="Core\Memory\RefCounter\RefCounter.hpp" />
+    <ClInclude Include="Core\Memory\SmartPtr\UniquePointer.hpp" />
     <ClInclude Include="Core\Memory\Utils\Utils.hpp" />
     <ClInclude Include="Core\Misc\Defines\Common.hpp" />
     <ClInclude Include="Core\Misc\Defines\DataStructure.hpp" />
@@ -223,7 +225,7 @@
     <ClInclude Include="RenderEngine\RawModel\RawModelSettings.hpp" />
     <ClInclude Include="RenderEngine\Loader\MaterialLoader.hpp" />
     <ClInclude Include="RenderEngine\Loader\MeshLoader.hpp" />
-    <ClInclude Include="Core\Memory\StackAlloc\AlignedStackAllocator.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\StackAlloc\AlignedStackAllocator.hpp" />
     <ClInclude Include="Tests\Camera.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -232,9 +234,9 @@
     <ClCompile Include="Core\Context\Context_X11.cpp" />
     <ClCompile Include="Core\Context\Extensions.cpp" />
     <ClCompile Include="Core\DataStructure\String\String.cpp" />
-    <ClCompile Include="Core\Memory\LinearAlloc\LinearAllocator.cpp" />
-    <ClCompile Include="Core\Memory\PoolAlloc\PoolAllocator.cpp" />
-    <ClCompile Include="Core\Memory\StackAlloc\StackAllocator.cpp" />
+    <ClCompile Include="Core\Memory\Allocators\LinearAlloc\LinearAllocator.cpp" />
+    <ClCompile Include="Core\Memory\Allocators\PoolAlloc\PoolAllocator.cpp" />
+    <ClCompile Include="Core\Memory\Allocators\StackAlloc\StackAllocator.cpp" />
     <ClCompile Include="Core\Misc\Utils\Common.cpp" />
     <ClCompile Include="Core\Misc\Utils\Image.cpp" />
     <ClCompile Include="Core\Misc\Utils\libjpeg\jaricom.c" />
@@ -326,7 +328,7 @@
     <ClCompile Include="RenderEngine\RawModel\RawModel.cpp" />
     <ClCompile Include="RenderEngine\Loader\MaterialLoader.cpp" />
     <ClCompile Include="RenderEngine\Loader\MeshLoader.cpp" />
-    <ClCompile Include="Core\Memory\StackAlloc\AlignedStackAllocator.cpp" />
+    <ClCompile Include="Core\Memory\Allocators\StackAlloc\AlignedStackAllocator.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
     <ClCompile Include="Tests\Main2.cpp" />
     <ClCompile Include="Tests\TestingString.cpp" />
