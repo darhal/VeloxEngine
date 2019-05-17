@@ -24,6 +24,26 @@ int main()
 	return 0;
 }
 
+void TestStackAlloc()
+{
+
+}
+
+void TestAlignedStackAlloc()
+{
+
+}
+
+void TestLinearAlloc()
+{
+
+}
+
+void TestPoolAlloc()
+{
+
+}
+
 void BenchmarkString()
 {
 	printf("----------------- TRE STRING -----------------\n");
@@ -66,7 +86,7 @@ void BenchmarkString()
 	std::cout << "TRE::String benchmark of text == text3 :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 	printf("Result : %s\n", (slot) ? "true" : "false");
 
-	
+
 	printf("Appending ' XBC'\n");
 	start = std::chrono::steady_clock::now();
 	text.Append(String(" XBC"));
@@ -142,24 +162,4 @@ void BenchmarkStdString()
 	diff = end - start;
 	std::cout << "STD::String benchmark of Erease(4, 6); :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 	printf("Text = %s\n", text.c_str());
-}
-
-void TestStackAlloc()
-{
-
-}
-
-void TestAlignedStackAlloc()
-{
-
-}
-
-void TestLinearAlloc()
-{
-
-}
-
-void TestPoolAlloc()
-{
-
 }

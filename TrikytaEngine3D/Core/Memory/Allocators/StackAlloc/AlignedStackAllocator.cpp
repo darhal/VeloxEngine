@@ -5,7 +5,6 @@ TRE_NS_START
 
 AlignedStackAllocator::AlignedStackAllocator(usize total_size) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL), m_Marker(0)
 {
-	far
 };
 
 AlignedStackAllocator::~AlignedStackAllocator()
@@ -28,6 +27,7 @@ AlignedStackAllocator& AlignedStackAllocator::Reset()
 	return *this;
 }
 
+//Alignement must be power of 2!
 void* AlignedStackAllocator::Allocate(ssize size, usize alignment)
 {
 	ASSERT(!(alignment >= 1)); ASSERT(!(alignment <= 128)); ASSERT(!((alignment & (alignment - 1)) == 0)); // pwr of 2

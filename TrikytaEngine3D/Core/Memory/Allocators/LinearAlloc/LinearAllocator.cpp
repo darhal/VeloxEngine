@@ -4,8 +4,7 @@ TRE_NS_START
 
 LinearAllocator::LinearAllocator(usize total_size) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL)
 {
-
-};
+}
 
 LinearAllocator::~LinearAllocator()
 {
