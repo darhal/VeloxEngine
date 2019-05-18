@@ -9,6 +9,8 @@
 #include <array>
 #include <Core/Memory/RefCounter/RefCounter.hpp>
 #include <Core/Memory/SmartPtr/SharedPointer.hpp>
+#include <Core/DataStructure/Vector/Vector.hpp>
+#include <vector>
 
 using namespace TRE;
 
@@ -25,28 +27,97 @@ struct A
 	~A() { printf("dtor\n"); }
 };
 
-void DoSmthg(const SharedPointer<A>& other)
+
+template<typename T>
+void PrintVec(Vector<T>& vec)
 {
-	printf("*** -> RefCount is : %d\n", other.GetRefCount());
-	auto another_sptr = other;
-	printf("*** -> RefCount is : %d\n", other.GetRefCount());
+	printf("Len = %d | Cap = %d\n", vec.Length(), vec.Capacity());
+	printf("Data = {\n");
+	for (usize i = 0; i < vec.Length(); i++)
+	{
+		printf("[%d]=%s, ", i, (*vec.At(i)).Buffer());
+	}
+	printf("}\n");
+	printf("--------------------------\n");
+}
+
+template<typename T>
+void PrintVec(std::vector<T>& vec)
+{
+	printf("Len = %d | Cap = %d\n", vec.size(), vec.capacity());
+	printf("Data = {\n");
+	for (usize i = 0; i < vec.size(); i++)
+	{
+		printf("[%d]=%s, ", i, (vec.at(i)).Buffer());
+	}
+	printf("}\n");
+	printf("--------------------------\n");
 }
 
 int main()
 {
+	Vector<String> arr = {"Hello", "Hi", "I can hear you", "Nice", "Sure"};
+	arr.Emplace(6, "BLABLA");
+	PrintVec(arr);
+	arr.Erease(4, 2);
+	PrintVec(arr);
+	/*const usize MAX = 1;
 	{
-		SharedPointer<A> sptr = new A();
-		printf("* -> RefCount is : %d\n", sptr.GetRefCount());
-		{
-			auto another_sptr = sptr;
-			printf("** -> RefCount is : %d\n", another_sptr.GetRefCount());
-			printf("Do stuff\n");
-			DoSmthg(another_sptr);
-			printf("* -> RefCount is : %d\n", another_sptr.GetRefCount());
+		auto start = std::chrono::steady_clock::now();
+		Vector<String> arr;
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+		std::cout << "TRE::Vector benchmark of declartion of Vector<String> arr :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		double sum = 0;
+		for (usize i = 0; i < MAX; i++) {
+			start = std::chrono::steady_clock::now();
+			arr.EmplaceBack("50");
+			arr.EmplaceBack("70");
+			arr.EmplaceBack("80");
+			arr.EmplaceBack("90");
+			arr.EmplaceBack("90");
+			arr.EmplaceBack("20");
+			arr.EmplaceBack("156");
+			arr.EmplaceBack("6161");
+			arr.EmplaceBack("965");
+			arr.Emplace(3, "69");
+			end = std::chrono::steady_clock::now();
+			diff = end - start;
+			sum += std::chrono::duration<double, std::nano>(diff).count();
 		}
-		printf("* -> RefCount is : %d\n", sptr.GetRefCount());
+		std::cout << "TRE::Vector AVERAGE benchmark of pushing back 9 string elements (x" <<MAX<<"times) :" << sum / MAX  << " ns" << std::endl;
+		printf("TRE::VEC Len = %d | Cap = %d\n", arr.Length(), arr.Capacity());
+		PrintVec(arr);
 	}
-	printf("\n\n");
+	{
+		auto start = std::chrono::steady_clock::now();
+		std::vector<String> arr(MAX);
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+		std::cout << "std::vector benchmark of declartion of std::vector<String> arr :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		double sum = 0;
+		for (usize i = 0; i < MAX; i++) {
+			start = std::chrono::steady_clock::now();
+			arr.emplace_back("50");
+			arr.emplace_back("70");
+			arr.emplace_back("80");
+			arr.emplace_back("90");
+			arr.emplace_back("90");
+			arr.emplace_back("20");
+			arr.emplace_back("156");
+			arr.emplace_back("6161");
+			arr.emplace_back("965");
+			arr.emplace(arr.begin()+3, "69");
+			end = std::chrono::steady_clock::now();
+			diff = end - start;
+			sum += std::chrono::duration<double, std::nano>(diff).count();
+		}
+		std::cout << "std::vector AVERAGE benchmark of pushing back 9 string elements (x" << MAX << "times) :" << sum / MAX << " ns" << std::endl;
+		printf("std::vec Len = %d | Cap = %d\n", arr.size(), arr.capacity());
+		PrintVec(arr);
+	}*/
 	getchar();
 	return 0;
 }

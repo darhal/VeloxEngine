@@ -48,9 +48,9 @@ public:
 	void Copy(const BasicString<T>& str, usize pos, usize offset);
 
 	FORCEINLINE const T*	   Buffer()							    const;
-	FORCEINLINE usize	   Length()							    const;
-	FORCEINLINE usize	   Size()								const;
-	FORCEINLINE usize	   Capacity()							const;
+	FORCEINLINE usize		   Length()							    const;
+	FORCEINLINE usize		   Size()								const;
+	FORCEINLINE usize	       Capacity()							const;
 	FORCEINLINE T			   At(usize i)							const;
 	FORCEINLINE T			   Back()								const;
 	FORCEINLINE T			   Front()								const;
@@ -103,6 +103,7 @@ template<typename T>
 template<usize S>
 BasicString<T>::BasicString(const T(&str)[S])
 {
+	
 	if (S <= SSO_SIZE) { // here its <= because we will count the trailing null
 		for (usize i = 0; i < S; i++) {
 			m_Data[i] = str[i];

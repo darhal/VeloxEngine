@@ -343,8 +343,7 @@ BasicString<T>::BasicString(BasicString<T>&& other)
 		}
 		SetSmallLength(len);
 
-	}
-	else {
+	}else{
 		m_Buffer = other.m_Buffer;
 		m_Capacity = other.m_Capacity;
 		SetNormalLength(len);

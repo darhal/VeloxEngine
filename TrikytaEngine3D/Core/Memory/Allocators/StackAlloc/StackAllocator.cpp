@@ -39,7 +39,7 @@ void* StackAllocator::Allocate(ssize size, usize alignment)
 	m_Offset += padding;
 	const usize nextAddress = currentAddress + padding;
 	const usize headerAddress = nextAddress - sizeof(AllocationHeader);
-	AllocationHeader allocationHeader{ padding };
+	AllocationHeader allocationHeader{ (char)padding };
 	AllocationHeader* headerPtr = (AllocationHeader*)headerAddress;
 	headerPtr = &allocationHeader;
 	m_Offset += size;

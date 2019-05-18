@@ -13,7 +13,7 @@ static FORCEINLINE const T Absolute(T x)
 	return (x < 0) ? -x : x;
 }
 
-template<typename T, typename std::enable_if<std::is_signed<T>::value == false, bool>::type = true>
+template<typename T, typename std::enable_if<std::is_unsigned<T>::value == true, bool>::type = true>
 static FORCEINLINE const T Absolute(T x)
 {
 	return x;

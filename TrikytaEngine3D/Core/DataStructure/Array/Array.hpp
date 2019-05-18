@@ -104,7 +104,7 @@ Array<T, S>::~Array()
 }
 
 template<typename T, usize S>
-template<typename ...Args>
+template<typename... Args>
 FORCEINLINE void Array<T, S>::ConstructFill(Args&& ...args)
 {
 	for (usize i = 0; i < CAPACITY; i++) {
