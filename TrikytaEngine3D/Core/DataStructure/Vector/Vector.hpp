@@ -33,13 +33,15 @@ public:
 	FORCEINLINE usize Capacity() const;
 	FORCEINLINE usize Length() const;
 	FORCEINLINE usize Size() const;
+	FORCEINLINE const T& Back() const;
+	FORCEINLINE const T& Front() const;
 
 	FORCEINLINE bool Reserve(usize sz);
 
 	FORCEINLINE const T* At(usize i);
-	/*FORCEINLINE const T& At(usize i) const;
+	FORCEINLINE const T& At(usize i) const;
 	FORCEINLINE const T* operator[](usize i);
-	FORCEINLINE const T& operator[](usize i) const;*/
+	FORCEINLINE const T& operator[](usize i) const;
 private:
 	FORCEINLINE void Reallocate(usize nCap);
 private:
@@ -116,13 +118,6 @@ FORCEINLINE bool Vector<T>::PopBack()
 	if (m_Length <= 0) return false;
 	m_Data[m_Length - 1].~T();
 	return m_Length--;
-}
-
-template<typename T>
-FORCEINLINE const T* Vector<T>::At(usize i)
-{
-	ASSERTF(!(i >= m_Length), "Bad usage of vector function At index out of bounds");
-	return &m_Data[i];
 }
 
 template<typename T>
@@ -204,14 +199,13 @@ FORCEINLINE void Vector<T>::Erease(usize start, usize end)
 {
 	ASSERTF(!(start > m_Length || end > m_Length), "[%d..%d] interval isn't included in the range [0..%d]", start, end, m_Length);
 	usize size = Absolute(ssize(end) - ssize(start));
-	T* buffer = Allocate<T>(size);
-	CopyRangeTo(m_Data + start, buffer, size);
-	for (usize i = 0; i < size; i++) {
-		printf("Str = \n", buffer[i].Buffer());
-	}
-	MoveRange(buffer, m_Data + start, size);
+	T* start_ptr = m_Data + start;
+	T* end_ptr = m_Data + end;
+	do {
+		(*start_ptr++).~T();
+	} while (start_ptr != end_ptr);
+	MoveRange(m_Data + end, m_Data + start, size);
 	m_Length -= size;
-	Free(buffer);
 }
 
 template<typename T>
@@ -229,7 +223,46 @@ FORCEINLINE usize Vector<T>::Length() const
 template<typename T>
 FORCEINLINE usize Vector<T>::Size() const
 {
-	return m_Length - 1;
+	return m_Length ? 0 : m_Length - 1;
+}
+
+template<typename T>
+inline const T& Vector<T>::Back() const
+{
+	return m_Data[Size()];
+}
+
+template<typename T>
+inline const T& Vector<T>::Front() const
+{
+	return m_Data[0];
+}
+
+template<typename T>
+FORCEINLINE const T* Vector<T>::At(usize i)
+{
+	ASSERTF(!(i >= m_Length), "Bad usage of vector function At index out of bounds");
+	return &m_Data[i];
+}
+
+template<typename T>
+inline const T& Vector<T>::At(usize i) const
+{
+	ASSERTF(!(i >= m_Length), "Bad usage of vector function At index out of bounds");
+	return m_Data[i];
+}
+
+template<typename T>
+inline const T* Vector<T>::operator[](usize i)
+{
+	if (i >= m_Length) return NULL;
+	return At(i);
+}
+
+template<typename T>
+inline const T& Vector<T>::operator[](usize i) const
+{
+	return At(i);
 }
 
 TRE_NS_END

@@ -59,7 +59,7 @@ int main()
 	Vector<String> arr = {"Hello", "Hi", "I can hear you", "Nice", "Sure"};
 	arr.Emplace(6, "BLABLA");
 	PrintVec(arr);
-	arr.Erease(4, 2);
+	arr.Erease(1, 2);
 	PrintVec(arr);
 	/*const usize MAX = 1;
 	{
