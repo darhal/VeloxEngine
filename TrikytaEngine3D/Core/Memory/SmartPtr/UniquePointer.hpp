@@ -10,7 +10,7 @@ template<typename T>
 class UniquePointer
 {
 public:
-	FORCEINLINE UniquePointer(T* ptr) : m_Ptr(ptr) {};
+	FORCEINLINE UniquePointer(T* ptr) : m_Ptr(ptr) {ASSERTF(!(m_Ptr == NULL), "Attempt to use unique pointer with a null pointer!");}
 	FORCEINLINE virtual ~UniquePointer();
 
 	FORCEINLINE T& operator*();

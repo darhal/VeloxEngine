@@ -7,6 +7,8 @@
 #include <chrono>
 #include <bitset>
 #include <array>
+#include <Core/Memory/RefCounter/RefCounter.hpp>
+#include <Core/Memory/SmartPtr/SharedPointer.hpp>
 
 using namespace TRE;
 
@@ -17,8 +19,33 @@ void TestPoolAlloc();
 void BenchmarkStdString();
 void BenchmarkString();
 
+struct A
+{
+	A() { printf("ctor\n"); }
+	~A() { printf("dtor\n"); }
+};
+
+void DoSmthg(const SharedPointer<A>& other)
+{
+	printf("*** -> RefCount is : %d\n", other.GetRefCount());
+	auto another_sptr = other;
+	printf("*** -> RefCount is : %d\n", other.GetRefCount());
+}
+
 int main()
 {
+	{
+		SharedPointer<A> sptr = new A();
+		printf("* -> RefCount is : %d\n", sptr.GetRefCount());
+		{
+			auto another_sptr = sptr;
+			printf("** -> RefCount is : %d\n", another_sptr.GetRefCount());
+			printf("Do stuff\n");
+			DoSmthg(another_sptr);
+			printf("* -> RefCount is : %d\n", another_sptr.GetRefCount());
+		}
+		printf("* -> RefCount is : %d\n", sptr.GetRefCount());
+	}
 	printf("\n\n");
 	getchar();
 	return 0;

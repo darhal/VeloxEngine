@@ -2,50 +2,77 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
+#include <atomic>
 
 TRE_NS_START
 
-class ReferenceCounter
-{
+template<bool IS_MT>
+class ReferenceCounter {
 public:
-	FORCEINLINE ReferenceCounter() : m_refCounter(0) {};
-
-	FORCEINLINE uint32 GetCount() const;
 	FORCEINLINE ReferenceCounter& operator++(int);
 	FORCEINLINE ReferenceCounter& operator--(int);
 	FORCEINLINE bool operator==(const ReferenceCounter& o);
-	FORCEINLINE operator uint32();
+	FORCEINLINE uint32 GetCount() const;
+	FORCEINLINE operator uint32() const;
+};
+
+template<> 
+class ReferenceCounter<true>
+{
+public:
+	FORCEINLINE ReferenceCounter() : m_refCounter(0) {};
+	FORCEINLINE ReferenceCounter(uint x) : m_refCounter(x) {};
+
+	FORCEINLINE ReferenceCounter& operator++(int);
+	FORCEINLINE ReferenceCounter& operator--(int);
+	FORCEINLINE bool operator==(const ReferenceCounter& o);
+
+	FORCEINLINE uint32 GetCount() const;
+	FORCEINLINE operator uint32() const;
+
+	CONSTEXPR static bool IsThreadSafe = true;
+private:
+	std::atomic<uint32> m_refCounter;
+};
+
+template<>
+class ReferenceCounter<false>
+{
+public:
+	FORCEINLINE ReferenceCounter() : m_refCounter(0) {};
+	FORCEINLINE ReferenceCounter(uint x) : m_refCounter(x) {};
+
+	FORCEINLINE ReferenceCounter& operator++(int);
+	FORCEINLINE ReferenceCounter& operator--(int);
+	FORCEINLINE bool operator==(const ReferenceCounter& o);
+
+	FORCEINLINE uint32 GetCount() const;
+	FORCEINLINE operator uint32() const;
+
+	CONSTEXPR static bool IsThreadSafe = false;
 private:
 	uint32 m_refCounter;
 };
 
-FORCEINLINE ReferenceCounter& ReferenceCounter::operator++(int)
-{
-	m_refCounter++;
-	return *this;
-}
+/**********************THREAD SAFE************************/
+FORCEINLINE ReferenceCounter<true>& ReferenceCounter<true>::operator++(int) { m_refCounter++; return *this; }
+FORCEINLINE ReferenceCounter<true>& ReferenceCounter<true>::operator--(int) { m_refCounter--; return *this; }
+FORCEINLINE bool ReferenceCounter<true>::operator==(const ReferenceCounter<true>& o) { return o.m_refCounter == m_refCounter; }
+FORCEINLINE ReferenceCounter<true>::operator uint32() const { return m_refCounter; }
+FORCEINLINE uint32 ReferenceCounter<true>::GetCount() const{ return m_refCounter; }
 
-FORCEINLINE ReferenceCounter& ReferenceCounter::operator--(int)
-{
-	m_refCounter--;
-	return *this;
-}
+/**********************NON THREAD SAFE************************/
+FORCEINLINE ReferenceCounter<false>& ReferenceCounter<false>::operator++(int) { m_refCounter++; return *this; }
+FORCEINLINE ReferenceCounter<false>& ReferenceCounter<false>::operator--(int) { m_refCounter--; return *this; }
+FORCEINLINE bool ReferenceCounter<false>::operator==(const ReferenceCounter<false>& o) { return o.m_refCounter == m_refCounter; }
+FORCEINLINE ReferenceCounter<false>::operator uint32() const { return m_refCounter; }
+FORCEINLINE uint32 ReferenceCounter<false>::GetCount() const { return m_refCounter; }
 
-FORCEINLINE bool ReferenceCounter::operator==(const ReferenceCounter& o)
-{
-	return o.m_refCounter == m_refCounter;
-}
 
-FORCEINLINE ReferenceCounter::operator uint32()
-{
-	return m_refCounter;
-}
+template<bool IS_MT = false>
+using RefCounter = ReferenceCounter<IS_MT>;
 
-FORCEINLINE uint32 ReferenceCounter::GetCount() const
-{
-	return m_refCounter;
-}
-
-typedef ReferenceCounter RefCounter;
+//A non thread safe but faster version of RefCounter
+typedef ReferenceCounter<false> RefCount;
 
 TRE_NS_END

@@ -159,6 +159,7 @@
     <ClInclude Include="Core\Memory\Allocators\PoolAlloc\StackLinkedList.hpp" />
     <ClInclude Include="Core\Memory\Allocators\StackAlloc\StackAllocator.hpp" />
     <ClInclude Include="Core\Memory\RefCounter\RefCounter.hpp" />
+    <ClInclude Include="Core\Memory\SmartPtr\SharedPointer.hpp" />
     <ClInclude Include="Core\Memory\SmartPtr\UniquePointer.hpp" />
     <ClInclude Include="Core\Memory\Utils\Utils.hpp" />
     <ClInclude Include="Core\Misc\Defines\Common.hpp" />
