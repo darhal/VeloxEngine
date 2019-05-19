@@ -317,6 +317,7 @@ BasicString<T>& BasicString<T>::operator=(const BasicString<T>& other)
 		for (usize i = 0; i < len; i++) {
 			m_Data[i] = other.m_Data[i];
 		}
+		//memcpy(m_Data, other.m_Data, sizeof(T)*len);
 		SetSmallLength(len);
 	}else{
 		if (this->IsSmall()) {

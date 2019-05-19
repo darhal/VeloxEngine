@@ -39,7 +39,7 @@ FORCEINLINE static const std::size_t CalculatePaddingWithHeader(const std::size_
 template<typename T>
 FORCEINLINE static T* Allocate(usize size)
 {
-	return (T*)(operator new (sizeof(T) * size));
+	return (T*)(::operator new (sizeof(T) * size));
 }
 
 FORCEINLINE static void Free(void* ptr)

@@ -236,7 +236,6 @@
     <ClCompile Include="Core\Context\Context_X11.cpp" />
     <ClCompile Include="Core\Context\Extensions.cpp" />
     <ClCompile Include="Core\DataStructure\String\String.cpp" />
-    <ClCompile Include="Core\DataStructure\Vector\Vector.inl" />
     <ClCompile Include="Core\Memory\Allocators\LinearAlloc\LinearAllocator.cpp" />
     <ClCompile Include="Core\Memory\Allocators\PoolAlloc\PoolAllocator.cpp" />
     <ClCompile Include="Core\Memory\Allocators\StackAlloc\StackAllocator.cpp" />
@@ -337,6 +336,7 @@
     <ClCompile Include="Tests\TestingString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Core\DataStructure\Vector\Vector.inl" />
     <None Include="Core\Misc\Maths\Vec2.inl" />
     <None Include="Core\Misc\Maths\Vec3.inl" />
     <None Include="Core\Misc\Maths\Vec4.inl" />

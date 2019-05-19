@@ -48,7 +48,7 @@ void PrintVec(std::vector<T>& vec)
 	printf("Data = {\n");
 	for (usize i = 0; i < vec.size(); i++)
 	{
-		printf("[%d]=%s, ", i, (vec.at(i)).Buffer());
+		printf("[%d]=%d, ", i, vec.at(i));
 	}
 	printf("}\n");
 	printf("--------------------------\n");
@@ -56,12 +56,15 @@ void PrintVec(std::vector<T>& vec)
 
 int main()
 {
-	Vector<String> arr = {"Hello", "Hi", "I can hear you", "Nice", "Sure"};
-	arr.Emplace(6, "BLABLA");
-	PrintVec(arr);
-	arr.Erease(1, 2);
-	PrintVec(arr);
-	/*const usize MAX = 1;
+	std::vector<int> vec = {5, 6, 8, 7,9, 3};
+	PrintVec(vec);
+	auto vec2 = std::move(vec);
+	PrintVec(vec2);
+	vec2.push_back(5);
+	PrintVec(vec);
+	PrintVec(vec2);
+
+	/*const usize MAX = 1000;
 	{
 		auto start = std::chrono::steady_clock::now();
 		Vector<String> arr;
@@ -88,7 +91,7 @@ int main()
 		}
 		std::cout << "TRE::Vector AVERAGE benchmark of pushing back 9 string elements (x" <<MAX<<"times) :" << sum / MAX  << " ns" << std::endl;
 		printf("TRE::VEC Len = %d | Cap = %d\n", arr.Length(), arr.Capacity());
-		PrintVec(arr);
+		//PrintVec(arr);
 	}
 	{
 		auto start = std::chrono::steady_clock::now();
@@ -116,7 +119,7 @@ int main()
 		}
 		std::cout << "std::vector AVERAGE benchmark of pushing back 9 string elements (x" << MAX << "times) :" << sum / MAX << " ns" << std::endl;
 		printf("std::vec Len = %d | Cap = %d\n", arr.size(), arr.capacity());
-		PrintVec(arr);
+		//PrintVec(arr);
 	}*/
 	getchar();
 	return 0;

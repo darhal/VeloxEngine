@@ -572,9 +572,6 @@
     <ClCompile Include="Core\Memory\Allocators\StackAlloc\StackAllocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\DataStructure\Vector\Vector.inl">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Core\Misc\Maths\Vec2.inl">
@@ -596,5 +593,6 @@
     <None Include="Shader\cam.vs" />
     <None Include="Shader\screen.fs" />
     <None Include="Shader\screen.vs" />
+    <None Include="Core\DataStructure\Vector\Vector.inl" />
   </ItemGroup>
 </Project>
