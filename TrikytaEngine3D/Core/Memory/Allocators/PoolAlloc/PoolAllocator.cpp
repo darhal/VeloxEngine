@@ -33,7 +33,8 @@ PoolAllocator& PoolAllocator::Reset()
 
 void* PoolAllocator::Allocate(usize size)
 {
-	if (size >= m_ChunkSize) return NULL;
+	ASSERTF(!(size > m_ChunkSize), "Failed to allocate the requested amount of bytes, requested size is bigger than block size.");
+	if (size > m_ChunkSize) return NULL;
 	Node* freePosition = m_FreeList.Pop();
 	ASSERTF(!(freePosition == NULL), "Pool is full (empty free positions) //TODO: Allocate another arena in the future.");
 	return (void*)freePosition;

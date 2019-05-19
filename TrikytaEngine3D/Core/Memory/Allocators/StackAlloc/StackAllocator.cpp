@@ -32,7 +32,7 @@ void* StackAllocator::Allocate(ssize size, usize alignment)
 {
 	const usize currentAddress = (usize)m_Start + m_Offset;
 	usize padding = CalculatePaddingWithHeader(currentAddress, alignment, sizeof(AllocationHeader));
-
+	ASSERTF(!(m_Offset + padding + size > m_TotalSize), "Failed to allocate the requested amount of bytes, requested size is bigger than the total size.");
 	ASSERTF(!(m_Offset + padding + size > m_TotalSize), "Stack allocator is out of memory..");
 	if (m_Offset + padding + size > m_TotalSize) return NULL;
 

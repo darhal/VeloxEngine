@@ -261,6 +261,9 @@
     <ClInclude Include="Core\DataStructure\Vector\Vector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Core\DataStructure\LinkedList\List\List.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Main.cpp">
@@ -594,5 +597,8 @@
     <None Include="Shader\screen.fs" />
     <None Include="Shader\screen.vs" />
     <None Include="Core\DataStructure\Vector\Vector.inl" />
+    <None Include="Core\DataStructure\LinkedList\List\List.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

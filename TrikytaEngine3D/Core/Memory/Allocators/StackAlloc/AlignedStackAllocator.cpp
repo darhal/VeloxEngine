@@ -33,6 +33,7 @@ void* AlignedStackAllocator::Allocate(ssize size, usize alignment)
 	ASSERT(!(alignment >= 1)); ASSERT(!(alignment <= 128)); ASSERT(!((alignment & (alignment - 1)) == 0)); // pwr of 2
 	// Determine total amount of memory to allocate. 
 	size_t expandedSize_bytes = size + alignment;
+	ASSERTF(!(m_Offset + expandedSize_bytes > m_TotalSize), "Failed to allocate the requested amount of bytes, requested size is bigger than the total size.");
 	if (m_Offset + expandedSize_bytes > m_TotalSize) { // Doesnt have enough size
 		return NULL;
 	}

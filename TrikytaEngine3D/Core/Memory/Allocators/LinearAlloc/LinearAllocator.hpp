@@ -41,6 +41,7 @@ U* LinearAllocator::Construct(Args&&... args)
 {
 	U* curr_adr = (U*)((char*)m_Start + m_Offset);
 	const usize padding = CalculatePadding<U>(curr_adr);
+	ASSERTF(!(m_Offset + padding + sizeof(U)), "Failed to allocate the requested amount of bytes, allocator is out of memory.");
 	if (m_Offset + padding + sizeof(U) > m_TotalSize) { // Doesnt have enough size
 		return NULL;
 	}
