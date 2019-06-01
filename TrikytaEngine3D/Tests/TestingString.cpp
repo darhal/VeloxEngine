@@ -24,10 +24,11 @@ void TestPoolAlloc();
 void BenchmarkStdString();
 void BenchmarkString();
 
-struct A
+class A
 {
+public:
 	A() { printf("ctor\n"); }
-	~A() { printf("dtor\n"); }
+	//~A() { printf("dtor\n"); }
 };
 
 
@@ -43,8 +44,17 @@ int main()
 	test.EmplaceBack("How are you ?");
 	test.EmplaceBack("I'm fine!");
 	test.EmplaceFront("Convo start.");
+	test.Clear();
 
-	typename List<String>::Node* head = test.m_Head;
+	List<A> test2;
+	test2.EmplaceBack();
+	test2.EmplaceFront();
+	test2.EmplaceBack();
+	test2.EmplaceBack();
+	test2.EmplaceFront();
+	test2.Clear();
+
+	/*typename List<String>::Node* head = test.m_Head;
 	while (head != NULL) {
 		printf("%s\n", head->m_Obj.Buffer());
 		head = head->m_Next;
@@ -64,7 +74,7 @@ int main()
 	while (head != NULL) {
 		printf("%s\n", head->m_Obj.Buffer());
 		head = head->m_Next;
-	}
+	}*/
 
 	getchar();
 	return 0;

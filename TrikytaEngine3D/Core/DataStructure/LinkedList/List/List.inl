@@ -1,7 +1,5 @@
 #include "List.hpp"
 
-//TODO: Make Pod optimization !
-
 template<typename T, typename Alloc>
 FORCEINLINE List<T, Alloc>::List() : m_Allocator(sizeof(Node), BLOCK_NUM)
 {
@@ -36,11 +34,7 @@ List<T, Alloc>::List(const T(&objs_array)[S]) : m_Allocator(sizeof(Node), S)
 template<typename T, typename Alloc>
 FORCEINLINE List<T, Alloc>::~List()
 {
-	auto head = m_Head;
-	while (head != NULL) {
-		head->m_Obj.~T(); //Make sure to call the dtor for non pod types!
-		head = head->m_Next;
-	}
+	List<T, Alloc>::Destroy(*this);
 	// Allocator will go out of scope and free its memory by itself....
 }
 
@@ -172,4 +166,53 @@ template<typename T, typename Alloc>
 FORCEINLINE T* List<T, Alloc>::Back() const
 {
 	return m_Tail;
+}
+
+template <typename T, typename Alloc>
+FORCEINLINE void List<T, Alloc>::Clear()
+{
+	List<T, Alloc>::EmptyList(*this);
+}
+
+
+template<typename U, typename A>
+template<typename T, typename Alloc, typename std::enable_if<HAVE_DTOR(T), int>::type>
+static void List<U, A>::EmptyList(List<T, Alloc>& list)
+{
+	auto head = list.m_Head;
+	while (head != NULL) {
+		head->m_Obj.~T(); //Make sure to call the dtor for non pod types!
+		auto oldHead = head;
+		head = head->m_Next;
+		list.m_Allocator.Deallocate(oldHead);
+	}
+}
+
+template<typename U, typename A>
+template<typename T, typename Alloc, typename std::enable_if<NO_DTOR(T), int>::type>
+static void List<U, A>::EmptyList(List<T, Alloc>& list)
+{
+	auto head = list.m_Head;
+	while (head != NULL) {
+		auto oldHead = head;
+		head = head->m_Next;
+		list.m_Allocator.Deallocate(oldHead);
+	}
+}
+
+template<typename U, typename A>
+template<typename T, typename Alloc, typename std::enable_if<HAVE_DTOR(T), int>::type>
+static void List<U, A>::Destroy(List<T, Alloc>& list)
+{
+	auto head = list.m_Head;
+	while (head != NULL) {
+		head->m_Obj.~T(); //Make sure to call the dtor for non pod types!
+		head = head->m_Next;
+	}
+}
+
+template<typename U, typename A>
+template<typename T, typename Alloc, typename std::enable_if<NO_DTOR(T), int>::type>
+static void List<U, A>::Destroy(List<T, Alloc>& list)
+{
 }

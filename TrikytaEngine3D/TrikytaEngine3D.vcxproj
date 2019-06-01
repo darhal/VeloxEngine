@@ -170,6 +170,7 @@
     <ClInclude Include="Core\Misc\Defines\Platform.hpp" />
     <ClInclude Include="Core\Misc\Defines\PlatformInclude.hpp" />
     <ClInclude Include="Core\Misc\Defines\PlatformSIMDInclude.hpp" />
+    <ClInclude Include="Core\Misc\Defines\Types.hpp" />
     <ClInclude Include="Core\Misc\Maths\Common.hpp" />
     <ClInclude Include="Core\Misc\Maths\Maths.hpp" />
     <ClInclude Include="Core\Misc\Maths\Matrix.hpp" />

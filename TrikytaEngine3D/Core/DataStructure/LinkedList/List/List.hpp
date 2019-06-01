@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/Misc/Defines/Common.hpp>
+#include <Core/Misc/Defines/Types.hpp>
 
 TRE_NS_START
 
@@ -51,7 +52,8 @@ public:
 
 	FORCEINLINE T* Front() const;
 	FORCEINLINE T* Back() const;
-//private:
+	FORCEINLINE void Clear();
+private:
 	CONSTEXPR static usize BLOCK_NUM = 8;
 
 	struct Node
@@ -70,6 +72,18 @@ public:
 	Node* m_Head;
 	Node* m_Tail;
 	Alloc m_Allocator;
+
+	template<typename U, typename A, typename std::enable_if<NO_DTOR(U), int>::type = 0>
+	static void EmptyList(List<U, A>& list);
+
+	template<typename U, typename A, typename std::enable_if<HAVE_DTOR(U), int>::type = 0>
+	static void EmptyList(List<U, A>& list);
+
+	template<typename U, typename A, typename std::enable_if<HAVE_DTOR(U), int>::type = 0>
+	static void Destroy(List<U, A>& list);
+
+	template<typename U, typename A, typename std::enable_if<NO_DTOR(U), int>::type = 0>
+	static void Destroy(List<U, A>& list);
 };
 
 #include "List.inl"
