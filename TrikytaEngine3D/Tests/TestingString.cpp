@@ -12,6 +12,7 @@
 #include <Core/DataStructure/Vector/Vector.hpp>
 #include <Core/Memory/Allocators/PoolAlloc/PoolAllocator.hpp>
 #include <Core/DataStructure/LinkedList/List/List.hpp>
+#include <Core/Memory/Allocators/PoolAlloc/MultiPoolAllocator.hpp>
 #include <vector>
 #include <list>
 
@@ -37,8 +38,32 @@ int main()
 	/*BenchmarkStdString();
 	printf("\n\n\n");
 	BenchmarkString();*/
+	{
+		int* mems[16];
+		MultiPoolAlloc poolAllloc(sizeof(int), 4);
+		for (usize i = 0; i < 16; i++) {
+			mems[i] = poolAllloc.Allocate<int>(i);
+			printf("Adress allocated : %d | Value = %d\n", mems[i], *mems[i]);
+		}
+		printf("___________________________________________\n");
+		for (usize i = 0; i < 4; i++) {
+			poolAllloc.Deallocate(mems[i]);
+		}
+		printf("___________________________________________\n");
+		for (usize i = 0; i < 16; i++) {
+			mems[i] = poolAllloc.Allocate<int>(i * 2);
+			printf("Adress allocated : %d | Value = %d\n", mems[i], *mems[i]);
+		}
 
-	List<String> test;
+		printf("___________________________________________\n");
+		printf("Second check  ? ...\n");
+		for (usize i = 0; i < 16; i++)
+		{
+			printf("Adress allocated : %d | Value = %d\n", mems[i], *mems[i]);
+		}
+	}
+
+	/*List<String> test;
 	test.EmplaceBack("Hello!");
 	test.EmplaceFront("Hey!");
 	test.EmplaceBack("How are you ?");
@@ -52,7 +77,7 @@ int main()
 	test2.EmplaceBack();
 	test2.EmplaceBack();
 	test2.EmplaceFront();
-	test2.Clear();
+	test2.Clear();*/
 
 	/*typename List<String>::Node* head = test.m_Head;
 	while (head != NULL) {

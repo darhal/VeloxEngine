@@ -155,6 +155,7 @@
     <ClInclude Include="Core\DataStructure\String\String.hpp" />
     <ClInclude Include="Core\DataStructure\Vector\Vector.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\PoolAlloc\MultiPoolAllocator.hpp" />
     <ClInclude Include="Core\Memory\Common.hpp" />
     <ClInclude Include="Core\Memory\Allocators\LinearAlloc\LinearAllocator.hpp" />
     <ClInclude Include="Core\Memory\Allocators\PoolAlloc\PoolAllocator.hpp" />
