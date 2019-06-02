@@ -59,7 +59,7 @@ public:
 	}
 
 	~PoolArena() { 
-		printf("DELETE AN ARENA adr = %d\n", m_Items);
+		//printf("DELETE AN ARENA adr = %d\n", m_Items);
 		delete m_Items; 
 	}
 
@@ -75,7 +75,7 @@ public:
 		m_Freelist(m_Arena->GetStorage()),
 		m_ItemSize(chunk_size), m_ItemsNumber(chunk_num)
 	{
-		printf("List is empty allocating more Start at = %d\n", m_Arena->GetStorage());
+		//printf(">> List is empty allocating more Start at = %d\n", m_Arena->GetStorage());
 	}
 
 	template<typename T>
@@ -84,21 +84,21 @@ public:
 		m_Freelist(m_Arena->GetStorage()),
 		m_ItemSize(sizeof(T)), m_ItemsNumber(chunk_num)
 	{
-		printf("List is empty allocating more Start at = %d\n", m_Arena->GetStorage());
+		//printf(">> List is empty allocating more Start at = %d\n", m_Arena->GetStorage());
 	}
 
 	void* Allocate(usize sz = 0)
 	{
 		if (m_Freelist == NULL) {
 			UniquePointer<PoolArena> newArena(new PoolArena(m_ItemSize, m_ItemsNumber));
-			printf("List is empty allocating more Start at = %d\n", newArena->GetStorage());
+			//printf(">> List is empty allocating more Start at = %d\n", newArena->GetStorage());
 			newArena->SetNext(std::move(m_Arena));
 			m_Arena = newArena;
 			m_Freelist = m_Arena->GetStorage();
 		}
 		typename PoolArena::PoolItem* item = m_Freelist;
 		m_Freelist = item->GetNext();
-		printf("Giving adress = %d\n", item);
+		//printf("Giving adress = %d\n", item);
 		void* result = (void*) item;
 		return result;
 	}
@@ -121,18 +121,16 @@ public:
 	void Deallocate(void* ptr)
 	{
 		typename PoolArena::PoolItem* current_item = PoolArena::PoolItem::StorageToItem(ptr);
+		//printf(">> Dealloacting : %d | Free List : %d\n", current_item, m_Freelist);
 		current_item->SetNext(m_Freelist);
 		m_Freelist = current_item;
 	}
 
-	//TODO: This is wasting memeory even tho there is space ! (fix this)
 	template<typename T>
 	void Deallocate(T* ptr)
 	{
 		ptr->T::~T();
-		typename PoolArena::PoolItem* current_item = PoolArena::PoolItem::StorageToItem(ptr);
-		current_item->SetNext(m_Freelist);
-		m_Freelist = current_item;
+		this->Deallocate((void*)ptr);
 	}
 
 private:
