@@ -2,7 +2,7 @@
 
 TRE_NS_START
 
-PoolAllocator::PoolAllocator(usize chunk_size, usize chunk_num, bool autoInit) :
+FORCEINLINE PoolAllocator::PoolAllocator(usize chunk_size, usize chunk_num, bool autoInit) :
 	m_Start(NULL), m_ChunkSize(chunk_size), m_ChunkNum(chunk_num)
 {
 	if (autoInit) {
@@ -10,12 +10,12 @@ PoolAllocator::PoolAllocator(usize chunk_size, usize chunk_num, bool autoInit) :
 	}
 }
 
-PoolAllocator::~PoolAllocator()
+FORCEINLINE PoolAllocator::~PoolAllocator()
 {
 	this->Free();
 }
 
-PoolAllocator& PoolAllocator::Init()
+FORCEINLINE PoolAllocator& PoolAllocator::Init()
 {
 	if (m_Start != NULL)
 		delete m_Start;
@@ -24,14 +24,14 @@ PoolAllocator& PoolAllocator::Init()
 	return *this;
 }
 
-void PoolAllocator::InternalInit()
+FORCEINLINE void PoolAllocator::InternalInit()
 {
 	if (m_Start != NULL) return;
 	m_Start = operator new (m_ChunkSize*m_ChunkNum);
 	this->Reset();
 }
 
-PoolAllocator& PoolAllocator::Reset()
+FORCEINLINE PoolAllocator& PoolAllocator::Reset()
 {
 	// Create a linked-list with all free positions
 	for (usize i = 0; i < m_ChunkNum; i++) {
@@ -41,7 +41,7 @@ PoolAllocator& PoolAllocator::Reset()
 	return *this;
 }
 
-void* PoolAllocator::Allocate(usize size, usize alignement)
+FORCEINLINE void* PoolAllocator::Allocate(usize size, usize alignement)
 {
 	ASSERTF(!(size > m_ChunkSize), "Failed to allocate the requested amount of bytes, requested size is bigger than block size.");
 	if (size > m_ChunkSize) return NULL;
@@ -51,12 +51,12 @@ void* PoolAllocator::Allocate(usize size, usize alignement)
 	return (void*)freePosition;
 }
 
-void PoolAllocator::Deallocate(void* ptr)
+FORCEINLINE void PoolAllocator::Deallocate(void* ptr)
 {
 	m_FreeList.Push((Node*) ptr);
 }
 
-void PoolAllocator::Free()
+FORCEINLINE void PoolAllocator::Free()
 {
 	if (m_Start != NULL) {
 		delete m_Start;

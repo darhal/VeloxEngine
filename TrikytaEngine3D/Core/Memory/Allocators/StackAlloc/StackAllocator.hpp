@@ -10,37 +10,37 @@ TRE_NS_START
 class StackAllocator : BaseAllocator
 {
 public:
-	StackAllocator(usize total_size, bool autoInit = true);
+	FORCEINLINE StackAllocator(usize total_size, bool autoInit = true);
 
-	~StackAllocator();
+	FORCEINLINE ~StackAllocator();
 
-	StackAllocator& Init();
+	FORCEINLINE StackAllocator& Init();
 
-	StackAllocator& Reset();
+	FORCEINLINE StackAllocator& Reset();
 
-	void Free();
+	FORCEINLINE void Free();
 
-	void* Allocate(ssize size, usize alignment);
+	FORCEINLINE void* Allocate(ssize size, usize alignment);
 
-	void Deallocate(void* ptr);
+	FORCEINLINE void Deallocate(void* ptr);
 
 	template<typename U, typename... Args>
-	U* Allocate(Args&&... arg);
+	FORCEINLINE U* Allocate(Args&&... arg);
 	template<typename T>
-	void Deallocate(T* obj);
+	FORCEINLINE void Deallocate(T* obj);
 
-	void FreeToMarker();
-	void SetCurrentOffsetAsMarker();
-	void SetMarker(usize marker = 0);
-	usize GetMarker() const;
+	FORCEINLINE void FreeToMarker();
+	FORCEINLINE void SetCurrentOffsetAsMarker();
+	FORCEINLINE void SetMarker(usize marker = 0);
+	FORCEINLINE usize GetMarker() const;
 
-	const void* GetTop() const;
-	const void* GetBottom() const;
+	FORCEINLINE const void* GetTop() const;
+	FORCEINLINE const void* GetBottom() const;
 	const void Dump() const;
 
 	
 private:
-	void InternalInit();
+	FORCEINLINE void InternalInit();
 
 	void* m_Start;
 	usize m_Offset;
@@ -53,7 +53,7 @@ private:
 };
 
 template<typename U, typename... Args>
-U* StackAllocator::Allocate(Args&&... args)
+FORCEINLINE U* StackAllocator::Allocate(Args&&... args)
 {
 	void* adr = this->Allocate(sizeof(U), alignof(U));
 	if (adr == NULL) return adr;
@@ -62,7 +62,7 @@ U* StackAllocator::Allocate(Args&&... args)
 }
 
 template<typename T>
-void StackAllocator::Deallocate(T* obj)
+FORCEINLINE void StackAllocator::Deallocate(T* obj)
 {
 	obj->T::~T();
 	this->RollBack(obj);

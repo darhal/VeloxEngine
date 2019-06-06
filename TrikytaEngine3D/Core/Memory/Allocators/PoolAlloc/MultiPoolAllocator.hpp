@@ -48,9 +48,10 @@ public:
 	{
 		for (usize i = 1; i < chunk_num; i++) {
 			ssize address = (ssize) m_Items + i * chunk_size;
-			m_Items[i - 1].SetNext((PoolItem*)address);
+			((PoolItem*)(address - chunk_size))->SetNext((PoolItem*)address);
 		}
-		m_Items[chunk_num - 1].SetNext(NULL);
+		ssize address = (ssize)m_Items + (chunk_num - 1) * chunk_size;
+		((PoolItem*)address)->SetNext(NULL);
 	}
 
 	void SetNext(UniquePointer<PoolArena>&& next) 
@@ -66,15 +67,20 @@ public:
 	PoolItem* GetStorage() { return m_Items; };
 };
 
-class MultiPoolAllocator
+class MultiPoolAllocator : BaseAllocator
 {
 public:
 
-	MultiPoolAllocator(usize chunk_size, usize chunk_num) : 
-		m_Arena(new PoolArena(chunk_size, chunk_num)), 
-		m_Freelist(m_Arena->GetStorage()),
-		m_ItemSize(chunk_size), m_ItemsNumber(chunk_num)
+	MultiPoolAllocator(usize chunk_size, usize chunk_num, bool autoInit = true) : 
+		m_ItemSize(chunk_size), m_ItemsNumber(chunk_num),
+		//m_Arena(new PoolArena(chunk_size, chunk_num)), 
+		m_Freelist(NULL)
+		//m_Freelist(m_Arena->GetStorage())
 	{
+		if (autoInit) {
+			m_Arena = new PoolArena(chunk_size, chunk_num);
+			m_Freelist = (m_Arena->GetStorage());
+		}
 		//printf(">> List is empty allocating more Start at = %d\n", m_Arena->GetStorage());
 	}
 
@@ -87,7 +93,7 @@ public:
 		//printf(">> List is empty allocating more Start at = %d\n", m_Arena->GetStorage());
 	}
 
-	void* Allocate(usize sz = 0)
+	void* Allocate(usize sz = 0, usize alignement = 0)
 	{
 		if (m_Freelist == NULL) {
 			UniquePointer<PoolArena> newArena(new PoolArena(m_ItemSize, m_ItemsNumber));
@@ -96,6 +102,7 @@ public:
 			m_Arena = newArena;
 			m_Freelist = m_Arena->GetStorage();
 		}
+
 		typename PoolArena::PoolItem* item = m_Freelist;
 		m_Freelist = item->GetNext();
 		//printf("Giving adress = %d\n", item);
@@ -113,7 +120,7 @@ public:
 	template<typename T, typename... Args>
 	T* Allocate(Args&&... args)
 	{
-		T* result = (T*)this->Allocate();
+		T* result = (T*) this->Allocate();
 		new (result) T(std::forward<Args>(args)...);
 		return result;
 	}

@@ -2,19 +2,19 @@
 
 TRE_NS_START
 
-LinearAllocator::LinearAllocator(usize total_size, bool autoInit) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL)
+FORCEINLINE LinearAllocator::LinearAllocator(usize total_size, bool autoInit) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL)
 {
 	if (autoInit) {
 		this->InternalInit();
 	}
 }
 
-LinearAllocator::~LinearAllocator()
+FORCEINLINE LinearAllocator::~LinearAllocator()
 {
 	this->Free();
 }
 
-LinearAllocator& LinearAllocator::Init()
+FORCEINLINE LinearAllocator& LinearAllocator::Init()
 {
 	if (m_Start != NULL)
 		delete m_Start;
@@ -22,13 +22,13 @@ LinearAllocator& LinearAllocator::Init()
 	return *this;
 }
 
-LinearAllocator& LinearAllocator::Reset()
+FORCEINLINE LinearAllocator& LinearAllocator::Reset()
 {
 	m_Offset = 0;
 	return *this;
 }
 
-void* LinearAllocator::Allocate(ssize size, usize alignement)
+FORCEINLINE void* LinearAllocator::Allocate(ssize size, usize alignement)
 {
 	this->InternalInit();
 
@@ -43,12 +43,12 @@ void* LinearAllocator::Allocate(ssize size, usize alignement)
 	return (void*)((char*)m_Start + old_off);
 }
 
-void LinearAllocator::Deallocate(void * ptr)
+FORCEINLINE void LinearAllocator::Deallocate(void * ptr)
 {
 
 }
 
-void LinearAllocator::Free()
+FORCEINLINE void LinearAllocator::Free()
 {
 	if (m_Start != NULL) {
 		delete m_Start;
@@ -56,12 +56,12 @@ void LinearAllocator::Free()
 	}
 }
 
-const void* LinearAllocator::GetTop() const
+FORCEINLINE const void* LinearAllocator::GetTop() const
 {
 	return m_Start;
 }
 
-const void* LinearAllocator::GetBottom() const
+FORCEINLINE const void* LinearAllocator::GetBottom() const
 {
 	return (void*)((usize)m_Start + m_Offset);
 }
@@ -76,7 +76,7 @@ const void LinearAllocator::Dump() const
 	printf("\n------------------------------\n");
 }
 
-void LinearAllocator::InternalInit()
+FORCEINLINE void LinearAllocator::InternalInit()
 {
 	if (m_Start != NULL) return;
 	m_Start = operator new (m_TotalSize);

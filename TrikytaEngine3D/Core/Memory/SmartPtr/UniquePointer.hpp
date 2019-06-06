@@ -12,6 +12,7 @@ class UniquePointer
 public:
 	FORCEINLINE UniquePointer(T* ptr) : m_Ptr(ptr) {/*ASSERTF(!(m_Ptr == NULL), "Attempt to use unique pointer with a null pointer!");*/}
 	FORCEINLINE virtual ~UniquePointer();
+	FORCEINLINE UniquePointer();
 
 	FORCEINLINE T& operator*();
 	FORCEINLINE T* operator->();
@@ -59,6 +60,11 @@ FORCEINLINE UniquePointer<T>::~UniquePointer()
 {
 	if (m_Ptr != NULL)
 		delete m_Ptr;
+}
+
+template<typename T>
+FORCEINLINE UniquePointer<T>::UniquePointer() : m_Ptr(NULL)
+{
 }
 
 template<typename T>

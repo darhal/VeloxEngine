@@ -10,27 +10,27 @@ TRE_NS_START
 class PoolAllocator : BaseAllocator
 {
 public:
-	PoolAllocator(usize chunk_size, usize chunk_num, bool autoInit = true);
+	FORCEINLINE PoolAllocator(usize chunk_size, usize chunk_num, bool autoInit = true);
 
-	~PoolAllocator();
+	FORCEINLINE ~PoolAllocator();
 
-	PoolAllocator& Init();
+	FORCEINLINE PoolAllocator& Init();
 
-	PoolAllocator& Reset();
+	FORCEINLINE PoolAllocator& Reset();
 
-	void Free();
+	FORCEINLINE void Free();
 
-	void* Allocate(usize size, usize alignement = 0);
+	FORCEINLINE void* Allocate(usize size, usize alignement = 0);
 
-	void Deallocate(void* ptr);
+	FORCEINLINE void Deallocate(void* ptr);
 
 	template<typename U, typename... Args>
-	U* Allocate(Args&&... arg);
+	FORCEINLINE U* Allocate(Args&&... arg);
 
 	template<typename T>
-	void Deallocate(T* obj);
+	FORCEINLINE void Deallocate(T* obj);
 private:
-	void InternalInit();
+	FORCEINLINE void InternalInit();
 
 	void* m_Start;
 	usize m_ChunkSize;
@@ -42,7 +42,7 @@ private:
 };
 
 template<typename U, typename... Args>
-U* PoolAllocator::Allocate(Args&&... args)
+FORCEINLINE U* PoolAllocator::Allocate(Args&&... args)
 {
 	ASSERTF(!(m_ChunkSize < sizeof(U)), "Pool chunk size is smaller than sizeof(U)."); // Doesnt have enough size per chunk
 	U* freePosition = (U*)m_FreeList.Pop();
@@ -52,7 +52,7 @@ U* PoolAllocator::Allocate(Args&&... args)
 }
 
 template<typename T>
-void PoolAllocator::Deallocate(T* obj)
+FORCEINLINE void PoolAllocator::Deallocate(T* obj)
 {
 	ASSERTF(!(obj == NULL), "Can't destroy a null pointer...");
 #if not defined(_DEBUG) || defined(NDEBUG)

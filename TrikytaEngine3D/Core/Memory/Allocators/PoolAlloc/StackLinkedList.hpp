@@ -15,18 +15,18 @@ public:
 public:
 	StackLinkedList() : m_Head(NULL) {};
 	StackLinkedList(StackLinkedList& stackLinkedList) = delete;
-	void  Push(Node * newNode);
-	Node* Pop();
+	FORCEINLINE void  Push(Node * newNode);
+	FORCEINLINE Node* Pop();
 };
 
 template <class T>
-void StackLinkedList<T>::Push(Node* newNode) {
+FORCEINLINE void StackLinkedList<T>::Push(Node* newNode) {
 	newNode->m_Next = m_Head;
 	m_Head = newNode;
 }
 
 template <class T>
-typename StackLinkedList<T>::Node* StackLinkedList<T>::Pop() {
+FORCEINLINE typename StackLinkedList<T>::Node* StackLinkedList<T>::Pop() {
 	Node* top = m_Head;
 	m_Head = m_Head->m_Next;
 	return top;

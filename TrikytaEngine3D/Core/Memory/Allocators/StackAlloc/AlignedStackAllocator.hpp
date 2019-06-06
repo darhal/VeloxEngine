@@ -9,37 +9,35 @@ TRE_NS_START
 
 class AlignedStackAllocator : BaseAllocator
 {
-	AlignedStackAllocator(usize total_size, bool autoInit = true);
+	FORCEINLINE AlignedStackAllocator(usize total_size, bool autoInit = true);
 
-	~AlignedStackAllocator();
+	FORCEINLINE ~AlignedStackAllocator();
 
-	AlignedStackAllocator& Init();
+	FORCEINLINE AlignedStackAllocator& Init();
 
-	AlignedStackAllocator& Reset();
+	FORCEINLINE AlignedStackAllocator& Reset();
 
-	void Free();
+	FORCEINLINE void Free();
 
-	void* Allocate(ssize size, usize alignment = 2);
-	void Deallocate(void* pMem);
+	FORCEINLINE void* Allocate(ssize size, usize alignment = 2);
+	FORCEINLINE void Deallocate(void* pMem);
 
 	template<typename U, typename... Args>
-	U* Allocate(Args&&... arg);
+	FORCEINLINE U* Allocate(Args&&... arg);
 
 	template<typename T>
-	void Deallocate(T* obj);
+	FORCEINLINE void Deallocate(T* obj);
 
-	void FreeToMarker();
-	void SetCurrentOffsetAsMarker();
-	void SetMarker(usize marker = 0);
-	const usize GetMarker() const;
+	FORCEINLINE void FreeToMarker();
+	FORCEINLINE void SetCurrentOffsetAsMarker();
+	FORCEINLINE void SetMarker(usize marker = 0);
+	FORCEINLINE const usize GetMarker() const;
 
 	const void* GetTop() const;
 	const void* GetBottom() const;
 	const void Dump() const;
-
-	
 private:
-	void InternalInit();
+	FORCEINLINE void InternalInit();
 
 	void* m_Start;
 	usize m_Offset;
@@ -49,7 +47,7 @@ private:
 };
 
 template<typename U, typename... Args>
-U* AlignedStackAllocator::Allocate(Args&&... args)
+FORCEINLINE U* AlignedStackAllocator::Allocate(Args&&... args)
 {
 	void* curr = this->Allocate(sizeof(U), alignof(U));
 	new (curr) U(std::forward<Args>(args)...);
@@ -57,7 +55,7 @@ U* AlignedStackAllocator::Allocate(Args&&... args)
 }
 
 template<typename T>
-void AlignedStackAllocator::Deallocate(T* obj)
+FORCEINLINE void AlignedStackAllocator::Deallocate(T* obj)
 {
 	ASSERTF(!(m_Offset <= 0), "Can't roll back anymore. Stack is empty..");
 	ASSERTF(!(obj == NULL), "Can't destroy a null pointer...");

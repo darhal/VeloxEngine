@@ -3,19 +3,19 @@
 
 TRE_NS_START
 
-StackAllocator::StackAllocator(usize total_size, bool autoInit) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL), m_Marker(0)
+FORCEINLINE StackAllocator::StackAllocator(usize total_size, bool autoInit) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL), m_Marker(0)
 {
 	if (autoInit) {
 		this->InternalInit();
 	}
 };
 
-StackAllocator::~StackAllocator()
+FORCEINLINE StackAllocator::~StackAllocator()
 {
 	this->Free();
 }
 
-StackAllocator& StackAllocator::Init()
+FORCEINLINE StackAllocator& StackAllocator::Init()
 {
 	if (m_Start != NULL)
 		delete m_Start;
@@ -23,14 +23,14 @@ StackAllocator& StackAllocator::Init()
 	return *this;
 }
 
-StackAllocator& StackAllocator::Reset()
+FORCEINLINE StackAllocator& StackAllocator::Reset()
 {
 	m_Offset = 0;
 	m_Marker = 0;
 	return *this;
 }
 
-void* StackAllocator::Allocate(ssize size, usize alignment)
+FORCEINLINE void* StackAllocator::Allocate(ssize size, usize alignment)
 {
 	this->InternalInit(); // Check wether should we init or not ?
 
@@ -50,7 +50,7 @@ void* StackAllocator::Allocate(ssize size, usize alignment)
 	return (void*)nextAddress;
 }
 
-void StackAllocator::Free()
+FORCEINLINE void StackAllocator::Free()
 {
 	if (m_Start != NULL) {
 		delete m_Start;
@@ -58,7 +58,7 @@ void StackAllocator::Free()
 	}
 }
 
-void StackAllocator::Deallocate(void* ptr)
+FORCEINLINE void StackAllocator::Deallocate(void* ptr)
 {
 	const usize currentAddress = (usize)ptr;
 	const usize headerAddress = currentAddress - sizeof(AllocationHeader);
@@ -66,33 +66,33 @@ void StackAllocator::Deallocate(void* ptr)
 	m_Offset = currentAddress - allocationHeader->padding - (usize)m_Start;
 }
 
-void StackAllocator::FreeToMarker()
+FORCEINLINE void StackAllocator::FreeToMarker()
 {
 	m_Offset = m_Marker;
 }
 
-void StackAllocator::SetCurrentOffsetAsMarker()
+FORCEINLINE void StackAllocator::SetCurrentOffsetAsMarker()
 {
 	m_Marker = m_Offset;
 }
 
-void StackAllocator::SetMarker(usize marker)
+FORCEINLINE void StackAllocator::SetMarker(usize marker)
 {
 	ASSERTF(!(marker < 0 || marker > m_TotalSize), "Bad usage of StackAllocator::SetMarker(marker) given marker is out of stach bounds.");
 	m_Marker = marker;
 }
 
-usize StackAllocator::GetMarker() const
+FORCEINLINE usize StackAllocator::GetMarker() const
 {
 	return m_Marker;
 }
 
-const void* StackAllocator::GetTop() const
+FORCEINLINE const void* StackAllocator::GetTop() const
 {
 	return m_Start;
 }
 
-const void* StackAllocator::GetBottom() const
+FORCEINLINE const void* StackAllocator::GetBottom() const
 {
 	return (void*)((usize)m_Start + m_Offset);
 }

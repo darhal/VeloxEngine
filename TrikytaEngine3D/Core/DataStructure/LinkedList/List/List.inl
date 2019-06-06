@@ -1,21 +1,18 @@
 #include "List.hpp"
 
 template<typename T, typename Alloc>
-FORCEINLINE List<T, Alloc>::List() : m_Allocator(sizeof(Node), BLOCK_NUM)
+FORCEINLINE List<T, Alloc>::List() : m_Allocator(sizeof(Node), BLOCK_NUM, false)
 {
-	m_Allocator.Init();
 }
 
 template<typename T, typename Alloc>
-FORCEINLINE List<T, Alloc>::List(usize nbChunk) : m_Allocator(sizeof(Node), nbChunk)
+FORCEINLINE List<T, Alloc>::List(usize nbChunk) : m_Allocator(sizeof(Node), nbChunk, false)
 {
-	m_Allocator.Init();
 }
 
 template<typename T, typename Alloc>
 FORCEINLINE List<T, Alloc>::List(const std::initializer_list<T>& list) : m_Allocator(sizeof(Node), list.size())
 {
-	m_Allocator.Init();
 	for (usize i = 0; i < list.size(); i++) {
 		PushBack(list[i]);
 	}
@@ -25,7 +22,6 @@ template<typename T, typename Alloc>
 template<usize S>
 List<T, Alloc>::List(const T(&objs_array)[S]) : m_Allocator(sizeof(Node), S)
 {
-	m_Allocator.Init();
 	for (usize i = 0; i < S; i++) {
 		PushBack(objs_array[i]);
 	}
@@ -42,7 +38,7 @@ template<typename T, typename Alloc>
 template<typename... Args>
 FORCEINLINE T& List<T, Alloc>::EmplaceBack(Args&&... args)
 {
-	Node* node_ptr = (Node*)m_Allocator.Allocate(sizeof(Node));
+	Node* node_ptr = (Node*) m_Allocator.Allocate(sizeof(Node));
 	new (node_ptr) Node(m_Tail, NULL, std::forward<Args>(args)...);
 	if (m_Head == NULL) m_Head = node_ptr;
 	m_Tail = node_ptr;
@@ -131,7 +127,7 @@ FORCEINLINE bool List<T, Alloc>::PopBack()
 {
 	if (m_Tail == NULL) return false;
 	Node* tail_prev = m_Tail->m_Previous;
-	m_Tail->m_Obj.~T(); //Make sure to call the dtor for non pod types!
+	//m_Tail->m_Obj.~T(); //Make sure to call the dtor for non pod types!
 	m_Allocator.Deallocate(m_Tail);
 	m_Tail = tail_prev;
 	m_Tail->m_Next = NULL;
@@ -143,7 +139,7 @@ FORCEINLINE bool List<T, Alloc>::PopFront()
 {
 	if (m_Head == NULL) return false;
 	Node* head_next = m_Head->m_Next;
-	m_Head->m_Obj.~T();	 //Make sure to call the dtor for non pod types!
+	//m_Head->m_Obj.~T();	 //Make sure to call the dtor for non pod types!
 	m_Allocator.Deallocate(m_Head);
 	m_Head = head_next;
 	m_Tail->m_Previous = NULL;

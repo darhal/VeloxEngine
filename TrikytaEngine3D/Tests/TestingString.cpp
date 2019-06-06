@@ -24,12 +24,17 @@ void TestLinearAlloc();
 void TestPoolAlloc();
 void BenchmarkStdString();
 void BenchmarkString();
+void BenchmarkList();
+void BenchmarkVector();
 
 class A
 {
 public:
 	A() { printf("ctor\n"); }
+	A(uint32 x, uint32 y) : x(x), y(y) {};
 	//~A() { printf("dtor\n"); }
+	uint32 x;
+	uint32 y;
 };
 
 
@@ -38,11 +43,13 @@ int main()
 	/*BenchmarkStdString();
 	printf("\n\n\n");
 	BenchmarkString();*/
-	{
-		int* mems[16];
-		MultiPoolAlloc poolAllloc(sizeof(int), 4);
+	//BenchmarkList();
+	BenchmarkVector();
+	/*{
+		A* mems[16];
+		MultiPoolAlloc poolAllloc(sizeof(A), 4);
 		for (usize i = 0; i < 16; i++) {
-			mems[i] = poolAllloc.Allocate<int>(i);
+			mems[i] = poolAllloc.Allocate<A>(i, i);
 			printf("Adress allocated : %d | Value = %d\n", mems[i], *mems[i]);
 		}
 		printf("___________________________________________\n");
@@ -51,7 +58,7 @@ int main()
 		}
 		printf("___________________________________________\n");
 		for (usize i = 0; i < 4; i++) {
-			mems[i] = poolAllloc.Allocate<int>(i * 2);
+			mems[i] = poolAllloc.Allocate<A>(i * 2, i * 2);
 			printf("Adress allocated : %d | Value = %d\n", mems[i], *mems[i]);
 		}
 
@@ -61,7 +68,7 @@ int main()
 		{
 			printf("Adress allocated : %d | Value = %d\n", mems[i], *mems[i]);
 		}
-	}
+	}*/
 
 	/*List<String> test;
 	test.EmplaceBack("Hello!");
@@ -273,7 +280,7 @@ void PrintVec(std::vector<T>& vec)
 
 void BenchmarkVector()
 {
-	/*const usize MAX = 1000;
+const usize MAX = 1000;
 {
 	auto start = std::chrono::steady_clock::now();
 	Vector<String> arr;
@@ -329,7 +336,7 @@ void BenchmarkVector()
 	std::cout << "std::vector AVERAGE benchmark of pushing back 9 string elements (x" << MAX << "times) :" << sum / MAX << " ns" << std::endl;
 	printf("std::vec Len = %d | Cap = %d\n", arr.size(), arr.capacity());
 	//PrintVec(arr);
-}*/
+}
 }
 
 void BenchmarkList()
@@ -348,6 +355,10 @@ void BenchmarkList()
 		test.EmplaceBack("How are you ?");
 		test.EmplaceBack("I'm fine!");
 		test.EmplaceFront("Convo start.");
+		test.EmplaceBack("Thats nice!.");
+		test.EmplaceBack("Yes it is!.");
+		test.EmplaceFront("The weather is good!.");
+		test.EmplaceFront("I Agree!.");
 		end = std::chrono::steady_clock::now();
 		diff = end - start;
 		std::cout << "TRE::List<String> benchmark multiple EmplaceBack and EmplaceFront Ops :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
@@ -362,7 +373,6 @@ void BenchmarkList()
 		test.PopBack();
 		end = std::chrono::steady_clock::now();
 		diff = end - start;
-		diff = end - start;
 		std::cout << "TRE::List<String> benchmark of PopBack Op :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 		/*head = test.m_Head;
 		while (head != NULL) {
@@ -373,7 +383,6 @@ void BenchmarkList()
 		start = std::chrono::steady_clock::now();
 		test.PopFront();
 		end = std::chrono::steady_clock::now();
-		diff = end - start;
 		diff = end - start;
 		std::cout << "TRE::List<String> benchmark of PopFront Op :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 		/*head = test.m_Head;
@@ -396,6 +405,10 @@ void BenchmarkList()
 		test.emplace_back("How are you ?");
 		test.emplace_back("I'm fine!");
 		test.emplace_front("Convo start.");
+		test.emplace_back("Thats nice!.");
+		test.emplace_back("Yes it is!.");
+		test.emplace_front("The weather is good!.");
+		test.emplace_front("I Agree!.");
 		end = std::chrono::steady_clock::now();
 		diff = end - start;
 		std::cout << "std::list<String> benchmark multiple EmplaceBack and EmplaceFront Ops :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;

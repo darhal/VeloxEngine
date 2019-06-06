@@ -3,19 +3,19 @@
 
 TRE_NS_START
 
-AlignedStackAllocator::AlignedStackAllocator(usize total_size, bool autoInit) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL), m_Marker(0)
+FORCEINLINE AlignedStackAllocator::AlignedStackAllocator(usize total_size, bool autoInit) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL), m_Marker(0)
 {
 	if (autoInit) {
 		this->InternalInit();
 	}
 };
 
-AlignedStackAllocator::~AlignedStackAllocator()
+FORCEINLINE AlignedStackAllocator::~AlignedStackAllocator()
 {
 	this->Free();
 }
 
-AlignedStackAllocator& AlignedStackAllocator::Init()
+FORCEINLINE AlignedStackAllocator& AlignedStackAllocator::Init()
 {
 	if (m_Start != NULL)
 		delete m_Start;
@@ -23,13 +23,13 @@ AlignedStackAllocator& AlignedStackAllocator::Init()
 	return *this;
 }
 
-void AlignedStackAllocator::InternalInit()
+FORCEINLINE void AlignedStackAllocator::InternalInit()
 {
 	if (m_Start != NULL) return;
 	m_Start = operator new (m_TotalSize);
 }
 
-AlignedStackAllocator& AlignedStackAllocator::Reset()
+FORCEINLINE AlignedStackAllocator& AlignedStackAllocator::Reset()
 {
 	m_Offset = 0;
 	m_Marker = 0;
@@ -37,7 +37,7 @@ AlignedStackAllocator& AlignedStackAllocator::Reset()
 }
 
 //Alignement must be power of 2!
-void* AlignedStackAllocator::Allocate(ssize size, usize alignment)
+FORCEINLINE void* AlignedStackAllocator::Allocate(ssize size, usize alignment)
 {
 	ASSERT(!(alignment >= 1)); ASSERT(!(alignment <= 128)); ASSERT(!((alignment & (alignment - 1)) == 0)); // pwr of 2
 	this->InternalInit();
@@ -61,7 +61,7 @@ void* AlignedStackAllocator::Allocate(ssize size, usize alignment)
 	return static_cast<void*>(pAlignedMem);
 }
 
-void AlignedStackAllocator::Deallocate(void* pMem) {
+FORCEINLINE void AlignedStackAllocator::Deallocate(void* pMem) {
 	const char* pAlignedMem = reinterpret_cast<const char*>(pMem);
 	uintptr_t alignedAddress = reinterpret_cast<uintptr_t>(pMem); 
 	ptrdiff_t adjustment = static_cast<ptrdiff_t>(pAlignedMem[-1]);
@@ -72,7 +72,7 @@ void AlignedStackAllocator::Deallocate(void* pMem) {
 }
 
 
-void AlignedStackAllocator::Free()
+FORCEINLINE void AlignedStackAllocator::Free()
 {
 	if (m_Start != NULL) {
 		delete m_Start;
@@ -80,17 +80,17 @@ void AlignedStackAllocator::Free()
 	}
 }
 
-void AlignedStackAllocator::FreeToMarker()
+FORCEINLINE void AlignedStackAllocator::FreeToMarker()
 {
 	m_Offset = m_Marker;
 }
 
-void AlignedStackAllocator::SetCurrentOffsetAsMarker()
+FORCEINLINE void AlignedStackAllocator::SetCurrentOffsetAsMarker()
 {
 	m_Marker = m_Offset;
 }
 
-void AlignedStackAllocator::SetMarker(usize marker)
+FORCEINLINE void AlignedStackAllocator::SetMarker(usize marker)
 {
 	ASSERTF(!(marker < 0 || marker > m_TotalSize), "Bad usage of AlignedStackAllocator::SetMarker(marker) given marker is out of stach bounds.");
 	m_Marker = marker;

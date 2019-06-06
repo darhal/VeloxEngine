@@ -5,9 +5,7 @@
 
 TRE_NS_START
 
-class PoolAllocator;
-
-template<typename T, typename Alloc = PoolAllocator>
+template<typename T, typename Alloc = MultiPoolAlloc>
 class List
 {
 public:
