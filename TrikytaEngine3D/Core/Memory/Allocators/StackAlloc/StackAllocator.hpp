@@ -3,13 +3,14 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/Memory/Utils/Utils.hpp>
+#include <Core/Memory/Allocators/BaseAlloc/BaseAllocator.hpp>
 
 TRE_NS_START
 
-class StackAllocator
+class StackAllocator : BaseAllocator
 {
 public:
-	StackAllocator(usize total_size);
+	StackAllocator(usize total_size, bool autoInit = true);
 
 	~StackAllocator();
 
@@ -21,13 +22,12 @@ public:
 
 	void* Allocate(ssize size, usize alignment);
 
-	void RollBack(void* ptr);
+	void Deallocate(void* ptr);
 
 	template<typename U, typename... Args>
-	U* Construct(Args&&... arg);
-
+	U* Allocate(Args&&... arg);
 	template<typename T>
-	void Destroy(T* obj);
+	void Deallocate(T* obj);
 
 	void FreeToMarker();
 	void SetCurrentOffsetAsMarker();
@@ -37,7 +37,11 @@ public:
 	const void* GetTop() const;
 	const void* GetBottom() const;
 	const void Dump() const;
+
+	
 private:
+	void InternalInit();
+
 	void* m_Start;
 	usize m_Offset;
 	usize m_TotalSize;
@@ -49,7 +53,7 @@ private:
 };
 
 template<typename U, typename... Args>
-U* StackAllocator::Construct(Args&&... args)
+U* StackAllocator::Allocate(Args&&... args)
 {
 	void* adr = this->Allocate(sizeof(U), alignof(U));
 	if (adr == NULL) return adr;
@@ -58,7 +62,7 @@ U* StackAllocator::Construct(Args&&... args)
 }
 
 template<typename T>
-void StackAllocator::Destroy(T* obj)
+void StackAllocator::Deallocate(T* obj)
 {
 	obj->T::~T();
 	this->RollBack(obj);

@@ -3,13 +3,14 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include "StackLinkedList.hpp"
 #include <Core/Misc/Defines/Debug.hpp>
+#include <Core/Memory/Allocators/BaseAlloc/BaseAllocator.hpp>
 
 TRE_NS_START
 
-class PoolAllocator
+class PoolAllocator : BaseAllocator
 {
 public:
-	PoolAllocator(usize chunk_size, usize chunk_num);
+	PoolAllocator(usize chunk_size, usize chunk_num, bool autoInit = true);
 
 	~PoolAllocator();
 
@@ -19,16 +20,18 @@ public:
 
 	void Free();
 
-	void* Allocate(usize size);
+	void* Allocate(usize size, usize alignement = 0);
 
 	void Deallocate(void* ptr);
 
 	template<typename U, typename... Args>
-	U* Construct(Args&&... arg);
+	U* Allocate(Args&&... arg);
 
 	template<typename T>
-	void Destroy(T* obj);
+	void Deallocate(T* obj);
 private:
+	void InternalInit();
+
 	void* m_Start;
 	usize m_ChunkSize;
 	usize m_ChunkNum;
@@ -39,7 +42,7 @@ private:
 };
 
 template<typename U, typename... Args>
-U* PoolAllocator::Construct(Args&&... args)
+U* PoolAllocator::Allocate(Args&&... args)
 {
 	ASSERTF(!(m_ChunkSize < sizeof(U)), "Pool chunk size is smaller than sizeof(U)."); // Doesnt have enough size per chunk
 	U* freePosition = (U*)m_FreeList.Pop();
@@ -49,7 +52,7 @@ U* PoolAllocator::Construct(Args&&... args)
 }
 
 template<typename T>
-void PoolAllocator::Destroy(T* obj)
+void PoolAllocator::Deallocate(T* obj)
 {
 	ASSERTF(!(obj == NULL), "Can't destroy a null pointer...");
 #if not defined(_DEBUG) || defined(NDEBUG)

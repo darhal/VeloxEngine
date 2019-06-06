@@ -2,8 +2,11 @@
 
 TRE_NS_START
 
-LinearAllocator::LinearAllocator(usize total_size) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL)
+LinearAllocator::LinearAllocator(usize total_size, bool autoInit) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL)
 {
+	if (autoInit) {
+		this->InternalInit();
+	}
 }
 
 LinearAllocator::~LinearAllocator()
@@ -27,6 +30,8 @@ LinearAllocator& LinearAllocator::Reset()
 
 void* LinearAllocator::Allocate(ssize size, usize alignement)
 {
+	this->InternalInit();
+
 	char* curr_adr = (char*)m_Start + m_Offset;
 	const usize padding = CalculatePadding((usize)curr_adr, alignement);
 	ASSERTF(!(m_Offset + size + padding > m_TotalSize), "Failed to allocate the requested amount of bytes, allocator is out of memory.");
@@ -36,6 +41,11 @@ void* LinearAllocator::Allocate(ssize size, usize alignement)
 	ssize old_off = m_Offset + padding;
 	m_Offset += size + padding;
 	return (void*)((char*)m_Start + old_off);
+}
+
+void LinearAllocator::Deallocate(void * ptr)
+{
+
 }
 
 void LinearAllocator::Free()
@@ -64,6 +74,12 @@ const void LinearAllocator::Dump() const
 		printf("%d", *byte);
 	}
 	printf("\n------------------------------\n");
+}
+
+void LinearAllocator::InternalInit()
+{
+	if (m_Start != NULL) return;
+	m_Start = operator new (m_TotalSize);
 }
 
 

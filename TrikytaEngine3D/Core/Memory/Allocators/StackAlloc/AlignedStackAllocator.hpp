@@ -3,12 +3,13 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/Memory/Utils/Utils.hpp>
+#include <Core/Memory/Allocators/BaseAlloc/BaseAllocator.hpp>
 
 TRE_NS_START
 
-class AlignedStackAllocator
+class AlignedStackAllocator : BaseAllocator
 {
-	AlignedStackAllocator(usize total_size);
+	AlignedStackAllocator(usize total_size, bool autoInit = true);
 
 	~AlignedStackAllocator();
 
@@ -22,10 +23,10 @@ class AlignedStackAllocator
 	void Deallocate(void* pMem);
 
 	template<typename U, typename... Args>
-	U* Construct(Args&&... arg);
+	U* Allocate(Args&&... arg);
 
 	template<typename T>
-	void Destroy(T* obj);
+	void Deallocate(T* obj);
 
 	void FreeToMarker();
 	void SetCurrentOffsetAsMarker();
@@ -35,7 +36,11 @@ class AlignedStackAllocator
 	const void* GetTop() const;
 	const void* GetBottom() const;
 	const void Dump() const;
+
+	
 private:
+	void InternalInit();
+
 	void* m_Start;
 	usize m_Offset;
 	usize m_TotalSize;
@@ -44,7 +49,7 @@ private:
 };
 
 template<typename U, typename... Args>
-U* AlignedStackAllocator::Construct(Args&&... args)
+U* AlignedStackAllocator::Allocate(Args&&... args)
 {
 	void* curr = this->Allocate(sizeof(U), alignof(U));
 	new (curr) U(std::forward<Args>(args)...);
@@ -52,7 +57,7 @@ U* AlignedStackAllocator::Construct(Args&&... args)
 }
 
 template<typename T>
-void AlignedStackAllocator::Destroy(T* obj)
+void AlignedStackAllocator::Deallocate(T* obj)
 {
 	ASSERTF(!(m_Offset <= 0), "Can't roll back anymore. Stack is empty..");
 	ASSERTF(!(obj == NULL), "Can't destroy a null pointer...");

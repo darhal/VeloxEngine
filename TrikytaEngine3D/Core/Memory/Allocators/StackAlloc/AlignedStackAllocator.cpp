@@ -3,8 +3,11 @@
 
 TRE_NS_START
 
-AlignedStackAllocator::AlignedStackAllocator(usize total_size) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL), m_Marker(0)
+AlignedStackAllocator::AlignedStackAllocator(usize total_size, bool autoInit) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL), m_Marker(0)
 {
+	if (autoInit) {
+		this->InternalInit();
+	}
 };
 
 AlignedStackAllocator::~AlignedStackAllocator()
@@ -20,6 +23,12 @@ AlignedStackAllocator& AlignedStackAllocator::Init()
 	return *this;
 }
 
+void AlignedStackAllocator::InternalInit()
+{
+	if (m_Start != NULL) return;
+	m_Start = operator new (m_TotalSize);
+}
+
 AlignedStackAllocator& AlignedStackAllocator::Reset()
 {
 	m_Offset = 0;
@@ -31,6 +40,7 @@ AlignedStackAllocator& AlignedStackAllocator::Reset()
 void* AlignedStackAllocator::Allocate(ssize size, usize alignment)
 {
 	ASSERT(!(alignment >= 1)); ASSERT(!(alignment <= 128)); ASSERT(!((alignment & (alignment - 1)) == 0)); // pwr of 2
+	this->InternalInit();
 	// Determine total amount of memory to allocate. 
 	size_t expandedSize_bytes = size + alignment;
 	ASSERTF(!(m_Offset + expandedSize_bytes > m_TotalSize), "Failed to allocate the requested amount of bytes, requested size is bigger than the total size.");

@@ -2,9 +2,12 @@
 
 TRE_NS_START
 
-PoolAllocator::PoolAllocator(usize chunk_size, usize chunk_num) : 
+PoolAllocator::PoolAllocator(usize chunk_size, usize chunk_num, bool autoInit) :
 	m_Start(NULL), m_ChunkSize(chunk_size), m_ChunkNum(chunk_num)
 {
+	if (autoInit) {
+		this->InternalInit();
+	}
 }
 
 PoolAllocator::~PoolAllocator()
@@ -21,6 +24,13 @@ PoolAllocator& PoolAllocator::Init()
 	return *this;
 }
 
+void PoolAllocator::InternalInit()
+{
+	if (m_Start != NULL) return;
+	m_Start = operator new (m_ChunkSize*m_ChunkNum);
+	this->Reset();
+}
+
 PoolAllocator& PoolAllocator::Reset()
 {
 	// Create a linked-list with all free positions
@@ -31,10 +41,11 @@ PoolAllocator& PoolAllocator::Reset()
 	return *this;
 }
 
-void* PoolAllocator::Allocate(usize size)
+void* PoolAllocator::Allocate(usize size, usize alignement)
 {
 	ASSERTF(!(size > m_ChunkSize), "Failed to allocate the requested amount of bytes, requested size is bigger than block size.");
 	if (size > m_ChunkSize) return NULL;
+	this->InternalInit();
 	Node* freePosition = m_FreeList.Pop();
 	ASSERTF(!(freePosition == NULL), "Pool is full (empty free positions) //TODO: Allocate another arena in the future.");
 	return (void*)freePosition;

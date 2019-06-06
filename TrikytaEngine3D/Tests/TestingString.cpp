@@ -46,11 +46,11 @@ int main()
 			printf("Adress allocated : %d | Value = %d\n", mems[i], *mems[i]);
 		}
 		printf("___________________________________________\n");
-		for (usize i = 0; i < 16; i++) {
+		for (usize i = 0; i < 4; i++) {
 			poolAllloc.Deallocate(mems[i]);
 		}
 		printf("___________________________________________\n");
-		for (usize i = 0; i < 16; i++) {
+		for (usize i = 0; i < 4; i++) {
 			mems[i] = poolAllloc.Allocate<int>(i * 2);
 			printf("Adress allocated : %d | Value = %d\n", mems[i], *mems[i]);
 		}

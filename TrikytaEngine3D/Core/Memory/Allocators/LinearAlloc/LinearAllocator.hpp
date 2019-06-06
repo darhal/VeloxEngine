@@ -3,13 +3,14 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/Memory/Utils/Utils.hpp>
+#include <Core/Memory/Allocators/BaseAlloc/BaseAllocator.hpp>
 
 TRE_NS_START
 
-class LinearAllocator
+class LinearAllocator : BaseAllocator
 {
 public:
-	LinearAllocator(usize total_size);
+	LinearAllocator(usize total_size, bool autoInit = true);
 
 	~LinearAllocator();
 
@@ -20,25 +21,29 @@ public:
 	void Free();
 
 	void* Allocate(ssize size, usize alignement = 1);
+	void Deallocate(void* ptr);
 	
 	template<typename U, typename... Args>
-	U* Construct(Args&&... arg);
-
+	U* Allocate(Args&&... arg);
 	template<typename T>
-	void Destroy(T* obj);
+	void Deallocate(T* obj);
 
 	const void* GetTop() const;
 	const void* GetBottom() const;
 	const void Dump() const;
 private:
+	void InternalInit();
+
 	void* m_Start;
 	usize m_Offset;
 	usize m_TotalSize;
 };
 
 template<typename U, typename... Args>
-U* LinearAllocator::Construct(Args&&... args)
+U* LinearAllocator::Allocate(Args&&... args)
 {
+	this->InternalInit();
+
 	U* curr_adr = (U*)((char*)m_Start + m_Offset);
 	const usize padding = CalculatePadding<U>(curr_adr);
 	ASSERTF(!(m_Offset + padding + sizeof(U)), "Failed to allocate the requested amount of bytes, allocator is out of memory.");
@@ -52,7 +57,7 @@ U* LinearAllocator::Construct(Args&&... args)
 }
 
 template<typename T>
-void LinearAllocator::Destroy(T* obj)
+void LinearAllocator::Deallocate(T* obj)
 {
 	ASSERTF(!(m_Offset <= 0), "Attempt to Destroy an object with an empty linear allocator.");
 	ASSERTF(!(obj == NULL), "Can't destroy a null pointer...");

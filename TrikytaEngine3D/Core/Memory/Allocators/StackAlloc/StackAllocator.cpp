@@ -3,9 +3,11 @@
 
 TRE_NS_START
 
-StackAllocator::StackAllocator(usize total_size) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL), m_Marker(0)
+StackAllocator::StackAllocator(usize total_size, bool autoInit) : m_TotalSize(total_size), m_Offset(0), m_Start(NULL), m_Marker(0)
 {
-
+	if (autoInit) {
+		this->InternalInit();
+	}
 };
 
 StackAllocator::~StackAllocator()
@@ -30,6 +32,8 @@ StackAllocator& StackAllocator::Reset()
 
 void* StackAllocator::Allocate(ssize size, usize alignment)
 {
+	this->InternalInit(); // Check wether should we init or not ?
+
 	const usize currentAddress = (usize)m_Start + m_Offset;
 	usize padding = CalculatePaddingWithHeader(currentAddress, alignment, sizeof(AllocationHeader));
 	ASSERTF(!(m_Offset + padding + size > m_TotalSize), "Failed to allocate the requested amount of bytes, requested size is bigger than the total size.");
@@ -54,7 +58,7 @@ void StackAllocator::Free()
 	}
 }
 
-void StackAllocator::RollBack(void* ptr)
+void StackAllocator::Deallocate(void* ptr)
 {
 	const usize currentAddress = (usize)ptr;
 	const usize headerAddress = currentAddress - sizeof(AllocationHeader);
@@ -101,6 +105,12 @@ const void StackAllocator::Dump() const
 		printf("%d", *byte);
 	}
 	printf("\n------------------------------\n");
+}
+
+void StackAllocator::InternalInit()
+{
+	if (m_Start != NULL) return;
+	m_Start = operator new (m_TotalSize);
 }
 
 TRE_NS_END
