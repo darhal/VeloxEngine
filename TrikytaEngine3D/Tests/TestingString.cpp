@@ -15,6 +15,8 @@
 #include <Core/Memory/Allocators/PoolAlloc/MultiPoolAllocator.hpp>
 #include <vector>
 #include <list>
+#include <Core/DataStructure/Tuple/Pair.hpp>
+#include <Core/DataStructure/Tuple/Tuple.hpp>
 
 using namespace TRE;
 
@@ -32,6 +34,11 @@ class A
 public:
 	A() { printf("ctor\n"); }
 	A(uint32 x, uint32 y) : x(x), y(y) {};
+	A(const A& a) { x = a.x; y = a.y; printf("COPY CTOR\n"); }
+	A(A&& a) { x = a.x; y = a.y; printf("MOVE CTOR\n"); }
+
+	A& operator=(const A& a) { x = a.x; y = a.y; printf("COPY ASSIGNEMENT\n"); return *this; }
+	A& operator=(const A&& a) { x = a.x; y = a.y; printf("MOVE ASSIGNEMENT\n"); return *this; }
 	//~A() { printf("dtor\n"); }
 	uint32 x;
 	uint32 y;
@@ -40,11 +47,17 @@ public:
 
 int main()
 {
+	Pair<int, A> pair(5,  A(5, 6));
+	printf("Pair : first : %d | second : %d\n", pair.first, pair.second.x+pair.second.y);
+
+	Tuple<int, A, String> tuple(5, A(5, 6), String("Hello"));
+	printf("Tuple : first : %d | second : %d | third : %s\n", tuple.Get<0>(), tuple.Get<1>().x + tuple.Get<1>().y, tuple.Get<2>().Buffer());
+
 	/*BenchmarkStdString();
 	printf("\n\n\n");
 	BenchmarkString();*/
 	//BenchmarkList();
-	BenchmarkVector();
+	//BenchmarkVector();
 	/*{
 		A* mems[16];
 		MultiPoolAlloc poolAllloc(sizeof(A), 4);
