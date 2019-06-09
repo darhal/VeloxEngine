@@ -1,4 +1,14 @@
+template<typename T>
+FORCEINLINE Vector<T>::Vector() : m_Length(0), m_Capacity(DEFAULT_CAPACITY), m_Data(NULL)
+{
+	//m_Data = Allocate<T>(m_Capacity);
+}
 
+template<typename T>
+FORCEINLINE Vector<T>::Vector(usize sz) : m_Length(0), m_Capacity(sz), m_Data(NULL)
+{
+	//m_Data = Allocate<T>(m_Capacity);
+}
 
 template<typename T>
 template<usize S>
@@ -10,18 +20,6 @@ Vector<T>::Vector(T(&arr)[S]) : m_Length(S), m_Capacity(S)
 		new (ptr) T(obj);
 		ptr++;
 	}
-}
-
-template<typename T>
-FORCEINLINE Vector<T>::Vector() : m_Length(0), m_Capacity(DEFAULT_CAPACITY)
-{
-	m_Data = Allocate<T>(DEFAULT_CAPACITY);
-}
-
-template<typename T>
-FORCEINLINE Vector<T>::Vector(usize sz) : m_Length(0), m_Capacity(sz < 2 ? DEFAULT_CAPACITY : sz)
-{
-	m_Data = Allocate<T>(m_Capacity);
 }
 
 template<typename T>
@@ -73,6 +71,7 @@ FORCEINLINE bool Vector<T>::PopBack()
 template<typename T>
 FORCEINLINE bool Vector<T>::Reserve(usize sz)
 {
+	if (m_Data == NULL)	{ m_Data = Allocate<T>(m_Capacity); }
 	if (sz <= m_Capacity) return true;
 	Reallocate(sz * DEFAULT_GROW_SIZE);
 	return false;
@@ -188,13 +187,13 @@ FORCEINLINE usize Vector<T>::Size() const
 }
 
 template<typename T>
-inline const T& Vector<T>::Back() const
+FORCEINLINE const T& Vector<T>::Back() const
 {
 	return m_Data[Size()];
 }
 
 template<typename T>
-inline const T& Vector<T>::Front() const
+FORCEINLINE const T& Vector<T>::Front() const
 {
 	return m_Data[0];
 }
@@ -207,21 +206,21 @@ FORCEINLINE const T* Vector<T>::At(usize i)
 }
 
 template<typename T>
-inline const T& Vector<T>::At(usize i) const
+FORCEINLINE const T& Vector<T>::At(usize i) const
 {
 	ASSERTF(!(i >= m_Length), "Bad usage of vector function At index out of bounds");
 	return m_Data[i];
 }
 
 template<typename T>
-inline const T* Vector<T>::operator[](usize i)
+FORCEINLINE const T* Vector<T>::operator[](usize i)
 {
 	if (i >= m_Length) return NULL;
 	return At(i);
 }
 
 template<typename T>
-inline const T& Vector<T>::operator[](usize i) const
+FORCEINLINE const T& Vector<T>::operator[](usize i) const
 {
 	return At(i);
 }
@@ -229,7 +228,7 @@ inline const T& Vector<T>::operator[](usize i) const
 template<typename T>
 FORCEINLINE typename Vector<T>::Iterator Vector<T>::begin() noexcept
 {
-	return m_Data + m_Length;
+	return m_Data;
 }
 
 template<typename T>

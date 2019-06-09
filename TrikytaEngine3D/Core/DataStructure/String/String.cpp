@@ -314,10 +314,12 @@ BasicString<T>& BasicString<T>::operator=(const BasicString<T>& other)
 	usize cap = other.Capacity();
 	usize len = other.Length();
 	if (IsOtherSmall && Capacity() <= cap) {
+
 		for (usize i = 0; i < len; i++) {
 			m_Data[i] = other.m_Data[i];
 		}
 		SetSmallLength(len);
+
 	}else{
 		if (this->IsSmall()) {
 			m_Buffer = (T*) operator new (sizeof(T) * cap); // allocate empty storage
@@ -338,16 +340,19 @@ BasicString<T>::BasicString(BasicString<T>&& other)
 	bool IsOtherSmall = other.IsSmall();
 	usize len = other.Length();
 	if (IsOtherSmall) {
+
 		for (usize i = 0; i < len; i++) {
 			m_Data[i] = other.m_Data[i];
 		}
 		SetSmallLength(len);
 
 	}else{
+
 		m_Buffer = other.m_Buffer;
 		m_Capacity = other.m_Capacity;
 		SetNormalLength(len);
 		other.SetSmallLength(1); // Pervent the other string from deleting when it go out of scope
+
 	}
 }
 

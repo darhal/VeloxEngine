@@ -5,7 +5,7 @@
 
 TRE_NS_START
 
-template<typename T, typename Alloc = MultiPoolAlloc>
+template<typename T, typename Alloc_t = MultiPoolAlloc>
 class List
 {
 public:
@@ -69,7 +69,7 @@ private:
 
 	Node* m_Head;
 	Node* m_Tail;
-	Alloc m_Allocator;
+	Alloc_t m_Allocator;
 
 	template<typename U, typename A, typename std::enable_if<NO_DTOR(U), int>::type = 0>
 	static void EmptyList(List<U, A>& list);

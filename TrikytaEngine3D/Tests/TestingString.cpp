@@ -17,6 +17,10 @@
 #include <list>
 #include <Core/DataStructure/Tuple/Pair.hpp>
 #include <Core/DataStructure/Tuple/Tuple.hpp>
+#include <Core/DataStructure/HashMap/HashMap.hpp>
+#include <map>
+#include <unordered_map>
+#include <Core/DataStructure/_Infrastructure/BinaryTree/BinaryTree.hpp>
 
 using namespace TRE;
 
@@ -47,79 +51,40 @@ public:
 
 int main()
 {
-	Pair<int, A> pair(5,  A(5, 6));
+	/*Pair<int, A> pair(5,  A(5, 6));
 	printf("Pair : first : %d | second : %d\n", pair.first, pair.second.x+pair.second.y);
 
 	Tuple<int, A, String> tuple(5, A(5, 6), String("Hello"));
-	printf("Tuple : first : %d | second : %d | third : %s\n", tuple.Get<0>(), tuple.Get<1>().x + tuple.Get<1>().y, tuple.Get<2>().Buffer());
+	printf("Tuple : first : %d | second : %d | third : %s\n", tuple.Get<0>(), tuple.Get<1>().x + tuple.Get<1>().y, tuple.Get<2>().Buffer());*/
 
-	/*BenchmarkStdString();
-	printf("\n\n\n");
-	BenchmarkString();*/
-	//BenchmarkList();
-	//BenchmarkVector();
-	/*{
-		A* mems[16];
-		MultiPoolAlloc poolAllloc(sizeof(A), 4);
-		for (usize i = 0; i < 16; i++) {
-			mems[i] = poolAllloc.Allocate<A>(i, i);
-			printf("Adress allocated : %d | Value = %d\n", mems[i], *mems[i]);
+	/*String str2 = res.second;
+	printf("Content = %s | Capacity = %d | Len = %d | IsSmall = %s\n", str2.Buffer(), str2.Capacity(), str2.Length(), str2.IsSmall() ? "True" : "False");*/
+	
+	BinaryTree<int> tree(0);
+	BinaryTree<int>::BTNode* cur	   = NULL;
+	BinaryTree<int>::BTNode* left_cur  = NULL;
+	BinaryTree<int>::BTNode* right_cur = NULL;
+	for (usize i = 0; i < 10; i++) {
+		if (i % 2 == 0) {
+			right_cur = tree.AddRight(right_cur, i);
+		}else{
+			left_cur = tree.AddLeft(left_cur, i);
 		}
-		printf("___________________________________________\n");
-		for (usize i = 0; i < 4; i++) {
-			poolAllloc.Deallocate(mems[i]);
-		}
-		printf("___________________________________________\n");
-		for (usize i = 0; i < 4; i++) {
-			mems[i] = poolAllloc.Allocate<A>(i * 2, i * 2);
-			printf("Adress allocated : %d | Value = %d\n", mems[i], *mems[i]);
-		}
-
-		printf("___________________________________________\n");
-		printf("Second check  ? ...\n");
-		for (usize i = 0; i < 16; i++)
-		{
-			printf("Adress allocated : %d | Value = %d\n", mems[i], *mems[i]);
-		}
-	}*/
-
-	/*List<String> test;
-	test.EmplaceBack("Hello!");
-	test.EmplaceFront("Hey!");
-	test.EmplaceBack("How are you ?");
-	test.EmplaceBack("I'm fine!");
-	test.EmplaceFront("Convo start.");
-	test.Clear();
-
-	List<A> test2;
-	test2.EmplaceBack();
-	test2.EmplaceFront();
-	test2.EmplaceBack();
-	test2.EmplaceBack();
-	test2.EmplaceFront();
-	test2.Clear();*/
-
-	/*typename List<String>::Node* head = test.m_Head;
-	while (head != NULL) {
-		printf("%s\n", head->m_Obj.Buffer());
-		head = head->m_Next;
-	}
-	printf("-------------------\n");
-
-	test.PopBack();
-	head = test.m_Head;
-	while (head != NULL) {
-		printf("%s\n", head->m_Obj.Buffer());
-		head = head->m_Next;
 	}
 
-	printf("-------------------\n");
-	test.PopFront();
-	head = test.m_Head;
-	while (head != NULL) {
-		printf("%s\n", head->m_Obj.Buffer());
-		head = head->m_Next;
-	}*/
+	printf("Right branch:\n");
+	cur = tree.GetRoot();
+	while (cur != NULL) {
+		printf("\t Value = %d\n", cur->GetElement());
+		cur = cur->GetRight();
+	}
+
+	printf("Left branch:\n");
+	cur = tree.GetRoot();
+	while (cur != NULL) {
+		printf("\t Value = %d\n", cur->GetElement());
+		cur = cur->GetLeft();
+	}
 
 	getchar();
 	return 0;
@@ -437,5 +402,65 @@ void BenchmarkList()
 		end = std::chrono::steady_clock::now();
 		diff = end - start;
 		std::cout << "std::list<String> benchmark of PopFront Op :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	}
+}
+
+void BenchmarkHashMap()
+{
+	printf("sizeof(std::unordered_map<int, String>) = %d || sizeof(HashMap<int, String>) = %d\n", sizeof(std::unordered_map<int, String>), sizeof(HashMap<int, String>));
+	{
+		/*double avrg = 0.;
+		for (usize i = 0; i < 1'000; i++) {
+			auto start = std::chrono::steady_clock::now();
+			HashMap<int, String> map;
+			auto end = std::chrono::steady_clock::now();
+			auto diff = end - start;
+			avrg += std::chrono::duration<double, std::nano>(diff).count();
+		}
+		std::cout << "Benchmark of declaration of HashMap<int, String> x1000 :" << avrg/1'000 << " ns" << std::endl;*/
+
+		auto start = std::chrono::steady_clock::now();
+		HashMap<int, String> map;
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+		std::cout << "Benchmark of declaration of HashMap<int, String> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		start = std::chrono::steady_clock::now();
+		map.Put(5, String("Test"));
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "Benchmark of map.Put(5, Test)  :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		//printf("Key = %d | Value = %s\n", pair.first, pair.second.Buffer());
+		start = std::chrono::steady_clock::now();
+		String* str = map.Get(5);
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "Benchmark of map.Get(5)  :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		printf("Value for 5 = %s\n", str->Buffer());
+	}
+	printf("------------------------------------------------\n");
+	{
+		auto start = std::chrono::steady_clock::now();
+		std::unordered_map<int, String> test;
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+		std::cout << "Benchmark of declaration of std::unordered_map<int, String> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		start = std::chrono::steady_clock::now();
+		test.emplace(5, String("Test"));
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "Benchmark of test[5] = Test  :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		//printf("Key = %d | Value = %s\n", pair.first, pair.second.Buffer());
+		start = std::chrono::steady_clock::now();
+		String str = test[5];
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "Benchmark of test[5]  :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		printf("Value for 5 = %s\n", str.Buffer());
 	}
 }

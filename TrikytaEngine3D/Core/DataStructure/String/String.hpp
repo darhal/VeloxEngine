@@ -70,7 +70,7 @@ public:
 	FORCEINLINE BasicString<T>& operator+=(const BasicString<T>& other);
 public:
 	CONSTEXPR static usize SPARE_RATE = 2;
-private:
+//private:
 	CONSTEXPR static usize SSO_SIZE	  = (sizeof(T*) + 2 * sizeof(usize)) / sizeof(T); 
 	CONSTEXPR static usize SSO_MI	  = SSO_SIZE - 1;  // MI stands for Max Index.
 	

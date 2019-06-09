@@ -28,12 +28,12 @@ public:
 	template<typename... Args>
 	FORCEINLINE const T* EmplaceBack(Args&&... args);
 	FORCEINLINE const T* PushBack(const T& obj);
-	FORCEINLINE bool PopBack();
 	FORCEINLINE const T* Insert(usize i, const T& obj);
 	template<typename... Args>
 	FORCEINLINE const T* Emplace(usize i, Args&&... args);
 	FORCEINLINE void Erease(usize start, usize end);
 	FORCEINLINE void Clear();
+	FORCEINLINE bool PopBack();
 
 	FORCEINLINE bool IsEmpty() const;
 	FORCEINLINE usize Capacity() const;
@@ -43,8 +43,8 @@ public:
 	FORCEINLINE const T& Front() const;
 
 	FORCEINLINE const T* At(usize i);
-	FORCEINLINE const T& At(usize i) const;
 	FORCEINLINE const T* operator[](usize i);
+	FORCEINLINE const T& At(usize i) const;
 	FORCEINLINE const T& operator[](usize i) const;
 
 	FORCEINLINE Iterator begin() noexcept;
@@ -57,7 +57,7 @@ public:
 private:
 	FORCEINLINE void Reallocate(usize nCap);
 private:
-	CONSTEXPR static usize DEFAULT_CAPACITY	 = 8;
+	CONSTEXPR static usize DEFAULT_CAPACITY	 = 6;
 	CONSTEXPR static usize DEFAULT_GROW_SIZE = 2;
 
 	T* m_Data;

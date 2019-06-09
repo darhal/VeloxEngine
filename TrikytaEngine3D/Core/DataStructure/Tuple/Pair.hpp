@@ -13,7 +13,7 @@ struct Pair
 	Pair()
 	{}
 
-	Pair(T1&& f, T2&& s) : first(f), second(s)
+	Pair(T1&& f, T2&& s) : first(std::forward<T1>(f)), second(std::forward<T2>(s))
 	{}
 
 	T1 first;
