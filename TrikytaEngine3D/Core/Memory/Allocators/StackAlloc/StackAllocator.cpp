@@ -60,6 +60,11 @@ FORCEINLINE void StackAllocator::Free()
 
 FORCEINLINE void StackAllocator::Deallocate(void* ptr)
 {
+	ASSERTF(!(ptr == NULL), "Can't destroy a null pointer...");
+	#if not defined(_DEBUG) || defined(NDEBUG)
+		if (ptr == NULL) return;
+	#endif
+
 	const usize currentAddress = (usize)ptr;
 	const usize headerAddress = currentAddress - sizeof(AllocationHeader);
 	const AllocationHeader* allocationHeader{ (AllocationHeader *)headerAddress };

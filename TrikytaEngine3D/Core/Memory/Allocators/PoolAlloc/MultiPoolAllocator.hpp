@@ -127,6 +127,11 @@ public:
 
 	void Deallocate(void* ptr)
 	{
+		ASSERTF(!(ptr == NULL), "Can't destroy a null pointer...");
+		#if not defined(_DEBUG) || defined(NDEBUG)
+				if (ptr == NULL) return;
+		#endif
+
 		typename PoolArena::PoolItem* current_item = PoolArena::PoolItem::StorageToItem(ptr);
 		//printf(">> Dealloacting : %d | Free List : %d\n", current_item, m_Freelist);
 		current_item->SetNext(m_Freelist);
@@ -136,6 +141,11 @@ public:
 	template<typename T>
 	void Deallocate(T* ptr)
 	{
+		ASSERTF(!(ptr == NULL), "Can't destroy a null pointer...");
+		#if not defined(_DEBUG) || defined(NDEBUG)
+				if (ptr == NULL) return;
+		#endif
+
 		ptr->T::~T();
 		this->Deallocate((void*)ptr);
 	}

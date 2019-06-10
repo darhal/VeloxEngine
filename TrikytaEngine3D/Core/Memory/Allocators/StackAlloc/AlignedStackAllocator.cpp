@@ -62,6 +62,11 @@ FORCEINLINE void* AlignedStackAllocator::Allocate(ssize size, usize alignment)
 }
 
 FORCEINLINE void AlignedStackAllocator::Deallocate(void* pMem) {
+	ASSERTF(!(pMem == NULL), "Can't destroy a null pointer...");
+	#if not defined(_DEBUG) || defined(NDEBUG)
+		if (pMem == NULL) return;
+	#endif
+
 	const char* pAlignedMem = reinterpret_cast<const char*>(pMem);
 	uintptr_t alignedAddress = reinterpret_cast<uintptr_t>(pMem); 
 	ptrdiff_t adjustment = static_cast<ptrdiff_t>(pAlignedMem[-1]);

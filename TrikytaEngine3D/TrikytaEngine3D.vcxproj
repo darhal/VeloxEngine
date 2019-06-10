@@ -158,7 +158,9 @@
     <ClInclude Include="Core\DataStructure\Tuple\Pair.hpp" />
     <ClInclude Include="Core\DataStructure\Tuple\Tuple.hpp" />
     <ClInclude Include="Core\DataStructure\Vector\Vector.hpp" />
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTree\BinaryTree.hpp" />
+    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\AVL.hpp" />
+    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\BinaryTree.hpp" />
+    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\BST.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />
     <ClInclude Include="Core\Memory\Allocators\BaseAlloc\BaseAllocator.hpp" />
     <ClInclude Include="Core\Memory\Allocators\PoolAlloc\MultiPoolAllocator.hpp" />

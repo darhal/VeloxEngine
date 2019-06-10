@@ -285,7 +285,13 @@
     <ClInclude Include="Core\DataStructure\HashMap\TempHashMap.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTree\BinaryTree.hpp">
+    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\BinaryTree.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\BST.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\AVL.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

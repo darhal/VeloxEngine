@@ -64,6 +64,11 @@ FORCEINLINE U* StackAllocator::Allocate(Args&&... args)
 template<typename T>
 FORCEINLINE void StackAllocator::Deallocate(T* obj)
 {
+	ASSERTF(!(obj == NULL), "Can't destroy a null pointer...");
+	#if not defined(_DEBUG) || defined(NDEBUG)
+		if (obj == NULL) return;
+	#endif
+
 	obj->T::~T();
 	this->RollBack(obj);
 }

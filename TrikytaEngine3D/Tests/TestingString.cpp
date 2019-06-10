@@ -20,7 +20,9 @@
 #include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <map>
 #include <unordered_map>
-#include <Core/DataStructure/_Infrastructure/BinaryTree/BinaryTree.hpp>
+#include <Core/DataStructure/_Infrastructure/BinaryTrees/BinaryTree.hpp>
+#include <Core/DataStructure/_Infrastructure/BinaryTrees/BST.hpp>
+#include <Core/DataStructure/_Infrastructure/BinaryTrees/AVL.hpp>
 
 using namespace TRE;
 
@@ -61,14 +63,14 @@ int main()
 	printf("Content = %s | Capacity = %d | Len = %d | IsSmall = %s\n", str2.Buffer(), str2.Capacity(), str2.Length(), str2.IsSmall() ? "True" : "False");*/
 	
 	BinaryTree<int> tree(0);
-	BinaryTree<int>::BTNode* cur	   = NULL;
-	BinaryTree<int>::BTNode* left_cur  = NULL;
-	BinaryTree<int>::BTNode* right_cur = NULL;
+	BinaryTree<int>::BTLeaf* cur	   = NULL;
+	BinaryTree<int>::BTLeaf* left_cur  = NULL;
+	BinaryTree<int>::BTLeaf* right_cur = NULL;
 	for (usize i = 0; i < 10; i++) {
 		if (i % 2 == 0) {
-			tree.AddTopRight(i);
+			tree.InsertTopRight(i);
 		}else{
-			tree.AddTopLeft(i);
+			tree.InsertTopLeft(i);
 		}
 	}
 

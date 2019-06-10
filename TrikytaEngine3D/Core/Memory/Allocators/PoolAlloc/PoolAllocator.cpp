@@ -53,6 +53,10 @@ FORCEINLINE void* PoolAllocator::Allocate(usize size, usize alignement)
 
 FORCEINLINE void PoolAllocator::Deallocate(void* ptr)
 {
+	ASSERTF(!(ptr == NULL), "Can't destroy a null pointer...");
+#if not defined(_DEBUG) || defined(NDEBUG)
+	if (ptr == NULL) return;
+#endif
 	m_FreeList.Push((Node*) ptr);
 }
 
