@@ -66,9 +66,9 @@ int main()
 	BinaryTree<int>::BTNode* right_cur = NULL;
 	for (usize i = 0; i < 10; i++) {
 		if (i % 2 == 0) {
-			right_cur = tree.AddRight(right_cur, i);
+			tree.AddTopRight(i);
 		}else{
-			left_cur = tree.AddLeft(left_cur, i);
+			tree.AddTopLeft(i);
 		}
 	}
 

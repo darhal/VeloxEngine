@@ -64,6 +64,10 @@ public:
 	template<typename... Args>
 	FORCEINLINE BTNode* SetRoot(Args&&... args);
 
+	template<typename... Args>
+	FORCEINLINE BTNode* AddTopRight(Args&&... args);
+	template<typename... Args>
+	FORCEINLINE BTNode* AddTopLeft(Args&&... args);
 private:
 	static const usize NODE_CHUNKS = 3;
 
@@ -137,6 +141,32 @@ FORCEINLINE typename BinaryTree<T, Alloc_t>::BTNode* BinaryTree<T, Alloc_t>::Set
 	}
 	m_Root->element = T(std::forward<Args>(args)...);
 	return m_Root;
+}
+
+template<typename T, typename Alloc_t>
+template<typename... Args>
+FORCEINLINE typename BinaryTree<T, Alloc_t>::BTNode* BinaryTree<T, Alloc_t>::AddTopRight(Args&& ...args)
+{
+	BTNode* cur = m_Root;
+	while (cur->right != NULL) {
+		cur = cur->right;
+	}
+	cur->right = m_Allocator.Allocate<BTNode>();
+	new (cur->right) BTNode(NULL, NULL, std::forward<Args>(args)...);
+	return cur->right;
+}
+
+template<typename T, typename Alloc_t>
+template<typename... Args>
+FORCEINLINE typename BinaryTree<T, Alloc_t>::BTNode* BinaryTree<T, Alloc_t>::AddTopLeft(Args&& ...args)
+{
+	BTNode* cur = m_Root;
+	while (cur->left != NULL) {
+		cur = cur->left;
+	}
+	cur->left = m_Allocator.Allocate<BTNode>();
+	new (cur->left) BTNode(NULL, NULL, std::forward<Args>(args)...);
+	return cur->left;
 }
 
 
