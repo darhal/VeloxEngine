@@ -5,6 +5,7 @@
 #include <Core/Misc/Maths/Utils.hpp>
 #include <limits>
 #include <type_traits>
+#include <ostream>
 
 TRE_NS_START
 
@@ -23,6 +24,8 @@ public:
 	BasicString(usize capacity);
 	template<usize S>
 	BasicString(const T(&str)[S]);
+	template<usize S>
+	BasicString(const T(&str)[S], usize capacity);
 
 	BasicString(const char* str, usize S);
 
@@ -41,6 +44,7 @@ public:
 	void Resize(usize s);
 	
 	void Append(const BasicString<T>& str);
+	void Append(const char* str);
 	void PushBack(T c);
 	void PopBack();
 	void Erase(usize pos, usize offset);
@@ -103,7 +107,6 @@ template<typename T>
 template<usize S>
 BasicString<T>::BasicString(const T(&str)[S])
 {
-	
 	if (S <= SSO_SIZE) { // here its <= because we will count the trailing null
 		for (usize i = 0; i < S; i++) {
 			m_Data[i] = str[i];
@@ -123,22 +126,46 @@ BasicString<T>::BasicString(const T(&str)[S])
 }
 
 template<typename T>
-BasicString<T>::BasicString(const char* str, usize S)
+template<usize S>
+BasicString<T>::BasicString(const T(&str)[S], usize capacity)
 {
-	if (S <= SSO_SIZE) { // here its <= because we will count the trailing null
+	if (capacity < S) capacity = S;
+	if (capacity <= SSO_SIZE) { // here its <= because we will count the trailing null
 		for (usize i = 0; i < S; i++) {
 			m_Data[i] = str[i];
 		}
 		SetSmallLength(S);
-	}
-	else {
-		usize real_cap = S * SPARE_RATE;
+	}else{
+		usize real_cap = capacity * SPARE_RATE;
 		m_Buffer = (T*) operator new (sizeof(T)* real_cap); // allocate empty storage
 		for (usize i = 0; i < S; i++) {
 			m_Buffer[i] = str[i];
 		}
 		m_Capacity = real_cap;
 		SetNormalLength(S); // bit to indicate that its not small string 
+							// (the bit is located always at the end of the bit stream, 
+							// works both on little and big endian architectures)
+	}
+}
+
+template<typename T>
+BasicString<T>::BasicString(const char* str, usize S)
+{
+	usize len = strlen(str);
+	if (S < len) S = len;
+	if (S <= SSO_SIZE) { // here its <= because we will count the trailing null
+		for (usize i = 0; i < len; i++) {
+			m_Data[i] = str[i];
+		}
+		SetSmallLength(len);
+	}else{
+		usize real_cap = S * SPARE_RATE;
+		m_Buffer = (T*) operator new (sizeof(T)* real_cap); // allocate empty storage
+		for (usize i = 0; i < len; i++) {
+			m_Buffer[i] = str[i];
+		}
+		m_Capacity = real_cap;
+		SetNormalLength(len); // bit to indicate that its not small string 
 							// (the bit is located always at the end of the bit stream, 
 							// works both on little and big endian architectures)
 	}
@@ -287,6 +314,21 @@ static BasicString<T> operator+(const BasicString<T>& lhs, const BasicString<T>&
 	res = lhs;
 	res.Append(rhs);
 	return res;
+}
+
+template<typename T>
+static BasicString<T> operator+(const BasicString<T>& lhs, const char* rhs)
+{
+	usize rlen = (lhs.Length() + strlen(rhs) + 1) * BasicString<T>::SPARE_RATE;
+	BasicString<T> res(rlen);
+	res = lhs;
+	res.Append(rhs);
+	return res;
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const BasicString<T>& m) {
+	return os << m.Buffer();
 }
 
 typedef BasicString<char> String;

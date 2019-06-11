@@ -165,6 +165,29 @@ void BasicString<T>::Append(const BasicString<T>& str)
 }
 
 template<typename T>
+void BasicString<T>::Append(const char* str)
+{
+	usize tlen = this->Length() - 1; // -1 is to remove the trailing null terminator
+	usize slen = strlen(str) + 1;
+	usize finalLen = tlen + slen;
+	const char* str_buffer_ptr = str;
+	if (finalLen - 1 > this->Capacity()) { // -1 is to remove the trailing null terminator
+		this->Reserve(finalLen * SPARE_RATE);
+		T* buffer_ptr = this->EditableBuffer();
+		for (usize i = 0; i < slen; i++) {
+			buffer_ptr[tlen++] = str_buffer_ptr[i];
+		}
+		this->SetNormalLength(tlen);
+	}else{
+		T* buffer_ptr = this->EditableBuffer();
+		for (usize i = 0; i < slen; i++) {
+			buffer_ptr[tlen++] = str_buffer_ptr[i];
+		}
+		this->SetLength(tlen);
+	}
+}
+
+template<typename T>
 FORCEINLINE T BasicString<T>::At(usize i) const
 {
 	ASSERTF(!(i > Length()), "Bad usage of String::At (index out of bound).");

@@ -23,6 +23,14 @@
 #include <Core/DataStructure/_Infrastructure/BinaryTrees/BinaryTree.hpp>
 #include <Core/DataStructure/_Infrastructure/BinaryTrees/BST.hpp>
 #include <Core/DataStructure/_Infrastructure/BinaryTrees/AVL.hpp>
+#include <Windows.h>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <random>
+
 
 using namespace TRE;
 
@@ -50,9 +58,9 @@ public:
 	uint32 y;
 };
 
-
 int main()
 {
+	SetConsoleOutputCP(65001);
 	/*Pair<int, A> pair(5,  A(5, 6));
 	printf("Pair : first : %d | second : %d\n", pair.first, pair.second.x+pair.second.y);
 
@@ -62,31 +70,27 @@ int main()
 	/*String str2 = res.second;
 	printf("Content = %s | Capacity = %d | Len = %d | IsSmall = %s\n", str2.Buffer(), str2.Capacity(), str2.Length(), str2.IsSmall() ? "True" : "False");*/
 	
-	BinaryTree<int> tree(0);
-	BinaryTree<int>::BTLeaf* cur	   = NULL;
-	BinaryTree<int>::BTLeaf* left_cur  = NULL;
-	BinaryTree<int>::BTLeaf* right_cur = NULL;
+	/*BST<int> tree(0);
+	BST<int>::BTLeaf* cur	    = NULL;
+	BST<int>::BTLeaf* left_cur  = NULL;
+	BST<int>::BTLeaf* right_cur = NULL;
+	Vector<int> vec(10);
 	for (usize i = 0; i < 10; i++) {
-		if (i % 2 == 0) {
-			tree.InsertTopRight(i);
-		}else{
-			tree.InsertTopLeft(i);
-		}
+		int r = rand() % 100;
+		vec.EmplaceBack(r);
+		printf("Number = %d\n", r);
+		tree.Insert(r);
 	}
+	std::cout << "Max = " << tree.FindMax() << std::endl;
+	std::cout << "Min = " << tree.FindMin() << std::endl;
+	std::cout << "Find(78) = " << tree.Find(78) << std::endl;
+	tree.Dump();
+	for (int x : vec) {
+		printf("Removing : %d\n", x);
+		tree.Remove(x);	
+		tree.Print();
 
-	printf("Right branch:\n");
-	cur = tree.GetRoot();
-	while (cur != NULL) {
-		printf("\t Value = %d\n", cur->GetElement());
-		cur = cur->GetRight();
-	}
-
-	printf("Left branch:\n");
-	cur = tree.GetRoot();
-	while (cur != NULL) {
-		printf("\t Value = %d\n", cur->GetElement());
-		cur = cur->GetLeft();
-	}
+	}*/
 
 	getchar();
 	return 0;

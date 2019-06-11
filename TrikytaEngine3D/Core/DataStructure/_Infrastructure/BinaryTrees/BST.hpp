@@ -28,15 +28,15 @@ public:
 	FORCEINLINE T& FindMin() const;
 	FORCEINLINE T& FindMax() const;
 
-	FORCEINLINE T& Find(BTLeaf* node, T& value) const;
+	FORCEINLINE bool Find(const T& value) const;
 private:
-	FORCEINLINE void InsertHelper(BTLeaf* src, BTLeaf val);
+	FORCEINLINE void InsertHelper(BTLeaf* src, BTLeaf* val);
 
 	FORCEINLINE BTLeaf* FindMinHelper(BTLeaf* node) const;
 	FORCEINLINE BTLeaf* FindMaxHelper(BTLeaf* node) const;
-	FORCEINLINE BTLeaf* FindHelper(BTLeaf* node, T& value) const;
+	FORCEINLINE BTLeaf* FindHelper(BTLeaf* node, const T& value) const;
 
-	FORCEINLINE BTLeaf* RemoveHelper(T& value, BTLeaf* node);
+	FORCEINLINE BTLeaf* RemoveHelper(const T& value, BTLeaf* node);
 };
 
 template<typename T, typename Alloc_t>
@@ -76,7 +76,7 @@ FORCEINLINE typename BinarySearchTree<T, Alloc_t>::BTLeaf* BinarySearchTree<T, A
 template<typename T, typename Alloc_t>
 FORCEINLINE T& BinarySearchTree<T, Alloc_t>::FindMin() const
 {
-	BTLeaf* res = this->FindMinHelper(BTLeaf::m_Root);
+	BTLeaf* res = this->FindMinHelper(BTree::m_Root);
 	ASSERTF(!(res == NULL), "Attempt to search an empty tree!");
 	return res->element;
 }
@@ -84,46 +84,45 @@ FORCEINLINE T& BinarySearchTree<T, Alloc_t>::FindMin() const
 template<typename T, typename Alloc_t>
 FORCEINLINE T& BinarySearchTree<T, Alloc_t>::FindMax() const
 {
-	BTLeaf* res = this->FindMinHelper(BTLeaf::m_Root);
+	BTLeaf* res = this->FindMaxHelper(BTree::m_Root);
 	ASSERTF(!(res == NULL), "Attempt to search an empty tree!");
 	return res->element;
 }
 
 template<typename T, typename Alloc_t>
-FORCEINLINE typename BinarySearchTree<T, Alloc_t>::BTLeaf* BinarySearchTree<T, Alloc_t>::FindHelper(BTLeaf* node, T& value) const
+FORCEINLINE typename BinarySearchTree<T, Alloc_t>::BTLeaf* BinarySearchTree<T, Alloc_t>::FindHelper(BTLeaf* node, const T& value) const
 {
 	if (node == NULL)
 		return NULL;
 	else if (value < node->element)
-		return Find(node->left, value);
+		return FindHelper(node->left, value);
 	else if (value > node->element)
-		return Find(node->right, value);
+		return FindHelper(node->right, value);
 	else
 		return node;
 }
 
 template<typename T, typename Alloc_t>
-FORCEINLINE T& BinarySearchTree<T, Alloc_t>::Find(BTLeaf* node, T& value) const
+FORCEINLINE bool BinarySearchTree<T, Alloc_t>::Find(const T& value) const
 {
-	BTLeaf* res = this->FindHelper(BTLeaf::m_Root);
-	ASSERTF(!(res == NULL), "Attempt to search an empty tree!");
-	return res->element;
+	BTLeaf* res = this->FindHelper(BTree::m_Root, value);
+	return res != NULL;
 }
 
 template<typename T, typename Alloc_t>
-FORCEINLINE void BinarySearchTree<T, Alloc_t>::InsertHelper(BTLeaf * src, BTLeaf val)
+FORCEINLINE void BinarySearchTree<T, Alloc_t>::InsertHelper(BTLeaf* src, BTLeaf* val)
 {
-	if (BTree::m_Root->element > val->element) {
-		if (BTree::m_Root->left == NULL) {
-			BTree::m_Root->left = val;
+	if (src->element > val->element) {
+		if (src->left == NULL) {
+			src->left = val;
 		}else{
-			InsertHelper(BTree::m_Root->left, val);
+			InsertHelper(src->left, val);
 		}
 	}else{
-		if (BTree::m_Root->right == NULL) {
-			BTree::m_Root->right = val;
+		if (src->right == NULL) {
+			src->right = val;
 		}else{
-			InsertHelper(BTree::m_Root->right, val);
+			InsertHelper(src->right, val);
 		}
 	}
 }
@@ -144,7 +143,7 @@ FORCEINLINE typename BinarySearchTree<T, Alloc_t>::BTLeaf& BinarySearchTree<T, A
 }
 
 template<typename T, typename Alloc_t>
-FORCEINLINE typename BinarySearchTree<T, Alloc_t>::BTLeaf* BinarySearchTree<T, Alloc_t>::RemoveHelper(T& value, BTLeaf* node)
+FORCEINLINE typename BinarySearchTree<T, Alloc_t>::BTLeaf* BinarySearchTree<T, Alloc_t>::RemoveHelper(const T& value, BTLeaf* node)
 {
 	BTLeaf* temp;
 	if (node == NULL)
@@ -163,7 +162,7 @@ FORCEINLINE typename BinarySearchTree<T, Alloc_t>::BTLeaf* BinarySearchTree<T, A
 			node = node->right;
 		else if (node->right == NULL)
 			node = node->left;
-		BTLeaf::m_Allocator.Deallocate(temp);
+		BTree::m_Allocator.Deallocate(temp);
 	}
 
 	return node;
@@ -172,7 +171,7 @@ FORCEINLINE typename BinarySearchTree<T, Alloc_t>::BTLeaf* BinarySearchTree<T, A
 template<typename T, typename Alloc_t>
 FORCEINLINE void BinarySearchTree<T, Alloc_t>::Remove(const T& value)
 {
-	BTLeaf::m_Root = this->RemoveHelper(value, BTLeaf::m_Root);
+	BTree::m_Root = this->RemoveHelper(value, BTree::m_Root);
 }
 
 template<typename T, typename Alloc_t = MultiPoolAlloc>
