@@ -20,6 +20,8 @@ public:
 	template<typename... Args>
 	FORCEINLINE BinarySearchTree(Args&&... args);
 
+	FORCEINLINE virtual ~BinarySearchTree();
+
 	template<typename... Args>
 	FORCEINLINE BTLeaf& Insert(Args&&... args);
 
@@ -42,6 +44,12 @@ private:
 template<typename T, typename Alloc_t>
 FORCEINLINE BinarySearchTree<T, Alloc_t>::BinarySearchTree() : BinaryTree<T, Alloc_t>()
 {
+}
+
+template<typename T, typename Alloc_t>
+FORCEINLINE BinarySearchTree<T, Alloc_t>::~BinarySearchTree()
+{
+	// It will call base class dtor!
 }
 
 template<typename T, typename Alloc_t>
@@ -176,5 +184,8 @@ FORCEINLINE void BinarySearchTree<T, Alloc_t>::Remove(const T& value)
 
 template<typename T, typename Alloc_t = MultiPoolAlloc>
 using BST = BinarySearchTree<T, Alloc_t>;
+
+template<typename T, typename Alloc_t = MultiPoolAlloc>
+using BSTree = BinarySearchTree<T, Alloc_t>;
 
 TRE_NS_END

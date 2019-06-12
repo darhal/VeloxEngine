@@ -23,6 +23,8 @@
 #include <Core/DataStructure/_Infrastructure/BinaryTrees/BinaryTree.hpp>
 #include <Core/DataStructure/_Infrastructure/BinaryTrees/BST.hpp>
 #include <Core/DataStructure/_Infrastructure/BinaryTrees/AVL.hpp>
+#include <Core/DataStructure/_Infrastructure/BinaryTrees/RedBlackTree.hpp>
+#include <Core/DataStructure/_Infrastructure/BinaryTrees/RBT.hpp>
 #include <Windows.h>
 #include <iostream>
 #include <vector>
@@ -30,6 +32,7 @@
 #include <sstream>
 #include <algorithm>
 #include <random>
+#include <Core/DataStructure/HashMap/Map.hpp>
 
 
 using namespace TRE;
@@ -60,7 +63,119 @@ public:
 
 int main()
 {
-	SetConsoleOutputCP(65001);
+	/*RBTree bst;
+	bst.insert(8);
+	bst.insert(18);
+	bst.insert(5);
+	bst.insert(15);
+	bst.insert(17);
+	bst.insert(25);
+	bst.insert(40);
+	bst.insert(80);
+	bst.deleteNode(25);
+	bst.prettyPrint();
+	printf("++++++++++++++++++++++++++++++++++++++++++\n");
+	RBT<int, int> test;
+	test.Insert(8, 8);
+	test.Insert(18, 18);
+	test.Insert(5, 5);
+	test.Insert(15, 15);
+	test.Insert(17, 17);
+	test.Insert(25, 25);
+	test.Insert(40, 40);
+	test.Insert(80, 80);
+	test.Remove(25);
+	test.Print();*/
+	auto start = std::chrono::steady_clock::now();
+	Map<int, String> map;
+	auto end = std::chrono::steady_clock::now();
+	auto diff = end - start;
+	std::cout << "Declartion of Map<int, String> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+	start = std::chrono::steady_clock::now();
+	map.Emplace(5, "Hello");
+	map.Emplace(1, "Thanks");
+	map.Emplace(2, "Yes!");
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "TRE::Map Multiple affectations:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+	start = std::chrono::steady_clock::now();
+	auto res = map.Get(5);
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "TRE::Map get from key:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+	if (res != NULL)
+		printf("Result found : %d | %s\n", 5, res->Buffer());
+	start = std::chrono::steady_clock::now();
+	res = map.Get(2);
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "TRE::Map get from key:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	if (res != NULL)
+		printf("Result found : %d | %s\n", 2, res->Buffer());
+	start = std::chrono::steady_clock::now();
+	res = map.Get(1);
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "TRE::Map get from key:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	if (res != NULL)
+		printf("Result found : %d | %s\n", 1, res->Buffer());
+	start = std::chrono::steady_clock::now();
+	res = map.Get(0);
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "TRE::Map get from key:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	if (res != NULL)
+		printf("Result found : %d | %s\n", 0, res->Buffer());
+
+	printf("--------------------------------------------------------------\n");
+
+	start = std::chrono::steady_clock::now();
+	std::map<int, String> map2;
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "Declartion of std::map<int, String> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+	start = std::chrono::steady_clock::now();
+	map2[5] = "Hello";
+	map2[1] = "Thanks";
+	map2[2] = "Yes";
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "std::map Multiple affectations:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+	start = std::chrono::steady_clock::now();
+	auto str = map2[5];
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "STD::Map get from key:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+	if (res != NULL)
+		printf("Result found : %d | %s\n", 5, str.Buffer());
+	start = std::chrono::steady_clock::now();
+	str = map2[2];
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "STD::Map get from key:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	if (res != NULL)
+		printf("Result found : %d | %s\n", 2, str.Buffer());
+	start = std::chrono::steady_clock::now();
+	str = map2[1];
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "STD::Map get from key:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	if (res != NULL)
+		printf("Result found : %d | %s\n", 1, str.Buffer());
+	start = std::chrono::steady_clock::now();
+	str = map2[0];
+	end = std::chrono::steady_clock::now();
+	diff = end - start;
+	std::cout << "STD::Map get from key:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	if (res != NULL)
+		printf("Result found : %d | %s\n", 0, str.Buffer());
+
 	/*Pair<int, A> pair(5,  A(5, 6));
 	printf("Pair : first : %d | second : %d\n", pair.first, pair.second.x+pair.second.y);
 

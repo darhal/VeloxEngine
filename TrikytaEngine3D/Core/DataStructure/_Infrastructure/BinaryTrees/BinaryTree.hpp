@@ -59,7 +59,7 @@ public:
 	template<typename... Args>
 	FORCEINLINE BinaryTree(Args&&... args);
 
-	FORCEINLINE ~BinaryTree();
+	virtual ~BinaryTree();
 
 	FORCEINLINE BTLeaf* GetRoot() const;
 	FORCEINLINE BTLeaf* GetRight(BTLeaf* cur = NULL) const;

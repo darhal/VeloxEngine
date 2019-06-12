@@ -152,7 +152,7 @@
     <ClInclude Include="Core\Context\Extensions.hpp" />
     <ClInclude Include="Core\Context\GLDefines.hpp" />
     <ClInclude Include="Core\DataStructure\HashMap\HashMap.hpp" />
-    <ClInclude Include="Core\DataStructure\HashMap\TempHashMap.hpp" />
+    <ClInclude Include="Core\DataStructure\HashMap\Map.hpp" />
     <ClInclude Include="Core\DataStructure\LinkedList\List\List.hpp" />
     <ClInclude Include="Core\DataStructure\String\String.hpp" />
     <ClInclude Include="Core\DataStructure\Tuple\Pair.hpp" />
@@ -161,6 +161,8 @@
     <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\AVL.hpp" />
     <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\BinaryTree.hpp" />
     <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\BST.hpp" />
+    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\RBT.hpp" />
+    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\RedBlackTree.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />
     <ClInclude Include="Core\Memory\Allocators\BaseAlloc\BaseAllocator.hpp" />
     <ClInclude Include="Core\Memory\Allocators\PoolAlloc\MultiPoolAllocator.hpp" />
