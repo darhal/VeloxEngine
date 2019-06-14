@@ -93,9 +93,12 @@ int main()
 	std::cout << "Declartion of Map<int, String> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 
 	start = std::chrono::steady_clock::now();
-	map.Emplace(5, "Hello");
+	/*map.Emplace(5, "Hello");
 	map.Emplace(1, "Thanks");
-	map.Emplace(2, "Yes!");
+	map.Emplace(2, "Yes!");*/
+	map[5] = "Hello";
+	map[1] = "Thanks";
+	map[2] = "Yes";
 	end = std::chrono::steady_clock::now();
 	diff = end - start;
 	std::cout << "TRE::Map Multiple affectations:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
@@ -139,6 +142,9 @@ int main()
 	std::cout << "Declartion of std::map<int, String> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 
 	start = std::chrono::steady_clock::now();
+	/*map2.emplace(5, "Hello");
+	map2.emplace(1, "Thanks");
+	map2.emplace(2, "Yes");*/
 	map2[5] = "Hello";
 	map2[1] = "Thanks";
 	map2[2] = "Yes";

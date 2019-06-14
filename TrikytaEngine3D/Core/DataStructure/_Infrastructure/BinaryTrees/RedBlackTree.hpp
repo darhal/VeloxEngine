@@ -8,6 +8,12 @@
 
 TRE_NS_START
 
+template<typename T>
+static bool Compare(const T& a, const T& b)
+{
+	return a < b;
+}
+
 template<typename K, typename T, typename Alloc_t = MultiPoolAlloc>
 class RedBalckTree
 {
@@ -49,7 +55,7 @@ public:
 	FORCEINLINE RBNode* Search(const K& key) const;
 
 	template<typename... Args>
-	FORCEINLINE void Insert(const K& key, Args&&... args);
+	FORCEINLINE T& Insert(const K& key, Args&&... args);
 
 	FORCEINLINE void Remove(const K& key);
 
@@ -123,7 +129,7 @@ FORCEINLINE RedBalckTree<K, T, Alloc_t>::~RedBalckTree()
 
 template<typename K, typename T, typename Alloc_t>
 template<typename ...Args>
-FORCEINLINE void RedBalckTree<K, T, Alloc_t>::Insert(const K& key, Args&& ...args)
+FORCEINLINE T& RedBalckTree<K, T, Alloc_t>::Insert(const K& key, Args&& ...args)
 {
 	// Ordinary Binary Search Insertion
 	RBNode* node = m_Allocator.Allocate<RBNode>();
@@ -134,7 +140,7 @@ FORCEINLINE void RedBalckTree<K, T, Alloc_t>::Insert(const K& key, Args&& ...arg
 
 	while (x != TNULL) {
 		y = x;
-		if (node->key < x->key) {
+		if (Compare(node->key, x->key)) { // quivalent to (node->key < x->key)
 			x = x->left;
 		}else {
 			x = x->right;
@@ -145,7 +151,7 @@ FORCEINLINE void RedBalckTree<K, T, Alloc_t>::Insert(const K& key, Args&& ...arg
 	node->parent = y;
 	if (y == NULL) {
 		m_Root = node;
-	}else if (node->key < y->key) {
+	}else if (Compare(node->key, y->key)) { // quivalent to (node->key < y->key)
 		y->left = node;
 	}else {
 		y->right = node;
@@ -154,16 +160,18 @@ FORCEINLINE void RedBalckTree<K, T, Alloc_t>::Insert(const K& key, Args&& ...arg
 	// if new node is a root node, simply return
 	if (node->parent == NULL) {
 		node->color = false;
-		return;
+		return node->value;
 	}
 
 	// if the grandparent is null, simply return
 	if (node->parent->parent == NULL) {
-		return;
+		return node->value;
 	}
 
 	// Fix the tree
 	this->FixInsert(node);
+	
+	return node->value;
 }
 
 template<typename K, typename T, typename Alloc_t>
@@ -271,7 +279,7 @@ FORCEINLINE bool RedBalckTree<K, T, Alloc_t>::IsEmpty() const
 template<typename K, typename T, typename Alloc_t>
 FORCEINLINE void RedBalckTree<K, T, Alloc_t>::InsertHelper(RBNode* newNode, RBNode* parent)
 {
-	if (newNode->key < parent->key) {
+	if (Compare(newNode->key, parent->key)) {  // newNode->key < parent->key 
 		if (parent->left == NULL) {
 			parent->left = newNode;
 			newNode->parent = parent;
@@ -314,7 +322,7 @@ FORCEINLINE typename RedBalckTree<K, T, Alloc_t>::RBNode* RedBalckTree<K, T, All
 		return node;
 	}
 
-	if (key < node->key) {
+	if (Compare(key, node->key)) { // key < node->key
 		return SearchTreeHelper(node->left, key);
 	}
 	return SearchTreeHelper(node->right, key);
@@ -365,7 +373,7 @@ void RedBalckTree<K, T, Alloc_t>::FixDelete(RBNode* x)
 				s = x->parent->left;
 			}
 
-			if (s->right->color == false && s->right->color == false) {
+			if (s->right->color == false) {
 				// case 3.2
 				s->color = true;
 				x = x->parent;
@@ -412,11 +420,11 @@ void RedBalckTree<K, T, Alloc_t>::DeleteNodeHelper(RBNode* node, const K& key)
 	RBNode* y = NULL;
 
 	while (node != TNULL) {
-		if (node->key == key) {
+		if (!Compare(node->key, key) && !Compare(key, node->key)) { // node->key == key
 			z = node;
 		}
 
-		if (!(node->key > key)) {
+		if (Compare(node->key, key)) { // !(node->key > key)
 			node = node->right;
 		}else {
 			node = node->left;

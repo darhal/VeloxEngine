@@ -636,5 +636,6 @@
     <None Include="Core\DataStructure\LinkedList\List\List.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>
