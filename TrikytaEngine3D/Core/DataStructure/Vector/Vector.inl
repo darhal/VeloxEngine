@@ -1,3 +1,5 @@
+#include "Vector.hpp"
+
 template<typename T>
 FORCEINLINE Vector<T>::Vector() : m_Length(0), m_Capacity(DEFAULT_CAPACITY), m_Data(NULL)
 {
@@ -44,20 +46,20 @@ Vector<T>::~Vector()
 
 template<typename T>
 template<typename ...Args>
-FORCEINLINE const T* Vector<T>::EmplaceBack(Args&&... args)
+FORCEINLINE T& Vector<T>::EmplaceBack(Args&&... args)
 {
 	Reserve(m_Length + 1);
 	new (m_Data + m_Length) T(std::forward<Args>(args)...);
-	return (m_Data + (m_Length++));
+	return *(m_Data + (m_Length++));
 }
 
 template<typename T>
-FORCEINLINE const T* Vector<T>::PushBack(const T& obj)
+FORCEINLINE T& Vector<T>::PushBack(const T& obj)
 {
 	Reserve(m_Length + 1);
 	new (m_Data + m_Length) T(obj);
 	m_Length++;
-	return (m_Data + (m_Length++));
+	return *(m_Data + (m_Length++));
 }
 
 template<typename T>
@@ -65,6 +67,15 @@ FORCEINLINE bool Vector<T>::PopBack()
 {
 	if (m_Length <= 0) return false;
 	m_Data[m_Length - 1].~T();
+	return m_Length--;
+}
+
+template<typename T>
+FORCEINLINE bool Vector<T>::PopFront()
+{
+	if (m_Length < 0) return false;
+	m_Data[0].~T();
+	MoveRange(m_Data, m_Data, m_Length - 1);
 	return m_Length--;
 }
 
@@ -78,7 +89,7 @@ FORCEINLINE bool Vector<T>::Reserve(usize sz)
 }
 
 template<typename T>
-FORCEINLINE const T* Vector<T>::Insert(usize i, const T& obj)
+FORCEINLINE T& Vector<T>::Insert(usize i, const T& obj)
 {
 	ASSERTF(!(i == 0 || i > m_Length + 1), "Given index is out of bound please choose from [1..%d].", m_Length + 1);
 	usize index = i - 1;
@@ -94,19 +105,25 @@ FORCEINLINE const T* Vector<T>::Insert(usize i, const T& obj)
 		m_Data = newData;
 		m_Capacity = nCap;
 		m_Length++;
-		return (dest);
+		return *(dest);
 	}else{
 		T* dest = m_Data + index;
 		MoveRange(dest, m_Data + i, m_Length - i + 1); // shift all of this to keep place for the new element
 		new (dest) T(obj);
 		m_Length++;
-		return (dest);
+		return *(dest);
 	}
 }
 
 template<typename T>
+FORCEINLINE T& Vector<T>::PushFront(const T& obj)
+{
+	this->Insert(0, obj);
+}
+
+template<typename T>
 template<typename... Args>
-FORCEINLINE const T* Vector<T>::Emplace(usize i, Args&&... args)
+FORCEINLINE T& Vector<T>::Emplace(usize i, Args&&... args)
 {
 	ASSERTF(!(i == 0 || i > m_Length + 1), "Given index is out of bound please choose from [1..%d].", m_Length + 1);
 	usize index = i - 1;
@@ -121,14 +138,21 @@ FORCEINLINE const T* Vector<T>::Emplace(usize i, Args&&... args)
 		m_Data = newData;
 		m_Capacity = nCap;
 		m_Length++;
-		return (dest);
+		return *(dest);
 	}else{
 		T* dest = m_Data + index;
 		MoveRange(dest, m_Data + i, m_Length - i + 1); // shift all of this to keep place for the new element
 		new (dest) T(std::forward<Args>(args)...);
 		m_Length++;
-		return (dest);
+		return *(dest);
 	}
+}
+
+template<typename T>
+template<typename ...Args>
+FORCEINLINE T& Vector<T>::EmplaceFront(Args&&... args)
+{
+	return this->Emplace(0, std::forward<Args>(args)...);
 }
 
 template<typename T>
@@ -159,11 +183,12 @@ FORCEINLINE void Vector<T>::Erease(usize start, usize end)
 template<typename T>
 FORCEINLINE void Vector<T>::Clear()
 {
+	DestroyObjects(m_Data, m_Length);
 	m_Length = 0;
 }
 
 template<typename T>
-inline bool Vector<T>::IsEmpty() const
+FORCEINLINE bool Vector<T>::IsEmpty() const
 {
 	return this->Size() == 0;
 }
@@ -187,15 +212,15 @@ FORCEINLINE usize Vector<T>::Size() const
 }
 
 template<typename T>
-FORCEINLINE const T& Vector<T>::Back() const
+FORCEINLINE T* Vector<T>::Back() const
 {
-	return m_Data[Size()];
+	return &m_Data[Size()];
 }
 
 template<typename T>
-FORCEINLINE const T& Vector<T>::Front() const
+FORCEINLINE T* Vector<T>::Front() const
 {
-	return m_Data[0];
+	return &m_Data[0];
 }
 
 template<typename T>

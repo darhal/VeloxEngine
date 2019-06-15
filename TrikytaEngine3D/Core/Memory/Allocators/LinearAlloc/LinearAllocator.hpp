@@ -68,4 +68,6 @@ FORCEINLINE void LinearAllocator::Deallocate(T* obj)
 	m_Offset -= sizeof(T);
 }
 
+typedef LinearAllocator LinearAlloc;
+
 TRE_NS_END

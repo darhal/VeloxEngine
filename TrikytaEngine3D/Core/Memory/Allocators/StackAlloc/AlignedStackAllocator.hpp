@@ -66,5 +66,7 @@ FORCEINLINE void AlignedStackAllocator::Deallocate(T* obj)
 	this->Deallocate(obj);
 }
 
+typedef AlignedStackAllocator AlignStackAlloc;
+
 TRE_NS_END
 

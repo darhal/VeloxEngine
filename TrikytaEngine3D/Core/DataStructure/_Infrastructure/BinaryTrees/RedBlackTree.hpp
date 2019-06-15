@@ -525,10 +525,10 @@ FORCEINLINE void RedBalckTree<K, T, Alloc_t>::PrintHelper(RBNode* node, String i
 	if (node != NULL) {
 		std::cout << indent;
 		if (last) {
-			cout << "R----";
+			std::cout << "R----";
 			indent += String("     ");
 		}else{
-			cout << "L----";
+			std::cout << "L----";
 			indent += String("|    ");
 		}
 

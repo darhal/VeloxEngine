@@ -73,4 +73,6 @@ FORCEINLINE void StackAllocator::Deallocate(T* obj)
 	this->RollBack(obj);
 }
 
+typedef StackAllocator StackAlloc;
+
 TRE_NS_END

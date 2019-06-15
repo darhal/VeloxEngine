@@ -130,7 +130,8 @@ FORCEINLINE bool List<T, Alloc>::PopBack()
 	//m_Tail->m_Obj.~T(); //Make sure to call the dtor for non pod types!
 	m_Allocator.Deallocate(m_Tail);
 	m_Tail = tail_prev;
-	m_Tail->m_Next = NULL;
+	if (m_Tail != NULL)
+		m_Tail->m_Next = NULL;
 	return true;
 }
 
@@ -142,7 +143,8 @@ FORCEINLINE bool List<T, Alloc>::PopFront()
 	//m_Head->m_Obj.~T();	 //Make sure to call the dtor for non pod types!
 	m_Allocator.Deallocate(m_Head);
 	m_Head = head_next;
-	m_Tail->m_Previous = NULL;
+	if (m_Head != NULL)
+		m_Tail->m_Previous = NULL;
 	return true;
 }
 
@@ -155,13 +157,17 @@ FORCEINLINE bool List<T, Alloc>::IsEmpty() const
 template<typename T, typename Alloc>
 FORCEINLINE T* List<T, Alloc>::Front() const
 {
-	return m_Head;
+	if (m_Head !=  NULL)
+		return &(m_Head->m_Obj);
+	return NULL;
 }
 
 template<typename T, typename Alloc>
 FORCEINLINE T* List<T, Alloc>::Back() const
 {
-	return m_Tail;
+	if (m_Tail != NULL)
+		return &(m_Tail->m_Obj);
+	return NULL;
 }
 
 template <typename T, typename Alloc>

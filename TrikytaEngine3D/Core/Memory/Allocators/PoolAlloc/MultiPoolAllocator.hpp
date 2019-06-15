@@ -71,7 +71,7 @@ class MultiPoolAllocator : BaseAllocator
 {
 public:
 
-	MultiPoolAllocator(usize chunk_size, usize chunk_num, bool autoInit = true) : 
+	MultiPoolAllocator(usize chunk_size, usize chunk_num, bool autoInit = false) : 
 		m_ItemSize(chunk_size), m_ItemsNumber(chunk_num),
 		//m_Arena(new PoolArena(chunk_size, chunk_num)), 
 		m_Freelist(NULL)
@@ -155,5 +155,7 @@ private:
 	UniquePointer<PoolArena> m_Arena;
 	typename PoolArena::PoolItem* m_Freelist;
 };
+
+typedef MultiPoolAllocator MultiPoolAlloc;
 
 TRE_NS_END

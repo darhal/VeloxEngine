@@ -44,6 +44,7 @@ FORCEINLINE static T* Allocate(usize size)
 
 FORCEINLINE static void Free(void* ptr)
 {
+	if (ptr == NULL) return;
 	delete[] ptr;
 }
 
@@ -75,6 +76,7 @@ template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type
 FORCEINLINE static void Deallocate(T* ptr, usize sz)
 {
 	//printf("*** NON Pod Deallocate\n");
+	if (ptr == NULL) return;
 	for (usize i = 0; i < sz; i++) {
 		ptr[i].~T();
 	}
@@ -113,6 +115,15 @@ FORCEINLINE static void DefaultConstructRange(T* begin, T* end)
 	}
 }
 
+template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type = false>
+FORCEINLINE static void DestroyObjects(T* ptr, usize sz)
+{
+	//printf("*** NON Pod Deallocate\n");
+	if (ptr == NULL) return;
+	for (usize i = 0; i < sz; i++) {
+		ptr[i].~T();
+	}
+}
 
 /**********FOR POD TYPES********/
 
@@ -143,4 +154,10 @@ FORCEINLINE static void Deallocate(T* ptr, usize sz)
 {
 	::operator delete[] ((void*)ptr);
 	//printf("Pod Deallocate\n");
+}
+
+template<typename T, typename std::enable_if<std::is_pod<T>::value, bool>::type = true>
+FORCEINLINE static void DestroyObjects(T* ptr, usize sz)
+{
+	return;
 }

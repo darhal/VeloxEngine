@@ -300,6 +300,15 @@
     <ClInclude Include="Core\DataStructure\HashMap\Map.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Core\DataStructure\Stack\Stack.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DataStructure\Queue\Queue.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DataStructure\LinkedList\SingleList\SingleList.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Main.cpp">

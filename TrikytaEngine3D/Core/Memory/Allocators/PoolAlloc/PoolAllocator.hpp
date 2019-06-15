@@ -62,4 +62,6 @@ FORCEINLINE void PoolAllocator::Deallocate(T* obj)
 	m_FreeList.Push((Node*)obj);
 }
 
+typedef PoolAllocator PoolAlloc;
+
 TRE_NS_END

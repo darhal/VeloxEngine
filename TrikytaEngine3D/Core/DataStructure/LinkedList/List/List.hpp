@@ -2,6 +2,7 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Types.hpp>
+#include <Core/Memory/Allocators/PoolAlloc/MultiPoolAllocator.hpp>
 
 TRE_NS_START
 
@@ -18,6 +19,7 @@ public:
 	typedef Node* NodeIterator;
 	typedef Node& NodeRefIterator;
 	typedef const Node* NodeCIterator;
+
 public:
 	FORCEINLINE List();
 	FORCEINLINE List(usize nbChunk);
@@ -51,6 +53,7 @@ public:
 	FORCEINLINE T* Front() const;
 	FORCEINLINE T* Back() const;
 	FORCEINLINE void Clear();
+
 private:
 	CONSTEXPR static usize BLOCK_NUM = 8;
 
@@ -83,6 +86,12 @@ private:
 	template<typename U, typename A, typename std::enable_if<NO_DTOR(U), int>::type = 0>
 	static void Destroy(List<U, A>& list);
 };
+
+template<typename T, typename Alloc_t = MultiPoolAlloc>
+using DoubleList = List<T, Alloc_t>;
+
+template<typename T, typename Alloc_t = MultiPoolAlloc>
+using DList = List<T, Alloc_t>;
 
 #include "List.inl"
 
