@@ -2,7 +2,7 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
-#include <Core/DataStructure/_Infrastructure/BinaryTrees/RedBlackTree.hpp>
+#include <Core/DataStructure/BinaryTrees/RedBlackTree.hpp>
 
 TRE_NS_START
 

@@ -78,9 +78,10 @@ FORCEINLINE T& List<T, Alloc>::PushFront(const T& obj)
 
 template<typename T, typename Alloc>
 template<typename... Args>
-FORCEINLINE T& List<T, Alloc>::Emplace(NodeIterator node, Args&&... args)
+FORCEINLINE T& List<T, Alloc>::Emplace(Iterator itr, Args&&... args)
 {
 	Node* node_ptr = (Node*)m_Allocator.Allocate(sizeof(Node));
+	Node* node = itr->m_CurrentNode;
 	new (node_ptr) Node(node->m_Previous ? node->m_Previous : NULL, node, std::forward<Args>(args)...);
 	return node_ptr->m_Obj;
 }
@@ -115,9 +116,10 @@ FORCEINLINE T& List<T, Alloc>::Insert(usize index, const T& obj)
 }
 
 template<typename T, typename Alloc>
-FORCEINLINE T& List<T, Alloc>::Insert(NodeIterator node, const T& obj)
+FORCEINLINE T& List<T, Alloc>::Insert(Iterator itr, const T& obj)
 {
 	Node* node_ptr = (Node*)m_Allocator.Allocate(sizeof(Node));
+	Node* node = itr->m_CurrentNode;
 	new (node_ptr) Node(node->m_Previous ? node->m_Previous  : NULL, node, obj);
 	return node_ptr->m_Obj;
 }

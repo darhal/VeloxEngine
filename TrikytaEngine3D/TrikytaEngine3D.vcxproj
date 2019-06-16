@@ -161,11 +161,11 @@
     <ClInclude Include="Core\DataStructure\Tuple\Pair.hpp" />
     <ClInclude Include="Core\DataStructure\Tuple\Tuple.hpp" />
     <ClInclude Include="Core\DataStructure\Vector\Vector.hpp" />
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\AVL.hpp" />
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\BinaryTree.hpp" />
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\BST.hpp" />
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\RBT.hpp" />
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\RedBlackTree.hpp" />
+    <ClInclude Include="Core\DataStructure\BinaryTrees\AVL.hpp" />
+    <ClInclude Include="Core\DataStructure\BinaryTrees\BinaryTree.hpp" />
+    <ClInclude Include="Core\DataStructure\BinaryTrees\BST.hpp" />
+    <ClInclude Include="Core\DataStructure\BinaryTrees\RBT.hpp" />
+    <ClInclude Include="Core\DataStructure\BinaryTrees\RedBlackTree.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />
     <ClInclude Include="Core\Memory\Allocators\BaseAlloc\BaseAllocator.hpp" />
     <ClInclude Include="Core\Memory\Allocators\PoolAlloc\MultiPoolAllocator.hpp" />
@@ -353,6 +353,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Core\DataStructure\LinkedList\List\List.inl" />
+    <None Include="Core\DataStructure\LinkedList\SingleList\SingleList.inl" />
     <None Include="Core\DataStructure\Vector\Vector.inl" />
     <None Include="Core\Misc\Maths\Vec2.inl" />
     <None Include="Core\Misc\Maths\Vec3.inl" />

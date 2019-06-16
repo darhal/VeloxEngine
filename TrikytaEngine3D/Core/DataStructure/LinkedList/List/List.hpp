@@ -10,15 +10,7 @@ template<typename T, typename Alloc_t = MultiPoolAlloc>
 class List
 {
 public:
-	struct Node;
-
-	typedef T* Iterator;
-	typedef T& RefIterator;
-	typedef const T* CIterator;
-
-	typedef Node* NodeIterator;
-	typedef Node& NodeRefIterator;
-	typedef const Node* NodeCIterator;
+	class Iterator;
 
 public:
 	FORCEINLINE List();
@@ -38,10 +30,10 @@ public:
 	FORCEINLINE T& PushFront(const T& obj);
 
 	FORCEINLINE T& Insert(usize index, const T& obj);
-	FORCEINLINE T& Insert(NodeIterator node, const T& obj);
+	FORCEINLINE T& Insert(Iterator itr, const T& obj);
 
 	template<typename... Args>
-	FORCEINLINE T& Emplace(NodeIterator node, Args&&... args);
+	FORCEINLINE T& Emplace(Iterator itr, Args&&... args);
 	template<typename... Args>
 	FORCEINLINE T& Emplace(usize index, Args&&... args);
 
@@ -54,6 +46,8 @@ public:
 	FORCEINLINE T* Back() const;
 	FORCEINLINE void Clear();
 
+	Iterator begin() { return Iterator(m_Head); }
+	Iterator end() { return Iterator(m_Tail); }
 private:
 	CONSTEXPR static usize BLOCK_NUM = 8;
 
@@ -73,6 +67,52 @@ private:
 	Node* m_Head;
 	Node* m_Tail;
 	Alloc_t m_Allocator;
+
+	class Iterator
+	{
+	public:
+		Iterator() noexcept : m_CurrentNode(m_Head) { }
+		Iterator(const Node* node) noexcept : m_CurrentNode(node) { }
+		bool operator!=(const Iterator& iterator) { return m_CurrentNode != iterator.m_CurrentNode; }
+		T& operator*() const { m_CurrentNode->m_Obj; }
+
+		Iterator& operator=(Node* node)
+		{
+			this->m_CurrentNode = node;
+			return *this;
+		}
+
+		Iterator& operator++()
+		{
+			if (m_CurrentNode)
+				m_CurrentNode = m_CurrentNode->m_Next;
+			return *this;
+		}
+
+		Iterator operator++(int)
+		{
+			Iterator iterator = *this;
+			++*this;
+			return iterator;
+		}
+
+		Iterator& operator--()
+		{
+			if (m_CurrentNode)
+				m_CurrentNode = m_CurrentNode->m_Previous;
+			return *this;
+		}
+
+		Iterator operator--(int)
+		{
+			Iterator iterator = *this;
+			--*this;
+			return iterator;
+		}
+
+	private:
+		Node* m_CurrentNode;
+	};
 
 	template<typename U, typename A, typename std::enable_if<NO_DTOR(U), int>::type = 0>
 	static void EmptyList(List<U, A>& list);

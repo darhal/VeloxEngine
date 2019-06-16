@@ -282,21 +282,6 @@
     <ClInclude Include="Core\DataStructure\HashMap\HashMap.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\BinaryTree.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\BST.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\AVL.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\RedBlackTree.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\DataStructure\_Infrastructure\BinaryTrees\RBT.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Core\DataStructure\HashMap\Map.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -307,6 +292,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Core\DataStructure\LinkedList\SingleList\SingleList.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DataStructure\BinaryTrees\AVL.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DataStructure\BinaryTrees\BinaryTree.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DataStructure\BinaryTrees\BST.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DataStructure\BinaryTrees\RBT.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DataStructure\BinaryTrees\RedBlackTree.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -646,5 +646,8 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="cpp.hint" />
+    <None Include="Core\DataStructure\LinkedList\SingleList\SingleList.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
