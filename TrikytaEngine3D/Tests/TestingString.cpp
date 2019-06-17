@@ -1,3 +1,5 @@
+#ifdef ABRA
+
 #include <Core/DataStructure/String/String.hpp>
 #include <Core/DataStructure/Array/Array.hpp>
 #include <Core/Memory/Common.hpp>
@@ -637,3 +639,5 @@ void BenchmarkMap()
 	if (res != NULL)
 		printf("Result found : %d | %s\n", 0, str.Buffer());
 }
+
+#endif

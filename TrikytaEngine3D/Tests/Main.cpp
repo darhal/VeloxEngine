@@ -1,4 +1,4 @@
-#ifdef abra
+//#ifdef abra
 
 #include <RenderAPI/Shader/ShaderProgram.hpp>
 #include <RenderAPI/Shader/Shader.hpp>
@@ -20,7 +20,7 @@
 #include <Core/Context/Context.hpp>
 #include "Camera.hpp"
 
-#include <RenderUtils/MeshLoader.hpp>
+#include <RenderEngine/Loader/MeshLoader.hpp>
 
 using namespace TRE;
 
@@ -113,7 +113,9 @@ int main()
 	Sleep(1000);
 	printf("~BEGIN OF OBJ LOADING~\n");
 	//MeshLoader gun("res/obj/lowpoly/Carrot.obj");
-	MeshLoader gun("res/obj/Handgun_obj.obj");
+	MeshLoader gun("res/obj/lowpoly/carrot_box.obj");
+	std::vector<RawModel<true>> models;
+	gun.ProcessData(&models);
 	Sleep(200);
 	printf("~END OF OBJ LOADING~\n");
 
@@ -130,22 +132,23 @@ int main()
 	Shader("res/Shader/screen.vs", ShaderType::VERTEX),
 	Shader("res/Shader/screen.fs", ShaderType::FRAGMENT)
 		});
-	VAO vao; //glGenVertexArrays(1, &VAO);
+
+	/*VAO vao; //glGenVertexArrays(1, &VAO);
 	vao.Use(); //glBindVertexArray(VAO);
 	VBO vbo(BufferTarget::ARRAY_BUFFER); // glGenBuffers(1, &VBO);
 	vbo.FillData(vertices); //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	vao.BindAttribute<DataType::FLOAT>(0, vbo, 3, 5, 0); // glEnableVertexAttribArray(0); && glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	vao.BindAttribute<DataType::FLOAT>(1, vbo, 2, 5, 3); //glEnableVertexAttribArray(1);  && glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)))
 	
-	Texture texture1 = Texture("res/img/box1.jpg", TexTarget::TEX2D, {
+	Texture texture1("res/img/box1.jpg", TexTarget::TEX2D, {
 		{TexParam::TEX_WRAP_S , TexWrapping::REPEAT},
 		{TexParam::TEX_WRAP_T, TexWrapping::REPEAT},
 		{TexParam::TEX_MIN_FILTER, TexFilter::LINEAR},
 		{TexParam::TEX_MAG_FILTER, TexFilter::LINEAR}
-	});
+	});*/
 
 
-	FBO fbo(FBOTarget::FBO);
+	/*FBO fbo(FBOTarget::FBO);
 	TextureSettings set;
 	set.width = SCR_WIDTH;
 	set.height = SCR_HEIGHT;
@@ -183,7 +186,7 @@ int main()
 	screenShader.Use();
 	screenShader.SetInt("screenTexture", 0);
 	ourShader.Use();
-	ourShader.SetInt("texture", 0);
+	ourShader.SetInt("texture", 0);*/
 
 	mat4 projection = mat4::perspective(camera.Zoom, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 	//ourShader.SetMat4("projection", projection);
@@ -209,19 +212,29 @@ int main()
 		// render
 		// ------
 		//printf("\rTIME = %f", timer);
-		fbo.Use();
+		//fbo.Use();
 		Enable(Capability::DEPTH_TEST);
 		ActivateTexture(0);
-		texture1.Use();
+		//texture1.Use();
 		ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
 		Clear();
 
 		ourShader.Use(); // activate shader
 		mat4 view = camera.GetViewMatrix();
 		//ourShader.SetMat4("view", view);
+		for (const RawModel<true>& m : models) {
+			int i = 0;
+			mat4 model;
+			model.translate(cubePositions[i]);
+			float angle = 20.0f * i;
+			model.rotate(vec3(1.0f, 0.3f, 0.5f), rad(angle));
+			mat4 MVP = projection * view * model;
+			ourShader.SetMat4("MVP", MVP);
+			m.Render(ourShader);
+		}
 
 		// render boxes
-		vao.Use();
+		/*vao.Use();
 		for (unsigned int i = 0; i < 10; i++)
 		{
 			// calculate the model matrix for each object and pass it to shader before drawing
@@ -232,18 +245,18 @@ int main()
 			mat4 MVP = projection * view * model;
 			ourShader.SetMat4("MVP", MVP);
 			DrawArrays(Primitive::TRIANGLES, 0, 36);
-		}
-		fbo.Unuse();
+		}*/
+		//fbo.Unuse();
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-		Disable(Capability::DEPTH_TEST);
+		/*Disable(Capability::DEPTH_TEST);
 		ClearColor({255.f, 255.f, 255.f, 255.f });
 		Clear(Buffer::COLOR);
 		screenShader.Use();
 		quadVAO.Use();
 		ActivateTexture(0);
 		tex.Use();
-		DrawArrays(Primitive::TRIANGLES, 0, 6);
+		DrawArrays(Primitive::TRIANGLES, 0, 6);*/
 		window.Present();
 	}
 
@@ -371,4 +384,4 @@ void clip(const Window& win)
 
 }
 
-#endif
+//#endif
