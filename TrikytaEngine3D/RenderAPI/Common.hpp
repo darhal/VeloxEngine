@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/Context/GLDefines.hpp>
+#include <Core/Misc/Defines/Common.hpp>
 
 namespace DataType
 {
