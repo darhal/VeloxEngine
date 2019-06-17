@@ -1,4 +1,4 @@
-#ifdef ABRA
+//#ifdef ABRA
 
 #include <Core/DataStructure/String/String.hpp>
 #include <Core/DataStructure/Array/Array.hpp>
@@ -98,13 +98,13 @@ int main()
 	}
 	printf("}\n");*/
 
-	SingleList<int> list;
-	for (usize i = 0; i < 10; i++) {
-		list.EmplaceFront(i);
-	}
-	for (auto i : list) {
-		printf("Element : %d\n", i);
-	}
+	AVL<int> avl;
+	avl.Insert(50);
+	avl.Insert(30);
+	avl.Insert(70);
+	avl.Insert(65);
+	avl.Insert(68);
+	avl.Print();
 	
 
 	/*RBTree bst;
@@ -640,4 +640,4 @@ void BenchmarkMap()
 		printf("Result found : %d | %s\n", 0, str.Buffer());
 }
 
-#endif
+//#endif

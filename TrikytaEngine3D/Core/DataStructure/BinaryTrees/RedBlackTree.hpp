@@ -3,6 +3,7 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/DataStructure/String/String.hpp>
+#include <Core/Memory/Allocators/PoolAlloc/MultiPoolAllocator.hpp>
 
 // Based on this : https://github.com/Bibeknam/algorithmtutorprograms/blob/master/data-structures/red-black-trees/RedBlackTree.cpp
 

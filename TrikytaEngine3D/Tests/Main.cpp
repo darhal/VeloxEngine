@@ -1,4 +1,4 @@
-//#ifdef abra
+#ifdef abra
 
 #include <RenderAPI/Shader/ShaderProgram.hpp>
 #include <RenderAPI/Shader/Shader.hpp>
@@ -384,4 +384,4 @@ void clip(const Window& win)
 
 }
 
-//#endif
+#endif

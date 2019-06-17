@@ -352,6 +352,7 @@
     <ClCompile Include="Tests\TestingString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Core\DataStructure\BinaryTrees\AVL.inl" />
     <None Include="Core\DataStructure\BinaryTrees\BinaryTree.inl" />
     <None Include="Core\DataStructure\BinaryTrees\BST.inl" />
     <None Include="Core\DataStructure\BinaryTrees\RedBlackTree.inl" />
