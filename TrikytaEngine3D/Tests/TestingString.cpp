@@ -15,7 +15,6 @@
 #include <Core/DataStructure/BinaryTrees/RedBlackTree.hpp>
 #include <Core/DataStructure/BinaryTrees/BST.hpp>
 #include <Core/DataStructure/BinaryTrees/AVL.hpp>
-#include <Core/DataStructure/BinaryTrees/RBT.hpp>
 #include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <Core/DataStructure/HashMap/Map.hpp>
 #include <Core/DataStructure/Stack/Stack.hpp>
@@ -68,6 +67,8 @@ public:
 
 int main()
 {
+	HashMap<int, int> test;
+
 	/*Queue<int> queue;
 	printf("Queue Top = {");
 	for (usize i = 0; i < 10; i++) {

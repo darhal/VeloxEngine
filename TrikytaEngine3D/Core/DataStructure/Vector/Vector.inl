@@ -181,6 +181,17 @@ FORCEINLINE void Vector<T>::Erease(usize start, usize end)
 }
 
 template<typename T>
+FORCEINLINE void Vector<T>::Erease(Iterator itr)
+{
+	ASSERTF(!(itr >= m_Data + m_Length || itr < m_Data), "The given iterator doesn't belong to the Vector.");
+	(*itr).~T();
+	usize start = usize(itr - m_Data);
+	usize end = usize(m_Data + m_Length - itr);
+	MoveRange(m_Data + end + 1, m_Data + start, m_Length - end);
+	m_Length -= 1;
+}
+
+template<typename T>
 FORCEINLINE void Vector<T>::Clear()
 {
 	DestroyObjects(m_Data, m_Length);

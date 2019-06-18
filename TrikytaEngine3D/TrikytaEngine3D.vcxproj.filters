@@ -303,9 +303,6 @@
     <ClInclude Include="Core\DataStructure\BinaryTrees\BST.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\DataStructure\BinaryTrees\RBT.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Core\DataStructure\BinaryTrees\RedBlackTree.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -659,6 +656,12 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="Core\DataStructure\BinaryTrees\AVL.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="Core\DataStructure\HashMap\HashMap.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="Core\DataStructure\HashMap\Map.inl">
       <Filter>Header Files</Filter>
     </None>
   </ItemGroup>

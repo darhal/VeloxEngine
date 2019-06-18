@@ -10,6 +10,14 @@ struct Pair
 	Pair(const T1& f, const T2& s) : first(f), second(s)
 	{}
 
+	template<typename... Args>
+	Pair(const T1& f, Args&&... args) : first(f), second(std::forward<Args>(args)...)
+	{}
+
+	template<typename... Args>
+	Pair(T1&& f, Args&&... args) : first(std::forward<T1>(f)), second(std::forward<Args>(args)...)
+	{}
+
 	Pair()
 	{}
 

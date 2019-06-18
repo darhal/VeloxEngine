@@ -114,7 +114,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -164,7 +164,6 @@
     <ClInclude Include="Core\DataStructure\BinaryTrees\AVL.hpp" />
     <ClInclude Include="Core\DataStructure\BinaryTrees\BinaryTree.hpp" />
     <ClInclude Include="Core\DataStructure\BinaryTrees\BST.hpp" />
-    <ClInclude Include="Core\DataStructure\BinaryTrees\RBT.hpp" />
     <ClInclude Include="Core\DataStructure\BinaryTrees\RedBlackTree.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />
     <ClInclude Include="Core\Memory\Allocators\BaseAlloc\BaseAllocator.hpp" />
@@ -356,6 +355,8 @@
     <None Include="Core\DataStructure\BinaryTrees\BinaryTree.inl" />
     <None Include="Core\DataStructure\BinaryTrees\BST.inl" />
     <None Include="Core\DataStructure\BinaryTrees\RedBlackTree.inl" />
+    <None Include="Core\DataStructure\HashMap\HashMap.inl" />
+    <None Include="Core\DataStructure\HashMap\Map.inl" />
     <None Include="Core\DataStructure\LinkedList\List\List.inl" />
     <None Include="Core\DataStructure\LinkedList\SingleList\SingleList.inl" />
     <None Include="Core\DataStructure\Vector\Vector.inl" />

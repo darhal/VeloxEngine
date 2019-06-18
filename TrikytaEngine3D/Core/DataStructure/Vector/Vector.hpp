@@ -36,6 +36,7 @@ public:
 	FORCEINLINE T& EmplaceFront(Args&&... args);
 	FORCEINLINE T& PushFront(const T& obj);
 	FORCEINLINE void Erease(usize start, usize end);
+	FORCEINLINE void Erease(Iterator itr);
 	FORCEINLINE void Clear();
 	FORCEINLINE bool PopBack();
 	FORCEINLINE bool PopFront();
