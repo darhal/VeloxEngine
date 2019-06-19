@@ -6,10 +6,10 @@
 
 TRE_NS_START
 
-enum CollisionSolvingMethod
+enum HashCollisionSolvingMethod
 {
 	PROBING, // Probing
-	OPEN_ADR // Open adressing
+	CHAINING // Open adressing
 };
 
 template<typename T>
@@ -24,13 +24,13 @@ usize Hash(const int32& val)
 	return val;
 }
 
-template<typename K, typename V, usize SIZE = 13, CollisionSolvingMethod COLLISION_SOLVING = OPEN_ADR>
+template<typename K, typename V, HashCollisionSolvingMethod COLLISION_SOLVING = CHAINING, usize SIZE = 7>
 class HashMap
 {
 };
 
 template<typename K, typename V, usize SIZE>
-class HashMap<K, V, SIZE, OPEN_ADR>
+class HashMap<K, V, CHAINING, SIZE>
 {
 public:
 	typedef Pair<K, V> HashNode;
@@ -66,18 +66,22 @@ private:
 	FORCEINLINE usize CalculateIndex(const K& key) const;
 	FORCEINLINE HashTab_t* InternalListCheck(usize index);
 
-	static const usize DEFAULT_TABLE_CAPACITY = SIZE;
 	static const usize DEFAULT_LIST_CAPACITY = 1;
 
-	HashTab_t m_HashTable[DEFAULT_TABLE_CAPACITY];
+	HashTab_t m_HashTable[SIZE];
 };
 
 /***********************************************************/
 /************************ PROBING **************************/
 /***********************************************************/
 
+usize Probe(usize x, uint32 b = 1, uint32 a = 0) // Linear by default, Quadratic probing if a is not 0
+{
+	return a * (x * x) + b * x;
+}
+
 template<typename K, typename V, usize SIZE>
-class HashMap<K, V, SIZE, PROBING>
+class HashMap<K, V, PROBING, SIZE>
 {
 public:
 	typedef Pair<K, V> HashNode;
@@ -110,13 +114,20 @@ public:
 	FORCEINLINE bool IsEmpty() const;
 
 private:
-	FORCEINLINE usize CalculateIndex(const K& key) const;
-	FORCEINLINE HashTab_t InternalListCheck(usize index);
+	FORCEINLINE usize CalculateHash(const K& key) const;
 
-	static const usize DEFAULT_TABLE_CAPACITY = SIZE;
+	FORCEINLINE usize CalculateIndex(const usize hash, const uint32 x) const;
+
+	FORCEINLINE HashTab_t CalculateAdress(const K& key);
+
+	FORCEINLINE HashTab_t InternalListCheck(const K& key);
+
+	FORCEINLINE void Resize(usize newSize);
+
 	static const usize DEFAULT_LIST_CAPACITY = 1;
 
 	HashTab_t m_HashTable;
+	usize m_Capacity;
 };
 
 #include "HashMap.inl"

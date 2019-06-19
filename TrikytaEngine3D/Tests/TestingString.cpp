@@ -67,7 +67,47 @@ public:
 
 int main()
 {
-	HashMap<int, int> test;
+	{
+		auto start = std::chrono::steady_clock::now();
+		HashMap<int, String, PROBING> test;
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+		std::cout << "TRE::HashMap benchmark of declartion of HashMap<int, String, PROBING> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		start = std::chrono::steady_clock::now();
+		test.Emplace(6, "Test");
+		test.Emplace(5, "xD");
+		test.Emplace(10, "lol");
+		test.Emplace(12, "mdr");
+		test.Emplace(8, "xx");
+		test.Emplace(7, "i love you");
+		test.Emplace(1, "k");
+		test.Emplace(0, "okay");
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "TRE::HashMap benchmark of multiple inserts :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	}
+
+	{
+		auto start = std::chrono::steady_clock::now();
+		std::unordered_map<int, String> test;
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+		std::cout << "std::unordered_map benchmark of declartion of unordered_map<int, String> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		start = std::chrono::steady_clock::now();
+		test.emplace(6, "Test");
+		test.emplace(5, "xD");
+		test.emplace(10, "lol");
+		test.emplace(12, "mdr");
+		test.emplace(8, "xx");
+		test.emplace(7, "i love you");
+		test.emplace(1, "k");
+		test.emplace(0, "okay");
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "std::unordered_map benchmark of multiple inserts :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	}
 
 	/*Queue<int> queue;
 	printf("Queue Top = {");
@@ -98,14 +138,6 @@ int main()
 		stack.Pop();
 	}
 	printf("}\n");*/
-
-	AVL<int> avl;
-	avl.Insert(50);
-	avl.Insert(30);
-	avl.Insert(70);
-	avl.Insert(65);
-	avl.Insert(68);
-	avl.Print();
 	
 
 	/*RBTree bst;

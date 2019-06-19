@@ -24,6 +24,8 @@ struct Pair
 	Pair(T1&& f, T2&& s) : first(std::forward<T1>(f)), second(std::forward<T2>(s))
 	{}
 
+	FORCEINLINE ~Pair() {}
+
 	T1 first;
 	T2 second;
 };

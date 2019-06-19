@@ -1,25 +1,25 @@
 #include "HashMap.hpp"
 
 template<typename K, typename V, usize S>
-HashMap<K, V, S, OPEN_ADR>::HashMap()
+HashMap<K, V, CHAINING, S>::HashMap()
 {
-	/*m_HashTable = Allocate<HashTab_t>(DEFAULT_TABLE_CAPACITY);
-	for (usize i = 0; i < DEFAULT_TABLE_CAPACITY; i++) {
+	/*m_HashTable = Allocate<HashTab_t>(S);
+	for (usize i = 0; i < S; i++) {
 		int32* adr = (int32*)(m_HashTable + i);
 		*adr = NULL;
 	}*/
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE typename HashMap<K, V, S, OPEN_ADR>::HashNode& HashMap<K, V, S, OPEN_ADR>::Put(const K& key, const V& value)
+FORCEINLINE typename HashMap<K, V, CHAINING, S>::HashNode& HashMap<K, V, CHAINING, S>::Put(const K& key, const V& value)
 {
 	usize index = this->CalculateIndex(key);
-	HashTab_t* listAdr = this->InternalListCheck(index);
+	HashTab_t* listAdr = this->InternalListCheck(index); 
 	return listAdr->EmplaceBack(key, value);
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE typename HashMap<K, V, S, OPEN_ADR>::HashNode& HashMap<K, V, S, OPEN_ADR>::Put(K&& key, V&& value)
+FORCEINLINE typename HashMap<K, V, CHAINING, S>::HashNode& HashMap<K, V, CHAINING, S>::Put(K&& key, V&& value)
 {
 	usize index = this->CalculateIndex(key);
 	HashTab_t* listAdr = this->InternalListCheck(index);
@@ -28,7 +28,7 @@ FORCEINLINE typename HashMap<K, V, S, OPEN_ADR>::HashNode& HashMap<K, V, S, OPEN
 
 template<typename K, typename V, usize S>
 template<typename... Args>
-FORCEINLINE typename HashMap<K, V, S, OPEN_ADR>::HashNode& HashMap<K, V, S, OPEN_ADR>::Emplace(const K& key, Args&&... args)
+FORCEINLINE typename HashMap<K, V, CHAINING, S>::HashNode& HashMap<K, V, CHAINING, S>::Emplace(const K& key, Args&&... args)
 {
 	usize index = this->CalculateIndex(key);
 	HashTab_t* listAdr = this->InternalListCheck(index);
@@ -37,7 +37,7 @@ FORCEINLINE typename HashMap<K, V, S, OPEN_ADR>::HashNode& HashMap<K, V, S, OPEN
 
 template<typename K, typename V, usize S>
 template<typename... Args>
-FORCEINLINE typename HashMap<K, V, S, OPEN_ADR>::HashNode& HashMap<K, V, S, OPEN_ADR>::Emplace(K&& key, Args&& ...args)
+FORCEINLINE typename HashMap<K, V, CHAINING, S>::HashNode& HashMap<K, V, CHAINING, S>::Emplace(K&& key, Args&& ...args)
 {
 	usize index = this->CalculateIndex(key);
 	HashTab_t* listAdr = this->InternalListCheck(index);
@@ -45,7 +45,7 @@ FORCEINLINE typename HashMap<K, V, S, OPEN_ADR>::HashNode& HashMap<K, V, S, OPEN
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE V* HashMap<K, V, S, OPEN_ADR>::Get(const K& key)
+FORCEINLINE V* HashMap<K, V, CHAINING, S>::Get(const K& key)
 {
 	usize index = this->CalculateIndex(key);
 	for (HashNode& node : m_HashTable[index]) {
@@ -57,7 +57,7 @@ FORCEINLINE V* HashMap<K, V, S, OPEN_ADR>::Get(const K& key)
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE const V& HashMap<K, V, S, OPEN_ADR>::Get(const K& key) const
+FORCEINLINE const V& HashMap<K, V, CHAINING, S>::Get(const K& key) const
 {
 	usize index = this->CalculateIndex(key);
 	for (const HashNode& node : m_HashTable[index]) {
@@ -69,7 +69,7 @@ FORCEINLINE const V& HashMap<K, V, S, OPEN_ADR>::Get(const K& key) const
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE V& HashMap<K, V, S, OPEN_ADR>::operator[](const K& key)
+FORCEINLINE V& HashMap<K, V, CHAINING, S>::operator[](const K& key)
 {
 	V* res = this->Get(key);
 	if (res != NULL) {
@@ -80,7 +80,7 @@ FORCEINLINE V& HashMap<K, V, S, OPEN_ADR>::operator[](const K& key)
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE void HashMap<K, V, S, OPEN_ADR>::Remove(const K& key)
+FORCEINLINE void HashMap<K, V, CHAINING, S>::Remove(const K& key)
 {
 	usize index = this->CalculateIndex(key);
 	for (typename HashTab_t::Iterator it = m_HashTable.begin(); it != m_HashTable.end(); it++) {
@@ -89,7 +89,7 @@ FORCEINLINE void HashMap<K, V, S, OPEN_ADR>::Remove(const K& key)
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE bool HashMap<K, V, S, OPEN_ADR>::ContainsKey(const K& key) const
+FORCEINLINE bool HashMap<K, V, CHAINING, S>::ContainsKey(const K& key) const
 {
 	usize index = this->CalculateIndex(key);
 	HashTab_t* listAdr = m_HashTable + index;
@@ -105,9 +105,9 @@ FORCEINLINE bool HashMap<K, V, S, OPEN_ADR>::ContainsKey(const K& key) const
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE void HashMap<K, V, S, OPEN_ADR>::Clear()
+FORCEINLINE void HashMap<K, V, CHAINING, S>::Clear()
 {
-	for (usize i = 0; i < DEFAULT_TABLE_CAPACITY; i++) {
+	for (usize i = 0; i < S; i++) {
 		int32* adr = (int32*)(m_HashTable + i);
 		if (*adr != NULL) {
 			m_HashTable[i].Clear();
@@ -116,9 +116,9 @@ FORCEINLINE void HashMap<K, V, S, OPEN_ADR>::Clear()
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE bool HashMap<K, V, S, OPEN_ADR>::IsEmpty() const
+FORCEINLINE bool HashMap<K, V, CHAINING, S>::IsEmpty() const
 {
-	for (usize i = 0; i < DEFAULT_TABLE_CAPACITY; i++) {
+	for (usize i = 0; i < S; i++) {
 		int32* adr = (int32*)(m_HashTable + i);
 		if (*adr != NULL && !m_HashTable[i].IsEmpty()) {
 			return false;
@@ -128,18 +128,18 @@ FORCEINLINE bool HashMap<K, V, S, OPEN_ADR>::IsEmpty() const
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE usize HashMap<K, V, S, OPEN_ADR>::CalculateIndex(const K& key) const
+FORCEINLINE usize HashMap<K, V, CHAINING, S>::CalculateIndex(const K& key) const
 {
 	usize hash = Hash(key);
-	return hash % DEFAULT_TABLE_CAPACITY;
+	return hash % S;
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE typename HashMap<K, V, S, OPEN_ADR>::HashTab_t* HashMap<K, V, S>::InternalListCheck(usize index)
+FORCEINLINE typename HashMap<K, V, CHAINING, S>::HashTab_t* HashMap<K, V, CHAINING, S>::InternalListCheck(usize index)
 {
 	/*if (m_HashTable == NULL) {
-		m_HashTable = Allocate<HashTab_t>(DEFAULT_TABLE_CAPACITY);
-		for (usize i = 0; i < DEFAULT_TABLE_CAPACITY; i++) {
+		m_HashTable = Allocate<HashTab_t>(S);
+		for (usize i = 0; i < S; i++) {
 			int32* adr = (int32*)(m_HashTable + i);
 			*adr = NULL;
 		}
@@ -155,76 +155,148 @@ FORCEINLINE typename HashMap<K, V, S, OPEN_ADR>::HashTab_t* HashMap<K, V, S>::In
 /************************ PROBING **************************/
 /***********************************************************/
 
-// TODO:
+// TODO : Implement deleting with tombstone and replacement, implement resize on hitting fresh hold.
 
 template<typename K, typename V, usize S>
-HashMap<K, V, S, PROBING>::HashMap()
+HashMap<K, V, PROBING, S>::HashMap() : m_HashTable(NULL), m_Capacity(S)
 {
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE typename HashMap<K, V, S, PROBING>::HashNode& HashMap<K, V, S, PROBING>::Put(const K& key, const V& value)
+FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode& HashMap<K, V, PROBING, S>::Put(const K& key, const V& value)
 {
+	HashTab_t listAdr = this->CalculateAdress(key);
+	new (listAdr) HashNode(key, value);
+	return *listAdr;
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE typename HashMap<K, V, S, PROBING>::HashNode& HashMap<K, V, S, PROBING>::Put(K&& key, V&& value)
+FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode& HashMap<K, V, PROBING, S>::Put(K&& key, V&& value)
 {
+	HashTab_t listAdr = this->CalculateAdress(key);
+	new (listAdr) HashNode(std::forward<K>(key), std::forward<V>(value));
+	return *listAdr;
 }
 
 template<typename K, typename V, usize S>
 template<typename... Args>
-FORCEINLINE typename HashMap<K, V, S, PROBING>::HashNode& HashMap<K, V, S, PROBING>::Emplace(const K& key, Args&&... args)
+FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode& HashMap<K, V, PROBING, S>::Emplace(const K& key, Args&&... args)
 {
+	HashTab_t listAdr = this->CalculateAdress(key);
+	new (listAdr) HashNode(key, std::forward<Args>(args)...);
+	return *listAdr;
 }
 
 template<typename K, typename V, usize S>
 template<typename... Args>
-FORCEINLINE typename HashMap<K, V, S, PROBING>::HashNode& HashMap<K, V, S, PROBING>::Emplace(K&& key, Args&& ...args)
+FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode& HashMap<K, V, PROBING, S>::Emplace(K&& key, Args&& ...args)
+{
+	HashTab_t listAdr = this->CalculateAdress(key);
+	new (listAdr) HashNode(std::forward<K>(key), std::forward<Args>(args)...);
+	return *listAdr;
+}
+
+template<typename K, typename V, usize S>
+FORCEINLINE V* HashMap<K, V, PROBING, S>::Get(const K& key)
 {
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE V* HashMap<K, V, S, PROBING>::Get(const K& key)
+FORCEINLINE const V& HashMap<K, V, PROBING, S>::Get(const K& key) const
 {
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE const V& HashMap<K, V, S, PROBING>::Get(const K& key) const
+FORCEINLINE V& HashMap<K, V, PROBING, S>::operator[](const K& key)
 {
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE V& HashMap<K, V, S, PROBING>::operator[](const K& key)
+FORCEINLINE void HashMap<K, V, PROBING, S>::Remove(const K& key)
 {
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE void HashMap<K, V, S, PROBING>::Remove(const K& key)
+FORCEINLINE bool HashMap<K, V, PROBING, S>::ContainsKey(const K& key) const
 {
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE bool HashMap<K, V, S, PROBING>::ContainsKey(const K& key) const
+FORCEINLINE void HashMap<K, V, PROBING, S>::Clear()
 {
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE void HashMap<K, V, S, PROBING>::Clear()
+FORCEINLINE bool HashMap<K, V, PROBING, S>::IsEmpty() const
 {
+	return m_HashTable == NULL;
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE bool HashMap<K, V, S, PROBING>::IsEmpty() const
+FORCEINLINE void HashMap<K, V, PROBING, S>::Resize(usize newSize)
 {
+	if (newSize < m_Capacity) return;
+	HashTab_t newAdr = Allocate<HashNode>(newSize);
+	CopyRangeTo(m_HashTable, newAdr, m_Capacity);
+	// Make new slots empty by assigning them to 0 on 8 bits space
+	for (usize i = m_Capacity; i < newSize; i++) {
+		int8* adr = reinterpret_cast<int8*>(newAdr + i);
+		*adr = NULL;
+	}
+	Free(m_HashTable);
+	m_Capacity = newSize;
+	m_HashTable = newAdr;
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE usize HashMap<K, V, S, PROBING>::CalculateIndex(const K& key) const
+FORCEINLINE typename HashMap<K, V, PROBING, S>::HashTab_t HashMap<K, V, PROBING, S>::CalculateAdress(const K& key)
 {
+	HashTab_t listAdr = this->InternalListCheck(key); // Should handle probing
+	// Resize and insert in the right place while there is no place left.
+	while (listAdr == NULL) {
+		this->Resize(m_Capacity + S * 2);
+		listAdr = this->InternalListCheck(key);		// Should handle probing
+	}
+	return listAdr;
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE typename HashMap<K, V, S, PROBING>::HashTab_t HashMap<K, V, S, PROBING>::InternalListCheck(usize index)
+FORCEINLINE typename HashMap<K, V, PROBING, S>::HashTab_t HashMap<K, V, PROBING, S>::InternalListCheck(const K& key)
 {
+	uint32 x = 0;
+	usize hash = Hash(key);
+	usize initialIndex = this->CalculateIndex(hash, x);
+	if (m_HashTable == NULL) {
+		m_HashTable = Allocate<HashNode>(m_Capacity);
+		for (usize i = 0; i < m_Capacity; i++) {
+			int8* adr = reinterpret_cast<int8*>(m_HashTable + i);
+			*adr = NULL;
+		}
+		HashTab_t listAdr = m_HashTable + initialIndex; // Its safe since the table is empty
+		return listAdr;
+	}
+	HashTab_t listAdr = m_HashTable + initialIndex;
+	HashTab_t startAdr = listAdr;
+	// Probing solution since there is a collision here
+	while (*(reinterpret_cast<int8*>(listAdr)) != NULL && !(listAdr->first == key)) {
+		listAdr = m_HashTable + this->CalculateIndex(hash, x++);
+		if (listAdr == startAdr) return NULL; // There is no slots (we finished a cycle) we are obliged to return NULL pointer.
+	}
+	if (*(reinterpret_cast<int8*>(listAdr)) != NULL) {
+		listAdr->~HashNode(); // Call dtor since the same key is here already
+	}
+	return listAdr;
+}
+
+
+template<typename K, typename V, usize S>
+FORCEINLINE usize HashMap<K, V, PROBING, S>::CalculateIndex(const usize hash, const uint32 x) const
+{
+	return ((hash + Probe(x)) % m_Capacity);
+}
+
+template<typename K, typename V, usize S>
+FORCEINLINE usize HashMap<K, V, PROBING, S>::CalculateHash(const K& key) const
+{
+	return Hash(key);
 }
