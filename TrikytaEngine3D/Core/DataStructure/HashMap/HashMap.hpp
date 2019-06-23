@@ -114,6 +114,8 @@ public:
 
 	FORCEINLINE bool IsEmpty() const;
 
+	FORCEINLINE usize GetSize() const;
+
 private:
 	FORCEINLINE usize CalculateHash(const K& key) const;
 
@@ -125,6 +127,8 @@ private:
 
 	FORCEINLINE void Resize(usize newSize);
 
+	FORCEINLINE HashTab_t GetOrEmplace(const K& key);
+
 	FORCEINLINE HashTab_t Reinsert(HashTab_t src, HashTab_t dest);
 
 	static const usize  DEFAULT_LIST_CAPACITY = 7;
@@ -133,7 +137,7 @@ private:
 
 	HashTab_t m_HashTable;
 	usize m_Capacity;
-	
+	usize m_UsedBuckets;
 };
 
 template<typename K, typename V, usize S>

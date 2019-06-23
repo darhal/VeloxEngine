@@ -102,6 +102,7 @@ int main()
 		end = std::chrono::steady_clock::now();
 		diff = end - start;
 		std::cout << "TRE::HashMap benchmark of one remove :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
 		//printf("----------------------------------------------------------\n");
 
 		time = 0.0;
@@ -112,9 +113,9 @@ int main()
 			auto diff = end - start;
 			time += std::chrono::duration<double, std::nano>(diff).count();
 
-			/*if (v != NULL) {
+			if (v != NULL) {
 				printf("Element at key = %d is String = %s\n", i, v->Buffer());
-			}*/
+			}
 		}
 		std::cout << "TRE::HashMap benchmark of all gets :" << (time) << " ns" << std::endl;
 
@@ -134,6 +135,7 @@ int main()
 		std::cout << "std::unordered_map benchmark of declartion of unordered_map<int, String> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 
 		start = std::chrono::steady_clock::now();
+		//test[1] = "String";
 		test.emplace(1, "Test");
 		test.emplace(2, "xD");
 		test.emplace(3, "lol");
