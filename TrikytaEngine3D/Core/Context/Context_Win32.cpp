@@ -29,15 +29,15 @@ TRE::Context::Context(uint8 vmajor, uint8 vminor, uint8 color, uint8 depth, uint
 	LoadGL();
 
 	// Choose final pixel format
-	const int pixelAttribs[] =
+	const int32 pixelAttribs[] =
 	{
 		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
 		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
 		WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
 		WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-		WGL_COLOR_BITS_ARB, (int)color,
-		WGL_DEPTH_BITS_ARB, (int)depth,
-		WGL_STENCIL_BITS_ARB, (int)stencil,
+		WGL_COLOR_BITS_ARB, color,
+		WGL_DEPTH_BITS_ARB, depth,
+		WGL_STENCIL_BITS_ARB, stencil,
 		WGL_SAMPLE_BUFFERS_ARB, antialias > 1 ? GL_TRUE : GL_FALSE,
 		WGL_SAMPLES_ARB, antialias > 1 ? antialias : 0,
 		0

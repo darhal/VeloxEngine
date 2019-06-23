@@ -95,6 +95,7 @@ public:
 
 	void* Allocate(usize sz = 0, usize alignement = 0)
 	{
+		sz, alignement; // supress compiler
 		if (m_Freelist == NULL) {
 			UniquePointer<PoolArena> newArena(new PoolArena(m_ItemSize, m_ItemsNumber));
 			//printf(">> List is empty allocating more Start at = %d\n", newArena->GetStorage());

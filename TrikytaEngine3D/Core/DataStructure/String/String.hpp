@@ -1,11 +1,49 @@
 #pragma once
 
+/************************************************************************************************************
+										* Trikyta Engine 3D *
+
+BasicString class is written using the technique that uses small string optimisation :
+	Resources : https://youtu.be/kPR8h4-qZdk
+
+Small String : Static buffer that is already on the stack, Its size is either
+24 bytes or 12 bytes (depends on the architecture). When we are in the small string
+case we can already anticpate the capacity because we know its either 24 or 12
+so no need to store the capcity in this casee (in case of SSO). length needs to be calculated
+and its the capacity - the remainder (which is stored in the last index of the static buffer)
+so when its 0 it acts like null terminator. in this remainder we store also a bit
+to indicate wether our string is small or not.
+imagine the remainder is like this : 00001010
+							^-> this is actually what indicates if our string is small or not
+so we can check later if its small or not by using logical and with 00000000
+if the result is 0 its small otherwise its normal.
+
+Normal String: In the other hand normal string is just like any casual strings
+the pointer point to heap buffer that have the data with its null terminator the capacity is stores
+as full integer, the length however is the length of the string + a bit to indicate
+its not small smthg like this (remmber its 4 bytes (or 8))
+Lets imagine its 4 here
+				   |-> this bit is one (it means its normal string)
+0.............0 (0 0 0 0 1 0 1 1)  : m_Length bit representation in memory
+^ many zeros  ^  ^  last byte  ^
+
+************************************************************************************************************/
+
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/Misc/Maths/Utils.hpp>
 #include <limits>
 #include <type_traits>
 #include <ostream>
+
+#if defined(COMPILER_MSVC)
+	#pragma warning(disable : 4201) // Remove namesless struct/union warnning
+#elif defined(COMPILER_GCC)
+	#pragma GCC diagnostic ignored "-Wpedantic"
+#elif defined(COMPILER_CLANG)
+	#pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
+	#pragma clang diagnostic ignored "-Wnested-anon-types"
+#endif
 
 TRE_NS_START
 
@@ -31,11 +69,11 @@ public:
 
 	~BasicString();
 
-	//Copy ctor copy assignement
+	// Copy ctor copy assignement
 	BasicString(const BasicString<T>& other);
 	BasicString<T>& operator=(const BasicString<T>& other);
 
-	//Move ctor move assignement
+	// Move ctor move assignement
 	BasicString(BasicString<T>&& other);
 	BasicString<T>& operator=(BasicString<T>&& other);
 
@@ -100,14 +138,46 @@ public:
 	FORCEINLINE void SetNormalLength(usize nlen);
 	FORCEINLINE void SetCapacity(usize ncap);
 	FORCEINLINE T*   EditableBuffer();
-};
 
+	template<usize S, bool IsSmall>
+	struct InitString {};
+
+	template<usize S>
+	struct InitString<S, true>
+	{
+		void operator()(BasicString<T>* obj, const T(&str)[S])
+		{
+			for (usize i = 0; i < S; i++) {
+				obj->m_Data[i] = str[i];
+			}
+			obj->SetSmallLength(S);
+		}
+	};
+
+	template<usize S>
+	struct InitString<S, false>
+	{
+		void operator()(BasicString<T>* obj, const T(&str)[S])
+		{
+			usize real_cap = S * SPARE_RATE;
+			obj->m_Buffer = (T*) operator new (sizeof(T)* real_cap); // allocate empty storage
+			for (usize i = 0; i < S; i++) {
+				obj->m_Buffer[i] = str[i];
+			}
+			obj->m_Capacity = real_cap;
+			obj->SetNormalLength(S); // bit to indicate that its not small string 
+								// (the bit is located always at the end of the bit stream, 
+								// works both on little and big endian architectures)
+		}
+	};
+};
 
 template<typename T>
 template<usize S>
 BasicString<T>::BasicString(const T(&str)[S])
 {
-	if (S <= SSO_SIZE) { // here its <= because we will count the trailing null
+	BasicString<T>::InitString<S, S <= SSO_SIZE>()(this, str);
+	/*if (S <= SSO_SIZE) { // here its <= because we will count the trailing null
 		for (usize i = 0; i < S; i++) {
 			m_Data[i] = str[i];
 		}
@@ -122,7 +192,7 @@ BasicString<T>::BasicString(const T(&str)[S])
 		SetNormalLength(S); // bit to indicate that its not small string 
 							// (the bit is located always at the end of the bit stream, 
 							// works both on little and big endian architectures)
-	}
+	}*/
 }
 
 template<typename T>
@@ -245,8 +315,8 @@ ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat)
 			The condition s+m < n is necessary for
 			the case when pattern occurs at the end
 			of text */
-			return s;
-			s += (s + m < n) ? m - badchar[txt_buffer[s + m]] : 1;
+			return s; // cout << "pattern occurs at shift = " <<  s << endl;  
+			// s += (s + m < n) ? m - badchar[txt_buffer[s + m]] : 1;
 
 		} else {
 			/* Shift the pattern so that the bad character

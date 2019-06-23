@@ -21,6 +21,7 @@ usize Hash(const T& val)
 template<>
 usize Hash(const int32& val)
 {
+	if (val == 5 || val == 9) return 3;
 	return val;
 }
 
@@ -124,11 +125,19 @@ private:
 
 	FORCEINLINE void Resize(usize newSize);
 
-	static const usize DEFAULT_LIST_CAPACITY = 1;
+	FORCEINLINE HashTab_t Reinsert(HashTab_t src, HashTab_t dest);
+
+	static const usize  DEFAULT_LIST_CAPACITY = 7;
+	static const double DEFAULT_LOAD_FACTOR;
+	static const int8	TOMBSTONE_MARKER	  = -1;
 
 	HashTab_t m_HashTable;
 	usize m_Capacity;
+	
 };
+
+template<typename K, typename V, usize S>
+const double HashMap<K, V, PROBING, S>::DEFAULT_LOAD_FACTOR = 0.65;
 
 #include "HashMap.inl"
 
