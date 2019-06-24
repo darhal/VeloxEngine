@@ -10,6 +10,8 @@ template<typename K, typename V, typename Alloc_t = MultiPoolAlloc>
 class Map
 {
 public:
+	typedef typename RBT<K, V, Alloc_t>::Iterator Iterator;
+
 	Map();
 
 	FORCEINLINE void Put(const K& key, const V& value);
@@ -30,6 +32,10 @@ public:
 	FORCEINLINE void Clear();
 
 	FORCEINLINE bool IsEmpty() const;
+
+	FORCEINLINE Iterator begin() noexcept;
+
+	FORCEINLINE Iterator end() noexcept;
 
 private:
 	RBT<K, V, Alloc_t> m_RBT;

@@ -175,6 +175,34 @@ FORCEINLINE bool RedBalckTree<K, T, Alloc_t>::IsEmpty() const
 	return m_Root == TNULL;
 }
 
+template<typename K, typename T, typename Alloc_t>
+FORCEINLINE typename RedBalckTree<K, T, Alloc_t>::Iterator RedBalckTree<K, T, Alloc_t>::begin() noexcept
+{
+	if (m_Root == NULL || m_Root == TNULL) {
+		return Iterator(this, m_Root);
+	}
+
+	RBNode* node = m_Root;
+
+	// iterate to the node in the bottom-left
+	while (true) {
+
+		if (node->left != NULL || node->left != TNULL) {
+			node = node->left;
+		}else if (node->right != NULL || node->left != TNULL) {
+			node = node->right;
+		}else {
+			return Iterator(this, node);
+		}
+	}
+}
+
+template<typename K, typename T, typename Alloc_t>
+FORCEINLINE typename RedBalckTree<K, T, Alloc_t>::Iterator RedBalckTree<K, T, Alloc_t>::end() noexcept
+{
+	return Iterator(this, NULL);
+}
+
 /************************************************************/
 /*					Private Methods							*/
 /************************************************************/

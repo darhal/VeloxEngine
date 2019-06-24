@@ -74,7 +74,7 @@ private:
 		Iterator() noexcept : m_CurrentNode(m_Head) { }
 		Iterator(const Node* node) noexcept : m_CurrentNode(node) { }
 		bool operator!=(const Iterator& iterator) { return m_CurrentNode != iterator.m_CurrentNode; }
-		T& operator*() const { m_CurrentNode->m_Obj; }
+		T& operator*() const { return m_CurrentNode->m_Obj; }
 
 		Iterator& operator=(Node* node)
 		{

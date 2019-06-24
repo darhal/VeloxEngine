@@ -67,3 +67,15 @@ FORCEINLINE bool Map<K, V, Alloc_t>::IsEmpty() const
 {
 	return m_RBT.IsEmpty();
 }
+
+template<typename K, typename V, typename Alloc_t>
+FORCEINLINE typename Map<K, V, Alloc_t>::Iterator Map<K, V, Alloc_t>::begin() noexcept
+{
+	return m_RBT.begin();
+}
+
+template<typename K, typename V, typename Alloc_t>
+FORCEINLINE typename Map<K, V, Alloc_t>::Iterator Map<K, V, Alloc_t>::end() noexcept
+{
+	return m_RBT.end();
+}

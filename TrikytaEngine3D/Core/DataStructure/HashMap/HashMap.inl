@@ -293,7 +293,7 @@ FORCEINLINE void HashMap<K, V, PROBING, S>::Remove(const K& key)
 			return; 
 	}
 
-	if (*(reinterpret_cast<int8*>(listAdr)) != NULL) { // We found the element
+	if (elementMarker != NULL) { // We found the element
 		m_UsedBuckets--;
 		listAdr->~HashNode();
 		*reinterpret_cast<int8*>(listAdr) = TOMBSTONE_MARKER; // Put Tombstone as its deleted
@@ -526,4 +526,44 @@ template<typename K, typename V, usize S>
 FORCEINLINE usize HashMap<K, V, PROBING, S>::CalculateHash(const K& key) const
 {
 	return Hash(key);
+}
+
+//TODO : This should be fixed since there is holes in the array
+
+template<typename K, typename V, usize S>
+FORCEINLINE typename HashMap<K, V, PROBING, S>::Iterator HashMap<K, V, PROBING, S>::begin() noexcept
+{
+	if (m_UsedBuckets == 0)
+		return Iterator(this, m_HashTable);
+
+	usize i = 0;
+	HashTab_t adr = m_HashTable + i;
+	int8 elementMarker = *reinterpret_cast<int8*>(adr);
+
+	while ((elementMarker == NULL || elementMarker == TOMBSTONE_MARKER) && i < m_Capacity) {
+		i++;
+		adr = m_HashTable + i;
+		elementMarker = *reinterpret_cast<int8*>(adr);
+	}
+
+	return Iterator(this, adr);
+}
+
+template<typename K, typename V, usize S>
+FORCEINLINE typename HashMap<K, V, PROBING, S>::Iterator HashMap<K, V, PROBING, S>::end() noexcept
+{
+	if (m_UsedBuckets == 0)
+		return Iterator(this, m_HashTable);
+
+	/*ssize i = m_Capacity - 1;
+	HashTab_t adr = m_HashTable + i;
+	int8 elementMarker = *reinterpret_cast<int8*>(adr);
+
+	while ((elementMarker == NULL || elementMarker == TOMBSTONE_MARKER) && (i > 0)) {
+		i--;
+		adr = m_HashTable + i;
+		elementMarker = *reinterpret_cast<int8*>(adr);
+	}*/
+
+	return Iterator(this, NULL);
 }

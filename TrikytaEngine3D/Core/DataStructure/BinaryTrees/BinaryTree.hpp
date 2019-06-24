@@ -12,7 +12,10 @@ template<typename T, typename Alloc_t = MultiPoolAlloc>
 class BinaryTree
 {
 public:
-	struct BinaryTreeLeaf {
+	class Iterator;
+
+	struct BinaryTreeLeaf 
+	{
 	public:
 		template<typename... Args>
 		BinaryTreeLeaf(BinaryTreeLeaf* r, BinaryTreeLeaf* l, Args&&... args) : right(r), left(l), element(std::forward<Args>(args)...)
@@ -50,6 +53,7 @@ public:
 	typedef BinaryTreeLeaf BTLeaf;
 	typedef BinaryTreeLeaf BTNode;
 	typedef BinaryTreeLeaf Node;
+
 public:
 	FORCEINLINE BinaryTree();
 
@@ -90,11 +94,16 @@ public:
 
 	FORCEINLINE bool IsEmpty() const;
 
+	FORCEINLINE Iterator begin() noexcept;
+
+	FORCEINLINE Iterator end() noexcept;
+
 	FORCEINLINE void Print(BTLeaf* node = NULL);
 	FORCEINLINE void PrintBT(const String& prefix, const BTLeaf* node, bool isLeft);
 
 	// Dumps a representation of the tree to cout
 	void Dump() const;
+
 protected:
 	FORCEINLINE void DestroyTree(BTLeaf* cur);
 	FORCEINLINE usize MaxDepthHelper(BTLeaf* cur) const;
@@ -129,6 +138,88 @@ protected:
 	// At least one string in the vector will end up beginning
 	// with no space characters.
 	static void trim_rows_left(std::vector<std::string>& rows);
+
+private:
+
+	class Iterator
+	{
+	public:
+		Iterator(BinaryTree<T, Alloc_t>* instance) : m_TreeInstance(instance), m_Node(instance->m_Root)
+		{};
+
+		Iterator(BinaryTree<T, Alloc_t>* instance, Node* node) : m_TreeInstance(instance), m_Node(node)
+		{};
+
+		bool operator!=(const Iterator& iterator) { return m_Node != iterator.m_Node; }
+
+		Node& operator*() const { return *m_Node; }
+
+		Iterator& operator=(const Iterator& other)
+		{
+			this->m_Node = other.m_Node;
+			this->m_TreeInstance = other.m_TreeInstance;
+			return *this;
+		}
+
+		Iterator& operator++()
+		{
+			Node* parent = NULL;
+
+			if (this->m_Node == NULL) {
+				return *this; // end iterator does not increment
+			}
+
+			parent = this->m_Node->parent;
+
+			// reaches root -> next is end()
+			if (parent == NULL) {
+				this->m_Node = NULL;
+				return *this;
+			}
+
+			// left child -> go to right child
+			if ((this->m_Node == parent->left) && parent->right != NULL) {
+				this->m_Node = parent->right;
+			}else {
+				this->m_Node = this->m_Node->parent;
+				return *this;
+			}
+
+			while (true) {
+				if (this->m_Node->left != NULL) {
+					this->m_Node = this->m_Node->left; // has left child node
+				}else if (this->m_Node->right != NULL) {
+					this->m_Node = this->m_Node->right; // only right child node
+				}else {
+					return *this; // has no children -> stop here
+				}
+			}
+		}
+
+		Iterator operator++(int)
+		{
+			Iterator iterator = *this;
+			++(*this);
+			return iterator;
+		}
+
+		Iterator& operator--()
+		{
+			// TODO: operator -- have to be implemented
+			return *this;
+		}
+
+		Iterator operator--(int)
+		{
+			Iterator iterator = *this;
+			--*this;
+			return iterator;
+		}
+
+	private:
+		Node* m_Node;
+		BinaryTree<T, Alloc_t>* m_TreeInstance;
+	};
 };
 
 #include "BinaryTree.inl"

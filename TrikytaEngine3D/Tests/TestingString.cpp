@@ -49,6 +49,8 @@ void BenchmarkString();
 void BenchmarkList();
 void BenchmarkVector();
 void BenchmarkMap();
+void BenchmarkHashMapProbing();
+
 
 class A
 {
@@ -67,120 +69,14 @@ public:
 
 int main()
 {
-	{
-		auto start = std::chrono::steady_clock::now();
-		HashMap<int, String, PROBING> test;
-		auto end = std::chrono::steady_clock::now();
-		auto diff = end - start;
-		std::cout << "TRE::HashMap benchmark of declartion of HashMap<int, String, PROBING> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
-
-		start = std::chrono::steady_clock::now();
-		test.Emplace(1, "Test");
-		test.Emplace(2, "xD");
-		test.Emplace(3, "lol");
-		test.Emplace(4, "mdr");
-		test.Emplace(5, "xx");
-		test.Emplace(6, "i love you");
-		test.Emplace(7, "k");
-		test.Emplace(8, "okay");
-		end = std::chrono::steady_clock::now();
-		diff = end - start;
-		std::cout << "TRE::HashMap benchmark of multiple inserts :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
-
-		double time = 0.0;
-		for (usize i = 1; i < 9; i++) {
-			auto start = std::chrono::steady_clock::now();
-			String* v = test.Get(i);
-			auto end = std::chrono::steady_clock::now();
-			auto diff = end - start;
-			time += std::chrono::duration<double, std::nano>(diff).count();
-		}
-		std::cout << "TRE::HashMap benchmark of all gets :" << (time) << " ns" << std::endl;
-
-		start = std::chrono::steady_clock::now();
-		test.Remove(5);
-		end = std::chrono::steady_clock::now();
-		diff = end - start;
-		std::cout << "TRE::HashMap benchmark of one remove :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
-
-		//printf("----------------------------------------------------------\n");
-
-		time = 0.0;
-		for (usize i = 1; i < 9; i++) {
-			auto start = std::chrono::steady_clock::now();
-			String* v = test.Get(i);
-			auto end = std::chrono::steady_clock::now();
-			auto diff = end - start;
-			time += std::chrono::duration<double, std::nano>(diff).count();
-
-			if (v != NULL) {
-				printf("Element at key = %d is String = %s\n", i, v->Buffer());
-			}
-		}
-		std::cout << "TRE::HashMap benchmark of all gets :" << (time) << " ns" << std::endl;
-
-		start = std::chrono::steady_clock::now();
-		test.Emplace(5, "Heheheh Im trolling!");
-		end = std::chrono::steady_clock::now();
-		diff = end - start;
-		std::cout << "TRE::HashMap benchmark of emplace at the slot removed :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
-		//printf("----------------------------------------------------------\n");
+	RBT<int, int> rbt;
+	for (usize i = 0; i < 10; i++) {
+		rbt.Insert(i, i*2);
 	}
 
-	{
-		auto start = std::chrono::steady_clock::now();
-		std::unordered_map<int, String> test;
-		auto end = std::chrono::steady_clock::now();
-		auto diff = end - start;
-		std::cout << "std::unordered_map benchmark of declartion of unordered_map<int, String> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 
-		start = std::chrono::steady_clock::now();
-		//test[1] = "String";
-		test.emplace(1, "Test");
-		test.emplace(2, "xD");
-		test.emplace(3, "lol");
-		test.emplace(4, "mdr");
-		test.emplace(5, "xx");
-		test.emplace(6, "i love you");
-		test.emplace(7, "k");
-		test.emplace(8, "okay");
-		end = std::chrono::steady_clock::now();
-		diff = end - start;
-		std::cout << "std::unordered_map benchmark of multiple inserts :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
-
-		double time = 0.0;
-		for (usize i = 1; i < 9; i++) {
-			auto start = std::chrono::steady_clock::now();
-			String v = test.at(i);
-			auto end = std::chrono::steady_clock::now();
-			auto diff = end - start;
-			time += std::chrono::duration<double, std::nano>(diff).count();
-		}
-		std::cout << "std::unordered_map benchmark of all gets :" << (time) << " ns" << std::endl;
-
-		start = std::chrono::steady_clock::now();
-		test.erase(5);
-		end = std::chrono::steady_clock::now();
-		diff = end - start;
-		std::cout << "std::unordered_map benchmark of one remove :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
-		//printf("----------------------------------------------------------\n");
-
-		time = 0.0;
-		for (usize i = 1; i < 9; i++) {
-			if (i == 5) continue;
-			auto start = std::chrono::steady_clock::now();
-			String v = test.at(i);
-			auto end = std::chrono::steady_clock::now();
-			auto diff = end - start;
-			time += std::chrono::duration<double, std::nano>(diff).count();
-		}
-		std::cout << "std::unordered_map benchmark of all gets :" << (time) << " ns" << std::endl;
-
-		start = std::chrono::steady_clock::now();
-		test.emplace(5, "Heheheh Im trolling!");
-		end = std::chrono::steady_clock::now();
-		diff = end - start;
-		std::cout << "std::unordered_map benchmark of emplace at the slot removed :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	for (auto& itr : rbt) {
+		printf("key = %d | value = %d\n", itr.key, itr.value);
 	}
 
 	/*Queue<int> queue;
@@ -745,6 +641,125 @@ void BenchmarkMap()
 	std::cout << "STD::Map get from key:" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
 	if (res != NULL)
 		printf("Result found : %d | %s\n", 0, str.Buffer());
+}
+
+void BenchmarkHashMapProbing()
+{
+	printf("---------------------------------------------------------\n");
+	{
+		auto start = std::chrono::steady_clock::now();
+		HashMap<int, String, PROBING> test;
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+		std::cout << "TRE::HashMap benchmark of declartion of HashMap<int, String, PROBING> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		start = std::chrono::steady_clock::now();
+		test.Emplace(1, "Test");
+		test.Emplace(2, "xD");
+		test.Emplace(3, "lol");
+		test.Emplace(4, "mdr");
+		test.Emplace(5, "xx");
+		test.Emplace(6, "i love you");
+		test.Emplace(7, "k");
+		test.Emplace(8, "okay");
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "TRE::HashMap benchmark of multiple inserts :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		double time = 0.0;
+		for (usize i = 1; i < 9; i++) {
+			auto start = std::chrono::steady_clock::now();
+			String* v = test.Get(i);
+			auto end = std::chrono::steady_clock::now();
+			auto diff = end - start;
+			time += std::chrono::duration<double, std::nano>(diff).count();
+		}
+		std::cout << "TRE::HashMap benchmark of all gets :" << (time) << " ns" << std::endl;
+
+		start = std::chrono::steady_clock::now();
+		test.Remove(5);
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "TRE::HashMap benchmark of one remove :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+		//printf("----------------------------------------------------------\n");
+
+		time = 0.0;
+		for (usize i = 1; i < 9; i++) {
+			auto start = std::chrono::steady_clock::now();
+			String* v = test.Get(i);
+			auto end = std::chrono::steady_clock::now();
+			auto diff = end - start;
+			time += std::chrono::duration<double, std::nano>(diff).count();
+
+			if (v != NULL) {
+				//printf("Element at key = %d is String = %s\n", i, v->Buffer());
+			}
+		}
+		std::cout << "TRE::HashMap benchmark of all gets :" << (time) << " ns" << std::endl;
+
+		start = std::chrono::steady_clock::now();
+		test.Emplace(5, "Heheheh Im trolling!");
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "TRE::HashMap benchmark of emplace at the slot removed :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+		//printf("----------------------------------------------------------\n");
+	}
+	printf("---------------------------------------------------------\n");
+	{
+		auto start = std::chrono::steady_clock::now();
+		std::unordered_map<int, String> test;
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+		std::cout << "std::unordered_map benchmark of declartion of unordered_map<int, String> :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		start = std::chrono::steady_clock::now();
+		//test[1] = "String";
+		test.emplace(1, "Test");
+		test.emplace(2, "xD");
+		test.emplace(3, "lol");
+		test.emplace(4, "mdr");
+		test.emplace(5, "xx");
+		test.emplace(6, "i love you");
+		test.emplace(7, "k");
+		test.emplace(8, "okay");
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "std::unordered_map benchmark of multiple inserts :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+
+		double time = 0.0;
+		for (usize i = 1; i < 9; i++) {
+			auto start = std::chrono::steady_clock::now();
+			String v = test.at(i);
+			auto end = std::chrono::steady_clock::now();
+			auto diff = end - start;
+			time += std::chrono::duration<double, std::nano>(diff).count();
+		}
+		std::cout << "std::unordered_map benchmark of all gets :" << (time) << " ns" << std::endl;
+
+		start = std::chrono::steady_clock::now();
+		test.erase(5);
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "std::unordered_map benchmark of one remove :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+		//printf("----------------------------------------------------------\n");
+
+		time = 0.0;
+		for (usize i = 1; i < 9; i++) {
+			if (i == 5) continue;
+			auto start = std::chrono::steady_clock::now();
+			String v = test.at(i);
+			auto end = std::chrono::steady_clock::now();
+			auto diff = end - start;
+			time += std::chrono::duration<double, std::nano>(diff).count();
+		}
+		std::cout << "std::unordered_map benchmark of all gets :" << (time) << " ns" << std::endl;
+
+		start = std::chrono::steady_clock::now();
+		test.emplace(5, "Heheheh Im trolling!");
+		end = std::chrono::steady_clock::now();
+		diff = end - start;
+		std::cout << "std::unordered_map benchmark of emplace at the slot removed :" << std::chrono::duration<double, std::nano>(diff).count() << " ns" << std::endl;
+	}
 }
 
 //#endif

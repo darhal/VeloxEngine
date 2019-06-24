@@ -6,6 +6,7 @@
 #include <Core/Memory/Allocators/PoolAlloc/MultiPoolAllocator.hpp>
 
 // Based on this : https://github.com/Bibeknam/algorithmtutorprograms/blob/master/data-structures/red-black-trees/RedBlackTree.cpp
+// https://codereview.stackexchange.com/questions/153476/iterator-through-binary-trees-with-parent-pointer-without-memory-overhead
 
 TRE_NS_START
 
@@ -19,6 +20,8 @@ template<typename K, typename T, typename Alloc_t = MultiPoolAlloc>
 class RedBalckTree
 {
 public:
+	class Iterator;
+
 	struct RedBlackNode {
 		K key;					// holds the key
 		T value;				// holds the value
@@ -74,6 +77,11 @@ public:
 	FORCEINLINE bool IsEmpty() const;
 
 	FORCEINLINE void Print();
+
+	FORCEINLINE Iterator begin() noexcept;
+
+	FORCEINLINE Iterator end() noexcept;
+
 private:
 	CONSTEXPR static const usize NODE_CHUNKS = 3;
 	CONSTEXPR static RBNode* TNULL = reinterpret_cast<RBNode*>(-1);
@@ -102,6 +110,86 @@ private:
 	void FixInsert(RBNode* k);
 
 	FORCEINLINE void PrintHelper(RBNode* node, String indent, bool last);
+
+	class Iterator
+	{
+	public:
+		Iterator(RedBalckTree<K, T, Alloc_t>* instance) : m_TreeInstance(instance), m_Node(instance->m_Root)
+		{};
+
+		Iterator(RedBalckTree<K, T, Alloc_t>* instance, RedBlackNode* node) : m_TreeInstance(instance), m_Node(node)
+		{};
+		
+		bool operator!=(const Iterator& iterator) { return m_Node != iterator.m_Node; }
+
+		RBNode& operator*() const { return *m_Node; }
+
+		Iterator& operator=(const Iterator& other)
+		{
+			this->m_Node = other.m_Node;
+			this->m_TreeInstance = other.m_TreeInstance;
+			return *this;
+		}
+
+		Iterator& operator++()
+		{
+			RBNode* parent = NULL;
+
+			if (this->m_Node == NULL || this->m_Node == TNULL) {
+				return *this; // end iterator does not increment
+			}
+
+			parent = this->m_Node->parent;
+
+			// reaches root -> next is end()
+			if (parent == NULL || parent == TNULL) {
+				this->m_Node = NULL;
+				return *this;
+			}
+
+			// left child -> go to right child
+			if ((this->m_Node == parent->left) && (parent->right != NULL || parent->right != TNULL)) {
+				this->m_Node = parent->right;
+			}else{
+				this->m_Node = this->m_Node->parent;
+				return *this;
+			}
+
+			while (true) {
+				if (this->m_Node->left != NULL || this->m_Node->left != TNULL) {
+					this->m_Node = this->m_Node->left; // has left child node
+				}else if (this->m_Node->right != NULL || this->m_Node->right != TNULL) {
+					this->m_Node = this->m_Node->right; // only right child node
+				}else {
+					return *this; // has no children -> stop here
+				}
+			}
+		}
+
+		Iterator operator++(int)
+		{
+			Iterator iterator = *this;
+			++(*this);
+			return iterator;
+		}
+
+		Iterator& operator--()
+		{
+			// TODO: operator -- have to be implemented
+			return *this;
+		}
+
+		Iterator operator--(int)
+		{
+			Iterator iterator = *this;
+			--*this;
+			return iterator;
+		}
+
+	private:
+		RedBlackNode* m_Node;
+		RedBalckTree<K, T, Alloc_t>* m_TreeInstance;
+	};
 };
 
 #include "RedBlackTree.inl"

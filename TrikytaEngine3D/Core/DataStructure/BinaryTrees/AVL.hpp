@@ -11,6 +11,8 @@ class AVL
 {
 public:
 	struct AVLNode;
+	class Iterator;
+
 public:
 	FORCEINLINE AVL();
 
@@ -76,6 +78,91 @@ private:
 
 	// Destroy the tree!
 	FORCEINLINE void DestroyTree(AVLNode* cur);
+
+	FORCEINLINE Iterator begin() noexcept;
+
+	FORCEINLINE Iterator end() noexcept;
+
+private:
+	class Iterator
+	{
+	public:
+		Iterator(AVL<T, Alloc_t>* instance) : m_TreeInstance(instance), m_Node(instance->m_Root)
+		{};
+
+		Iterator(AVL<T, Alloc_t>* instance, Node* node) : m_TreeInstance(instance), m_Node(node)
+		{};
+
+		bool operator!=(const Iterator& iterator) { return m_Node != iterator.m_Node; }
+
+		Node& operator*() const { return *m_Node; }
+
+		Iterator& operator=(const Iterator& other)
+		{
+			this->m_Node = other.m_Node;
+			this->m_TreeInstance = other.m_TreeInstance;
+			return *this;
+		}
+
+		Iterator& operator++()
+		{
+			Node* parent = NULL;
+
+			if (this->m_Node == NULL) {
+				return *this; // end iterator does not increment
+			}
+
+			parent = this->m_Node->parent;
+
+			// reaches root -> next is end()
+			if (parent == NULL) {
+				this->m_Node = NULL;
+				return *this;
+			}
+
+			// left child -> go to right child
+			if ((this->m_Node == parent->left) && parent->right != NULL) {
+				this->m_Node = parent->right;
+			}else {
+				this->m_Node = this->m_Node->parent;
+				return *this;
+			}
+
+			while (true) {
+				if (this->m_Node->left != NULL) {
+					this->m_Node = this->m_Node->left; // has left child node
+				}else if (this->m_Node->right != NULL) {
+					this->m_Node = this->m_Node->right; // only right child node
+				}else {
+					return *this; // has no children -> stop here
+				}
+			}
+		}
+
+		Iterator operator++(int)
+		{
+			Iterator iterator = *this;
+			++(*this);
+			return iterator;
+		}
+
+		Iterator& operator--()
+		{
+			// TODO: operator -- have to be implemented
+			return *this;
+		}
+
+		Iterator operator--(int)
+		{
+			Iterator iterator = *this;
+			--*this;
+			return iterator;
+		}
+
+	private:
+		Node* m_Node;
+		AVL<T, Alloc_t>* m_TreeInstance;
+	};
 };
 
 #include "AVL.inl"

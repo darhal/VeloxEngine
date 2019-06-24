@@ -486,3 +486,31 @@ void BinaryTree<T, Alloc_t>::Dump() const
 		std::cout << ' ' << row << '\n';
 	}
 }
+
+template<typename T, typename Alloc_t>
+FORCEINLINE typename BinaryTree<T, Alloc_t>::Iterator BinaryTree<T, Alloc_t>::begin() noexcept
+{
+	if (m_Root == NULL) {
+		return Iterator(this, m_Root);
+	}
+
+	Node* node = m_Root;
+
+	// iterate to the node in the bottom-left
+	while (true) {
+
+		if (node->left != NULL) {
+			node = node->left;
+		}else if (node->right != NULL) {
+			node = node->right;
+		}else {
+			return Iterator(this, node);
+		}
+	}
+}
+
+template<typename T, typename Alloc_t>
+FORCEINLINE typename BinaryTree<T, Alloc_t>::Iterator BinaryTree<T, Alloc_t>::end() noexcept
+{
+	return Iterator(this, NULL);
+}
