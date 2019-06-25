@@ -12,7 +12,7 @@ TRE_NS_START
 
 struct MatrialForRawModel
 {
-	Material material;
+	const Material& material;
 	int32 vcount;
 	MatrialForRawModel(const Material& material, int32 vcount) : material(material), vcount(vcount)
 	{}
@@ -88,9 +88,9 @@ RawModel<false>::RawModel(float(&vert)[V], float(&tex)[T], float(&normal)[N], co
 	m_VertexCount = V / 3LLU; // Get the vertex Count!
 	m_ModelVAO.Unuse();
 	m_Materials = mat_vec;
-	if (m_Materials.empty()) {
+	if (m_Materials.IsEmpty()) {
 		Material default_material("Unknown");
-		m_Materials.emplace_back(default_material, m_VertexCount); // default material
+		m_Materials.EmplaceBack(default_material, m_VertexCount); // default material
 	}
 }
 
@@ -106,9 +106,9 @@ RawModel<true>::RawModel(float(&vert)[V], uint32(&indices)[I], float(&tex)[T], f
 	m_ModelVAO.Unuse();
 	indexVBO.Unuse();
 	m_Materials = mat_vec;
-	if (m_Materials.empty()) {
+	if (m_Materials.IsEmpty()) {
 		Material default_material("Unknown");
-		m_Materials.emplace_back(default_material, m_VertexCount); // default material
+		m_Materials.EmplaceBack(default_material, m_VertexCount); // default material
 	}
 }
 

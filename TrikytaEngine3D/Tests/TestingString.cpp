@@ -1,4 +1,4 @@
-//#ifdef ABRA
+#ifdef ABRA
 
 #include <Core/DataStructure/String/String.hpp>
 #include <Core/DataStructure/Array/Array.hpp>
@@ -69,16 +69,12 @@ public:
 
 int main()
 {
-	RBT<int, int> rbt;
-	for (usize i = 0; i < 10; i++) {
-		rbt.Insert(i, i*2);
+	Vector<A> test;
+	//test.Emplace(5, 6);
+
+	for (const A& i : test) {
+		printf("i = (%d, %d)\n", i.x, i.y);
 	}
-
-
-	for (auto& itr : rbt) {
-		printf("key = %d | value = %d\n", itr.key, itr.value);
-	}
-
 	/*Queue<int> queue;
 	printf("Queue Top = {");
 	for (usize i = 0; i < 10; i++) {
@@ -762,4 +758,4 @@ void BenchmarkHashMapProbing()
 	}
 }
 
-//#endif
+#endif

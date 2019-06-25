@@ -10,7 +10,13 @@ template<typename T, typename Alloc_t = MultiPoolAlloc>
 class SingleList
 {
 public:
-	class Iterator;
+	template<typename DataType>
+	class GIterator;
+
+	struct Node;
+
+	typedef GIterator<Node> Iterator;
+	typedef GIterator<const Node> CIterator;
 
 public:
 	SingleList();
@@ -32,6 +38,12 @@ public:
 	Iterator begin() { return Iterator(m_Head); }
 	Iterator end() { return Iterator(NULL); }
 
+	const Iterator begin() const { return Iterator(m_Head); }
+	const Iterator end() const { return Iterator(NULL); }
+
+	const CIterator cbegin() const { return CIterator(m_Head); }
+	const CIterator cend() const { return CIterator(NULL); }
+
 private:
 	CONSTEXPR static usize BLOCK_NUM = 8;
 
@@ -45,36 +57,42 @@ private:
 	Node* m_Head;
 	Alloc_t m_Allocator;
 
-	class Iterator
+	template<typename DataType>
+	class GIterator
 	{
 	public:
-		Iterator() noexcept : m_CurrentNode(m_Head) { }
-		Iterator(Node* node) noexcept : m_CurrentNode(node) { }
+		GIterator() noexcept : m_CurrentNode(m_Head) { }
+		GIterator(DataType* node) noexcept : m_CurrentNode(node) { }
 		bool operator!=(const Iterator& iterator) { return m_CurrentNode != iterator.m_CurrentNode; }
-		T& operator*() const { return const_cast<T&>(m_CurrentNode->m_Obj); }
+		
+		DataType& operator*() { return *m_CurrentNode; }
+		const DataType& operator*() const { return (*m_CurrentNode); }
 
-		Iterator& operator=(Node* node)
+		DataType* operator->() { return m_CurrentNode; }
+		const DataType* operator->() const { return m_CurrentNode; }
+
+		GIterator& operator=(DataType* node)
 		{
 			this->m_CurrentNode = node;
 			return *this;
 		}
 
-		Iterator& operator++()
+		GIterator& operator++()
 		{
 			if (m_CurrentNode)
 				m_CurrentNode = m_CurrentNode->m_Next;
 			return *this;
 		}
 
-		Iterator operator++(int)
+		GIterator operator++(int)
 		{
-			Iterator iterator = *this;
+			GIterator iterator = *this;
 			++*this;
 			return iterator;
 		}
 
 	private:
-		Node* m_CurrentNode;
+		DataType* m_CurrentNode;
 	};
 
 	template<typename U, typename A, typename std::enable_if<NO_DTOR(U), int>::type = 0>

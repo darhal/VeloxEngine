@@ -4,27 +4,28 @@
 //files, so they must be created manually.
 #if defined(__GNUC__) || defined(__clang__) || (defined(_MSC_VER) && _MSC_VER >= 1600)
 	// Compilers supporting C99 or C++0x have stdint.h defining these integer types	
-#include <stdint.h>
+	#include <stdint.h>
 #elif defined(_MSC_VER)
-typedef signed   __int8  int8_t;
-typedef unsigned __int8  uint8_t;
-typedef signed   __int16 int16_t;
-typedef unsigned __int16 uint16_t;
-typedef signed   __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef signed   __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-typedef uint64_t uintptr_t;
-typedef int64_t intptr_t;
-typedef int16_t wchar_t;
-#ifndef _INTPTR_T_DEFINED
-#define _INTPTR_T_DEFINED
-#ifdef  __x86_64__
-typedef int64_t intptr_t;
-#else
-typedef int32_t intptr_t;
-#endif
-#endif
+	typedef signed   __int8  int8_t;
+	typedef unsigned __int8  uint8_t;
+	typedef signed   __int16 int16_t;
+	typedef unsigned __int16 uint16_t;
+	typedef signed   __int32 int32_t;
+	typedef unsigned __int32 uint32_t;
+	typedef signed   __int64 int64_t;
+	typedef unsigned __int64 uint64_t;
+	typedef uint64_t uintptr_t;
+	typedef int64_t intptr_t;
+	typedef int16_t wchar_t;
+
+	#ifndef _INTPTR_T_DEFINED
+		#define _INTPTR_T_DEFINED
+		#ifdef  __x86_64__
+			typedef int64_t intptr_t;
+		#else
+			typedef int32_t intptr_t;
+		#endif
+	#endif
 #else
 	// sizeof(char) == 1
 	// sizeof(char) <= sizeof(short)
@@ -37,22 +38,22 @@ typedef int32_t intptr_t;
 	// sizeof(long) * CHAR_BIT >= 32
 	// sizeof(long long) * CHAR_BIT >= 64
 
-typedef signed   char      int8_t;
-typedef unsigned char      uint8_t;
-typedef signed   short int int16_t;
-typedef unsigned short int uint16_t;
-typedef signed   int       int32_t;
-typedef unsigned int       uint32_t;
-typedef long long          int64_t;
-typedef unsigned long long uint64_t;
-typedef uint64_t uintptr_t;
-typedef int64_t intptr_t;
-typedef int16_t wchar_t;
-#ifdef  __x86_64__
-typedef int64_t intptr_t;
-#else
-typedef int32_t intptr_t;
-#endif
+	typedef signed   char      int8_t;
+	typedef unsigned char      uint8_t;
+	typedef signed   short int int16_t;
+	typedef unsigned short int uint16_t;
+	typedef signed   int       int32_t;
+	typedef unsigned int       uint32_t;
+	typedef long long          int64_t;
+	typedef unsigned long long uint64_t;
+	typedef uint64_t uintptr_t;
+	typedef int64_t intptr_t;
+	typedef int16_t wchar_t;
+	#ifdef  __x86_64__
+		typedef int64_t intptr_t;
+	#else
+		typedef int32_t intptr_t;
+	#endif
 #endif
 
 /*
@@ -61,11 +62,11 @@ typedef int32_t intptr_t;
  * to be the only LLP64 architecture in current use.
 */
 #ifdef _WIN64
-typedef signed	 long long ssize_t;
-typedef unsigned long long usize_t;
+	typedef signed	 long long ssize_t;
+	typedef unsigned long long usize_t;
 #else
-typedef signed   int     ssize_t;
-typedef unsigned int     usize_t;
+	typedef signed   int     ssize_t;
+	typedef unsigned int     usize_t;
 #endif
 
 typedef int8_t int8;
@@ -84,18 +85,18 @@ typedef intptr_t intptr;
 typedef uintptr_t uintptr;
 
 #ifdef COMPILER_MSVC
-#define FORCEINLINE __forceinline
+	#define FORCEINLINE __forceinline
 #elif defined(COMPILER_GCC) || defined(COMPILER_CLANG)
-#define FORCEINLINE inline __attribute__ ((always_inline))
+	#define FORCEINLINE inline __attribute__ ((always_inline))
 #else
-#define FORCEINLINE inline
+	#define FORCEINLINE inline
 #endif
 
 #if __cplusplus < 199711L
-#define nullptr NULL
-#define CONSTEXPR
+	#define nullptr NULL
+	#define CONSTEXPR
 #else
-#define CONSTEXPR constexpr
+	#define CONSTEXPR constexpr
 #endif
 
 //Without control what happen on setting the auto clean.
@@ -137,6 +138,7 @@ typedef uintptr_t uintptr;
 
 
 /******************* BIT ENDIANNESS *******************/
+
 #define LITTLE_ENDIAN 0x41424344UL 
 #define BIG_ENDIAN    0x44434241UL
 #define PDP_ENDIAN    0x42414443UL
@@ -154,4 +156,16 @@ typedef uintptr_t uintptr;
 	#define ENDIANNESS PDP_ENDIAN
 #else
 	#error "Can't determine the endianness."
+#endif
+
+
+/******************* SUPRESS WARNINGS *******************/
+
+#if defined(COMPILER_MSVC)
+	#pragma warning(disable : 4201) // Remove namesless struct/union warnning
+#elif defined(COMPILER_GCC)
+	#pragma GCC diagnostic ignored "-Wpedantic"
+#elif defined(COMPILER_CLANG)
+	#pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
+	#pragma clang diagnostic ignored "-Wnested-anon-types"
 #endif

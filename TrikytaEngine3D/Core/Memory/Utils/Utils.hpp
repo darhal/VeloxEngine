@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core/Misc/Defines/Common.hpp>
-#include <type_traits>
+#include <Core/Misc/Defines/Types.hpp>
 
 FORCEINLINE static const usize CalculatePadding(const usize baseAddress, const usize alignment) {
 	const usize multiplier = (baseAddress / alignment) + 1;
@@ -160,4 +160,16 @@ template<typename T, typename std::enable_if<std::is_pod<T>::value, bool>::type 
 FORCEINLINE static void DestroyObjects(T* ptr, usize sz = 0)
 {
 	return;
+}
+
+template<typename T, typename std::enable_if<HAVE_DTOR(T), int>::type = 0>
+FORCEINLINE static void Destroy(T* obj)
+{
+	obj->T::~T();
+}
+
+template<typename T, typename std::enable_if<NO_DTOR(T), int>::type = 0>
+FORCEINLINE static void Destroy(T* obj)
+{
+	// Do nothing
 }

@@ -4,6 +4,7 @@
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/Memory/Utils/Utils.hpp>
 #include <initializer_list>
+#include <iterator>
 
 TRE_NS_START
 
@@ -11,10 +12,11 @@ template<typename T>
 class Vector
 {
 public:
-	typedef T* Iterator;
-	typedef T& RefIterator;
-	typedef const T* CIterator;
+	template<typename PointerType>
+	class GIterator;
 
+	typedef GIterator<T> Iterator;
+	typedef GIterator<const T> CIterator;
 public:
 	FORCEINLINE Vector();
 	FORCEINLINE Vector(usize sz);
@@ -48,13 +50,22 @@ public:
 	FORCEINLINE T* Back() const;
 	FORCEINLINE T* Front() const;
 
-	FORCEINLINE const T* At(usize i);
-	FORCEINLINE const T* operator[](usize i);
+	//FORCEINLINE const T* At(usize i);
+	//FORCEINLINE const T* operator[](usize i);
+
+	FORCEINLINE T& At(usize i);
+	FORCEINLINE T& operator[](usize i);
 	FORCEINLINE const T& At(usize i) const;
 	FORCEINLINE const T& operator[](usize i) const;
 
 	FORCEINLINE Iterator begin() noexcept;
 	FORCEINLINE Iterator end() noexcept;
+
+	FORCEINLINE const Iterator begin() const noexcept;
+	FORCEINLINE const Iterator end() const noexcept;
+
+	FORCEINLINE CIterator cbegin() const noexcept;
+	FORCEINLINE CIterator cend() const noexcept;
 
 	FORCEINLINE Vector(const Vector<T>& other);
 	FORCEINLINE Vector& operator=(const Vector<T>& other);
@@ -71,6 +82,39 @@ private:
 	T* m_Data;
 	usize m_Length;
 	usize m_Capacity;
+
+	template<typename DataType>
+	class GIterator : public std::iterator<std::random_access_iterator_tag, DataType, ptrdiff_t, DataType*, DataType&>
+	{
+	public:
+		GIterator() noexcept : m_Current(m_Data) { }
+		GIterator(DataType* node) noexcept : m_Current(node) { }
+
+		GIterator(const GIterator<DataType>& rawIterator) = default;
+		~GIterator() {}
+
+		bool operator!=(const GIterator& iterator) { return m_Current != iterator.m_Current; }
+
+		DataType& operator*() { return *m_Current; }
+		const DataType& operator*() const { return (*m_Current); }
+
+		DataType* operator->() { return m_Current; }
+		const DataType* operator->() const { return m_Current; }
+
+		DataType* getPtr() const { return m_Current; }
+		const DataType* getConstPtr() const { return m_Current; }
+
+		GIterator<DataType>& operator+=(const ptrdiff_t& movement) { m_Current += movement; return (*this); }
+		GIterator<DataType>& operator-=(const ptrdiff_t& movement) { m_Current -= movement; return (*this); }
+		GIterator<DataType>& operator++() { m_Current++; return (*this); }
+		GIterator<DataType>& operator--() { m_Current--; return (*this); }
+		GIterator<DataType>  operator++(ptrdiff_t) { auto temp(*this); ++m_Current; return temp; }
+		GIterator<DataType>  operator--(ptrdiff_t) { auto temp(*this); --m_Current; return temp; }
+		GIterator<DataType>  operator+(const ptrdiff_t& movement) { auto oldPtr = m_Current; m_Current += movement; auto temp(*this); m_Current = oldPtr; return temp; }
+		GIterator<DataType>  operator-(const ptrdiff_t& movement) { auto oldPtr = m_Current; m_Current -= movement; auto temp(*this); m_Current = oldPtr; return temp; }
+	private:
+		DataType* m_Current;
+	};
 };
 
 #include "Vector.inl"

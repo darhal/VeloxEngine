@@ -36,12 +36,12 @@ void MeshLoader::LoadFile(const char* path)
 		if (line_len == 0) { continue; } // empty line
 		if(buffer[0] == 'o'){
 			if (m_ObjectCount > 0) {
-				vert_offset += m_Verticies[m_ObjectCount].size();
-				tex_offset += m_TextureCoord[m_ObjectCount].size();
-				norm_offset += m_Normals[m_ObjectCount].size();
+				vert_offset += m_Verticies[m_ObjectCount].Length();
+				tex_offset += m_TextureCoord[m_ObjectCount].Length();
+				norm_offset += m_Normals[m_ObjectCount].Length();
 			}
 			if (m_MaterialName[0] != '\0') { //We have seen usemtl so lets dump it inside the array.
-				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
+				m_Materials[m_ObjectCount].EmplaceBack(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].Size() - lastVertexCount));
 				// Clear it
 				m_MaterialName[0] = '\0';
 				lastVertexCount = 0;
@@ -56,7 +56,7 @@ void MeshLoader::LoadFile(const char* path)
 				float x, y, z, w;
 				int32 nargs = sscanf(buffer+2, "%f %f %f %f", &x, &y, &z, &w);
 				if (nargs == 3) {
-					m_Verticies[m_ObjectCount].emplace_back(x, y, z);
+					m_Verticies[m_ObjectCount].EmplaceBack(x, y, z);
 					//printf("v %f %f %f [ObjectCount = %d]", x, y, z, m_ObjectCount);
 				}/*else if (nargs == 4) {
 					m_Verticies[m_ObjectCount].emplace_back(x, y, z, w);
@@ -66,7 +66,7 @@ void MeshLoader::LoadFile(const char* path)
 				vec3 tempVec;
 				int32 nargs = sscanf(buffer + 2, " %f %f %f", &tempVec.x, &tempVec.y, &tempVec.z);
 				if (nargs == 3) {
-					m_Normals[m_ObjectCount].push_back(tempVec);
+					m_Normals[m_ObjectCount].PushBack(tempVec);
 					//printf("vn %f %f %f [ObjectCount = %d]", tempVec.x, tempVec.y, tempVec.z, m_ObjectCount);
 				}
 			}
@@ -77,7 +77,7 @@ void MeshLoader::LoadFile(const char* path)
 					//m_TextureCoord[m_ObjectCount-1].emplace_back(x, y, z);
 					//printf("vt %f %f %f [ObjectCount = %d]", x, y, z, m_ObjectCount);
 				}*///if (nargs == 2) {
-					m_TextureCoord[m_ObjectCount].emplace_back(x, 1.f-y);
+					m_TextureCoord[m_ObjectCount].EmplaceBack(x, 1.f-y);
 					//printf("vt %f %f", x, y);
 				//}
 			}
@@ -103,12 +103,12 @@ void MeshLoader::LoadFile(const char* path)
 								//face.x = data;
 								//m_Indicies[m_ObjectCount].emplace_back(data - vert_offset);
 								vi = data - vert_offset;
-								pos = m_Verticies[m_ObjectCount].at(vi);
+								pos = m_Verticies[m_ObjectCount].At(vi);
 								break;
 							case 1: // Vertex texture.
 								//face.y = data;
 								ti = data - tex_offset;
-								tex = m_TextureCoord[m_ObjectCount].at(ti);
+								tex = m_TextureCoord[m_ObjectCount].At(ti);
 								break;
 							case 2: // Vertex normal.
 								//face.z = data;
@@ -118,7 +118,7 @@ void MeshLoader::LoadFile(const char* path)
 									//printf("I : %d | N (%f, %f, %f)\n", data - norm_offset, m_Normals[m_ObjectCount].at(data - norm_offset).x, m_Normals[m_ObjectCount].at(data - norm_offset).y, m_Normals[m_ObjectCount].at(data - norm_offset).z);
 								}*/
 								ni = data - norm_offset;
-								norm = m_Normals[m_ObjectCount].at(ni);
+								norm = m_Normals[m_ObjectCount].At(ni);
 								break;
 							}
 							buffer_index += len;
@@ -129,13 +129,13 @@ void MeshLoader::LoadFile(const char* path)
 						indicator = 0;
 						if (vi != -1) {
 							if (!m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)]) { // if v/vn/vt	isnt already exist and indexed
-								m_VerteciesData[m_ObjectCount].emplace_back(pos, norm, tex);
+								m_VerteciesData[m_ObjectCount].EmplaceBack(pos, norm, tex);
 								m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)] = m_IndiciesOfVData[m_ObjectCount];
 								m_IndiciesOfVData[m_ObjectCount]++;
 							}else {
 								//printf("Index (%ld, %ld, %ld) already exist and its i = %d\n", (long)vi, (long)ni, (long)ti, m_VertexDataIndex[m_ObjectCount][std::tuple<int64, int64, int64>(vi, ni, ti)]);
 							}
-							m_DataIndex[m_ObjectCount].emplace_back(m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)]);
+							m_DataIndex[m_ObjectCount].EmplaceBack(m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)]);
 						}
 						buffer_index++;
 						vi = -1; ni = -1; ti = -1;
@@ -149,13 +149,13 @@ void MeshLoader::LoadFile(const char* path)
 				}
 				if (vi != -1) {
 					if (!m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)]) { // if v/vn/vt	isnt already exist and indexed
-						m_VerteciesData[m_ObjectCount].emplace_back(pos, norm, tex);
+						m_VerteciesData[m_ObjectCount].EmplaceBack(pos, norm, tex);
 						m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)] = m_IndiciesOfVData[m_ObjectCount];
 						m_IndiciesOfVData[m_ObjectCount]++;
 					}else {
 						//printf("Index (%ld, %ld, %ld) already exist and its i = %d\n", (long)vi, (long)ni, (long)ti, m_VertexDataIndex[m_ObjectCount][std::tuple<int64, int64, int64>(vi, ni, ti)]);
 					}
-					m_DataIndex[m_ObjectCount].emplace_back(m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)]);
+					m_DataIndex[m_ObjectCount].EmplaceBack(m_VertexDataIndex[m_ObjectCount][std::tuple<ssize, ssize, ssize>(vi, ni, ti)]);
 				}
 			}
 		}else if (IsEqual(buffer, "mtllib")) { // Material
@@ -176,8 +176,8 @@ void MeshLoader::LoadFile(const char* path)
 			printf("* Finished loading the material file... Resuming the obj..\n");
 		}else if (IsEqual(buffer, "usemtl")) {
 			if (m_MaterialName[0] != '\0') {
-				m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
-				lastVertexCount = m_DataIndex[m_ObjectCount].size();
+				m_Materials[m_ObjectCount].EmplaceBack(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].Size() - lastVertexCount));
+				lastVertexCount = m_DataIndex[m_ObjectCount].Size();
 			}
 			int32 res = sscanf(buffer, "usemtl %s", m_MaterialName);
 			ASSERTF(res == 1, "Attempt to parse a corrupted OBJ file 'usemtl' is being used without material name (Line : %llu).", current_line);
@@ -186,8 +186,8 @@ void MeshLoader::LoadFile(const char* path)
 		current_line++;
 	}
 	if (m_MaterialName[0] != '\0') {
-		m_Materials[m_ObjectCount].emplace_back(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].size() - lastVertexCount));
-		lastVertexCount = m_DataIndex[m_ObjectCount].size();
+		m_Materials[m_ObjectCount].EmplaceBack(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].Size() - lastVertexCount));
+		lastVertexCount = m_DataIndex[m_ObjectCount].Size();
 	}
 	m_ObjectCount++;
 	fclose(file);
@@ -196,10 +196,10 @@ void MeshLoader::LoadFile(const char* path)
 void MeshLoader::ProcessData(Vector<RawModel<true>>* arrayOfObjects)
 {
 	ASSERTF(arrayOfObjects != NULL, "Argument passed to MeshLoader::ProcessData is NULL");
-	arrayOfObjects->reserve(m_ObjectCount);
+	arrayOfObjects->Reserve(m_ObjectCount);
 	int32 objectIndex = (m_ObjectCount > 1 ? 1 : 0);
 	do{
-		arrayOfObjects->emplace_back(m_VerteciesData[objectIndex], m_DataIndex[objectIndex], m_Materials[objectIndex]);
+		arrayOfObjects->EmplaceBack(m_VerteciesData[objectIndex], m_DataIndex[objectIndex], m_Materials[objectIndex]);
 		/*printf("index = {");
 		for (uint32 i : m_DataIndex[objectIndex]) {
 			printf("%d ", i);

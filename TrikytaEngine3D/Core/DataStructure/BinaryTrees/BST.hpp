@@ -31,6 +31,7 @@ public:
 	FORCEINLINE T& FindMax() const;
 
 	FORCEINLINE bool Find(const T& value) const;
+
 private:
 	FORCEINLINE void InsertHelper(BTLeaf* src, BTLeaf* val);
 

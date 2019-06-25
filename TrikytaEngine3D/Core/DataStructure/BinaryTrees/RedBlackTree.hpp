@@ -4,6 +4,7 @@
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/DataStructure/String/String.hpp>
 #include <Core/Memory/Allocators/PoolAlloc/MultiPoolAllocator.hpp>
+#include <iterator>
 
 // Based on this : https://github.com/Bibeknam/algorithmtutorprograms/blob/master/data-structures/red-black-trees/RedBlackTree.cpp
 // https://codereview.stackexchange.com/questions/153476/iterator-through-binary-trees-with-parent-pointer-without-memory-overhead
@@ -20,11 +21,31 @@ template<typename K, typename T, typename Alloc_t = MultiPoolAlloc>
 class RedBalckTree
 {
 public:
-	class Iterator;
+	template<typename PointerType>
+	class GIterator;
+
+	struct RedBlackNode;
+
+	typedef GIterator<RedBlackNode> Iterator;
+	typedef GIterator<const RedBlackNode> CIterator;
 
 	struct RedBlackNode {
-		K key;					// holds the key
-		T value;				// holds the value
+	public:
+		union {
+			struct {
+				K key;					// holds the key
+				T value;				// holds the value
+			};
+
+			struct{
+				K first;				// holds the key
+				T second;				// holds the value
+			};
+		};
+		
+		~RedBlackNode() {};
+
+	private:
 		RedBlackNode* parent;	// pointer to the parent
 		RedBlackNode* left;		// pointer to left child
 		RedBlackNode* right;	// pointer to right child
@@ -44,6 +65,8 @@ public:
 		void SetRight(RedBlackNode* r) { right = r; }
 		void SetLeft(RedBlackNode* l) { left = l; }
 		void SetParent(RedBlackNode* p) { parent = p; }
+
+		friend RedBalckTree<K, T, Alloc_t>;
 	};
 
 	typedef RedBlackNode RBNode;
@@ -82,6 +105,14 @@ public:
 
 	FORCEINLINE Iterator end() noexcept;
 
+	FORCEINLINE const CIterator begin() const noexcept;
+
+	FORCEINLINE const CIterator end() const noexcept;
+
+	FORCEINLINE const CIterator cbegin() const noexcept;
+
+	FORCEINLINE const CIterator cend() const noexcept;
+
 private:
 	CONSTEXPR static const usize NODE_CHUNKS = 3;
 	CONSTEXPR static RBNode* TNULL = reinterpret_cast<RBNode*>(-1);
@@ -111,29 +142,34 @@ private:
 
 	FORCEINLINE void PrintHelper(RBNode* node, String indent, bool last);
 
-	class Iterator
+	template<typename DataType>
+	class GIterator : public std::iterator<std::bidirectional_iterator_tag, DataType, ptrdiff_t, DataType*, DataType&>
 	{
 	public:
-		Iterator(RedBalckTree<K, T, Alloc_t>* instance) : m_TreeInstance(instance), m_Node(instance->m_Root)
+		GIterator(const RedBalckTree<K, T, Alloc_t>* instance) : m_TreeInstance(instance), m_Node(instance->m_Root)
 		{};
 
-		Iterator(RedBalckTree<K, T, Alloc_t>* instance, RedBlackNode* node) : m_TreeInstance(instance), m_Node(node)
+		GIterator(const RedBalckTree<K, T, Alloc_t>* instance, DataType* node) : m_TreeInstance(instance), m_Node(node)
 		{};
 		
-		bool operator!=(const Iterator& iterator) { return m_Node != iterator.m_Node; }
+		bool operator!=(const GIterator& iterator) { return m_Node != iterator.m_Node; }
 
-		RBNode& operator*() const { return *m_Node; }
+		DataType& operator*() { return *m_Node; }
+		const DataType& operator*() const { return (*m_Node); }
 
-		Iterator& operator=(const Iterator& other)
+		DataType* operator->() { return m_Node; }
+		const DataType* operator->() const { return m_Node; }
+
+		GIterator& operator=(const GIterator& other)
 		{
 			this->m_Node = other.m_Node;
 			this->m_TreeInstance = other.m_TreeInstance;
 			return *this;
 		}
 
-		Iterator& operator++()
+		GIterator& operator++()
 		{
-			RBNode* parent = NULL;
+			DataType* parent = NULL;
 
 			if (this->m_Node == NULL || this->m_Node == TNULL) {
 				return *this; // end iterator does not increment
@@ -166,30 +202,35 @@ private:
 			}
 		}
 
-		Iterator operator++(int)
+		GIterator operator++(int)
 		{
-			Iterator iterator = *this;
-			++(*this);
+			GIterator iterator = *this;
+			++*this;
 			return iterator;
 		}
 
-		Iterator& operator--()
+		GIterator& operator--()
 		{
 			// TODO: operator -- have to be implemented
 			return *this;
 		}
 
-		Iterator operator--(int)
+		GIterator operator--(int)
 		{
-			Iterator iterator = *this;
+			GIterator iterator = *this;
 			--*this;
 			return iterator;
 		}
 
 	private:
-		RedBlackNode* m_Node;
-		RedBalckTree<K, T, Alloc_t>* m_TreeInstance;
+		DataType* m_Node;
+		const RedBalckTree<K, T, Alloc_t>* m_TreeInstance;
 	};
+};
+
+template<typename K, typename T, typename Alloc_t>
+class RedBalckTree<const K, const T, Alloc_t> : public RedBalckTree<K, T, Alloc_t>
+{
 };
 
 #include "RedBlackTree.inl"

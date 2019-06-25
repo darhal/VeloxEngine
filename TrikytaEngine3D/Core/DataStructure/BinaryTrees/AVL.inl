@@ -295,3 +295,33 @@ FORCEINLINE typename AVL<T, Alloc_t>::Iterator AVL<T, Alloc_t>::end() noexcept
 {
 	return Iterator(this, NULL);
 }
+
+template<typename T, typename Alloc_t>
+FORCEINLINE const typename AVL<T, Alloc_t>::Iterator AVL<T, Alloc_t>::begin() const noexcept
+{
+	if (m_Root == NULL) {
+		return Iterator(this, m_Root);
+	}
+
+	Node* node = m_Root;
+
+	// iterate to the node in the bottom-left
+	while (true) {
+
+		if (node->left != NULL) {
+			node = node->left;
+		}
+		else if (node->right != NULL) {
+			node = node->right;
+		}
+		else {
+			return Iterator(this, node);
+		}
+	}
+}
+
+template<typename T, typename Alloc_t>
+FORCEINLINE const typename AVL<T, Alloc_t>::Iterator AVL<T, Alloc_t>::end() const noexcept
+{
+	return Iterator(this, NULL);
+}

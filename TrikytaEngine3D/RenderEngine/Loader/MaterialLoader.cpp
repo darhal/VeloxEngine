@@ -3,6 +3,7 @@
 #include "MaterialLoader.hpp"
 #include <Core/Misc/Defines/Debug.hpp>
 #include <RenderEngine/Materials/Material.hpp>
+#include <Core/DataStructure/String/String.hpp>
 
 TRE_NS_START
 
@@ -25,7 +26,7 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 			sscanf(buffer, "newmtl %s", m_Name);
 			//printf("Adding new material: %s\n", m_Name);
 			current_name = m_Name;
-			m_NameToMaterial[m_Name] = Material(m_Name);
+			m_NameToMaterial.Emplace(m_Name, m_Name); //m_NameToMaterial[m_Name] = Material(m_Name);
 		}else if (IsEqual(buffer, "Ka")) {
 			vec3 ambient;
 			int32 res = sscanf(buffer, "Ka %f %f %f", &ambient.x, &ambient.y, &ambient.z);
@@ -74,7 +75,7 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 
 Material& MaterialLoader::GetMaterialFromName(const char* name)
 {
-	return m_NameToMaterial[name];
+	return m_NameToMaterial[String(name, 0)];
 }
 
 TRE_NS_END

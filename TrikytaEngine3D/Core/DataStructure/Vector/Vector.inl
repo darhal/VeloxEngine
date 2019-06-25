@@ -234,11 +234,31 @@ FORCEINLINE T* Vector<T>::Front() const
 	return &m_Data[0];
 }
 
-template<typename T>
+/*template<typename T>
 FORCEINLINE const T* Vector<T>::At(usize i)
 {
 	ASSERTF(!(i >= m_Length), "Bad usage of vector function At index out of bounds");
 	return &m_Data[i];
+}
+
+template<typename T>
+FORCEINLINE const T* Vector<T>::operator[](usize i)
+{
+	if (i >= m_Length) return NULL;
+	return At(i);
+}*/
+
+template<typename T>
+FORCEINLINE T& Vector<T>::At(usize i)
+{
+	ASSERTF(!(i >= m_Length), "Bad usage of vector function At index out of bounds");
+	return m_Data[i];
+}
+
+template<typename T>
+FORCEINLINE T& Vector<T>::operator[](usize i)
+{
+	return At(i);
 }
 
 template<typename T>
@@ -249,28 +269,45 @@ FORCEINLINE const T& Vector<T>::At(usize i) const
 }
 
 template<typename T>
-FORCEINLINE const T* Vector<T>::operator[](usize i)
-{
-	if (i >= m_Length) return NULL;
-	return At(i);
-}
-
-template<typename T>
 FORCEINLINE const T& Vector<T>::operator[](usize i) const
 {
 	return At(i);
 }
 
 template<typename T>
+FORCEINLINE const typename Vector<T>::Iterator Vector<T>::begin() const noexcept
+{
+	return Iterator(m_Data);
+}
+
+template<typename T>
+FORCEINLINE const typename Vector<T>::Iterator Vector<T>::end() const noexcept
+{
+	return Iterator(m_Data + m_Length);
+}
+
+template<typename T>
 FORCEINLINE typename Vector<T>::Iterator Vector<T>::begin() noexcept
 {
-	return m_Data;
+	return Iterator(m_Data);
 }
 
 template<typename T>
 FORCEINLINE typename Vector<T>::Iterator Vector<T>::end() noexcept
 {
-	return m_Data + m_Length;
+	return Iterator(m_Data + m_Length);
+}
+
+template<typename T>
+FORCEINLINE typename Vector<T>::CIterator Vector<T>::cbegin() const noexcept
+{
+	return CIterator(m_Data);
+}
+
+template<typename T>
+FORCEINLINE typename Vector<T>::CIterator Vector<T>::cend() const noexcept
+{
+	return CIterator(m_Data + m_Length);
 }
 
 

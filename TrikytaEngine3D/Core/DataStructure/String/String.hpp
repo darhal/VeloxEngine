@@ -35,15 +35,7 @@ Lets imagine its 4 here
 #include <limits>
 #include <type_traits>
 #include <ostream>
-
-#if defined(COMPILER_MSVC)
-	#pragma warning(disable : 4201) // Remove namesless struct/union warnning
-#elif defined(COMPILER_GCC)
-	#pragma GCC diagnostic ignored "-Wpedantic"
-#elif defined(COMPILER_CLANG)
-	#pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-	#pragma clang diagnostic ignored "-Wnested-anon-types"
-#endif
+#include <iterator>
 
 TRE_NS_START
 
@@ -394,6 +386,12 @@ static BasicString<T> operator+(const BasicString<T>& lhs, const char* rhs)
 	res = lhs;
 	res.Append(rhs);
 	return res;
+}
+
+template<typename T>
+static bool operator<(const BasicString<T>& lhs, const BasicString<T>& rhs)
+{
+	return  strcmp(lhs.Buffer(), rhs.Buffer()) > 0;
 }
 
 template<typename T>

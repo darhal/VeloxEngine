@@ -98,6 +98,10 @@ public:
 
 	FORCEINLINE Iterator end() noexcept;
 
+	FORCEINLINE const Iterator begin() const noexcept;
+
+	FORCEINLINE const Iterator end() const noexcept;
+
 	FORCEINLINE void Print(BTLeaf* node = NULL);
 	FORCEINLINE void PrintBT(const String& prefix, const BTLeaf* node, bool isLeft);
 

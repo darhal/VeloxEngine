@@ -11,6 +11,7 @@ class Map
 {
 public:
 	typedef typename RBT<K, V, Alloc_t>::Iterator Iterator;
+	typedef typename RBT<K, V, Alloc_t>::CIterator CIterator;
 
 	Map();
 
@@ -37,6 +38,13 @@ public:
 
 	FORCEINLINE Iterator end() noexcept;
 
+	FORCEINLINE const CIterator begin() const noexcept;
+
+	FORCEINLINE const CIterator end() const noexcept;
+
+	FORCEINLINE const CIterator cbegin() const noexcept;
+
+	FORCEINLINE const CIterator cend() const noexcept;
 private:
 	RBT<K, V, Alloc_t> m_RBT;
 	typedef RBT<K, V, Alloc_t> MapTree;

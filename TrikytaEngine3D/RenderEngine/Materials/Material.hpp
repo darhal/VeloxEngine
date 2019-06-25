@@ -3,6 +3,7 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Maths/Maths.hpp>
 #include <Core/Misc/Utils/Common.hpp>
+#include <Core/Misc/Defines/DataStructure.hpp>
 #include <RenderAPI/Texture/Texture.hpp>
 
 TRE_NS_START
@@ -29,7 +30,7 @@ public:
 	vec3 m_Diffuse;
 	vec3 m_Specular;
 	float m_Shininess;
-	HashMap<TextureMap, Texture> m_Textures;
+	Map<TextureMap, Texture> m_Textures;
 	friend class MaterialLoader;
 };
 

@@ -3,9 +3,12 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/Memory/SmartPtr/UniquePointer.hpp>
+#include <Core/Memory/Allocators/BaseAlloc/BaseAllocator.hpp>
+#include <Core/Memory/Utils/Utils.hpp>
 #include <utility>
 
 TRE_NS_START
+
 
 class PoolArena
 {
@@ -147,7 +150,7 @@ public:
 				if (ptr == NULL) return;
 		#endif
 
-		ptr->T::~T();
+		Destroy<T>(ptr);
 		this->Deallocate((void*)ptr);
 	}
 

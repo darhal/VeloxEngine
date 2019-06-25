@@ -6,7 +6,7 @@
 
 TRE_NS_START
 
-HashMap<TargetType::target_type_t, uint32> GLState::m_bindings;
+Map<TargetType::target_type_t, uint32> GLState::m_bindings;
 
 /*template<>
 static void GLState::Bind(const ShaderProgram& obj)

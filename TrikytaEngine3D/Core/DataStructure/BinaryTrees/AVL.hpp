@@ -83,6 +83,10 @@ private:
 
 	FORCEINLINE Iterator end() noexcept;
 
+	FORCEINLINE const Iterator begin() const noexcept;
+
+	FORCEINLINE const Iterator end() const noexcept;
+
 private:
 	class Iterator
 	{
