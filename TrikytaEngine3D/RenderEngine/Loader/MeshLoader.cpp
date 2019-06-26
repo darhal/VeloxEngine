@@ -118,6 +118,7 @@ void MeshLoader::LoadFile(const char* path)
 									//printf("I : %d | N (%f, %f, %f)\n", data - norm_offset, m_Normals[m_ObjectCount].at(data - norm_offset).x, m_Normals[m_ObjectCount].at(data - norm_offset).y, m_Normals[m_ObjectCount].at(data - norm_offset).z);
 								}*/
 								ni = data - norm_offset;
+								printf("norm_offset = %d || data = %d\n", norm_offset, data);
 								norm = m_Normals[m_ObjectCount].At(ni);
 								break;
 							}
@@ -199,8 +200,7 @@ void MeshLoader::ProcessData(Vector<RawModel<true>>* arrayOfObjects)
 	arrayOfObjects->Reserve(m_ObjectCount);
 	int32 objectIndex = (m_ObjectCount > 1 ? 1 : 0);
 	do{
-		arrayOfObjects->EmplaceBack(m_VerteciesData[objectIndex], m_DataIndex[objectIndex], m_Materials[objectIndex]);
-		/*printf("index = {");
+		printf("index = {");
 		for (uint32 i : m_DataIndex[objectIndex]) {
 			printf("%d ", i);
 		}
@@ -217,13 +217,14 @@ void MeshLoader::ProcessData(Vector<RawModel<true>>* arrayOfObjects)
 		printf("}\n");
 		printf("----------------------------\n");
 		for (uint32 i : m_DataIndex[objectIndex]) {
-			const auto& data = m_VerteciesData[objectIndex].at(i);
+			const auto& data = m_VerteciesData[objectIndex].At(i);
 			printf("{V(%f, %f, %f) / N(%f, %f, %f) / T(%f, %f)}\n",
 				data.pos.x, data.pos.y, data.pos.z,
 				data.normal.x, data.normal.y, data.normal.z,
 				data.texture.x, data.texture.y
 			);
-		}*/
+		}
+		arrayOfObjects->EmplaceBack(m_VerteciesData[objectIndex], m_DataIndex[objectIndex], m_Materials[objectIndex]);
 		//arrayOfObjects->emplace_back(m_Verticies[objectIndex], m_Indicies[objectIndex], &m_TextureCoord[objectIndex], &m_OrderedNormals[objectIndex], m_Materials[objectIndex]);
 		objectIndex++;
 	}while (objectIndex < m_ObjectCount);

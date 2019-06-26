@@ -219,7 +219,7 @@ FORCEINLINE usize Vector<T>::Length() const
 template<typename T>
 FORCEINLINE usize Vector<T>::Size() const
 {
-	return (m_Length == 0) ? 0 : m_Length - 1;
+	return m_Length;
 }
 
 template<typename T>
