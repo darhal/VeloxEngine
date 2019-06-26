@@ -154,7 +154,7 @@ int main()
 	printf("- Version       : %s\n", glGetString(GL_VERSION));
 	printf("- GLSL Version  : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	MeshLoader carrot("res/obj/lowpoly/cube.obj");
+	MeshLoader carrot("res/obj/lowpoly/carrot_box.obj");
 	Vector<RawModel<true>> carrotModel;
 	carrot.ProcessData(&carrotModel);
 
@@ -214,6 +214,7 @@ int main()
 				ourShader.SetMat4("MVP", MVP);
 				ourShader.SetMat4("model", model);
 				//obj.Render();
+				printf("Hello\n");
 				obj.Render(ourShader);
 			//}
 		}

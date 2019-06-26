@@ -25,6 +25,7 @@ template<>
 RawModel<false>::RawModel(const Vector<vec3>& vertices, const Vector<vec2>* textures, const Vector<vec3>* normals, const Vector<MatrialForRawModel>& mat_vec)
 {
 	ASSERTF(!(vertices.Size() == 0), "Attempt to create a RawModel with empty vertecies!");
+	
 	LoadFromVector(vertices, textures, normals);
 	m_VertexCount = vertices.Size() / 3LLU; // Get the vertex Count!
 	m_ModelVAO.Unuse();
@@ -48,7 +49,9 @@ template<>
 RawModel<true>::RawModel(const Vector<VertexData>& ver_data, const Vector<uint32>& indices, const Vector<MatrialForRawModel>& mat_vec)
 {
 	ASSERTF(!(ver_data.Size() == 0 || indices.Size() == 0), "Attempt to create a RawModel with empty vertecies!");
+	
 	LoadFromVertexData(ver_data);
+
 	m_VertexCount = indices.Size(); // Get the vertex Count!
 	//Set up indices
 	indexVBO.Generate(BufferTarget::ELEMENT_ARRAY_BUFFER);
@@ -56,6 +59,8 @@ RawModel<true>::RawModel(const Vector<VertexData>& ver_data, const Vector<uint32
 	m_ModelVAO.Unuse();
 	indexVBO.Unuse();
 	m_Materials = mat_vec;
+	printf("Size = %d\n", mat_vec.Size());
+
 	if (m_Materials.IsEmpty()) {
 		m_Materials.EmplaceBack(Material(), m_VertexCount); // default material
 	}
@@ -69,6 +74,7 @@ RawModel<false>::RawModel(const Vector<VertexData>& ver_data, const Vector<Matri
 	m_VertexCount = ver_data.Size() / 8LLU; // Get the vertex Count!
 	m_ModelVAO.Unuse();
 	m_Materials = mat_vec;
+
 	if (m_Materials.IsEmpty()) {
 		Material default_material("Unknown");
 		m_Materials.EmplaceBack(default_material, m_VertexCount); // default material
@@ -98,6 +104,9 @@ void RawModel<true>::Render(const ShaderProgram& shader) const
 {
 	int32 lastVertexCount = 0;
 	for (const MatrialForRawModel& mat : m_Materials) {
+		printf("diffuse = (%f, %f, %f)\n", mat.material.m_Diffuse.x, mat.material.m_Diffuse.y, mat.material.m_Diffuse.z);
+		printf("ambient = (%f, %f, %f)\n", mat.material.m_Ambient.x, mat.material.m_Ambient.y, mat.material.m_Ambient.z);
+		printf("specular = (%f, %f, %f)\n", mat.material.m_Specular.x, mat.material.m_Specular.y, mat.material.m_Specular.z);
 		shader.SetVec3("material.diffuse", mat.material.m_Diffuse);
 		shader.SetVec3("material.ambient", mat.material.m_Ambient);
 		shader.SetVec3("material.specular", mat.material.m_Specular);

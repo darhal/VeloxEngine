@@ -58,7 +58,6 @@ FORCEINLINE T& Vector<T>::PushBack(const T& obj)
 {
 	Reserve(m_Length + 1);
 	new (m_Data + m_Length) T(obj);
-	m_Length++;
 	return *(m_Data + (m_Length++));
 }
 
@@ -225,7 +224,7 @@ FORCEINLINE usize Vector<T>::Size() const
 template<typename T>
 FORCEINLINE T* Vector<T>::Back() const
 {
-	return &m_Data[Size()];
+	return &m_Data[Size() ? 0 : m_Length - 1];
 }
 
 template<typename T>
