@@ -322,8 +322,8 @@ FORCEINLINE Vector<T>& Vector<T>::operator=(const Vector<T>& other)
 {
 	m_Length = other.m_Length;
 	m_Capacity = other.m_Capacity;
-	m_Data = Allocate<T>(other.m_Length);
-	CopyRangeTo(m_Data, other.m_Data, other.m_Length);
+	m_Data = Allocate<T>(m_Length);
+	CopyRangeTo(m_Data, other.m_Data, m_Length);
 	return *this;
 }
 

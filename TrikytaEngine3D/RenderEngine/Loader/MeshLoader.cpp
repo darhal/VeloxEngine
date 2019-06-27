@@ -176,7 +176,6 @@ void MeshLoader::LoadFile(const char* path)
 			printf("* Finished loading the material file... Resuming the obj..\n");
 		}else if (IsEqual(buffer, "usemtl")) {
 			if (m_MaterialName[0] != '\0') {
-				printf("Name = %s | ambient = (%f, %f, %f)\n", m_MaterialLoader.GetMaterialFromName(m_MaterialName).m_Name.Buffer(), m_MaterialLoader.GetMaterialFromName(m_MaterialName).m_Ambient.x, m_MaterialLoader.GetMaterialFromName(m_MaterialName).m_Ambient.y, m_MaterialLoader.GetMaterialFromName(m_MaterialName).m_Ambient.z);
 				m_Materials[m_ObjectCount].EmplaceBack(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].Size() - lastVertexCount));
 				lastVertexCount = m_DataIndex[m_ObjectCount].Size();
 			}
@@ -224,7 +223,6 @@ void MeshLoader::ProcessData(Vector<RawModel<true>>* arrayOfObjects)
 				data.texture.x, data.texture.y
 			);
 		}*/
-
 		arrayOfObjects->EmplaceBack(m_VerteciesData[objectIndex], m_DataIndex[objectIndex], m_Materials[objectIndex]);
 		//arrayOfObjects->emplace_back(m_Verticies[objectIndex], m_Indicies[objectIndex], &m_TextureCoord[objectIndex], &m_OrderedNormals[objectIndex], m_Materials[objectIndex]);
 		objectIndex++;

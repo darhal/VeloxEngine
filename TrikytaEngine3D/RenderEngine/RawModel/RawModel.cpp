@@ -58,8 +58,18 @@ RawModel<true>::RawModel(const Vector<VertexData>& ver_data, const Vector<uint32
 	indexVBO.FillData(&indices.At(0), indices.Size() * sizeof(uint32));
 	m_ModelVAO.Unuse();
 	indexVBO.Unuse();
+
+	// TODO: Problem with vector with copying !
 	m_Materials = mat_vec;
-	printf("Size = %d\n", mat_vec.Size());
+	printf("Size = %d\n", m_Materials.Size());
+
+	for (const auto& mat : mat_vec) {
+		auto& material = mat.material;
+		printf("Name = %s\n", material.m_Name.Buffer()),
+		printf("	diffuse = (%f, %f, %f)\n", material.m_Diffuse.x, material.m_Diffuse.y, material.m_Diffuse.z);
+		printf("	ambient = (%f, %f, %f)\n", material.m_Ambient.x, material.m_Ambient.y, material.m_Ambient.z);
+		printf("	specular = (%f, %f, %f)\n", material.m_Specular.x, material.m_Specular.y, material.m_Specular.z);
+	}
 
 	if (m_Materials.IsEmpty()) {
 		m_Materials.EmplaceBack(Material(), m_VertexCount); // default material

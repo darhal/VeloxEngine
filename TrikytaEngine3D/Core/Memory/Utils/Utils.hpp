@@ -88,10 +88,13 @@ template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type
 FORCEINLINE static void CopyRangeTo(T* begin, T* dest, usize len)
 {
 	//printf("*** NON Pod CopyRangeTo\n");
-	/*while (begin != end) {
-		new ((void*)dest) T(std::move(*begin));
+	/*usize i = 0;
+	while (i < len) {
+		//new ((void*)dest) T(std::move(*begin)); 
+		new ((void*)dest) T(*begin);
 		begin++;
 		dest++;
+		i++;
 	}*/
 	memcpy(dest, begin, len * sizeof(T));
 }

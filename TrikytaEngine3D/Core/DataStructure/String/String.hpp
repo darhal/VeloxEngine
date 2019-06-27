@@ -139,10 +139,11 @@ public:
 	{
 		void operator()(BasicString<T>* obj, const T(&str)[S])
 		{
-			for (usize i = 0; i < S; i++) {
+			usize len = strlen(str) + 1;
+			for (usize i = 0; i < len; i++) {
 				obj->m_Data[i] = str[i];
 			}
-			obj->SetSmallLength(S);
+			obj->SetSmallLength(len);
 		}
 	};
 
@@ -151,15 +152,16 @@ public:
 	{
 		void operator()(BasicString<T>* obj, const T(&str)[S])
 		{
+			usize len = strlen(str) + 1;
 			usize real_cap = S * SPARE_RATE;
 			obj->m_Buffer = (T*) operator new (sizeof(T)* real_cap); // allocate empty storage
-			for (usize i = 0; i < S; i++) {
+			for (usize i = 0; i < len; i++) {
 				obj->m_Buffer[i] = str[i];
 			}
 			obj->m_Capacity = real_cap;
-			obj->SetNormalLength(S); // bit to indicate that its not small string 
-								// (the bit is located always at the end of the bit stream, 
-								// works both on little and big endian architectures)
+			obj->SetNormalLength(len); // bit to indicate that its not small string 
+									   // (the bit is located always at the end of the bit stream, 
+								       // works both on little and big endian architectures)
 		}
 	};
 };
@@ -213,7 +215,7 @@ BasicString<T>::BasicString(const T(&str)[S], usize capacity)
 template<typename T>
 BasicString<T>::BasicString(const char* str, usize S)
 {
-	usize len = strlen(str);
+	usize len = strlen(str) + 1;
 	if (S < len) S = len;
 	if (S <= SSO_SIZE) { // here its <= because we will count the trailing null
 		for (usize i = 0; i < len; i++) {
@@ -228,8 +230,8 @@ BasicString<T>::BasicString(const char* str, usize S)
 		}
 		m_Capacity = real_cap;
 		SetNormalLength(len); // bit to indicate that its not small string 
-							// (the bit is located always at the end of the bit stream, 
-							// works both on little and big endian architectures)
+								  // (the bit is located always at the end of the bit stream, 
+							      // works both on little and big endian architectures)
 	}
 }
 
@@ -353,7 +355,9 @@ static bool operator==(const BasicString<T>& a, const BasicString<T>& b)
 	usize alen = a.Length();
 	const T* a_buffer = a.Buffer();
 	const T* b_buffer = b.Buffer();
-	if (alen != b.Length()) return false;
+	if (alen != b.Length()) {
+		return false;
+	}
 	for (usize i = 0; i < alen - 1; i++) {
 		if (a_buffer[i] != b_buffer[i]) {
 			return false;
@@ -391,7 +395,7 @@ static BasicString<T> operator+(const BasicString<T>& lhs, const char* rhs)
 template<typename T>
 static bool operator<(const BasicString<T>& lhs, const BasicString<T>& rhs)
 {
-	return  strcmp(lhs.Buffer(), rhs.Buffer()) > 0;
+	return strcmp(lhs.Buffer(), rhs.Buffer()) > 0;
 }
 
 template<typename T>

@@ -24,9 +24,9 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 		if (IsEqual(buffer, "newmtl")) {
 			char m_Name[25];
 			sscanf(buffer, "newmtl %s", m_Name);
-			//printf("Adding new material: %s\n", m_Name);
+			printf("Adding new material: %s\n", m_Name);
 			current_name = m_Name;
-			m_NameToMaterial.Emplace(m_Name, m_Name); //m_NameToMaterial[m_Name] = Material(m_Name);
+			m_NameToMaterial.Emplace(String(m_Name), m_Name); //m_NameToMaterial[m_Name] = Material(m_Name);
 		}else if (IsEqual(buffer, "Ka")) {
 			vec3 ambient;
 			int32 res = sscanf(buffer, "Ka %f %f %f", &ambient.x, &ambient.y, &ambient.z);
@@ -70,12 +70,20 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 		}
 		current_line++;
 	}
+	for (const auto& pair : m_NameToMaterial) {
+		printf("Material name = %s | Contain key ? = %d\n", pair.first.Buffer(), m_NameToMaterial.ContainsKey(String(pair.first.Buffer(), 0)));
+		auto material = &(pair.second);
+		printf("	diffuse = (%f, %f, %f)\n", material->m_Diffuse.x, material->m_Diffuse.y, material->m_Diffuse.z);
+		printf("	ambient = (%f, %f, %f)\n", material->m_Ambient.x, material->m_Ambient.y, material->m_Ambient.z);
+		printf("	specular = (%f, %f, %f)\n", material->m_Specular.x, material->m_Specular.y, material->m_Specular.z);
+	}
 	fclose(file);
 }
 
 Material& MaterialLoader::GetMaterialFromName(const char* name)
 {
-	return m_NameToMaterial[String(name, 0)];
+	String key(name, 0);
+	return m_NameToMaterial[key];
 }
 
 TRE_NS_END
