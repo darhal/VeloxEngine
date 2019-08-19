@@ -335,6 +335,7 @@ void RenderThread()
 
 	prepareThread.join();
 	printf("\033[1;31m[T1] : MIN FPS = %lu| MAX FPS = %lu | AVG FPS = %lu\n", minfps, maxfps, avgfps / frames);
+	getchar();
 }
 
 void PrepareThread(Scene* scene, TRE::Window* window)

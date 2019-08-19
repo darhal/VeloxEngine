@@ -34,32 +34,15 @@ void File::Write(const char* fmt, ...) const
     va_end(arg);
 }
 
-void File::Write(const String& fmt, ...) const
+/*void File::Write(const String& fmt, ...) const
 {
     va_list arg;
 	const char* char_fmt = fmt.Buffer();
     va_start(arg, char_fmt);
     this->WriteHelper(fmt.Buffer(), arg);
     va_end(arg);
-}
+}*/
 
-bool File::ReadString(String* result, usize sz) const
-{
-    result->Reserve(sz + 4);
-
-    if ( fgets(result->EditableBuffer() , sz , m_File) != NULL )
-        return true;
-    
-    return false;
-}
-
-bool File::ReadString(char* result, usize sz) const
-{
-    if ( fgets(result , sz , m_File) != NULL )
-        return true;
-    
-    return false;
-}
 
 int32 File::ReadFormated(const char* fmt, ...) const
 {
@@ -70,7 +53,7 @@ int32 File::ReadFormated(const char* fmt, ...) const
     return res;
 }
 
-int32 File::ReadFormated(const String& fmt, ...) const
+/*int32 File::ReadFormated(const String& fmt, ...) const
 {
     va_list arg;
 	const char* char_fmt = fmt.Buffer();
@@ -78,6 +61,24 @@ int32 File::ReadFormated(const String& fmt, ...) const
     int32 res = this->ReadFormatedHelper(fmt.Buffer(), arg);
     va_end(arg);
     return res;
+}*/
+
+bool File::ReadString(String* result, usize sz) const
+{
+	result->Reserve(sz + 4);
+
+	if (fgets(result->EditableBuffer(), sz, m_File) != NULL)
+		return true;
+
+	return false;
+}
+
+bool File::ReadString(char* result, usize sz) const
+{
+	if (fgets(result, sz, m_File) != NULL)
+		return true;
+
+	return false;
 }
 
 bool File::Delete()

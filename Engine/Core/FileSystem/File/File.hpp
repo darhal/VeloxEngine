@@ -41,7 +41,7 @@ public:
 
     void Write(const char* fmt, ...) const;
 
-    void Write(const String& fmt, ...) const;
+    // void Write(const String& fmt, ...) const;
 
     bool ReadString(String* result, usize sz) const;
 
@@ -51,7 +51,7 @@ public:
 
     int32 ReadFormated(const char* fmt, ...) const;
 
-    int32 ReadFormated(const String& fmt, ...) const;
+    // int32 ReadFormated(const String& fmt, ...) const;
 
     FORCEINLINE int32 ReadBytes(void* read_ptr, usize sz, usize count = 1) const;
 
