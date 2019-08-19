@@ -22,10 +22,10 @@ OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
 DEPS = $(OBJECTS:.o=.d)
 
 # flags #
-COMPILE_FLAGS = -std=c++11 -Wall -O3 -msse2
+COMPILE_FLAGS = -std=c++11 -Wall -Werror -msse2 -O3
 INCLUDES = -I $(SRC_PATH)/TrikytaEngine3D/
 # Space-separated pkg-config libraries used by this project
-LIBS = -lm -lGL -lGLU -lX11 -lXxf86vm -lXrandr -pthread -lXi -ldl
+LIBS = -lm -lGL -lGLU -lX11 -lXxf86vm -lXrandr -pthread -lXi -ldl -ljpeg -lpng12 -lz
 
 .PHONY: default_target
 default_target: release
