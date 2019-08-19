@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.539
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TrikytaEngine3D", "TrikytaEngine3D\TrikytaEngine3D.vcxproj", "{B229270D-C0BF-4D4B-A32E-45C2D92EC233}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "Engine\Engine.vcxproj", "{3AD572C8-3691-40CE-8DCA-F577A383F267}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,14 +13,14 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B229270D-C0BF-4D4B-A32E-45C2D92EC233}.Debug|x64.ActiveCfg = Debug|x64
-		{B229270D-C0BF-4D4B-A32E-45C2D92EC233}.Debug|x64.Build.0 = Debug|x64
-		{B229270D-C0BF-4D4B-A32E-45C2D92EC233}.Debug|x86.ActiveCfg = Debug|Win32
-		{B229270D-C0BF-4D4B-A32E-45C2D92EC233}.Debug|x86.Build.0 = Debug|Win32
-		{B229270D-C0BF-4D4B-A32E-45C2D92EC233}.Release|x64.ActiveCfg = Release|x64
-		{B229270D-C0BF-4D4B-A32E-45C2D92EC233}.Release|x64.Build.0 = Release|x64
-		{B229270D-C0BF-4D4B-A32E-45C2D92EC233}.Release|x86.ActiveCfg = Release|Win32
-		{B229270D-C0BF-4D4B-A32E-45C2D92EC233}.Release|x86.Build.0 = Release|Win32
+		{3AD572C8-3691-40CE-8DCA-F577A383F267}.Debug|x64.ActiveCfg = Debug|x64
+		{3AD572C8-3691-40CE-8DCA-F577A383F267}.Debug|x64.Build.0 = Debug|x64
+		{3AD572C8-3691-40CE-8DCA-F577A383F267}.Debug|x86.ActiveCfg = Debug|Win32
+		{3AD572C8-3691-40CE-8DCA-F577A383F267}.Debug|x86.Build.0 = Debug|Win32
+		{3AD572C8-3691-40CE-8DCA-F577A383F267}.Release|x64.ActiveCfg = Release|x64
+		{3AD572C8-3691-40CE-8DCA-F577A383F267}.Release|x64.Build.0 = Release|x64
+		{3AD572C8-3691-40CE-8DCA-F577A383F267}.Release|x86.ActiveCfg = Release|Win32
+		{3AD572C8-3691-40CE-8DCA-F577A383F267}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

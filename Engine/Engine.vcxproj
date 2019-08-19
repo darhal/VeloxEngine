@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{3AD572C8-3691-40CE-8DCA-F577A383F267}</ProjectGuid>
+    <RootNamespace>Engine</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)Build\$(Configuration)\</OutDir>
+    <IntDir>Intermediate\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)Build\$(Configuration)\</OutDir>
+    <IntDir>Intermediate\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Intermediate\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Intermediate\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Core\Context\Context.cpp" />
+    <ClCompile Include="Core\Context\Context_Win32.cpp" />
+    <ClCompile Include="Core\Context\Context_X11.cpp" />
+    <ClCompile Include="Core\Context\Extensions.cpp" />
+    <ClCompile Include="Core\FileSystem\AsyncFile\AsyncFileManager.cpp" />
+    <ClCompile Include="Core\FileSystem\Directory\Directory.cpp" />
+    <ClCompile Include="Core\FileSystem\File\File.cpp" />
+    <ClCompile Include="Core\Memory\Allocators\LinearAlloc\LinearAllocator.cpp" />
+    <ClCompile Include="Core\Memory\Allocators\PoolAlloc\PoolAllocator.cpp" />
+    <ClCompile Include="Core\Memory\Allocators\StackAlloc\AlignedStackAllocator.cpp" />
+    <ClCompile Include="Core\Memory\Allocators\StackAlloc\DoubleStackAllocator.cpp" />
+    <ClCompile Include="Core\Memory\Allocators\StackAlloc\StackAllocator.cpp" />
+    <ClCompile Include="Core\Misc\Utils\Common.cpp" />
+    <ClCompile Include="Core\Misc\Utils\Image.cpp" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jaricom.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcapimin.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcapistd.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcarith.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jccoefct.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jccolor.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcdctmgr.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jchuff.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcinit.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcmainct.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcmarker.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcmaster.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcomapi.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcparam.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcprepct.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jcsample.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jctrans.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdapimin.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdapistd.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdarith.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdatadst.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdatasrc.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdcoefct.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdcolor.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jddctmgr.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdhuff.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdinput.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdmainct.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdmarker.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdmaster.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdmerge.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdpostct.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdsample.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jdtrans.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jerror.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jfdctflt.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jfdctfst.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jfdctint.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jidctflt.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jidctfst.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jidctint.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jmemmgr.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jmemnobs.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jquant1.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jquant2.c" />
+    <ClCompile Include="Core\Misc\Utils\libjpeg\jutils.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\png.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngerror.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pnggccrd.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngget.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngmem.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngpread.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngread.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngrio.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngrtran.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngrutil.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngset.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngtrans.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngvcrd.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngwio.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngwrite.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngwtran.c" />
+    <ClCompile Include="Core\Misc\Utils\libpngc\pngwutil.c" />
+    <ClCompile Include="Core\Misc\Utils\Misc.cpp" />
+    <ClCompile Include="Core\Misc\Utils\zlib\adler32.c" />
+    <ClCompile Include="Core\Misc\Utils\zlib\compress.c" />
+    <ClCompile Include="Core\Misc\Utils\zlib\crc32.c" />
+    <ClCompile Include="Core\Misc\Utils\zlib\deflate.c" />
+    <ClCompile Include="Core\Misc\Utils\zlib\inffast.c" />
+    <ClCompile Include="Core\Misc\Utils\zlib\inflate.c" />
+    <ClCompile Include="Core\Misc\Utils\zlib\inftrees.c" />
+    <ClCompile Include="Core\Misc\Utils\zlib\trees.c" />
+    <ClCompile Include="Core\Misc\Utils\zlib\uncompr.c" />
+    <ClCompile Include="Core\Misc\Utils\zlib\zutil.c" />
+    <ClCompile Include="Core\TaskSystem\TaskExecutor\TaskExecutor.cpp" />
+    <ClCompile Include="Core\TaskSystem\WorkStealingQueue\WorkStealingQueue.cpp" />
+    <ClCompile Include="Core\Window\Window.cpp" />
+    <ClCompile Include="Core\Window\Window_Win32.cpp" />
+    <ClCompile Include="Core\Window\Window_X11.cpp" />
+    <ClCompile Include="RenderAPI\FrameBuffer\FBO.cpp" />
+    <ClCompile Include="RenderAPI\GlobalState\GLState.cpp" />
+    <ClCompile Include="RenderAPI\RenderBuffer\RBO.cpp" />
+    <ClCompile Include="RenderAPI\Shader\Shader.cpp" />
+    <ClCompile Include="RenderAPI\Shader\ShaderProgram.cpp" />
+    <ClCompile Include="RenderAPI\Texture\Texture.cpp" />
+    <ClCompile Include="RenderAPI\VertexArray\VAO.cpp" />
+    <ClCompile Include="RenderEngine\Loader\MaterialLoader.cpp" />
+    <ClCompile Include="RenderEngine\Loader\MeshLoader.cpp" />
+    <ClCompile Include="RenderEngine\Managers\GraphicsResourcesManager\GRM.cpp" />
+    <ClCompile Include="RenderEngine\Managers\RenderManager\RenderManager.cpp" />
+    <ClCompile Include="RenderEngine\Managers\ResourcesManager\ResourcesManager.cpp" />
+    <ClCompile Include="RenderEngine\Materials\AbstractMaterial\AbstractMaterial.cpp" />
+    <ClCompile Include="RenderEngine\Materials\Material.cpp" />
+    <ClCompile Include="RenderEngine\Materials\Techniques\Technique.cpp" />
+    <ClCompile Include="RenderEngine\Mesh\ModelLoader\ModelLoader.cpp" />
+    <ClCompile Include="RenderEngine\Mesh\StaticMesh\RiggedStaticMesh.cpp" />
+    <ClCompile Include="RenderEngine\Mesh\StaticMesh\StaticMesh.cpp" />
+    <ClCompile Include="RenderEngine\Renderer\Backend\Dispatcher\DrawCallsDispatcher.cpp" />
+    <ClCompile Include="RenderEngine\Renderer\Common\Common.cpp" />
+    <ClCompile Include="RenderEngine\Renderer\Frontend\Renderer\Renderer.cpp" />
+    <ClCompile Include="RenderEngine\Scenegraph\SceneNode\SceneNode.cpp" />
+    <ClCompile Include="RenderEngine\Scenegraph\Scene\Scene.cpp" />
+    <ClCompile Include="Tests\Main.cpp" />
+    <ClCompile Include="Tests\Main2.cpp" />
+    <ClCompile Include="Tests\TestingString.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Core\Context\Context.hpp" />
+    <ClInclude Include="Core\Context\Extensions.hpp" />
+    <ClInclude Include="Core\Context\GLDefines.hpp" />
+    <ClInclude Include="Core\DataStructure\Array\Array.hpp" />
+    <ClInclude Include="Core\DataStructure\BinaryTrees\AVL.hpp" />
+    <ClInclude Include="Core\DataStructure\BinaryTrees\BinaryTree.hpp" />
+    <ClInclude Include="Core\DataStructure\BinaryTrees\BST.hpp" />
+    <ClInclude Include="Core\DataStructure\BinaryTrees\RedBlackTree.hpp" />
+    <ClInclude Include="Core\DataStructure\Function\Function.hpp" />
+    <ClInclude Include="Core\DataStructure\HashMap\Hash.hpp" />
+    <ClInclude Include="Core\DataStructure\HashMap\HashMap.hpp" />
+    <ClInclude Include="Core\DataStructure\HashMap\Map.hpp" />
+    <ClInclude Include="Core\DataStructure\LinkedList\List\List.hpp" />
+    <ClInclude Include="Core\DataStructure\LinkedList\SingleList\SingleList.hpp" />
+    <ClInclude Include="Core\DataStructure\PackedArray\PackedArray.hpp" />
+    <ClInclude Include="Core\DataStructure\PackedArray\RefPackedArray.hpp" />
+    <ClInclude Include="Core\DataStructure\Queue\Queue.hpp" />
+    <ClInclude Include="Core\DataStructure\Stack\Stack.hpp" />
+    <ClInclude Include="Core\DataStructure\String\String.hpp" />
+    <ClInclude Include="Core\DataStructure\Tuple\Pair.hpp" />
+    <ClInclude Include="Core\DataStructure\Tuple\Tuple.hpp" />
+    <ClInclude Include="Core\DataStructure\Vector\Vector.hpp" />
+    <ClInclude Include="Core\Event\Event.hpp" />
+    <ClInclude Include="Core\FileSystem\AsyncFile\AsyncFileManager.hpp" />
+    <ClInclude Include="Core\FileSystem\Directory\Directory.hpp" />
+    <ClInclude Include="Core\FileSystem\File\File.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\BaseAlloc\BaseAllocator.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\LinearAlloc\LinearAllocator.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\PoolAlloc\MultiPoolAllocator.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\PoolAlloc\PoolAllocator.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\PoolAlloc\StackLinkedList.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\StackAlloc\AlignedStackAllocator.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\StackAlloc\DoubleStackAllocator.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\StackAlloc\StackAllocator.hpp" />
+    <ClInclude Include="Core\Memory\Common.hpp" />
+    <ClInclude Include="Core\Memory\RefCounter\RefCounter.hpp" />
+    <ClInclude Include="Core\Memory\SmartPtr\SharedPointer.hpp" />
+    <ClInclude Include="Core\Memory\SmartPtr\UniquePointer.hpp" />
+    <ClInclude Include="Core\Memory\Utils\Utils.hpp" />
+    <ClInclude Include="Core\Misc\Defines\Common.hpp" />
+    <ClInclude Include="Core\Misc\Defines\DataStructure.hpp" />
+    <ClInclude Include="Core\Misc\Defines\Debug.hpp" />
+    <ClInclude Include="Core\Misc\Defines\Platform.hpp" />
+    <ClInclude Include="Core\Misc\Defines\PlatformInclude.hpp" />
+    <ClInclude Include="Core\Misc\Defines\PlatformSIMDInclude.hpp" />
+    <ClInclude Include="Core\Misc\Defines\Types.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Common.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Maths.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Matrix.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Matrix4x4.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Utils.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Vec.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Vec1.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Vec2.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Vec3.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Vec4.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Vec4f_simd.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Vec4i_simd.hpp" />
+    <ClInclude Include="Core\Misc\Maths\VecN.hpp" />
+    <ClInclude Include="Core\Misc\Utils\ByteBuffer.hpp" />
+    <ClInclude Include="Core\Misc\Utils\Color.hpp" />
+    <ClInclude Include="Core\Misc\Utils\Common.hpp" />
+    <ClInclude Include="Core\Misc\Utils\Image.hpp" />
+    <ClInclude Include="Core\Misc\Utils\libjpeg\cderror.h" />
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jconfig.h" />
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jdct.h" />
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jerror.h" />
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jinclude.h" />
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jmemsys.h" />
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jmorecfg.h" />
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jpegint.h" />
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jpeglib.h" />
+    <ClInclude Include="Core\Misc\Utils\libjpeg\jversion.h" />
+    <ClInclude Include="Core\Misc\Utils\libpngc\png.h" />
+    <ClInclude Include="Core\Misc\Utils\libpngc\pngconf.h" />
+    <ClInclude Include="Core\Misc\Utils\Logging.hpp" />
+    <ClInclude Include="Core\Misc\Utils\zlib\crc32.h" />
+    <ClInclude Include="Core\Misc\Utils\zlib\deflate.h" />
+    <ClInclude Include="Core\Misc\Utils\zlib\inffast.h" />
+    <ClInclude Include="Core\Misc\Utils\zlib\inffixed.h" />
+    <ClInclude Include="Core\Misc\Utils\zlib\inflate.h" />
+    <ClInclude Include="Core\Misc\Utils\zlib\inftrees.h" />
+    <ClInclude Include="Core\Misc\Utils\zlib\trees.h" />
+    <ClInclude Include="Core\Misc\Utils\zlib\zconf.h" />
+    <ClInclude Include="Core\Misc\Utils\zlib\zlib.h" />
+    <ClInclude Include="Core\Misc\Utils\zlib\zutil.h" />
+    <ClInclude Include="Core\TaskSystem\TaskExecutor\TaskExecutor.hpp" />
+    <ClInclude Include="Core\TaskSystem\TaskManager\TaskManager.hpp" />
+    <ClInclude Include="Core\TaskSystem\Task\Task.hpp" />
+    <ClInclude Include="Core\TaskSystem\WorkStealingQueue\WorkStealingQueue.hpp" />
+    <ClInclude Include="Core\Window\Window.hpp" />
+    <ClInclude Include="RenderAPI\Common.hpp" />
+    <ClInclude Include="RenderAPI\FrameBuffer\FBO.hpp" />
+    <ClInclude Include="RenderAPI\General\GLContext.hpp" />
+    <ClInclude Include="RenderAPI\GlobalState\GLState.hpp" />
+    <ClInclude Include="RenderAPI\RenderBuffer\RBO.hpp" />
+    <ClInclude Include="RenderAPI\Shader\Shader.hpp" />
+    <ClInclude Include="RenderAPI\Shader\ShaderProgram.hpp" />
+    <ClInclude Include="RenderAPI\Texture\Texture.hpp" />
+    <ClInclude Include="RenderAPI\VertexArray\VAO.hpp" />
+    <ClInclude Include="RenderAPI\VertexArray\VAODef.hpp" />
+    <ClInclude Include="RenderAPI\VertexBuffer\VBO.hpp" />
+    <ClInclude Include="RenderEngine\Loader\MaterialLoader.hpp" />
+    <ClInclude Include="RenderEngine\Loader\MeshLoader.hpp" />
+    <ClInclude Include="RenderEngine\Managers\GraphicsResourcesManager\GRM.hpp" />
+    <ClInclude Include="RenderEngine\Managers\RenderManager\RenderManager.hpp" />
+    <ClInclude Include="RenderEngine\Managers\ResourcesManager\ResourcesManager.hpp" />
+    <ClInclude Include="RenderEngine\Materials\AbstractMaterial\AbstractMaterial.hpp" />
+    <ClInclude Include="RenderEngine\Materials\Material.hpp" />
+    <ClInclude Include="RenderEngine\Materials\MaterialParametres\MaterialParametres.hpp" />
+    <ClInclude Include="RenderEngine\Materials\MaterialParametres\MaterialParamHelper.hpp" />
+    <ClInclude Include="RenderEngine\Materials\Techniques\Technique.hpp" />
+    <ClInclude Include="RenderEngine\Mesh\IPrimitiveMesh\IPrimitiveMesh.hpp" />
+    <ClInclude Include="RenderEngine\Mesh\ModelLoader\ModelLoader.hpp" />
+    <ClInclude Include="RenderEngine\Mesh\ModelLoader\ModelSettings.hpp" />
+    <ClInclude Include="RenderEngine\Mesh\PrimitiveGeometry\PrimitiveGeometry.hpp" />
+    <ClInclude Include="RenderEngine\Mesh\RawSubMesh\RawSubMesh.hpp" />
+    <ClInclude Include="RenderEngine\Mesh\RawSubMesh\RiggedRawSubMesh.hpp" />
+    <ClInclude Include="RenderEngine\Mesh\StaticMesh\RiggedStaticMesh.hpp" />
+    <ClInclude Include="RenderEngine\Mesh\StaticMesh\StaticMesh.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Backend\CommandBuffer\FrameBufferCommandBucket\FramebufferCommandBucket.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Backend\CommandBuffer\ICommandBuffer\ICommandBuffer.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Backend\CommandBuffer\RenderCommandBucket\RenderCommandBucket.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Backend\CommandBuffer\ResourcesCommandBucket\ResourcesCommandBucket.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Backend\CommandPacket\CommandPacket.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Backend\Commands\Commands.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Backend\Dispatcher\DrawCallsDispatcher.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Backend\ShaderManager\ShaderManager.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Backend\StateGroups\StateGroup.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Common\Common.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Frontend\Camera\Camera.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Frontend\IRenderer\IRenderer.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Frontend\Renderer\Renderer.hpp" />
+    <ClInclude Include="RenderEngine\Scenegraph\SceneNode\SceneNode.hpp" />
+    <ClInclude Include="RenderEngine\Scenegraph\Scene\Scene.hpp" />
+    <ClInclude Include="RenderEngine\Variables\VariableDesc\VariableDesc.hpp" />
+    <ClInclude Include="RenderEngine\Variables\VariablesSet\VariablesSet.hpp" />
+    <ClInclude Include="RenderEngine\Variables\Variables\IVariable.hpp" />
+    <ClInclude Include="RenderEngine\Variables\Variables\Variable.hpp" />
+    <ClInclude Include="Tests\ThreadBarrier.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Core\DataStructure\BinaryTrees\AVL.inl" />
+    <None Include="Core\DataStructure\BinaryTrees\BinaryTree.inl" />
+    <None Include="Core\DataStructure\BinaryTrees\BST.inl" />
+    <None Include="Core\DataStructure\BinaryTrees\RedBlackTree.inl" />
+    <None Include="Core\DataStructure\HashMap\HashMap.inl" />
+    <None Include="Core\DataStructure\HashMap\Map.inl" />
+    <None Include="Core\DataStructure\LinkedList\List\List.inl" />
+    <None Include="Core\DataStructure\LinkedList\SingleList\SingleList.inl" />
+    <None Include="Core\DataStructure\PackedArray\PackedArray.inl" />
+    <None Include="Core\DataStructure\PackedArray\RefPackedArray.inl" />
+    <None Include="Core\DataStructure\String\String.inl" />
+    <None Include="Core\DataStructure\Vector\Vector.inl" />
+    <None Include="Core\Misc\Maths\Vec1.inl" />
+    <None Include="Core\Misc\Maths\Vec2.inl" />
+    <None Include="Core\Misc\Maths\Vec3.inl" />
+    <None Include="Core\Misc\Maths\Vec4.inl" />
+    <None Include="Core\Misc\Maths\Vec4f_simd.inl" />
+    <None Include="Core\Misc\Maths\Vec4i_simd.inl" />
+    <None Include="RenderAPI\VertexBuffer\VBO.inl" />
+    <None Include="RenderEngine\Managers\GraphicsResourcesManager\GRM.inl" />
+    <None Include="RenderEngine\Renderer\Backend\CommandBuffer\FrameBufferCommandBucket\FramebufferCommandBucket.inl" />
+    <None Include="RenderEngine\Renderer\Backend\CommandBuffer\ICommandBuffer\ICommandBuffer.inl" />
+    <None Include="RenderEngine\Renderer\Backend\CommandBuffer\RenderCommandBucket\RenderCommandBucket.inl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
