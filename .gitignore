@@ -38,11 +38,12 @@
 Build/
 Release/
 Debug/
-TrikytaEngine/x64/
 zlib/Debug/
 Intermediate/
 Binary/
 .vs/
+Engine/res/img
+Engine/res/obj
 LICENCE.*
 *.filters
 *.user
