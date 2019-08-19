@@ -23,7 +23,7 @@ DEPS = $(OBJECTS:.o=.d)
 
 # flags #
 COMPILE_FLAGS = -std=c++11 -Wall -Werror -msse2 -O3
-INCLUDES = -I $(SRC_PATH)/TrikytaEngine3D/
+INCLUDES = -I $(SRC_PATH)/Engine/
 # Space-separated pkg-config libraries used by this project
 LIBS = -lm -lGL -lGLU -lX11 -lXxf86vm -lXrandr -pthread -lXi -ldl -ljpeg -lpng12 -lz
 
