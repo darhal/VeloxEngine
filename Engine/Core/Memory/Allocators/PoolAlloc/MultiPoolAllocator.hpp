@@ -42,14 +42,14 @@ public:
 	explicit PoolArena(usize chunk_num) : m_Next(NULL)
 	{
 		usize chunk_size = sizeof(T);
-		ASSERTF((chunk_size < sizeof(PoolItem)), "Given size (%lu bytes) is smaller than the Pool Chunk(Item) size(%lu).", chunk_size, sizeof(PoolItem));
+		ASSERTF((chunk_size < sizeof(PoolItem)), "Given size (%" SZu " bytes) is smaller than the Pool Chunk(Item) size(%" SZu ").", chunk_size, sizeof(PoolItem));
 		m_Items = (PoolItem*) operator new (chunk_size * chunk_num);
 		this->Reset(chunk_size, chunk_num);
 	}
 
 	PoolArena(usize chunk_size, usize chunk_num) : m_Next(NULL)
 	{
-		ASSERTF((chunk_size < sizeof(PoolItem)), "Given size (%lu bytes) is smaller than the Pool Chunk(Item) size(%lu).", chunk_size, sizeof(PoolItem));
+		ASSERTF((chunk_size < sizeof(PoolItem)), "Given size (%" SZu " bytes) is smaller than the Pool Chunk(Item) size(%" SZu ").", chunk_size, sizeof(PoolItem));
 		m_Items = (PoolItem*) operator new (chunk_size * chunk_num);
 		this->Reset(chunk_size, chunk_num);
 	}

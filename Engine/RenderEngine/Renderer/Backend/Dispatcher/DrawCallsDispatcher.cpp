@@ -36,7 +36,7 @@ void BackendDispatch::GenerateVAO(const void* data)
 	    vertexVBO->Generate(BufferTarget::ARRAY_BUFFER);
         VariableDesc* desc = var.GetVariableDesc();
 	    vertexVBO->FillData(var.GetDataPtr(), desc->count * desc->size);
-	    modelVAO->BindAttribute<DataType::FLOAT>(index_attrib, *vertexVBO, desc->size, 0, 0);
+	    modelVAO->BindAttribute<DataType::FLOAT>(index_attrib, *vertexVBO, (int32) desc->size, 0, 0);
         index_attrib++;
     }
 }

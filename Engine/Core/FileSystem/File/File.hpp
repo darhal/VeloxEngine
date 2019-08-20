@@ -133,7 +133,7 @@ FORCEINLINE int32 File::ReadChar() const
 
 FORCEINLINE int32 File::ReadBytes(void* read_ptr, usize sz, usize count) const
 {
-    return fread(read_ptr, sz, count, m_File);
+    return (int32) fread(read_ptr, sz, count, m_File);
 }
 
 FORCEINLINE bool File::GetLine(String& line_out) const
@@ -176,7 +176,7 @@ FORCEINLINE bool File::Rename(const String& newName)
 
 FORCEINLINE bool File::SetCursor(usize cur, CursorOrigin cur_position) const
 {
-    return !fseek(m_File, cur, SEEK_POSITIONS[cur_position]);
+    return !fseek(m_File, (long) cur, SEEK_POSITIONS[cur_position]);
 }
 
 /**************************************************/

@@ -8,7 +8,9 @@
 	#pragma warning(disable:4996) // DISABLE VS WARNING
 #endif
 
-#define _DEBUG // Enable debugging for now !
+#if defined(OS_LINUX)
+	#define _DEBUG // Enable debugging for now !
+#endif
 
 inline static void PrintDate()
 {

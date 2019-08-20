@@ -69,7 +69,7 @@ ModelLoader::ModelLoader(Vector<VertexData>& ver_data, Vector<uint32>& indices, 
 		= CmdBucket.AppendCommand<Commands::GenerateIndexCmd>(create_vao_cmd);
 	
 	VariableDesc desc;
-	desc.count = indices.Size();
+	desc.count = (uint32) indices.Size();
 	Variable<uint32> var_index(desc, indices.StealPtr());
 	// memcpy(var_index.GetPointer(), indices.Front(), desc.count * desc.size);
 
@@ -210,7 +210,7 @@ typename Commands::GenerateVAOFromVertexDataCmd* ModelLoader::LoadFromVertexData
 		= CmdBucket.template AddCommand<Commands::GenerateVAOFromVertexDataCmd>(typename IRenderer::ResourcesCmdBuffer::Key(-1));
 	
 	VertexDataDesc desc;
-	desc.count = ver_data.Size();
+	desc.count = (uint32) ver_data.Size();
 	desc.freq = VariableDesc::FREQ_VERTEX;
 	desc.indv_count[0] = 3;
 	desc.indv_count[1] = 3;

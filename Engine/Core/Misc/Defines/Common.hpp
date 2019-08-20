@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Platform.hpp"
+#include <inttypes.h>
 
 //Include known-size integer files, based on compiler. Some compilers do not have these
 //files, so they must be created manually.
@@ -80,6 +81,14 @@
 	typedef usize_type usize_t;
 #endif
 
+#if CPU_ARCH == CPU_ARCH_x86_64
+	#define SZi PRIi64
+	#define SZu PRIu64
+#elif CPU_ARCH == CPU_ARCH_x86
+	#define SZi PRIi32 
+	#define SZu PRIu32
+#endif
+
 typedef int8_t int8;
 typedef int16_t int16;
 typedef int32_t int32;
@@ -89,7 +98,6 @@ typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint32_t uint;
 typedef uint64_t uint64;
-typedef int64_t int64;
 typedef ssize_type ssize;
 typedef usize_type usize;
 typedef intptr_t intptr;

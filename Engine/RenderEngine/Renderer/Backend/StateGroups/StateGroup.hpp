@@ -35,7 +35,7 @@ struct StateGroup
 
     uint8 GetSortKey() const
     {
-        return blend_enabled << 2 | depth_enabled << 1 | cull_enabled;
+        return int8(blend_enabled) << 2 | int8(depth_enabled) << 1 | int8(cull_enabled);
     }
     
     // Output 7 bits code.

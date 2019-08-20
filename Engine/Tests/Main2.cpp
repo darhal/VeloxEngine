@@ -334,7 +334,7 @@ void RenderThread()
 	}
 
 	prepareThread.join();
-	printf("\033[1;31m[T1] : MIN FPS = %lu| MAX FPS = %lu | AVG FPS = %lu\n", minfps, maxfps, avgfps / frames);
+	printf("\033[1;31m[T1] : MIN FPS = %u| MAX FPS = %u | AVG FPS = %u\n", minfps, maxfps, uint32(avgfps / frames));
 	getchar();
 }
 
@@ -418,7 +418,7 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 		//fflush(stdout);
 	}
 
-	printf("\n\033[1;32m[T2] : MIN FPS = %lu| MAX FPS = %lu | AVG FPS = %lu\n", minfps, maxfps, avgfps / frames);
+	printf("\n\033[1;32m[T2] : MIN FPS = %u| MAX FPS = %u | AVG FPS = %u\n", minfps, maxfps, uint32(avgfps / frames));
 }
 
 void output(int x)
@@ -464,16 +464,16 @@ void HandleEvent(Scene* scene, const Event& e)
 			deltaTime = 0;
 			break;
 		case Key::Z:
-			scene->GetCurrentCamera()->ProcessKeyboard(FORWARD, (float)clockToMilliseconds(deltaTime)/1000.0);
+			scene->GetCurrentCamera()->ProcessKeyboard(FORWARD, (float)clockToMilliseconds(deltaTime)/1000.f);
 			break;
 		case Key::S:
-			scene->GetCurrentCamera()->ProcessKeyboard(BACKWARD, (float)clockToMilliseconds(deltaTime)/1000.0);
+			scene->GetCurrentCamera()->ProcessKeyboard(BACKWARD, (float)clockToMilliseconds(deltaTime)/1000.f);
 			break;
 		case Key::Q:
-			scene->GetCurrentCamera()->ProcessKeyboard(LEFT, (float)clockToMilliseconds(deltaTime)/1000.0);
+			scene->GetCurrentCamera()->ProcessKeyboard(LEFT, (float)clockToMilliseconds(deltaTime)/1000.f);
 			break;
 		case Key::D:
-			scene->GetCurrentCamera()->ProcessKeyboard(RIGHT, (float)clockToMilliseconds(deltaTime)/1000.0);
+			scene->GetCurrentCamera()->ProcessKeyboard(RIGHT, (float)clockToMilliseconds(deltaTime)/1000.f);
 			break;
 		default:
 			break;

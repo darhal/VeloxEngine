@@ -67,7 +67,7 @@ bool File::ReadString(String* result, usize sz) const
 {
 	result->Reserve(sz + 4);
 
-	if (fgets(result->EditableBuffer(), sz, m_File) != NULL)
+	if (fgets(result->EditableBuffer(), (int32) sz, m_File) != NULL)
 		return true;
 
 	return false;
@@ -75,7 +75,7 @@ bool File::ReadString(String* result, usize sz) const
 
 bool File::ReadString(char* result, usize sz) const
 {
-	if (fgets(result, sz, m_File) != NULL)
+	if (fgets(result, (int32) sz, m_File) != NULL)
 		return true;
 
 	return false;

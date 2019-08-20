@@ -18,7 +18,7 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 	char buffer[255];
 	int64 line_len = 0;
 	printf("Parsing the materials: %s\n", mtrl_path);
-	uint64 current_line = 1;
+	usize current_line = 1;
 	String current_name;
 	AbstractMaterial* last_material =  NULL;
 	while ((line_len = ReadLine(file, buffer, 255)) != EOF) {
@@ -31,7 +31,7 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 		}else if (IsEqual(buffer, "Ka")) {
 			vec3 ambient;
 			int32 res = sscanf(buffer, "Ka %f %f %f", &ambient.x, &ambient.y, &ambient.z);
-			ASSERTF(res != 3, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the ambient component (Line : %lu).", current_line);
+			ASSERTF(res != 3, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the ambient component (Line : %" SZu ").", current_line);
 			// m_NameToMaterial[current_name].GetTechnique().SetUniformVec3(); 
 			// m_NameToMaterial[current_name].m_Ambient = ambient;
 			//printf("Ka %f %f %f\n", ambient.x, ambient.y, ambient.z);
@@ -39,7 +39,7 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 		}else if (IsEqual(buffer, "Kd")) {
 			vec3 diffuse;
 			int32 res = sscanf(buffer, "Kd %f %f %f", &diffuse.x, &diffuse.y, &diffuse.z);
-			ASSERTF(res != 3, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the diffuse component (Line : %lu).", current_line);
+			ASSERTF(res != 3, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the diffuse component (Line : %" SZu ").", current_line);
 			//m_NameToMaterial[current_name].GetTechnique().SetUniformVec3(); 
 			//m_NameToMaterial[current_name].m_Diffuse = diffuse;
 			//printf("Kd %f %f %f\n", diffuse.x, diffuse.y, diffuse.z);
@@ -47,7 +47,7 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 		}else if (IsEqual(buffer, "Ks")) {
 			vec3 specular;
 			int32 res = sscanf(buffer, "Ks %f %f %f", &specular.x, &specular.y, &specular.z);
-			ASSERTF(res != 3, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the specular component (Line : %lu).", current_line);
+			ASSERTF(res != 3, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the specular component (Line : %" SZu ").", current_line);
 			//m_NameToMaterial[current_name].GetTechnique().SetUniformVec3(); 
 			//m_NameToMaterial[current_name].m_Specular = specular;
 			//printf("Ks %f %f %f\n", specular.x, specular.y, specular.z);
@@ -55,7 +55,7 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 		}else if (IsEqual(buffer, "Ns")) {
 			float shininess;
 			int32 res = sscanf(buffer, "Ns %f", &shininess);
-			ASSERTF(res != 1, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the shininess component (Line : %lu).", current_line);
+			ASSERTF(res != 1, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the shininess component (Line : %" SZu ").", current_line);
 			//m_NameToMaterial[current_name].GetTechnique().SetUniformVec3(); 
 			//m_NameToMaterial[current_name].m_Shininess = shininess;
 			//printf("Ks %f %f %f\n", specular.x, specular.y, specular.z);
@@ -64,7 +64,7 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 			char tex_file[255];
 			char tex_path[512];
 			int32 res = sscanf(buffer, "map_Kd %s", tex_file);
-			ASSERTF(res != 1, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the diffuse map component (Line : %lu).", current_line);
+			ASSERTF(res != 1, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the diffuse map component (Line : %" SZu ").", current_line);
 			strcpy(tex_path, obj_path);
 			strcat(tex_path, tex_file);
 			//m_NameToMaterial[current_name].GetTechnique().SetUniformVec3(); 
@@ -74,7 +74,7 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 			char tex_file[255];
 			char tex_path[512];
 			int32 res = sscanf(buffer, "map_Ks %s", tex_file);
-			ASSERTF(res != 1, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the specular map component (Line : %lu).", current_line);
+			ASSERTF(res != 1, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the specular map component (Line : %" SZu ").", current_line);
 			strcpy(tex_path, obj_path);
 			strcat(tex_path, tex_file);
 			//m_NameToMaterial[current_name].GetTechnique().SetUniformVec3(); 

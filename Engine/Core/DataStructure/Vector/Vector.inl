@@ -112,7 +112,7 @@ FORCEINLINE bool Vector<T>::Reserve(usize sz)
 template<typename T>
 FORCEINLINE T& Vector<T>::Insert(usize i, const T& obj)
 {
-	ASSERTF((i == 0 || i > m_Length + 1), "Given index is out of bound please choose from [1..%lu].", m_Length + 1);
+	ASSERTF((i == 0 || i > m_Length + 1), "Given index is out of bound please choose from [1..%" SZu "].", m_Length + 1);
 	usize index = i - 1;
 	if (m_Length + 1 > m_Capacity) {
 		usize nCap = (m_Length + 1)*DEFAULT_GROW_SIZE;
@@ -146,7 +146,7 @@ template<typename T>
 template<typename... Args>
 FORCEINLINE T& Vector<T>::Emplace(usize i, Args&&... args)
 {
-	ASSERTF((i == 0 || i > m_Length + 1), "Given index is out of bound please choose from [1..%lu].", m_Length + 1);
+	ASSERTF((i == 0 || i > m_Length + 1), "Given index is out of bound please choose from [1..%" SZu "].", m_Length + 1);
 	usize index = i - 1;
 	if (m_Length + 1 > m_Capacity) {
 		usize nCap = (m_Length + 1)*DEFAULT_GROW_SIZE;
@@ -219,7 +219,7 @@ FORCEINLINE Vector<T>& Vector<T>::operator+=(Vector<T>&& other)
 template<typename T>
 FORCEINLINE void Vector<T>::Erease(usize start, usize end)
 {
-	ASSERTF((start > m_Length || end > m_Length), "[%lu..%lu] interval isn't included in the range [0..%lu]", start, end, m_Length);
+	ASSERTF((start > m_Length || end > m_Length), "[%" SZu "..%" SZu "] interval isn't included in the range [0..%" SZu "]", start, end, m_Length);
 	usize size = Absolute<ssize>(ssize(end) - ssize(start));
 	T* start_ptr = m_Data + start;
 	T* end_ptr = m_Data + end;

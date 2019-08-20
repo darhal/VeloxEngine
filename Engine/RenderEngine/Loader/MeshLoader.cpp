@@ -34,7 +34,7 @@ void MeshLoader::LoadFile(const char* path)
 	usize tex_offset = 1;
 	usize norm_offset = 1;
 	usize lastVertexCount = 0;
-	uint64 current_line = 1;
+	usize current_line = 1;
 	while ((line_len = ReadLine(file, buffer, 255)) != EOF) {
 		if (line_len == 0) { continue; } // empty line
 		if(buffer[0] == 'o'){
@@ -183,7 +183,7 @@ void MeshLoader::LoadFile(const char* path)
 				lastVertexCount = m_DataIndex[m_ObjectCount].Size();
 			}
 			int32 res = sscanf(buffer, "usemtl %s", m_MaterialName);
-			ASSERTF(res != 1, "Attempt to parse a corrupted OBJ file 'usemtl' is being used without material name (Line : %lu).", current_line);
+			ASSERTF(res != 1, "Attempt to parse a corrupted OBJ file 'usemtl' is being used without material name (Line : %" SZu ").", current_line);
 		}
 		//printf("\n");
 		current_line++;
@@ -239,7 +239,7 @@ ModelLoader MeshLoader::LoadAsOneObject()
 	Vector<VertexData> vert_data_global = std::move(m_VerteciesData[objectIndex]);
 	Vector<uint32> indices_data_global = std::move(m_DataIndex[objectIndex]);
 	Vector<MatrialForRawModel> material_data_global = std::move(m_Materials[objectIndex]);
-	uint32 index_offset = vert_data_global.Length();
+	usize index_offset = vert_data_global.Length();
 	objectIndex++;
 
 	do{

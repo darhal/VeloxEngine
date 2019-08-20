@@ -17,7 +17,7 @@ void Technique::UploadUnfiroms(const ShaderProgram& program) const
         program.SetFloat(uniform_data.first, uniform_data.second);
     }
 
-    usize i = 0;
+    uint32 i = 0;
     for(const auto& uniform_data : m_MaterialParams.GetContainer<TextureID>()){
         Texture& active_tex = ResourcesManager::GetGRM().Get<Texture>(uniform_data.second);
         program.SetInt(uniform_data.first, i);

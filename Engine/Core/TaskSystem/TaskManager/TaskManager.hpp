@@ -46,7 +46,7 @@ private:
     uint8 m_WorkersMaxCount;
 
 public:
-    std::atomic<usize> m_TasksToDeleteCount;
+    std::atomic<int32_t> m_TasksToDeleteCount;
 };
 
 FORCEINLINE void TaskManager::Init() // shouldn't be inlined !
