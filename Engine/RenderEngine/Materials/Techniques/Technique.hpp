@@ -15,7 +15,7 @@ TRE_NS_START
 class Technique
 {
 public:
-    typedef MaterialParametres<uint8> MaterialParametresContainer;
+    typedef MaterialParametres<int32> MaterialParametresContainer;
 
 public:
     FORCEINLINE Technique(ShaderID shaderID = 0);

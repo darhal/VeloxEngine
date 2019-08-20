@@ -60,7 +60,8 @@ void ShaderProgram::AddShader(const Shader& shader)
 
 const ShaderProgram::Uniform& ShaderProgram::AddUniform(const String& name)
 {
-	return m_Uniforms.Emplace(std::move(name), glGetUniformLocation(m_ID, name.Buffer()));
+	int32 slot = glGetUniformLocation(m_ID, name.Buffer());
+	return m_Uniforms.Emplace(std::move(name), slot);
 }
 
 const ShaderProgram::Uniform& ShaderProgram::GetUniform(const String& name) const

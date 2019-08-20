@@ -5,20 +5,20 @@ TRE_NS_START
 
 void Technique::UploadUnfiroms(const ShaderProgram& program) const
 {
-    for(const auto& uniform_data : m_MaterialParams.GetContainer<mat4>()){
+    for(const auto& uniform_data : m_MaterialParams.GetContainer<mat4>()) {
         program.SetMat4(uniform_data.first, uniform_data.second);
     }
 
-    for(const auto& uniform_data :  m_MaterialParams.GetContainer<vec3>()){
+    for(const auto& uniform_data :  m_MaterialParams.GetContainer<vec3>()) {
         program.SetVec3(uniform_data.first, uniform_data.second);
     }
 
-    for(const auto& uniform_data : m_MaterialParams.GetContainer<float>()){
+    for(const auto& uniform_data : m_MaterialParams.GetContainer<float>()) {
         program.SetFloat(uniform_data.first, uniform_data.second);
     }
 
     uint32 i = 0;
-    for(const auto& uniform_data : m_MaterialParams.GetContainer<TextureID>()){
+    for(const auto& uniform_data : m_MaterialParams.GetContainer<TextureID>()) {
         Texture& active_tex = ResourcesManager::GetGRM().Get<Texture>(uniform_data.second);
         program.SetInt(uniform_data.first, i);
         glActiveTexture(GL_TEXTURE0 + i);

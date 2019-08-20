@@ -256,27 +256,30 @@ void RenderThread()
 
 	for (auto& shader_id : ResourcesManager::GetGRM().GetResourceContainer<ShaderProgram>()){
 		ShaderProgram& shader = shader_id.second;
+
 		shader.BindAttriute(0, "aPos");
 		shader.BindAttriute(1, "aNormals");
 		shader.BindAttriute(2, "aTexCoord");
 		shader.LinkProgram();
+		shader.Use();
 
 		shader.AddUniform("MVP");
 		shader.AddUniform("model");
+		shader.AddUniform("viewPos");
+
 		shader.AddUniform("light.ambient");
 		shader.AddUniform("light.diffuse");
 		shader.AddUniform("light.specular");
 		shader.AddUniform("light.position");
-		shader.AddUniform("viewPos");
-		shader.AddUniform("material.diffuse");
+
 		shader.AddUniform("material.ambient");
+		shader.AddUniform("material.diffuse");
 		shader.AddUniform("material.specular");
-		shader.AddUniform("material.diffuse_tex");
-		shader.AddUniform("material.specular_tex");
 		shader.AddUniform("material.alpha");
 		shader.AddUniform("material.shininess");
+		shader.AddUniform("material.diffuse_tex");
+		shader.AddUniform("material.specular_tex");
 
-		shader.Use();
 		shader.SetVec3("light.ambient", 0.09f, 0.09f, 0.09f);
 		shader.SetVec3("light.diffuse", 1.0f, 1.0f, 1.0f);
 		shader.SetVec3("light.specular", 0.1f, 0.1f, 0.1f);
@@ -296,9 +299,11 @@ void RenderThread()
 	ResourcesManager::GetGRM().GetState(RenderSettings::DEFAULT_STATE_HASH).ApplyStates();
 	while (IsWindowOpen) {
 		clock_t beginFrame = clock();
+
 		if (window.getEvent(ev)) {
 			HandleEvent(&scene, ev);
 		}
+
 		IsWindowOpen = window.isOpen();
 
 		ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
@@ -326,15 +331,15 @@ void RenderThread()
 		
 		avgfps += fps;
 
-		// printf("                                                   \r");
-    	// printf("\033[1;31m[T1] Delta Time : %lf ms - FPS : %lu\r", clockToMilliseconds(endFrame - beginFrame), fps);
-		// fflush(stdout);
+		//printf("                                                   \r");
+    	//printf("\033[1;31m[T1] Delta Time : %lf ms - FPS : %lu\r", clockToMilliseconds(endFrame - beginFrame), fps);
+		//fflush(stdout);
 
 		window.Present();
 	}
 
 	prepareThread.join();
-	printf("\033[1;31m[T1] : MIN FPS = %u| MAX FPS = %u | AVG FPS = %u\n", minfps, maxfps, uint32(avgfps / frames));
+	printf("\033[1;31m[T1] : MIN FPS = %u| MAX FPS = %u | AVG FPS = %u\n", (uint32) minfps, (uint32) maxfps, uint32(avgfps / frames));
 	getchar();
 }
 
@@ -418,7 +423,7 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 		//fflush(stdout);
 	}
 
-	printf("\n\033[1;32m[T2] : MIN FPS = %u| MAX FPS = %u | AVG FPS = %u\n", minfps, maxfps, uint32(avgfps / frames));
+	printf("\n\033[1;32m[T2] : MIN FPS = %u| MAX FPS = %u | AVG FPS = %u\n", (uint32) minfps, (uint32) maxfps, uint32(avgfps / frames));
 }
 
 void output(int x)
