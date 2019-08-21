@@ -23,7 +23,8 @@ void* StackAllocator::Allocate(usize size, usize alignment)
 	// ASSERTF((new_location > m_TotalSize), "Stack allocator is out of memory..");
 	
 	if (new_location > m_TotalSize) {
-		this->Resize(padding + size);
+		// this->Resize(padding + size); // dangerous as pointers will shift to another locatioin.
+		return NULL;
 	}
 
 	m_Offset += padding;

@@ -1,7 +1,7 @@
 template<typename SuperClass, typename T, typename... Args>
-ICommandBuffer<SuperClass, T, Args...>::ICommandBuffer(void(SuperClass::*submit_func)(Args...), uint32 mem_multiplier) 
+ICommandBuffer<SuperClass, T, Args...>::ICommandBuffer(void(SuperClass::*submit_func)(Args...), uint32 mem_multiplier, uint32 aux_memory)
     : 
-    m_KeyPacketPtrAllocator(DEFAULT_SIZE * mem_multiplier, true), 
+    m_KeyPacketPtrAllocator(DEFAULT_SIZE * mem_multiplier + aux_memory, true),
     m_CmdAllocator(DEFAULT_MAX_ELEMENTS * DEFAULT_MAX_ELEMENTS * mem_multiplier, true),
     m_Keys(NULL), m_Packets(NULL),
     m_SubmitFunc(submit_func), m_Current(0), m_PacketCount(0)

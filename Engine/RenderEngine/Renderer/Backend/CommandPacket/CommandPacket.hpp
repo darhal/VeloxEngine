@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Misc/Defines/Common.hpp"
+#include <Core/Memory/Allocators/BaseAlloc/BaseAllocator.hpp>
 #include "RenderEngine/Renderer/Backend/Commands/Commands.hpp"
 
 TRE_NS_START

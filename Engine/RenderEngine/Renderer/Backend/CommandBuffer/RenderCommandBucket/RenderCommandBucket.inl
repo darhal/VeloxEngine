@@ -1,15 +1,19 @@
 
 template<typename T>
-RenderCommandBucket<T>::RenderCommandBucket() : 
-    BaseClass(&RenderCommandBucket<T>::Submit, 2),
+RenderCommandBucket<T>::RenderCommandBucket() :
+	BaseClass(&RenderCommandBucket<T>::Submit, NUMBER_OF_BUFFERS, AUX_MEMORY),
+	m_RenderTargetStack((RenderTarget*) BaseClass::m_KeyPacketPtrAllocator.Allocate(AUX_MEMORY)),
     m_StartLocation(BaseClass::DEFAULT_MAX_ELEMENTS), 
     m_SecondCurrent(BaseClass::DEFAULT_MAX_ELEMENTS), 
+	m_RenderTargetCount(0),
     m_LastStateHash(RenderSettings::DEFAULT_STATE_HASH),
-    m_MainFboID(RenderSettings::DEFAULT_FRAMEBUFFER),
     mtx(),
     cv(),
     m_IsReading(false)
 {
+	RenderTarget render_t;
+	render_t.m_FboID = RenderSettings::DEFAULT_FRAMEBUFFER;
+	this->PushRenderTarget(render_t);
     // cv.notify_one();
 }
 
@@ -65,75 +69,80 @@ void RenderCommandBucket<T>::Submit(const Scene& scene)
     // SetViewMatrix();
     // SetProjectionMatrix();
     // SetRenderTargets();
+	for (FboID current_target = 0; current_target < m_RenderTargetCount; current_target++) {
 
-    FBO& main_fbo = ResourcesManager::GetGRM().Get<FBO>(m_MainFboID);
-    main_fbo.Bind();
+		const RenderTarget& render_target = m_RenderTargetStack[current_target];
+		const FBO& fbo = ResourcesManager::GetGRM().Get<FBO>(render_target.m_FboID);
+		// glViewport(0, 0, render_target.m_Width, render_target.m_Height);
+		fbo.Bind();
 
-    Mat4f pv = scene.GetProjectionMatrix() * scene.GetCurrentCamera().GetViewMatrix();
+		Mat4f pv = scene.GetProjectionMatrix() * scene.GetCurrentCamera().GetViewMatrix();
 
-    Key lastKey = -1;
-    MaterialID lastMatID = -1;
-    VaoID lastVaoID = -1;
-    ShaderID lastShaderID = -1;
-    ShaderProgram* lastShader = NULL;
-    const uint32 max = m_SecondCurrent;
-    const uint32 start = m_StartLocation;
+		Key lastKey = -1;
+		MaterialID lastMatID = -1;
+		VaoID lastVaoID = -1;
+		ShaderID lastShaderID = -1;
+		ShaderProgram* lastShader = NULL;
+		const uint32 max = m_SecondCurrent;
+		const uint32 start = m_StartLocation;
 
-    // printf("(READER THREAD) SUBMIT : Start = %d TO %d\n", start, max);
+		// printf("(READER THREAD) SUBMIT : Start = %d TO %d\n", start, max);
 
-    for(uint32 i = start; i < max; i++){
-        const Pair<Key, uint32>& k = BaseClass::m_Keys[i];
-        Key key = k.first;
-        CmdPacket packet = BaseClass::m_Packets[k.second];
+		for (uint32 i = start; i < max; i++) {
+			const Pair<Key, uint32>& k = BaseClass::m_Keys[i];
+			Key key = k.first;
+			CmdPacket packet = BaseClass::m_Packets[k.second];
 
-        if (key != lastKey){
-            Commands::BasicDrawCommand* command = reinterpret_cast<Commands::BasicDrawCommand*>(const_cast<void*>(CommandPacket::LoadCommand(packet)));
-        
-            MaterialID matID;
-            VaoID vaoID;
-            ShaderID shaderID;
-            this->DecodeKey(key, shaderID, vaoID, matID);
+			if (key != lastKey) {
+				Commands::BasicDrawCommand* command = reinterpret_cast<Commands::BasicDrawCommand*>(const_cast<void*>(CommandPacket::LoadCommand(packet)));
 
-            if (shaderID != lastShaderID){
-                lastShader = &ResourcesManager::GetGRM().Get<ShaderProgram>(shaderID);
-                lastShader->Bind();
-                lastShader->SetVec3("viewPos", scene.GetCurrentCamera().Position);
-                lastShaderID = shaderID;
-            }
+				MaterialID matID;
+				VaoID vaoID;
+				ShaderID shaderID;
+				this->DecodeKey(key, shaderID, vaoID, matID);
 
-            if (vaoID != lastVaoID){
-                VAO& vao = ResourcesManager::GetGRM().Get<VAO>(vaoID);
-                vao.Bind();
-                lastVaoID = vaoID;
-            }
+				if (shaderID != lastShaderID) {
+					lastShader = &ResourcesManager::GetGRM().Get<ShaderProgram>(shaderID);
+					lastShader->Bind();
+					lastShader->SetVec3("viewPos", scene.GetCurrentCamera().Position);
+					lastShaderID = shaderID;
+				}
 
-            if(matID != lastMatID){
-                Material& material = ResourcesManager::GetGRM().Get<Material>(matID);
+				if (vaoID != lastVaoID) {
+					VAO& vao = ResourcesManager::GetGRM().Get<VAO>(vaoID);
+					vao.Bind();
+					lastVaoID = vaoID;
+				}
 
-                StateGroup& state_grp = material.GetRenderStates();
-                StateHash stateHash = state_grp.GetHash();
-                if (stateHash != m_LastStateHash){
-                    state_grp.ApplyStates();
-                    m_LastStateHash = stateHash;
-                }
+				if (matID != lastMatID) {
+					Material& material = ResourcesManager::GetGRM().Get<Material>(matID);
 
-                if (!lastShader){
-                    lastShader = &ResourcesManager::GetGRM().Get<ShaderProgram>(material.GetTechnique().GetShaderID());
-                    lastShader->Bind();
-                }
+					StateGroup& state_grp = material.GetRenderStates();
+					StateHash stateHash = state_grp.GetHash();
+					if (stateHash != m_LastStateHash) {
+						state_grp.ApplyStates();
+						m_LastStateHash = stateHash;
+					}
 
-                lastShader->SetMat4("MVP", pv * *(command->model));
-		        lastShader->SetMat4("model", *command->model);
-                material.GetTechnique().UploadUnfiroms(*lastShader);
-                lastMatID = matID;
-            }
-        }
-        
-        do{
-            this->SubmitPacket(packet);
-            packet = CommandPacket::LoadNextCommandPacket(packet);
-        } while (packet != NULL);
-    }
+					if (!lastShader) {
+						lastShader = &ResourcesManager::GetGRM().Get<ShaderProgram>(material.GetTechnique().GetShaderID());
+						lastShader->Bind();
+					}
+
+					lastShader->SetMat4("MVP", pv * *(command->model));
+					lastShader->SetMat4("model", *command->model);
+					material.GetTechnique().UploadUnfiroms(*lastShader);
+					lastMatID = matID;
+				}
+			}
+
+			do {
+				this->SubmitPacket(packet);
+				packet = CommandPacket::LoadNextCommandPacket(packet);
+			} while (packet != NULL);
+		}
+
+	}
 
     // std::lock_guard<std::mutex> lk(mtx);
     m_IsReading = 0;
@@ -173,4 +182,28 @@ bool RenderCommandBucket<T>::SwapCmdBuffer()
     m_IsReading = 1;
     // lk.unlock();
     return true;
+}
+
+template<typename T>
+void RenderCommandBucket<T>::PushRenderTarget(const RenderTarget& render_target)
+{
+	memcpy(m_RenderTargetStack + m_RenderTargetCount, &render_target, sizeof(RenderTarget));
+	m_RenderTargetCount++;
+}
+
+template<typename T>
+void RenderCommandBucket<T>::PopRenderTarget()
+{
+	if (m_RenderTargetCount)
+		m_RenderTargetCount--;
+}
+
+template<typename T>
+RenderTarget* RenderCommandBucket<T>::GetRenderTarget(uint32 index)
+{
+	if (index < m_RenderTargetCount) {
+		return &m_RenderTargetStack[index];
+	}
+
+	return NULL;
 }

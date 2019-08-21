@@ -2,6 +2,7 @@
 #include <Core/Context/Extensions.hpp>
 #include <RenderAPI/GlobalState/GLState.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
+#include <RenderAPI/FrameBuffer/FBO.hpp>
 
 TRE_NS_START
 
@@ -31,11 +32,13 @@ void RBO::SetStorage(uint32 w, uint32 h, RBOInternal::rbo_internal_format_t inte
 	Call_GL(glRenderbufferStorage(GL_RENDERBUFFER, internal_format, w, h));
 }
 
-void RBO::AttachToFBO(const FBO& fbo, FBOAttachement::framebuffer_attachement_t attchement, uint8 color_index)
+void RBO::AttachToFBO(FBO* fbo, FBOAttachement::framebuffer_attachement_t attchement, uint8 color_index)
 {
-	fbo.Use();
-	this->Use();
-	Call_GL(glFramebufferRenderbuffer(fbo.GetTarget(), attchement + color_index, GL_RENDERBUFFER, m_ID));
+	if (fbo == NULL)
+		return;
+
+	fbo->Use();
+	Call_GL(glFramebufferRenderbuffer(fbo->GetTarget(), attchement + color_index, GL_RENDERBUFFER, m_ID));
 }
 
 void RBO::Bind() const

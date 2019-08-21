@@ -15,7 +15,7 @@ class ICommandBuffer
 public:
     typedef T Key;
     
-    ICommandBuffer(void(SuperClass::*submit_func)(Args...), uint32 mem_multiplier = 1) ;
+    ICommandBuffer(void(SuperClass::*submit_func)(Args...), uint32 mem_multiplier = 1, uint32 aux_memory = 0) ;
     /*[----------------------------------------------------------------------------------]*/
     /* |                        |                  |                     |                */
     /* start of packet          start of packet 2  Start of key          Start of key2    */

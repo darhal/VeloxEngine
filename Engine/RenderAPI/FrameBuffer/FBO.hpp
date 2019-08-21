@@ -1,42 +1,11 @@
 #pragma once
 
+#include <Core/Context/GLDefines.hpp>
 #include <Core/Misc/Defines/Common.hpp>
 #include <RenderAPI/Common.hpp>
-#include <Core/Context/GLDefines.hpp>
+#include <RenderAPI/RenderBuffer/RBO.hpp>
 
 TRE_NS_START
-
-namespace FBOTarget
-{
-	enum framebuffer_target_t {
-		FBO_DRAW = GL_DRAW_FRAMEBUFFER,
-		FBO_READ = GL_READ_FRAMEBUFFER,
-		FBO = GL_FRAMEBUFFER
-	};
-};
-
-namespace FBOAttachement
-{
-	enum framebuffer_attachement_t {
-		DEPTH_ATTACH = GL_DEPTH_ATTACHMENT,
-		STENCIL_ATTACH = GL_STENCIL_ATTACHMENT,
-		DEPTH_STENCIL_ATTACHMENT = GL_DEPTH_STENCIL_ATTACHMENT,
-		COLOR_ATTACH = GL_COLOR_ATTACHMENT0
-	};
-}
-
-namespace FBOTexTarget 
-{
-	enum framebuffer_tex_target_t {
-		TEX2D = GL_TEXTURE_2D, 
-		TEX_CUBE_PX = GL_TEXTURE_CUBE_MAP_POSITIVE_X, 
-		TEX_CUBE_NX = GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
-		TEX_CUBE_PY = GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
-		TEX_CUBE_NY = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
-		TEX_CUBE_PZ = GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
-		TEX_CUBE_NZ = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
-	};
-}
 
 typedef class FBO
 {
@@ -48,6 +17,19 @@ public:
 	void AttachTexture(const Texture& tex, FBOAttachement::framebuffer_attachement_t attachement, uint8 mipmap_level = 0);
 	void AttachTexture(const Texture& tex, FBOTexTarget::framebuffer_tex_target_t target, uint8 color_attachement_id = 0, uint8 mipmap_level = 0);
 	void AttachTexture(const Texture& tex, FBOTexTarget::framebuffer_tex_target_t target, FBOAttachement::framebuffer_attachement_t attachement, uint8 mipmap_level = 0);
+
+	void AttachRenderbuffer(const RBO& rbo, FBOAttachement::framebuffer_attachement_t attchement, uint8 color_index);
+
+	FORCEINLINE void SetDrawBuffer(uint8 color_attachement_id = 0);
+	FORCEINLINE void SetDrawBuffer(FBOColourBuffer::colour_buffer_t col_buf);
+
+	FORCEINLINE void SetReadBuffer(uint8 color_attachement_id = 0);
+	FORCEINLINE void SetReadBuffer(FBOColourBuffer::colour_buffer_t col_buf);
+
+	template<uint32 S>
+	FORCEINLINE void SetDrawBuffers(const uint32(&color_attachement_id)[S]);
+	template<uint32 S>
+	FORCEINLINE void SetDrawBuffers(const FBOColourBuffer::colour_buffer_t(&col_buf)[S]);
 
 	bool IsComplete() const;
 
@@ -91,6 +73,38 @@ FORCEINLINE FBO::operator uint32() const
 FORCEINLINE const int32 FBO::GetTarget() const
 {
 	return m_target;
+}
+
+FORCEINLINE void FBO::SetDrawBuffer(uint8 color_attachement_id)
+{
+	glDrawBuffer(FBOAttachement::COLOR_ATTACH + color_attachement_id);
+}
+
+FORCEINLINE void FBO::SetDrawBuffer(FBOColourBuffer::colour_buffer_t col_buf)
+{
+	glDrawBuffer(col_buf);
+}
+
+FORCEINLINE void FBO::SetReadBuffer(uint8 color_attachement_id)
+{
+	glReadBuffer(FBOAttachement::COLOR_ATTACH + color_attachement_id);
+}
+
+FORCEINLINE void FBO::SetReadBuffer(FBOColourBuffer::colour_buffer_t col_buf)
+{
+	glReadBuffer(col_buf);
+}
+
+template<uint32 S>
+FORCEINLINE void FBO::SetDrawBuffers(const uint32(&color_attachement_id)[S])
+{
+	glDrawBuffers(S, color_attachement_id);
+}
+
+template<uint32 S>
+FORCEINLINE void FBO::SetDrawBuffers(const FBOColourBuffer::colour_buffer_t(&col_buf)[S])
+{
+	glDrawBuffers(S, col_buf);
 }
 
 FORCEINLINE FBO::FBO(FBO&& other) :

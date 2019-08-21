@@ -3,16 +3,9 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <RenderAPI/Common.hpp>
 #include <Core/Context/GLDefines.hpp>
-#include <RenderAPI/FrameBuffer/FBO.hpp>
 
 TRE_NS_START
 
-namespace RBOInternal
-{
-	enum rbo_internal_format_t {
-		DEPTH24_STENCIL8 = GL_DEPTH24_STENCIL8
-	};
-}
 
 struct RenderbufferSettings
 {
@@ -26,6 +19,7 @@ struct RenderbufferSettings
 		uint32 color_index = 0)
 		: fbo(&fbo), w(w), h(h), internal_format(internal_format), attachement(attach), color_index(color_index)
 	{}
+
 	FBO* fbo;
 	uint32 w, h;
 	RBOInternal::rbo_internal_format_t internal_format;
@@ -47,7 +41,7 @@ public:
 	uint32 Generate();
 
 	void SetStorage(uint32 w, uint32 h, RBOInternal::rbo_internal_format_t internal_format = RBOInternal::rbo_internal_format_t::DEPTH24_STENCIL8);
-	void AttachToFBO(const FBO& fbo, FBOAttachement::framebuffer_attachement_t attchement = FBOAttachement::DEPTH_STENCIL_ATTACHMENT, uint8 color_index = 0);
+	void AttachToFBO(FBO* fbo, FBOAttachement::framebuffer_attachement_t attchement = FBOAttachement::DEPTH_STENCIL_ATTACHMENT, uint8 color_index = 0);
 
 	FORCEINLINE const uint32 GetID() const;
 	FORCEINLINE operator uint32() const;

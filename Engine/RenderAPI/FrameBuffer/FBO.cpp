@@ -1,8 +1,10 @@
 #include "FBO.hpp"
+
 #include <Core/Context/Extensions.hpp>
+#include <Core/Misc/Utils/Logging.hpp>
+
 #include <RenderAPI/GlobalState/GLState.hpp>
 #include <RenderAPI/Texture/Texture.hpp>
-#include <Core/Misc/Utils/Logging.hpp>
 
 TRE_NS_START
 
@@ -49,6 +51,12 @@ void FBO::AttachTexture(const Texture& tex, FBOTexTarget::framebuffer_tex_target
 {
 	this->Use();
 	Call_GL(glFramebufferTexture2D(m_target, attachement, target, tex, mipmap_level));
+}
+
+void FBO::AttachRenderbuffer(const RBO& rbo, FBOAttachement::framebuffer_attachement_t attchement, uint8 color_index)
+{
+	this->Use();
+	Call_GL(glFramebufferRenderbuffer(m_target, attchement + color_index, GL_RENDERBUFFER, rbo.GetID()));
 }
 
 void FBO::Bind() const

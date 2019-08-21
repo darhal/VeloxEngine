@@ -28,6 +28,7 @@ public:
 
 	template<typename U, typename... Args>
 	FORCEINLINE U* Allocate(Args&&... arg);
+
 	template<typename T>
 	FORCEINLINE void Deallocate(T* obj);
 

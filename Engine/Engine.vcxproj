@@ -394,6 +394,7 @@
     <ClInclude Include="RenderEngine\Renderer\Backend\CommandPacket\CommandPacket.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Backend\Commands\Commands.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Backend\Dispatcher\DrawCallsDispatcher.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Backend\RenderTarget\RenderTarget.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Backend\ShaderManager\ShaderManager.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Backend\StateGroups\StateGroup.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Common\Common.hpp" />

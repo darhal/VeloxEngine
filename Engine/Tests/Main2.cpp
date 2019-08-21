@@ -298,7 +298,8 @@ void RenderThread()
 
 	ResourcesManager::GetGRM().GetState(RenderSettings::DEFAULT_STATE_HASH).ApplyStates();
 	while (IsWindowOpen) {
-		clock_t beginFrame = clock();
+		// clock_t beginFrame = clock();
+		auto start = std::chrono::steady_clock::now();
 
 		if (window.getEvent(ev)) {
 			HandleEvent(&scene, ev);
@@ -316,12 +317,15 @@ void RenderThread()
 		
 		scene.Render();
 
-		clock_t endFrame = clock();
-		deltaTime += endFrame - beginFrame;		
+		// clock_t endFrame = clock();
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+		auto dt = std::chrono::duration<double, std::milli>(diff).count();
+		deltaTime += dt;
+		// deltaTime += endFrame - beginFrame;		
 		frames++;
 	
-		if(endFrame - beginFrame > 0)
-       	 	fps = CLOCKS_PER_SEC / (endFrame - beginFrame);
+       	fps = 1 / (dt * 1000.f);
 		
 		if (fps > maxfps)
 			maxfps = fps;
@@ -331,9 +335,9 @@ void RenderThread()
 		
 		avgfps += fps;
 
-		//printf("                                                   \r");
-    	//printf("\033[1;31m[T1] Delta Time : %lf ms - FPS : %lu\r", clockToMilliseconds(endFrame - beginFrame), fps);
-		//fflush(stdout);
+		printf("                                                    \r");
+    	printf("\033[1;31m[T1] Delta Time : %lf ms - FPS : %lu\r", dt, fps);
+		fflush(stdout);
 
 		window.Present();
 	}
@@ -387,30 +391,31 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 
 	}
 	trees.GetTransformationMatrix().translate(vec3(0, 0, 6));
-
-	
 	
 	clock_t fps = 0, avgfps = 0, maxfps = 0, deltaTime = 0, minfps = 9999999;
 	uint64 frames = 1;
 	// Event ev;
 	// printf("\n");
 	while(IsWindowOpen){
-		clock_t beginFrame = clock();
-    
+		//clock_t beginFrame = clock();
+		auto start = std::chrono::steady_clock::now();
+
 		auto& render_cmd = RenderManager::GetRenderer().GetRenderCommandBuffer();
 		if(render_cmd.SwapCmdBuffer()){
 			render_cmd.Clear(); // Clear write side
 			scene->Submit(); // write on write
 		}
 
-		clock_t endFrame = clock();
-		deltaTime += endFrame - beginFrame;
+		auto end = std::chrono::steady_clock::now();
+		auto diff = end - start;
+
 		frames++;
+		auto dt = std::chrono::duration<double, std::milli>(diff).count();
 
 		// trees.GetTransformationMatrix().rotateY(clockToMilliseconds(endFrame - beginFrame) / 500);
 		
-		if(endFrame - beginFrame > 0)
-       	 	fps = CLOCKS_PER_SEC / (endFrame - beginFrame);
+		if(dt > 0.f)
+       	 	fps = 1 / (dt * 1000.f);
 
 		if (fps > maxfps)
 			maxfps = fps;
@@ -419,7 +424,7 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 			minfps = fps;
 		
 		avgfps += fps;
-    	// printf("\033[1;32m[T2] Delta Time : %lf ms - FPS : %lu\r", clockToMilliseconds(endFrame - beginFrame), fps);
+    	//printf("\033[1;32m[T2] Delta Time : %lf ms - FPS : %lu\r", dt, fps);
 		//fflush(stdout);
 	}
 

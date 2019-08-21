@@ -10,9 +10,11 @@
 
 #include "RenderEngine/Scenegraph/Scene/Scene.hpp"
 #include "RenderEngine/Renderer/Frontend/Camera/Camera.hpp"
-#include "RenderEngine/Renderer/Backend/CommandPacket/CommandPacket.hpp"
+#include "RenderEngine/Renderer/Backend/RenderTarget/RenderTarget.hpp"
 #include "RenderEngine/Managers/ResourcesManager/ResourcesManager.hpp"
+#include "RenderEngine/Renderer/Backend/CommandPacket/CommandPacket.hpp"
 #include "RenderEngine/Renderer/Backend/CommandBuffer/ICommandBuffer/ICommandBuffer.hpp"
+
 
 TRE_NS_START
 
@@ -50,16 +52,24 @@ public:
 
     bool SwapCmdBuffer();
 
+	void PushRenderTarget(const RenderTarget& render_target);
+
+	void PopRenderTarget();
+
+	RenderTarget* GetRenderTarget(uint32 index);
 public:
-    uint32 m_StartLocation, m_SecondCurrent;
+	RenderTarget* m_RenderTargetStack;
+	uint32 m_StartLocation, m_SecondCurrent; 
     StateHash m_LastStateHash;
-    FboID m_MainFboID;
+	FboID m_RenderTargetCount;
     std::mutex mtx;
     std::condition_variable cv;
     bool m_IsReading;
     
-    CONSTEXPR static uint8  READ_CMD_BUFFER  = 0;
-    CONSTEXPR static uint8  WRITE_CMD_BUFFER = 1;
+    CONSTEXPR static uint8  READ_CMD_BUFFER		 = 0;
+    CONSTEXPR static uint8  WRITE_CMD_BUFFER	 = 1;
+	CONSTEXPR static uint8	NUMBER_OF_BUFFERS	 = 2;
+	CONSTEXPR static uint32 AUX_MEMORY		     = std::numeric_limits<FboID>::max() * sizeof(RenderTarget);
 };
 
 template<typename T>
