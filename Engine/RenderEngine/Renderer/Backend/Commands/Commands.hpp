@@ -4,6 +4,8 @@
 
 #include "RenderAPI/General/GLContext.hpp"
 #include "RenderAPI/Texture/Texture.hpp"
+#include "RenderAPI/FrameBuffer/FBO.hpp"
+#include "RenderAPI/RenderBuffer/RBO.hpp"
 
 #include "RenderEngine/Renderer/Common/Common.hpp"
 #include "RenderEngine/Variables/Variables/Variable.hpp"
@@ -81,6 +83,21 @@ struct Commands
         
         CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateTexture;
     };
+
+	struct CreateFrameBuffer
+	{
+		FramebufferSettings settings;
+		Framebuffer* fbo;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateFrameBuffer;
+	};
+
+	struct CreateRenderBuffer
+	{
+		RenderbufferSettings settings;
+		Renderbuffer* rbo;
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateRenderBuffer;
+	};
 };
 
 TRE_NS_END

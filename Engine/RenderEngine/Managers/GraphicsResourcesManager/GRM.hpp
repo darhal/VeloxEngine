@@ -9,9 +9,10 @@
 #include <RenderAPI/RenderBuffer/RBO.hpp>
 #include <RenderAPI/Texture/Texture.hpp>
 #include <RenderAPI/Shader/ShaderProgram.hpp>
+
 #include <RenderEngine/Materials/Material.hpp>
 #include <RenderEngine/Renderer/Common/Common.hpp>
-#include <RenderEngine/Renderer/Backend/StateGroups/StateGroup.hpp>
+#include <RenderEngine/Renderer/Backend/RenderTarget/RenderTarget.hpp>
 
 TRE_NS_START
 
@@ -40,21 +41,18 @@ public:
     //  Get Packed Array
     template<typename T>
     FORCEINLINE typename RMI<T>::Container& GetResourceContainer();
-
-    FORCEINLINE StateHash AddState(const StateGroup& state);
-
-    FORCEINLINE StateGroup& GetState(StateHash hash) const;
-
 private:
+
+	RMI<ShaderProgram>::Container m_Shaders;
+	RMI<Material>::Container m_Materials;
     RMI<Texture>::Container m_Textures;
+	
     RMI<VAO>::Container m_VAOs;
     RMI<VBO>::Container m_VBOs;
-    RMI<RBO>::Container m_RBOs;
-    RMI<FBO>::Container m_FBOs;
-    RMI<ShaderProgram>::Container m_Shaders;
-    RMI<Material>::Container m_Materials;
-    HashMap<StateHash, StateGroup, PROBING> m_StatesMap;
 
+	RMI<FBO>::Container m_FBOs;
+    RMI<RBO>::Container m_RBOs;
+	RMI<RenderTarget>::Container m_RenderTargets;
 };
 
 using GRM = GraphicsResourcesManager;

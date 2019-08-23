@@ -18,6 +18,29 @@ uint32 FBO::Generate()
 	return m_ID;
 }
 
+uint32 FBO::Generate(const FramebufferSettings& settings)
+{
+	Call_GL(glGenFramebuffers(1, &m_ID));
+	m_target = settings.target;
+
+	this->Use();
+
+	Call_GL(
+		for (const FramebufferSettings::TextureAttachement& tex_attach : settings.texture_attachments) {
+			glFramebufferTexture2D(m_target, tex_attach.texture_attachement + tex_attach.texture_attachment_id,
+				tex_attach.texture->GetBindingTarget(), tex_attach.texture->GetID(), tex_attach.mipmap_level);
+		}
+	);
+
+	if (settings.rbo != NULL) {
+		Call_GL(
+			glFramebufferRenderbuffer(m_target, settings.rbo_attachement, settings.rbo->GetBindingTarget(), settings.rbo->GetID())
+		);
+	}
+	
+	return m_ID;
+}
+
 bool FBO::IsComplete() const
 {
 	this->Use();

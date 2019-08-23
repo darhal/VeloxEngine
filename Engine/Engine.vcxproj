@@ -248,7 +248,6 @@
     <ClCompile Include="RenderAPI\VertexArray\VAO.cpp" />
     <ClCompile Include="RenderEngine\Loader\MaterialLoader.cpp" />
     <ClCompile Include="RenderEngine\Loader\MeshLoader.cpp" />
-    <ClCompile Include="RenderEngine\Managers\GraphicsResourcesManager\GRM.cpp" />
     <ClCompile Include="RenderEngine\Managers\RenderManager\RenderManager.cpp" />
     <ClCompile Include="RenderEngine\Managers\ResourcesManager\ResourcesManager.cpp" />
     <ClCompile Include="RenderEngine\Materials\AbstractMaterial\AbstractMaterial.cpp" />

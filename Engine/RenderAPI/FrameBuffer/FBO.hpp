@@ -2,10 +2,43 @@
 
 #include <Core/Context/GLDefines.hpp>
 #include <Core/Misc/Defines/Common.hpp>
+#include <Core/DataStructure/Vector/Vector.hpp>
 #include <RenderAPI/Common.hpp>
 #include <RenderAPI/RenderBuffer/RBO.hpp>
 
 TRE_NS_START
+
+struct FramebufferSettings
+{
+	struct TextureAttachement {
+		TextureAttachement(
+			Texture* tex,
+			FBOAttachement::framebuffer_attachement_t tex_attach = FBOAttachement::COLOR_ATTACH,
+			uint8 tex_attach_id = 0,
+			uint8 mipmap_level = 0) :
+			texture(tex), texture_attachement(tex_attach),
+			texture_attachment_id(tex_attach_id), mipmap_level(mipmap_level)
+		{}
+
+		Texture* texture = NULL;
+		FBOAttachement::framebuffer_attachement_t texture_attachement = FBOAttachement::COLOR_ATTACH;
+		uint8 texture_attachment_id = 0;
+		uint8 mipmap_level = 0;
+	};
+
+	FramebufferSettings(
+		const Vector<TextureAttachement>& tex_attachments = {},
+		FBOTarget::framebuffer_target_t target = FBOTarget::FBO,
+		RBO* rbo = NULL,
+		FBOAttachement::framebuffer_attachement_t rbo_attachement = FBOAttachement::DEPTH_STENCIL_ATTACH) :
+		texture_attachments(std::move(tex_attachments)), rbo(rbo), rbo_attachement(rbo_attachement), target(target)
+	{}
+
+	Vector<TextureAttachement> texture_attachments;
+	RBO* rbo = NULL;
+	FBOAttachement::framebuffer_attachement_t rbo_attachement = FBOAttachement::DEPTH_STENCIL_ATTACH;
+	FBOTarget::framebuffer_target_t target = FBOTarget::FBO;
+};
 
 typedef class FBO
 {
@@ -46,6 +79,8 @@ public:
 
 	uint32 Generate();
 
+	uint32 Generate(const FramebufferSettings& settings);
+
 	void Clean();
 
 	FORCEINLINE void Invalidate() { m_ID = 0; }
@@ -58,7 +93,7 @@ public:
 private:
 	uint32 m_ID;
 	int32 m_target;
-} FrameBuffer;
+} Framebuffer;
 
 FORCEINLINE const uint32 FBO::GetID() const
 {

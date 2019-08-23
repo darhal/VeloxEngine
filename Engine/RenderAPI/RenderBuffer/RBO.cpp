@@ -16,14 +16,19 @@ uint32 RBO::Generate()
 	return m_ID;
 }
 
-RBO::RBO(const RenderbufferSettings& settings)
+uint32 RBO::Generate(const RenderbufferSettings& settings)
 {
-	ASSERTF(settings.fbo == NULL, "Attempt to create RBO with settings without passing a valid FBO (settings.fbo is a nullptr).");
 	Call_GL(glGenRenderbuffers(1, &m_ID));
 	this->Use();
-	settings.fbo->Use();
-	Call_GL(glRenderbufferStorage(GL_RENDERBUFFER, settings.internal_format, settings.w, settings.h));
-	Call_GL(glFramebufferRenderbuffer(settings.fbo->GetTarget(), settings.attachement + settings.color_index, GL_RENDERBUFFER, m_ID));
+	Call_GL(glRenderbufferStorage(GL_RENDERBUFFER, settings.internal_format, settings.width, settings.height));
+	return m_ID;
+}
+
+RBO::RBO(const RenderbufferSettings& settings)
+{
+	Call_GL(glGenRenderbuffers(1, &m_ID));
+	this->Use();
+	Call_GL(glRenderbufferStorage(GL_RENDERBUFFER, settings.internal_format, settings.width, settings.height));
 }
 
 void RBO::SetStorage(uint32 w, uint32 h, RBOInternal::rbo_internal_format_t internal_format)

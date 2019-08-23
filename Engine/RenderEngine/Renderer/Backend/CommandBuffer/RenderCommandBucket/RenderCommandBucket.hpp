@@ -32,7 +32,6 @@ TRE_NS_START
 |-------------------------------------------------------------------------------------------|
 ********************************************************************************************/
 
-
 template<typename T>
 class RenderCommandBucket : public ICommandBuffer<RenderCommandBucket<T>, T, const Scene&>
 {
@@ -58,7 +57,7 @@ public:
 
 	RenderTarget* GetRenderTarget(uint32 index);
 public:
-	RenderTarget* m_RenderTargetStack;
+	RenderTarget* m_RenderTargetStack; // TODO: Probably make this in the manager, and retirved with an ID since it will be easier to manage and createand manage.
 	uint32 m_StartLocation, m_SecondCurrent; 
     StateHash m_LastStateHash;
 	FboID m_RenderTargetCount;

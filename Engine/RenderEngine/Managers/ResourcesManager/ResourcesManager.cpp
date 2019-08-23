@@ -6,7 +6,6 @@ ResourcesManager ResourcesManager::s_ManagerInstance = ResourcesManager();
 
 ResourcesManager::ResourcesManager()
 {
-    RenderSettings::DEFAULT_STATE_HASH = m_GRM.AddState(RenderSettings::DEFAULT_STATE);
     RenderSettings::DEFAULT_FRAMEBUFFER = m_GRM.Generate<FBO>();
 }
 

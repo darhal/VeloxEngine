@@ -12,6 +12,7 @@ class RBO;
 class VBO;
 class VAO;
 class ShaderProgram;
+struct RenderTarget;
 
 template<typename T>
 struct ResourceManagerInfo
@@ -37,6 +38,14 @@ struct ResourceManagerInfo<FBO>
     typedef typename Container::ID_t ID;
 };
 
+template<>
+struct ResourceManagerInfo<RenderTarget>
+{
+	typedef PackedArray<RenderTarget, 256, uint16, uint8> Container;
+	typedef typename Container::INDEX_t Index;
+	typedef typename Container::ID_t ID;
+};
+
 template<typename T>
 using RMI = ResourceManagerInfo<T>;
 
@@ -45,6 +54,7 @@ typedef RMI<VAO>::ID VaoID;
 typedef RMI<VBO>::ID VboID;
 typedef RMI<RBO>::ID RboID;
 typedef RMI<FBO>::ID FboID;
+typedef RMI<RenderTarget>::ID RenderTargetID;
 typedef RMI<ShaderProgram>::ID ShaderID;
 typedef RMI<Material>::ID MaterialID;
 typedef uint16 StateHash;
@@ -57,6 +67,9 @@ class RenderCommandBucket;
 template<typename T>
 class ResourcesCommandBucket;
 
+template<typename T>
+class FramebufferCommandBucket;
+
 namespace RenderSettings
 {
     extern StateGroup DEFAULT_STATE       ;
@@ -64,8 +77,9 @@ namespace RenderSettings
     extern uint8      BLEND_DISTANCE_BITS ;
     extern FboID      DEFAULT_FRAMEBUFFER ;
 
-    typedef RenderCommandBucket<uint64>     RenderCmdBuffer    ; 
-    typedef ResourcesCommandBucket<uint8>   ResourcesCmdBuffer ;
+    typedef RenderCommandBucket<uint64>			RenderCmdBuffer     ; 
+    typedef ResourcesCommandBucket<uint8>		ResourcesCmdBuffer  ;
+	typedef FramebufferCommandBucket<uint64>	FramebufferCmdBuffer;
 }
 
 TRE_NS_END

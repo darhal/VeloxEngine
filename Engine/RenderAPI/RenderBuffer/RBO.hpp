@@ -9,22 +9,17 @@ TRE_NS_START
 
 struct RenderbufferSettings
 {
-	RenderbufferSettings() : fbo(NULL), w(0), h(0), internal_format(RBOInternal::DEPTH24_STENCIL8), attachement(FBOAttachement::DEPTH_STENCIL_ATTACHMENT), color_index(0)
+	RenderbufferSettings() : width(0), height(0), internal_format(RBOInternal::DEPTH24_STENCIL8)
 	{}
 
 	RenderbufferSettings(
-		FBO&& fbo, uint32 w, uint32 h, 
-		RBOInternal::rbo_internal_format_t internal_format = RBOInternal::DEPTH24_STENCIL8,
-		FBOAttachement::framebuffer_attachement_t attach = FBOAttachement::DEPTH_STENCIL_ATTACHMENT, 
-		uint32 color_index = 0)
-		: fbo(&fbo), w(w), h(h), internal_format(internal_format), attachement(attach), color_index(color_index)
+		uint32 w, uint32 h, 
+		RBOInternal::rbo_internal_format_t internal_format = RBOInternal::DEPTH24_STENCIL8)
+		: width(w), height(h), internal_format(internal_format)
 	{}
 
-	FBO* fbo;
-	uint32 w, h;
+	uint32 width, height;
 	RBOInternal::rbo_internal_format_t internal_format;
-	FBOAttachement::framebuffer_attachement_t attachement;
-	uint8 color_index;
 };
 
 class FBO;
@@ -40,8 +35,10 @@ public:
 
 	uint32 Generate();
 
+	uint32 Generate(const RenderbufferSettings& settings);
+
 	void SetStorage(uint32 w, uint32 h, RBOInternal::rbo_internal_format_t internal_format = RBOInternal::rbo_internal_format_t::DEPTH24_STENCIL8);
-	void AttachToFBO(FBO* fbo, FBOAttachement::framebuffer_attachement_t attchement = FBOAttachement::DEPTH_STENCIL_ATTACHMENT, uint8 color_index = 0);
+	void AttachToFBO(FBO* fbo, FBOAttachement::framebuffer_attachement_t attchement = FBOAttachement::DEPTH_STENCIL_ATTACH, uint8 color_index = 0);
 
 	FORCEINLINE const uint32 GetID() const;
 	FORCEINLINE operator uint32() const;
@@ -95,6 +92,6 @@ FORCEINLINE RBO& RBO::operator=(RBO&& other)
 	return *this;
 }
 
-typedef RBO RenderBuffer;
+typedef RBO Renderbuffer;
 
 TRE_NS_END

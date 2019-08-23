@@ -6,6 +6,7 @@ void Renderer::Render(const Scene& scene)
 {
     m_ResourcesCommandBuffer.Submit();
     m_RenderCommandBuffer.Submit(scene);
+	m_FramebufferCommandBuffer.Submit();
 }
 
 void Renderer::Init()

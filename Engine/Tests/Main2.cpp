@@ -154,7 +154,7 @@ bool firstMouse = true;
 
 // camera
 Camera camera(vec3(0.0f, 0.0f, 3.0f));
-clock_t deltaTime = 0;
+double deltaTime = 0;
 double  frameRate = 30;
 double  averageFrameTimeMilliseconds = 33.333;
 bool vsync = true;
@@ -292,14 +292,15 @@ void RenderThread()
 	std::thread prepareThread(PrepareThread, &scene, &window);
 
 	clock_t fps = 0, avgfps = 0, maxfps = 0, minfps = 9999999;
+	double avgdt = 0, maxdt = 0, mindt = 9999999;
 	uint64 frames = 1;
 	Event ev;
 	printf("\n");
 
-	ResourcesManager::GetGRM().GetState(RenderSettings::DEFAULT_STATE_HASH).ApplyStates();
+	RenderSettings::DEFAULT_STATE.ApplyStates();
 	while (IsWindowOpen) {
 		// clock_t beginFrame = clock();
-		auto start = std::chrono::steady_clock::now();
+		auto start = std::chrono::high_resolution_clock::now();
 
 		if (window.getEvent(ev)) {
 			HandleEvent(&scene, ev);
@@ -318,32 +319,31 @@ void RenderThread()
 		scene.Render();
 
 		// clock_t endFrame = clock();
-		auto end = std::chrono::steady_clock::now();
+		auto end = std::chrono::high_resolution_clock::now();
 		auto diff = end - start;
 		auto dt = std::chrono::duration<double, std::milli>(diff).count();
 		deltaTime += dt;
-		// deltaTime += endFrame - beginFrame;		
-		frames++;
-	
-       	fps = 1 / (dt * 1000.f);
-		
-		if (fps > maxfps)
-			maxfps = fps;
-		
-		if (fps < minfps)
-			minfps = fps;
-		
-		avgfps += fps;
+		/*frames++;
+
+		fps = clock_t((1.f / dt) * 1000.f);
+
+		if (dt > maxdt)
+			maxdt = dt;
+
+		if (dt < mindt)
+			mindt = dt;
+
+		avgdt += dt;
 
 		printf("                                                    \r");
     	printf("\033[1;31m[T1] Delta Time : %lf ms - FPS : %lu\r", dt, fps);
-		fflush(stdout);
+		fflush(stdout);*/
 
 		window.Present();
 	}
 
 	prepareThread.join();
-	printf("\033[1;31m[T1] : MIN FPS = %u| MAX FPS = %u | AVG FPS = %u\n", (uint32) minfps, (uint32) maxfps, uint32(avgfps / frames));
+	printf("[T1] : MIN FPS = %lf | MAX FPS = %lf | AVG FPS = %lf\n", mindt, maxdt, avgdt / frames);
 	getchar();
 }
 
@@ -391,14 +391,40 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 
 	}
 	trees.GetTransformationMatrix().translate(vec3(0, 0, 6));
+
+
+	// Creating a frame buffer.
+	auto& res_buffer = RenderManager::GetRenderer().GetResourcesCommandBuffer();
+	TextureID tex_id = 0; FboID fbo_id;
+
+	Commands::CreateTexture* tex_cmd = res_buffer.AddCommand<Commands::CreateTexture>(0);
+	tex_cmd->texture = ResourcesManager::GetGRM().Create<Texture>(tex_id);
+	tex_cmd->settings = TextureSettings(TexTarget::TEX2D, SCR_WIDTH, SCR_HEIGHT, NULL,
+		Vector<TexParamConfig>{
+			{ TexParam::TEX_MIN_FILTER, TexFilter::LINEAR },
+			{ TexParam::TEX_MAG_FILTER, TexFilter::LINEAR }
+		}
+	);
+
+	Commands::CreateRenderBuffer* rbo_cmd = res_buffer.AppendCommand<Commands::CreateRenderBuffer>(tex_cmd);
+	rbo_cmd->rbo = ResourcesManager::GetGRM().Create<RBO>(tex_id);
+	rbo_cmd->settings = RenderbufferSettings(SCR_WIDTH, SCR_HEIGHT);
+
+	Commands::CreateFrameBuffer* fbo_cmd = res_buffer.AppendCommand<Commands::CreateFrameBuffer>(rbo_cmd);
+	fbo_cmd->fbo = ResourcesManager::GetGRM().Create<FBO>(fbo_id);
+	fbo_cmd->settings = FramebufferSettings({ tex_cmd->texture }, FBOTarget::FBO, rbo_cmd->rbo);
+	//RenderManager::GetRenderer().GetRenderCommandBuffer().PopRenderTarget();
+	//RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(fbo_id, SCR_WIDTH, SCR_HEIGHT));
 	
 	clock_t fps = 0, avgfps = 0, maxfps = 0, deltaTime = 0, minfps = 9999999;
 	uint64 frames = 1;
+	double avgdt = 0, maxdt = 0, mindt = 9999999;
+
 	// Event ev;
 	// printf("\n");
 	while(IsWindowOpen){
 		//clock_t beginFrame = clock();
-		auto start = std::chrono::steady_clock::now();
+		//auto start = std::chrono::high_resolution_clock::now();
 
 		auto& render_cmd = RenderManager::GetRenderer().GetRenderCommandBuffer();
 		if(render_cmd.SwapCmdBuffer()){
@@ -406,29 +432,25 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 			scene->Submit(); // write on write
 		}
 
-		auto end = std::chrono::steady_clock::now();
-		auto diff = end - start;
-
-		frames++;
-		auto dt = std::chrono::duration<double, std::milli>(diff).count();
-
 		// trees.GetTransformationMatrix().rotateY(clockToMilliseconds(endFrame - beginFrame) / 500);
 		
-		if(dt > 0.f)
-       	 	fps = 1 / (dt * 1000.f);
+		/*auto end = std::chrono::high_resolution_clock::now();
+		auto diff = end - start;
+		auto dt = std::chrono::duration<double, std::milli>(diff).count();
+		frames++;
 
-		if (fps > maxfps)
-			maxfps = fps;
-		
-		if (fps < minfps)
-			minfps = fps;
-		
-		avgfps += fps;
-    	//printf("\033[1;32m[T2] Delta Time : %lf ms - FPS : %lu\r", dt, fps);
-		//fflush(stdout);
+		// fps = clock_t((1.f / dt) * 1000.f);
+
+		if (dt > maxdt)
+			maxdt = dt;
+
+		if (dt < mindt)
+			mindt = dt;
+
+		avgdt += dt;*/
 	}
 
-	printf("\n\033[1;32m[T2] : MIN FPS = %u| MAX FPS = %u | AVG FPS = %u\n", (uint32) minfps, (uint32) maxfps, uint32(avgfps / frames));
+	printf("[T2] : MIN FPS = %lf | MAX FPS = %lf | AVG FPS = %lf\n", mindt, maxdt, avgdt / frames);
 }
 
 void output(int x)
@@ -443,7 +465,7 @@ int main()
 
 void PrintScreenshot()
 {
-	Color* pixels = new Color[SCR_WIDTH*SCR_HEIGHT];
+	Color* pixels = new Color[SCR_WIDTH * SCR_HEIGHT];
 	glReadPixels(0, 0, SCR_WIDTH, SCR_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	Image img = Image(SCR_WIDTH, SCR_HEIGHT, pixels);
 	img.Save("test.png", ImageFileFormat::PNG);

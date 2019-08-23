@@ -84,20 +84,8 @@ FORCEINLINE typename RMI<Material>::Container& GraphicsResourcesManager::GetReso
     return m_Materials;
 }
 
-FORCEINLINE StateHash GraphicsResourcesManager::AddState(const StateGroup& state)
+template<>
+FORCEINLINE typename RMI<RenderTarget>::Container& GraphicsResourcesManager::GetResourceContainer<RenderTarget>()
 {
-    StateHash hash = state.GetHash();
-    m_StatesMap.Emplace(hash, state);
-    return hash;
-
-}
-
-FORCEINLINE StateGroup& GraphicsResourcesManager::GetState(StateHash hash) const
-{
-    StateGroup* group = m_StatesMap.Get(hash);
-
-    if (group == NULL)
-        return RenderSettings::DEFAULT_STATE;
-    
-    return *group;
+	return m_RenderTargets;
 }

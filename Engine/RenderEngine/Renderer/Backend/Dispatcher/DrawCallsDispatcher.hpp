@@ -17,6 +17,10 @@ struct BackendDispatch
     static void GenerateIndex(const void* data);
     
     static void CreateTexture(const void* data);
+
+	static void CreateFrameBuffer(const void* data);
+
+	static void CreateRenderBuffer(const void* data);
 };
 
 

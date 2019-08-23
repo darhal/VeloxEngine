@@ -9,6 +9,12 @@ TRE_NS_START
 
 struct RenderTarget
 {
+	RenderTarget() {}
+
+	RenderTarget(FboID id, uint16 width, uint16 height, Mat4f projection = Mat4f(), Mat4f view = Mat4f()) :
+		m_Projection(projection), m_View(view), m_Width(width), m_Height(height), m_FboID(id)
+	{}
+
 	Mat4f m_Projection;
 	Mat4f m_View;
 	uint16 m_Width, m_Height;

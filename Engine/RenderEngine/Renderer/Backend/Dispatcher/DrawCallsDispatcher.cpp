@@ -87,9 +87,27 @@ void BackendDispatch::CreateTexture(const void* data)
 {
     const Commands::CreateTexture* real_data = reinterpret_cast<const Commands::CreateTexture*>(data);
     Texture* tex = real_data->texture;
-    const TextureSettings& texture = real_data->settings;
+    const TextureSettings& settings = real_data->settings;
 
-    tex->Generate(texture);
+    tex->Generate(settings);
+}
+
+void BackendDispatch::CreateFrameBuffer(const void * data)
+{
+	const Commands::CreateFrameBuffer* real_data = reinterpret_cast<const Commands::CreateFrameBuffer*>(data);
+	Framebuffer* fbo = real_data->fbo;
+	const FramebufferSettings& settings = real_data->settings;
+
+	fbo->Generate(settings);
+}
+
+void BackendDispatch::CreateRenderBuffer(const void * data)
+{
+	const Commands::CreateRenderBuffer* real_data = reinterpret_cast<const Commands::CreateRenderBuffer*>(data);
+	Renderbuffer* rbo = real_data->rbo;
+	const RenderbufferSettings& settings = real_data->settings;
+
+	rbo->Generate(settings);
 }
 
 TRE_NS_END

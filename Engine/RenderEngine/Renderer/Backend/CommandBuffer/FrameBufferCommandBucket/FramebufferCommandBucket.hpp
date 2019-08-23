@@ -18,11 +18,10 @@ public:
     typedef T Key;
     typedef ICommandBuffer<FramebufferCommandBucket<T>, T> BaseClass;
 
-    struct FrameBufferPiriority
-	{
+    struct FrameBufferPiriority {
         typedef uint8 Piroirty_t;
 
-		FboID fbo_id = RenderSettings::DEFAULT_FRAMEBUFFER;
+		RenderTargetID render_target_id = RenderSettings::DEFAULT_FRAMEBUFFER;
 		Piroirty_t pirority = 0;
 	};
 
@@ -58,7 +57,6 @@ FramebufferCommandBucket<T>::FramebufferCommandBucket() :
     m_StartLocation(BaseClass::DEFAULT_MAX_ELEMENTS), 
     m_SecondCurrent(BaseClass::DEFAULT_MAX_ELEMENTS), 
     m_LastStateHash(RenderSettings::DEFAULT_STATE_HASH),
-    m_MainFboID(RenderSettings::DEFAULT_FRAMEBUFFER),
     mtx(),
     cv(),
     m_IsReading(false)
@@ -67,44 +65,39 @@ FramebufferCommandBucket<T>::FramebufferCommandBucket() :
 }
 
 template<typename T>
-typename FramebufferCommandBucket<T>::Key FramebufferCommandBucket<T>::GenerateKey(
+typename FramebufferCommandBucket<T>::Key FramebufferCommandBucket<T>::GenerateKey
+	(
         FrameBufferPiriority fbo_piriority, 
         typename RMI<ShaderProgram>::ID shaderID, 
         typename RMI<VAO>::ID vaoID, 
-        typename RMI<Material>::ID matID) const
+        typename RMI<Material>::ID matID
+	) const
 {
     Key key = 0;
 
     typename FrameBufferPiriority::Piroirty_t pirority = fbo_piriority.pirority;
-    RMI<FBO>::Index fbo_id = ResourcesManager::GetGRM().GetResourceContainer<FBO>().CompressID(fbo_piriority.fbo_id);
+    RMI<RenderTarget>::Index rt_id = ResourcesManager::GetGRM().GetResourceContainer<RenderTarget>().CompressID(fbo_piriority.render_target_id);
     RMI<ShaderProgram>::Index sid = ResourcesManager::GetGRM().GetResourceContainer<ShaderProgram>().CompressID(shaderID);
     RMI<VAO>::Index vao_id  = ResourcesManager::GetGRM().GetResourceContainer<VAO>().CompressID(vaoID);
     RMI<Material>::Index mat_id = ResourcesManager::GetGRM().GetResourceContainer<Material>().CompressID(matID);
 
-#if ENDIANNESS == LITTLE_ENDIAN
     key = 
-        (Key(pirority) << (sizeof(mat_id) + sizeof(vao_id) + sizeof(sid) + sizeof(fbo_id)) * BITS_PER_BYTE) | 
-        (Key(fbo_id)   << (sizeof(mat_id) + sizeof(vao_id) + sizeof(sid)) * BITS_PER_BYTE) | 
+        (Key(pirority) << (sizeof(mat_id) + sizeof(vao_id) + sizeof(sid) + sizeof(rt_id)) * BITS_PER_BYTE) |
+        (Key(rt_id)    << (sizeof(mat_id) + sizeof(vao_id) + sizeof(sid)) * BITS_PER_BYTE) |
         (Key(sid)      << (sizeof(mat_id) + sizeof(vao_id)) * BITS_PER_BYTE) | 
         (Key(vao_id)   << (sizeof(mat_id) * BITS_PER_BYTE)) | 
         Key(mat_id);
-#else
-    key = (Key(vao_id) << (sizeof(vao_id) + sizeof(sid)) * BITS_PER_BYTE) | (Key(mat_id) << (sizeof(sid) * BITS_PER_BYTE)) | Key(sid);
-#endif
 
-    // printf("\033[1;31m* Encode : ShaderID = %d | vaoID = %d| matID = %d |-->Key = %lu\n", sid, vao_id, mat_id, key);
     return key;
 }
 
 template<typename T>
 void FramebufferCommandBucket<T>::DecodeKey(Key key, FrameBufferPiriority& fbo_piriority, typename RMI<ShaderProgram>::ID& shaderID, typename RMI<VAO>::ID& vaoID, typename RMI<Material>::ID& matID) const
-{
-#if ENDIANNESS == LITTLE_ENDIAN
-    
+{    
     fbo_piriority.pirority = FrameBufferPiriority::Piroirty_t(
-        key >> (sizeof(RMI<VAO>::Index) + sizeof(RMI<Material>::Index) + sizeof(RMI<ShaderProgram>::Index) + sizeof(RMI<FBO>::Index)) * BITS_PER_BYTE);
+        key >> (sizeof(RMI<VAO>::Index) + sizeof(RMI<Material>::Index) + sizeof(RMI<ShaderProgram>::Index) + sizeof(RMI<RenderTarget>::Index)) * BITS_PER_BYTE);
 
-    fbo_piriority.fbo_id = ResourcesManager::GetGRM().GetResourceContainer<FBO>().CompressID(
+    fbo_piriority.render_target_id = ResourcesManager::GetGRM().GetResourceContainer<FBO>().CompressID(
         RMI<FBO>::ID(key >> (sizeof(RMI<VAO>::Index) + sizeof(RMI<Material>::Index) + sizeof(RMI<ShaderProgram>::Index)) * BITS_PER_BYTE));
 
     shaderID = ResourcesManager::GetGRM().GetResourceContainer<ShaderProgram>().CompressID(
@@ -115,19 +108,11 @@ void FramebufferCommandBucket<T>::DecodeKey(Key key, FrameBufferPiriority& fbo_p
 
     matID = ResourcesManager::GetGRM().GetResourceContainer<Material>().CompressID(
         RMI<Material>::ID(key));
-
-#else
-    key = (Key(vao_id) << (sizeof(uint16) + sizeof(shader_id_encoding)) * BITS_PER_BYTE) | (Key(mat_id) << (sizeof(shader_id_encoding) * BITS_PER_BYTE)) | Key(sid);
-#endif
-
-    // printf("\033[1;32m* Decode : ShaderID = %d | vaoID = %d| matID = %d |-->Key = %lu\n", shaderID, vaoID, matID, key);
 }
 
 template<typename T>
 void FramebufferCommandBucket<T>::Submit()
 {
-    Mat4f pv = scene.GetProjectionMatrix() * scene.GetCurrentCamera().GetViewMatrix();
-
     Key lastKey = -1;
     MaterialID lastMatID = -1;
     VaoID lastVaoID = -1;
@@ -136,6 +121,9 @@ void FramebufferCommandBucket<T>::Submit()
     ShaderProgram* lastShader = NULL;
     const uint32 max = m_SecondCurrent;
     const uint32 start = m_StartLocation;
+	Mat4f pv;
+	GRM& resources_manager = ResourcesManager::GetGRM();
+	
 
     // printf("(READER THREAD) SUBMIT : Start = %d TO %d\n", start, max);
 
@@ -153,27 +141,30 @@ void FramebufferCommandBucket<T>::Submit()
             FrameBufferPiriority fbo_pirority;
             this->DecodeKey(key, fbo_pirority, shaderID, vaoID, matID);
 
-            if (fbo_pirority.fbo_id != lastFbo_pirority.fbo_id){
-                FBO& current_fbo = ResourcesManager::GetGRM().Get<FBO>(fbo_pirority.fbo_id);
+            if (fbo_pirority.render_target_id != lastFbo_pirority.render_target_id){
+				RenderTarget& current_rt = resources_manager.Get<RenderTarget>(fbo_pirority.render_target_id);
+				pv = current_rt.m_Projection * current_rt.m_View;
+				glViewport(0, 0, current_rt.m_Width, current_rt.m_Height);
+				FBO& current_fbo = resources_manager.Get<FBO>(current_rt.m_FboID);
                 current_fbo.Use();
                 lastFbo_pirority = fbo_pirority;
             }
 
             if (shaderID != lastShaderID){
-                lastShader = &ResourcesManager::GetGRM().Get<ShaderProgram>(shaderID);
+                lastShader = &resources_manager.Get<ShaderProgram>(shaderID);
                 lastShader->Bind();
-                lastShader->SetVec3("viewPos", scene.GetCurrentCamera().Position);
+                // lastShader->SetVec3("viewPos", scene.GetCurrentCamera().Position);
                 lastShaderID = shaderID;
             }
 
             if (vaoID != lastVaoID){
-                VAO& vao = ResourcesManager::GetGRM().Get<VAO>(vaoID);
+                VAO& vao = resources_manager.Get<VAO>(vaoID);
                 vao.Bind();
                 lastVaoID = vaoID;
             }
-
+			
             if(matID != lastMatID){
-                Material& material = ResourcesManager::GetGRM().Get<Material>(matID);
+                Material& material = resources_manager.Get<Material>(matID);
 
                 StateGroup& state_grp = material.GetRenderStates();
                 StateHash stateHash = state_grp.GetHash();
@@ -183,7 +174,7 @@ void FramebufferCommandBucket<T>::Submit()
                 }
 
                 if (!lastShader){
-                    lastShader = &ResourcesManager::GetGRM().Get<ShaderProgram>(material.GetTechnique().GetShaderID());
+                    lastShader = &resources_manager.Get<ShaderProgram>(material.GetTechnique().GetShaderID());
                     lastShader->Bind();
                 }
 
