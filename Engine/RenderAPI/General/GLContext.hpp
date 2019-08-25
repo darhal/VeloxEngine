@@ -204,12 +204,17 @@ FORCEINLINE static void ClearColor(const Vec<4, float, SIMD>& col)
 	Call_GL(glClearColor(r.x, r.y, r.z, r.w));
 }
 
-/*FORCEINLINE void ClearColor(float r, float g, float b, float a)
+FORCEINLINE static void ClearColor(float r, float g, float b, float a)
 {
 	glClearColor(r, g, b, a);
-}*/
+}
 
 FORCEINLINE static void Clear(Buffer::buffer_t buffers = Buffer::COLOR | Buffer::DEPTH)
+{
+	Call_GL(glClear(buffers));
+}
+
+FORCEINLINE static void ClearBuffers(Buffer::buffer_t buffers = Buffer::COLOR | Buffer::DEPTH)
 {
 	Call_GL(glClear(buffers));
 }

@@ -22,7 +22,7 @@ void Technique::UploadUnfiroms(const ShaderProgram& program) const
         Texture& active_tex = ResourcesManager::GetGRM().Get<Texture>(uniform_data.second);
         program.SetInt(uniform_data.first, i);
         glActiveTexture(GL_TEXTURE0 + i);
-        active_tex.Bind();
+        active_tex.Use();
         i++;
     }
 }

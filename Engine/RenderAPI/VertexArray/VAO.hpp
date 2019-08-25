@@ -153,7 +153,7 @@ FORCEINLINE void VAO::Clean()
 template<typename T>
 void VAO::BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, uint32 stride, intptr offset)
 {
-	this->Bind();
+	this->Use();
 	Call_GL(
 		glEnableVertexAttribArray(attribute)
 	);

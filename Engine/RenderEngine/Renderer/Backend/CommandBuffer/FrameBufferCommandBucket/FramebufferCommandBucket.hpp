@@ -143,9 +143,8 @@ void FramebufferCommandBucket<T>::Submit()
 				glViewport(0, 0, current_rt.m_Width, current_rt.m_Height);
 				FBO& current_fbo = resources_manager.Get<FBO>(current_rt.m_FboID);
                 current_fbo.Use();
-				printf("Current FBO : %d\n", current_fbo.GetID());
 				ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
-				Clear();
+				ClearBuffers();
                 lastFbo_pirority = fbo_pirority;
             }
 
@@ -179,7 +178,7 @@ void FramebufferCommandBucket<T>::Submit()
 
                 //lastShader->SetMat4("MVP", pv * *(command->model));
 		        //lastShader->SetMat4("model", *command->model);
-                material.GetTechnique().UploadUnfiroms(*lastShader);
+                material.GetTechnique().UploadUnfiroms();
                 lastMatID = matID;
             }
         }

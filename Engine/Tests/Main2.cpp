@@ -225,6 +225,74 @@ void DoJobs2(TaskExecutor* ts, int8 x)
 
 std::atomic<uint8> IsWindowOpen;
 
+
+void LoadObjects(Scene* scene)
+{
+	String mesh_file_path;
+	StaticMesh deagle;
+	{
+		mesh_file_path.Clear();
+		mesh_file_path = "res/obj/lowpoly/deagle.obj";
+		// res_dir.SearchRecursive("deagle.obj", mesh_file_path);
+		MeshLoader obj_loader(mesh_file_path.Buffer());
+		obj_loader.GetMaterialLoader().GetMaterialFromName("Fire.001").GetRenderStates().blend_enabled = true;
+		obj_loader.GetMaterialLoader().GetMaterialFromName("Fire.001").GetRenderStates().cull_enabled = false;
+		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
+		loader.ProcessData(deagle);
+		scene->AddMeshInstance(&deagle);
+	}
+
+	StaticMesh carrot_box;
+	{
+		mesh_file_path.Clear();
+		mesh_file_path = "res/obj/lowpoly/carrot_box.obj";
+		// res_dir.SearchRecursive("carrot_box.obj", mesh_file_path);
+		MeshLoader obj_loader(mesh_file_path.Buffer());
+		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
+		loader.ProcessData(carrot_box, 1);
+		scene->AddMeshInstance(&carrot_box);
+
+	}
+	carrot_box.GetTransformationMatrix().translate(LightPos - vec3(-5, 0, 0));
+
+	StaticMesh trees;
+	{
+		mesh_file_path.Clear();
+		mesh_file_path = "res/obj/lowpoly/all_combined_smooth.obj";
+		//res_dir.SearchRecursive("all_combined_smooth.obj", mesh_file_path);
+		MeshLoader obj_loader(mesh_file_path.Buffer());
+		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
+		loader.ProcessData(trees, 1);
+		scene->AddMeshInstance(&trees);
+
+	}
+	trees.GetTransformationMatrix().translate(vec3(0, 0, 6));
+
+	float planeVertices[] = {
+		// positions          // texture Coords 
+		 5.0f, -0.5f,  5.0f,  
+		-5.0f, -0.5f,  5.0f,
+		-5.0f, -0.5f, -5.0f,
+
+		 5.0f, -0.5f,  5.0f,
+		-5.0f, -0.5f, -5.0f,
+		 5.0f, -0.5f, -5.0f,  
+	};
+
+	float planeTexCoords[] = {
+		2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f,
+		2.0f, 0.0f, 0.0f, 2.0f, 2.0f, 2.0f
+	};
+
+	uint32 indices[] = { 0, 1, 2, 3, 4, 5 };
+
+	StaticMesh plane;
+	ModelSettings settings(planeVertices, planeTexCoords, planeVertices);
+	ModelLoader loader(settings, indices);
+	loader.ProcessData(plane);
+	scene->AddMeshInstance(&plane);
+}
+
 void RenderThread()
 {
 	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 3.3)", WindowStyle::Resize);
@@ -257,7 +325,7 @@ void RenderThread()
 	
 	ShaderProgram& shader = ResourcesManager::GetGRM().Get<ShaderProgram>(scrShader);
 	shader.BindAttriute(0, "aPos");
-	shader.BindAttriute(2, "aTexCoord");
+	shader.BindAttriute(1, "aTexCoord");
 	shader.LinkProgram();
 	shader.SetInt(shader.AddUniform("screenTexture").second, 0);
 
@@ -323,8 +391,7 @@ void RenderThread()
 		vertexUBO.SubFillData(scene.GetProjectionMatrix(), 0, sizeof(mat4));
 		vertexUBO.SubFillData(&view, sizeof(mat4), sizeof(mat4));
 		vertexUBO.Unbind();
-		
-		// scene.Render();
+
 		RenderManager::GetRenderer().Render(scene);
 
 		// clock_t endFrame = clock();
@@ -361,6 +428,7 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 #if defined(OS_LINUX)
 	Directory res_dir("res/");
 #endif
+	// LoadObjects(scene);
 	String mesh_file_path;
 	StaticMesh deagle;
 	{
@@ -401,7 +469,37 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 	}
 	trees.GetTransformationMatrix().translate(vec3(0, 0, 6));
 
-	float planeVertices[] = { // positions      
+	
+		float planeVertices[] = {
+			// positions          // texture Coords 
+			 5.0f, -0.5f,  5.0f,
+			-5.0f, -0.5f,  5.0f,
+			-5.0f, -0.5f, -5.0f,
+
+			 5.0f, -0.5f,  5.0f,
+			-5.0f, -0.5f, -5.0f,
+			 5.0f, -0.5f, -5.0f,
+		};
+
+		float planeTexCoords[] = {
+			2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f,
+			2.0f, 0.0f, 0.0f, 2.0f, 2.0f, 2.0f
+		};
+
+		uint32 indices2[] = { 0, 1, 2, 3, 4, 5 };
+
+		StaticMesh plane;
+		ModelSettings settings2(planeVertices, planeTexCoords, planeVertices);
+		ModelLoader loader2(settings2, indices2);
+		loader2.GetMaterials().PopBack();
+		AbstractMaterial abst_mat2;
+		abst_mat2.GetRenderStates().cull_enabled = false;
+		loader2.GetMaterials().EmplaceBack(abst_mat2, loader2.GetVertexCount());
+		loader2.ProcessData(plane);
+		scene->AddMeshInstance(&plane);
+	
+
+	float quadVertices[] = { // positions      
 		// positions  
 		-1.0f, 1.0f, 0.f, 
 		-1.0f, -1.0f, 0.f,
@@ -411,20 +509,26 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 		1.0f,  1.0f, 0.f,
 	};
 
-	float planeTexCoords[] = { // texture Coords 
-		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f
+	float quadTexCoords[] = { // texture Coords 
+		0.0f, 1.0f, 
+		0.0f, 0.0f,
+		1.0f, 0.0f, 
+		0.0f, 1.0f, 
+		1.0f, 0.0f, 
+		1.0f, 1.0f
 	};
 
 	uint32 indices[] = {0, 1, 2, 3, 4, 5};
 
-	StaticMesh plane;
+	StaticMesh quad;
 	ModelSettings settings;
-	settings.vertices = planeVertices;
-	settings.vertexSize = ARRAY_SIZE(planeVertices);
-	settings.normals = planeVertices;
-	settings.normalSize = ARRAY_SIZE(planeVertices);
+	settings.vertices = quadVertices;
+	settings.vertexSize = ARRAY_SIZE(quadVertices);
+	settings.textures = quadTexCoords;
+	settings.textureSize = ARRAY_SIZE(quadTexCoords);
 
 	ModelLoader loader(settings, indices);
+	loader.GetMaterials().PopBack();
 
 	// Creating a frame buffer.
 	auto& res_buffer = RenderManager::GetRenderer().GetResourcesCommandBuffer();
@@ -432,17 +536,20 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 	Commands::CreateTexture* tex_cmd = res_buffer.AddCommand<Commands::CreateTexture>(0);
 	tex_cmd->texture = ResourcesManager::GetGRM().Create<Texture>(tex_id);
 	tex_cmd->settings = TextureSettings(TexTarget::TEX2D, SCR_WIDTH, SCR_HEIGHT, NULL,
-		Vector<TexParamConfig> {
+		Vector<TexParamConfig>{
 			{ TexParam::TEX_MIN_FILTER, TexFilter::LINEAR },
 			{ TexParam::TEX_MAG_FILTER, TexFilter::LINEAR }
 		}
 	);
+
 	AbstractMaterial abst_mat;
+	abst_mat.GetRenderStates().depth_enabled = false;
+	// abst_mat.GetRenderStates().poly_mode = PolygonMode::polygon_mode_t::LINE;
 	ShaderID shaderID = 2;
 	abst_mat.GetParametres().AddParameter<TextureID>("screenTexture", tex_id);
 	loader.GetMaterials().EmplaceBack(abst_mat, loader.GetVertexCount());
-	loader.ProcessData(plane, shaderID);
-	scene->AddMeshInstance(&plane);
+	loader.ProcessData(quad, shaderID);
+	// scene->AddMeshInstance(&plane); // Dont add it!
 
 	Commands::CreateRenderBuffer* rbo_cmd = res_buffer.AppendCommand<Commands::CreateRenderBuffer>(tex_cmd);
 	rbo_cmd->rbo = ResourcesManager::GetGRM().Create<RBO>(tex_id);
@@ -452,20 +559,21 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 	fbo_cmd->settings = FramebufferSettings({ tex_cmd->texture }, FBOTarget::FBO, rbo_cmd->rbo);
 
 	// Setting up render targets.
-	//RenderManager::GetRenderer().GetRenderCommandBuffer().PopRenderTarget();
-	//RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(fbo_id, SCR_WIDTH, SCR_HEIGHT));
+	RenderManager::GetRenderer().GetRenderCommandBuffer().PopRenderTarget();
+	RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(fbo_id, SCR_WIDTH, SCR_HEIGHT));
+
 	Renderer::FramebufferCmdBuffer::FrameBufferPiriority f;
 	RenderTarget* rt = ResourcesManager::GetGRM().Create<RenderTarget>(f.render_target_id);
-	rt->m_Height = SCR_HEIGHT;
 	rt->m_Width = SCR_WIDTH;
-	auto key = RenderManager::GetRenderer().GetFramebufferCommandBuffer().GenerateKey(f, shaderID, plane.GetVaoID(), plane.GetSubMeshes().At(0).m_MaterialID);
+	rt->m_Height = SCR_HEIGHT;
+	auto key = RenderManager::GetRenderer().GetFramebufferCommandBuffer().GenerateKey(f, shaderID, quad.GetVaoID(), quad.GetSubMeshes().At(0).m_MaterialID);
 	auto cmd = RenderManager::GetRenderer().GetFramebufferCommandBuffer().AddCommand<Commands::DrawIndexedCmd>(key);
-	auto& obj = plane.GetSubMeshes().At(0);
+	auto& obj = quad.GetSubMeshes().At(0);
 	cmd->mode = obj.m_Geometry.m_Primitive;
 	cmd->type = obj.m_Geometry.m_DataType;
 	cmd->count = obj.m_Geometry.m_Count;
 	cmd->offset = obj.m_Geometry.m_Offset;
-	cmd->model = &plane.GetTransformationMatrix();
+	cmd->model = &quad.GetTransformationMatrix();
 	RenderManager::GetRenderer().GetFramebufferCommandBuffer().SwapCmdBuffer();
 
 	clock_t fps = 0, avgfps = 0, maxfps = 0, deltaTime = 0, minfps = 9999999;

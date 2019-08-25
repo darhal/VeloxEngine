@@ -29,6 +29,8 @@ public:
 
     FORCEINLINE StateGroup& GetRenderStates();
 
+	FORCEINLINE const String& GetName() const;
+
 	void GenerateShader();
 
 	void Setup(const AbstractMaterial& abstract_material, ShaderID shader_id = 0);
@@ -37,7 +39,7 @@ public:
 
 	NULL_COPY_AND_ASSIGN(Material);
 
-public:
+private:
 	Technique m_Technique;
 	StateGroup m_StateGroup;
 	String m_Name;
@@ -77,6 +79,11 @@ FORCEINLINE const StateGroup& Material::GetRenderStates() const
 FORCEINLINE StateGroup& Material::GetRenderStates()
 {
     return m_StateGroup;
+}
+
+FORCEINLINE const String& Material::GetName() const
+{
+	return m_Name;
 }
 
 TRE_NS_END

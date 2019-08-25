@@ -59,11 +59,10 @@ void RenderCommandBucket<T>::Submit(const Scene& scene)
 
 		const RenderTarget& render_target = m_RenderTargetStack[current_target];
 		const FBO& fbo = ResourcesManager::GetGRM().Get<FBO>(render_target.m_FboID);
-		// glViewport(0, 0, render_target.m_Width, render_target.m_Height);
+		glViewport(0, 0, render_target.m_Width, render_target.m_Height);
 		fbo.Use();
-		printf("FBO : %d\n", fbo.GetID());
 		ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
-		Clear();
+		ClearBuffers();
 
 		Mat4f pv = scene.GetProjectionMatrix() * scene.GetCurrentCamera().GetViewMatrix();
 

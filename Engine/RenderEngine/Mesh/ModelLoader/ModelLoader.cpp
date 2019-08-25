@@ -143,6 +143,8 @@ Commands::CreateVAO* ModelLoader::LoadFromVector(Vector<vec3>& vertices, Vector<
 {
 	ASSERTF((vertices.Size() == 0), "Attempt to create a ModelLoader with empty vertecies!");
 	
+	typename RMI<VBO>::ID vboID;
+	uint8 layout = 0;
 	VAO* modelVAO = ResourcesManager::GetGRM().Create<VAO>(m_VaoID);
 
 	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();
@@ -152,11 +154,10 @@ Commands::CreateVAO* ModelLoader::LoadFromVector(Vector<vec3>& vertices, Vector<
 	create_vao_cmd->settings = VertexSettings();
 
 	//Fill vertex:
-	typename RMI<VBO>::ID vboID;
 	VBO* vertexVBO = ResourcesManager::GetGRM().Create<VBO>(vboID);
 	m_VboIDs.EmplaceBack(vboID);
 	create_vao_cmd->settings.vertices_data.EmplaceBack(vertices, vertexVBO);
-	create_vao_cmd->settings.attributes.EmplaceBack(0, 3, 0, 0);
+	create_vao_cmd->settings.attributes.EmplaceBack(layout, 3, 0, 0);
 
 	// Fill normals if availble
 	if (normals != NULL && normals->Size() != 0) {
@@ -164,7 +165,7 @@ Commands::CreateVAO* ModelLoader::LoadFromVector(Vector<vec3>& vertices, Vector<
 		m_VboIDs.EmplaceBack(vboID);
 
 		create_vao_cmd->settings.vertices_data.EmplaceBack(*normals, normalVBO);
-		create_vao_cmd->settings.attributes.EmplaceBack(1, 3, 0, 0);
+		create_vao_cmd->settings.attributes.EmplaceBack(++layout, 3, 0, 0);
 	}
 
 	// Fill Texture if availble
@@ -173,7 +174,7 @@ Commands::CreateVAO* ModelLoader::LoadFromVector(Vector<vec3>& vertices, Vector<
 		m_VboIDs.EmplaceBack(vboID);
 
 		create_vao_cmd->settings.vertices_data.EmplaceBack(*textures, textureVBO);
-		create_vao_cmd->settings.attributes.EmplaceBack(2, 2, 0, 0);
+		create_vao_cmd->settings.attributes.EmplaceBack(++layout, 2, 0, 0);
 	}
 
 	return create_vao_cmd;
@@ -213,6 +214,7 @@ Commands::CreateVAO* ModelLoader::LoadFromSettings(const ModelSettings& settings
 	ASSERTF((settings.vertexSize == 0 || settings.vertices == NULL), "Attempt to create a ModelLoader with empty vertecies!");
 
 	typename RMI<VBO>::ID vboID;
+	uint8 layout = 0;
 	VAO* modelVAO = ResourcesManager::GetGRM().Create<VAO>(m_VaoID);
 
 	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();
@@ -225,7 +227,7 @@ Commands::CreateVAO* ModelLoader::LoadFromSettings(const ModelSettings& settings
 	VBO* vertexVBO = ResourcesManager::GetGRM().Create<VBO>(vboID);
 	m_VboIDs.EmplaceBack(vboID);
 	create_vao_cmd->settings.vertices_data.EmplaceBack(settings.vertices, settings.vertexSize, vertexVBO);
-	create_vao_cmd->settings.attributes.EmplaceBack(0, 3, 0, 0);
+	create_vao_cmd->settings.attributes.EmplaceBack(layout, 3, 0, 0);
 
 	if (settings.normalSize != 0 && settings.normals != NULL) { // Fill normals if availble
 		VBO* normalVBO = ResourcesManager::GetGRM().Create<VBO>(vboID);
@@ -233,7 +235,7 @@ Commands::CreateVAO* ModelLoader::LoadFromSettings(const ModelSettings& settings
 
 		// Fill normals:
 		create_vao_cmd->settings.vertices_data.EmplaceBack(settings.normals, settings.normalSize, normalVBO);
-		create_vao_cmd->settings.attributes.EmplaceBack(1, 3, 0, 0);
+		create_vao_cmd->settings.attributes.EmplaceBack(++layout, 3, 0, 0);
 	}
 
 	if (settings.textureSize != 0 && settings.textures != NULL) { // Fill Texture if availble
@@ -242,7 +244,7 @@ Commands::CreateVAO* ModelLoader::LoadFromSettings(const ModelSettings& settings
 
 		// Fill textures:
 		create_vao_cmd->settings.vertices_data.EmplaceBack(settings.textures, settings.textureSize, textureVBO);
-		create_vao_cmd->settings.attributes.EmplaceBack(2, 2, 0, 0);
+		create_vao_cmd->settings.attributes.EmplaceBack(++layout, 2, 0, 0);
 	}
 
 	return create_vao_cmd;

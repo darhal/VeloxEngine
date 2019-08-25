@@ -46,7 +46,7 @@ public:
 	ModelLoader(const ModelSettings& settings);
 
 	template<ssize_t I>
-	ModelLoader(const ModelSettings&, uint32(&indices)[I]);
+	ModelLoader(const ModelSettings& settings, uint32(&indices)[I]);
 
 	ModelLoader(Vector<vec3>& vertices, Vector<uint32>& indices, Vector<vec2>* textures = NULL, Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = {});
 	ModelLoader(Vector<vec3>& vertices, Vector<vec2>* textures = NULL, Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = {});
