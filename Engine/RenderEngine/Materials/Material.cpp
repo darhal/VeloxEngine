@@ -8,7 +8,7 @@ TRE_NS_START
 
 Material::Material(const AbstractMaterial& abstract_material, ShaderID shader_id) : 
 	m_Technique(shader_id), 
-	m_StateGroup(abstract_material.GetRenderStates()), 
+	m_StateGroup(abstract_material.GetRenderStates()),
 	m_Name(abstract_material.GetName())
 {
 	m_Technique.SetupAllUniforms(abstract_material);

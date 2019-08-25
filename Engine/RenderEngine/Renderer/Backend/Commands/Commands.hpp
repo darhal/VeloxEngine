@@ -6,6 +6,7 @@
 #include "RenderAPI/Texture/Texture.hpp"
 #include "RenderAPI/FrameBuffer/FBO.hpp"
 #include "RenderAPI/RenderBuffer/RBO.hpp"
+#include "RenderAPI/VertexArray/VAO.hpp"
 
 #include "RenderEngine/Renderer/Common/Common.hpp"
 #include "RenderEngine/Variables/Variables/Variable.hpp"
@@ -17,10 +18,9 @@ TRE_NS_START
 typedef void (*BackendDispatchFunction)(const void*);
 
 class ShaderProgram;
-class VAO;
 class Material;
 
-struct Commands
+namespace Commands
 {
     /*************************************** DRAW COMMANDS ***************************************/
     struct BasicDrawCommand
@@ -52,29 +52,21 @@ struct Commands
 
     /*************************************** RESOURCES COMMANDS ***************************************/
 
-    struct GenerateIndexCmd
+    struct CreateIndexBuffer
     {
-        Variable<uint32> m_IndexVariable;
-        VAO* m_VAO;
+		VertexSettings::VertexBufferData settings;
+        VAO* vao;
 
-        CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::GenerateIndex;
+        CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateIndexBuffer;
     };
 
-    struct GenerateVAOCmd
-    {
-        VariableSet<> m_VariablesSet;
-        VAO* m_VAO;
+	struct CreateVAO
+	{
+		VertexSettings settings;
+		VAO* vao;
 
-        CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::GenerateVAO;
-    };
-
-    struct GenerateVAOFromVertexDataCmd
-    {
-        Variable<struct VertexData, VertexDataDesc> variable;
-        VAO* m_VAO;
-        
-        CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::GenerateVAOFromVertexData;
-    };
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateVAO;
+	};
 
     struct CreateTexture
     {

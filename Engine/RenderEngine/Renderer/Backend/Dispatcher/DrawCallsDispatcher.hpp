@@ -10,11 +10,9 @@ struct BackendDispatch
 
     static void DrawIndexed(const void* data);
 
-    static void GenerateVAO(const void* data);
+	static void CreateVAO(const void* data);
 
-    static void GenerateVAOFromVertexData(const void* data);
-
-    static void GenerateIndex(const void* data);
+    static void CreateIndexBuffer(const void* data);
     
     static void CreateTexture(const void* data);
 

@@ -117,15 +117,12 @@ void FramebufferCommandBucket<T>::Submit()
     MaterialID lastMatID = -1;
     VaoID lastVaoID = -1;
     ShaderID lastShaderID = -1;
-    FrameBufferPiriority lastFbo_pirority;
+	FrameBufferPiriority lastFbo_pirority {RenderTargetID(-1), 0};
     ShaderProgram* lastShader = NULL;
     const uint32 max = m_SecondCurrent;
     const uint32 start = m_StartLocation;
 	Mat4f pv;
 	GRM& resources_manager = ResourcesManager::GetGRM();
-	
-
-    // printf("(READER THREAD) SUBMIT : Start = %d TO %d\n", start, max);
 
     for(uint32 i = start; i < max; i++){
         const Pair<Key, uint32>& k = BaseClass::m_Keys[i];
@@ -134,7 +131,6 @@ void FramebufferCommandBucket<T>::Submit()
 
         if (key != lastKey){
             Commands::BasicDrawCommand* command = reinterpret_cast<Commands::BasicDrawCommand*>(const_cast<void*>(CommandPacket::LoadCommand(packet)));
-        
             MaterialID matID;
             VaoID vaoID;
             ShaderID shaderID;
@@ -147,6 +143,9 @@ void FramebufferCommandBucket<T>::Submit()
 				glViewport(0, 0, current_rt.m_Width, current_rt.m_Height);
 				FBO& current_fbo = resources_manager.Get<FBO>(current_rt.m_FboID);
                 current_fbo.Use();
+				printf("Current FBO : %d\n", current_fbo.GetID());
+				ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
+				Clear();
                 lastFbo_pirority = fbo_pirority;
             }
 
@@ -178,8 +177,8 @@ void FramebufferCommandBucket<T>::Submit()
                     lastShader->Bind();
                 }
 
-                lastShader->SetMat4("MVP", pv * *(command->model));
-		        lastShader->SetMat4("model", *command->model);
+                //lastShader->SetMat4("MVP", pv * *(command->model));
+		        //lastShader->SetMat4("model", *command->model);
                 material.GetTechnique().UploadUnfiroms(*lastShader);
                 lastMatID = matID;
             }

@@ -238,7 +238,7 @@ void RenderThread()
 
 	Scene scene;
 
-	typename RMI<ShaderProgram>::ID shaderID, texShaderID;
+	typename RMI<ShaderProgram>::ID shaderID, texShaderID, scrShader;
 	
 	ResourcesManager::GetGRM().Create<ShaderProgram>(shaderID, 
 		Shader("res/Shader/texture.vs", ShaderType::VERTEX),
@@ -249,6 +249,17 @@ void RenderThread()
 		Shader("res/Shader/cam.vs", ShaderType::VERTEX),
 		Shader("res/Shader/cam.fs", ShaderType::FRAGMENT)
 	);
+
+	ResourcesManager::GetGRM().Create<ShaderProgram>(scrShader,
+		Shader("res/Shader/screen.vs", ShaderType::VERTEX),
+		Shader("res/Shader/screen.fs", ShaderType::FRAGMENT)
+	);
+	
+	ShaderProgram& shader = ResourcesManager::GetGRM().Get<ShaderProgram>(scrShader);
+	shader.BindAttriute(0, "aPos");
+	shader.BindAttriute(2, "aTexCoord");
+	shader.LinkProgram();
+	shader.SetInt(shader.AddUniform("screenTexture").second, 0);
 
 	VBO vertexUBO(BufferTarget::UNIFORM_BUFFER);
 	vertexUBO.FillData(NULL, 2 * sizeof(mat4));
@@ -308,15 +319,13 @@ void RenderThread()
 
 		IsWindowOpen = window.isOpen();
 
-		ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
-		Clear();
-		
 		mat4 view = scene.GetCurrentCamera()->GetViewMatrix();
 		vertexUBO.SubFillData(scene.GetProjectionMatrix(), 0, sizeof(mat4));
 		vertexUBO.SubFillData(&view, sizeof(mat4), sizeof(mat4));
 		vertexUBO.Unbind();
 		
-		scene.Render();
+		// scene.Render();
+		RenderManager::GetRenderer().Render(scene);
 
 		// clock_t endFrame = clock();
 		auto end = std::chrono::high_resolution_clock::now();
@@ -392,30 +401,73 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 	}
 	trees.GetTransformationMatrix().translate(vec3(0, 0, 6));
 
+	float planeVertices[] = { // positions      
+		// positions  
+		-1.0f, 1.0f, 0.f, 
+		-1.0f, -1.0f, 0.f,
+		1.0f, -1.0f, 0.f,
+		-1.0f, 1.0f, 0.f,
+		1.0f, -1.0f, 0.f,
+		1.0f,  1.0f, 0.f,
+	};
+
+	float planeTexCoords[] = { // texture Coords 
+		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f
+	};
+
+	uint32 indices[] = {0, 1, 2, 3, 4, 5};
+
+	StaticMesh plane;
+	ModelSettings settings;
+	settings.vertices = planeVertices;
+	settings.vertexSize = ARRAY_SIZE(planeVertices);
+	settings.normals = planeVertices;
+	settings.normalSize = ARRAY_SIZE(planeVertices);
+
+	ModelLoader loader(settings, indices);
 
 	// Creating a frame buffer.
 	auto& res_buffer = RenderManager::GetRenderer().GetResourcesCommandBuffer();
 	TextureID tex_id = 0; FboID fbo_id;
-
 	Commands::CreateTexture* tex_cmd = res_buffer.AddCommand<Commands::CreateTexture>(0);
 	tex_cmd->texture = ResourcesManager::GetGRM().Create<Texture>(tex_id);
 	tex_cmd->settings = TextureSettings(TexTarget::TEX2D, SCR_WIDTH, SCR_HEIGHT, NULL,
-		Vector<TexParamConfig>{
+		Vector<TexParamConfig> {
 			{ TexParam::TEX_MIN_FILTER, TexFilter::LINEAR },
 			{ TexParam::TEX_MAG_FILTER, TexFilter::LINEAR }
 		}
 	);
+	AbstractMaterial abst_mat;
+	ShaderID shaderID = 2;
+	abst_mat.GetParametres().AddParameter<TextureID>("screenTexture", tex_id);
+	loader.GetMaterials().EmplaceBack(abst_mat, loader.GetVertexCount());
+	loader.ProcessData(plane, shaderID);
+	scene->AddMeshInstance(&plane);
 
 	Commands::CreateRenderBuffer* rbo_cmd = res_buffer.AppendCommand<Commands::CreateRenderBuffer>(tex_cmd);
 	rbo_cmd->rbo = ResourcesManager::GetGRM().Create<RBO>(tex_id);
 	rbo_cmd->settings = RenderbufferSettings(SCR_WIDTH, SCR_HEIGHT);
-
 	Commands::CreateFrameBuffer* fbo_cmd = res_buffer.AppendCommand<Commands::CreateFrameBuffer>(rbo_cmd);
 	fbo_cmd->fbo = ResourcesManager::GetGRM().Create<FBO>(fbo_id);
 	fbo_cmd->settings = FramebufferSettings({ tex_cmd->texture }, FBOTarget::FBO, rbo_cmd->rbo);
+
+	// Setting up render targets.
 	//RenderManager::GetRenderer().GetRenderCommandBuffer().PopRenderTarget();
 	//RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(fbo_id, SCR_WIDTH, SCR_HEIGHT));
-	
+	Renderer::FramebufferCmdBuffer::FrameBufferPiriority f;
+	RenderTarget* rt = ResourcesManager::GetGRM().Create<RenderTarget>(f.render_target_id);
+	rt->m_Height = SCR_HEIGHT;
+	rt->m_Width = SCR_WIDTH;
+	auto key = RenderManager::GetRenderer().GetFramebufferCommandBuffer().GenerateKey(f, shaderID, plane.GetVaoID(), plane.GetSubMeshes().At(0).m_MaterialID);
+	auto cmd = RenderManager::GetRenderer().GetFramebufferCommandBuffer().AddCommand<Commands::DrawIndexedCmd>(key);
+	auto& obj = plane.GetSubMeshes().At(0);
+	cmd->mode = obj.m_Geometry.m_Primitive;
+	cmd->type = obj.m_Geometry.m_DataType;
+	cmd->count = obj.m_Geometry.m_Count;
+	cmd->offset = obj.m_Geometry.m_Offset;
+	cmd->model = &plane.GetTransformationMatrix();
+	RenderManager::GetRenderer().GetFramebufferCommandBuffer().SwapCmdBuffer();
+
 	clock_t fps = 0, avgfps = 0, maxfps = 0, deltaTime = 0, minfps = 9999999;
 	uint64 frames = 1;
 	double avgdt = 0, maxdt = 0, mindt = 9999999;

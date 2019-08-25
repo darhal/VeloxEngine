@@ -55,15 +55,15 @@ bool RenderCommandBucket<T>::DecodeKey(Key key, typename RMI<ShaderProgram>::ID&
 template<typename T>
 void RenderCommandBucket<T>::Submit(const Scene& scene)
 {
-    // SetViewMatrix();
-    // SetProjectionMatrix();
-    // SetRenderTargets();
 	for (FboID current_target = 0; current_target < m_RenderTargetCount; current_target++) {
 
 		const RenderTarget& render_target = m_RenderTargetStack[current_target];
 		const FBO& fbo = ResourcesManager::GetGRM().Get<FBO>(render_target.m_FboID);
 		// glViewport(0, 0, render_target.m_Width, render_target.m_Height);
 		fbo.Use();
+		printf("FBO : %d\n", fbo.GetID());
+		ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
+		Clear();
 
 		Mat4f pv = scene.GetProjectionMatrix() * scene.GetCurrentCamera().GetViewMatrix();
 
@@ -115,7 +115,7 @@ void RenderCommandBucket<T>::Submit(const Scene& scene)
 						lastShader = &ResourcesManager::GetGRM().Get<ShaderProgram>(material.GetTechnique().GetShaderID());
 						lastShader->Bind();
 					}
-
+	
 					lastShader->SetMat4("MVP", pv * *(command->model));
 					lastShader->SetMat4("model", *command->model);
 					material.GetTechnique().UploadUnfiroms(*lastShader);
@@ -128,7 +128,6 @@ void RenderCommandBucket<T>::Submit(const Scene& scene)
 				packet = CommandPacket::LoadNextCommandPacket(packet);
 			} while (packet != NULL);
 		}
-
 	}
 
     m_IsReading = 0;

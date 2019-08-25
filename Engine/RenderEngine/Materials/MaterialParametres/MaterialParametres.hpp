@@ -18,7 +18,7 @@ struct MaterialParametres
     Container<int32>     m_Ints;
     Container<TextureID> m_Textures;
 
-    FORCEINLINE MaterialParametres() = default;
+	FORCEINLINE MaterialParametres() {};
 
     FORCEINLINE MaterialParametres(MaterialParametres<KEY_TYPE>&& other) :
         m_Mat4fs(std::move(other.m_Mat4fs)),

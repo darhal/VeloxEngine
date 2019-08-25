@@ -26,6 +26,8 @@ public:
 
     FORCEINLINE const Vector<RawSubMesh>& GetSubMeshes() const;
 
+	FORCEINLINE VaoID GetVaoID() { return m_VaoID; }
+
 private:
     FORCEINLINE void SetVaoID(VaoID vao);
 

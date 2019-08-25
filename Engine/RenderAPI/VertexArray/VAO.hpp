@@ -1,13 +1,52 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <RenderAPI/Common.hpp>
-#include <Core/Context/Extensions.hpp>
-#include <RenderAPI/VertexBuffer/VBO.hpp>
-#include <type_traits>
 #include "VAODef.hpp"
+#include <type_traits>
+
+#include <Core/Misc/Defines/Common.hpp>
+#include <Core/Context/Extensions.hpp>
+#include <Core/DataStructure/Vector/Vector.hpp>
+#include <RenderAPI/Common.hpp>
+#include <RenderAPI/VertexBuffer/VBO.hpp>
 
 TRE_NS_START
+
+struct VertexSettings
+{
+	struct VertexBufferData {
+		template<typename T>
+		VertexBufferData(T* data, uint32 count, VBO* vbo) :
+			vbo(vbo), data((void*)data), elements_count(count), size(sizeof(T))
+		{}
+
+		template<typename T>
+		VertexBufferData(Vector<T>& data_container, VBO* vbo) :
+			vbo(vbo), data(NULL), elements_count((uint32)data_container.Length()), size(sizeof(T))
+		{
+			data = (void*) data_container.StealPtr();
+		}
+
+		VBO* vbo;
+		void* data;
+		uint32 elements_count;
+		uint32 size;
+	};
+
+	struct VertexAttribute {
+		VertexAttribute(uint32 attrib, uint32 sz, uint32 stride, usize offset, DataType::data_type_t type = DataType::FLOAT) :
+			offset(offset), size(sz), stride(stride), data_type(type), attrib_index(attrib)
+		{}
+
+		usize offset;
+		uint32 size;
+		uint32 stride;
+		DataType::data_type_t data_type;
+		uint8 attrib_index;
+	};
+
+	Vector<VertexBufferData> vertices_data;
+	Vector<VertexAttribute> attributes;
+};
 
 class VAO
 {
@@ -115,7 +154,6 @@ template<typename T>
 void VAO::BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, uint32 stride, intptr offset)
 {
 	this->Bind();
-	buffer.Bind();
 	Call_GL(
 		glEnableVertexAttribArray(attribute)
 	);

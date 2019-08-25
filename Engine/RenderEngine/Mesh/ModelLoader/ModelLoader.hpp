@@ -48,11 +48,11 @@ public:
 	template<ssize_t I>
 	ModelLoader(const ModelSettings&, uint32(&indices)[I]);
 
-	ModelLoader(const Vector<vec3>& vertices, const Vector<uint32>& indices, const Vector<vec2>* textures = NULL, const Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = {});
-	ModelLoader(const Vector<vec3>& vertices, const Vector<vec2>* textures = NULL, const Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = {});
+	ModelLoader(Vector<vec3>& vertices, Vector<uint32>& indices, Vector<vec2>* textures = NULL, Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = {});
+	ModelLoader(Vector<vec3>& vertices, Vector<vec2>* textures = NULL, Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = {});
 
 	ModelLoader(Vector<VertexData>& ver_data, Vector<uint32>& indices, const Vector<MatrialForRawModel>& mat_vec);
-	ModelLoader(const Vector<VertexData>& ver_data, const Vector<MatrialForRawModel>& mat_vec);
+	ModelLoader(Vector<VertexData>& ver_data, const Vector<MatrialForRawModel>& mat_vec);
 
 	void ProcessData(StaticMesh& mesh, ShaderID shader_id = 0);
 
@@ -69,14 +69,16 @@ public:
 
 	FORCEINLINE const Vector<MatrialForRawModel>& GetMaterials() const;
 
+	FORCEINLINE Vector<MatrialForRawModel>& GetMaterials();
+
 	FORCEINLINE void Clean();
 private:
 	// Utility Functions:
 	template<ssize_t V, ssize_t T, ssize_t N>
-	VAO& LoadFromArray(float(&vert)[V], float(&tex)[T], float(&normal)[N]);
-	VAO& LoadFromSettings(const ModelSettings& settings);
-	VAO& LoadFromVector(const Vector<vec3>& vertices, const Vector<vec2>* textures, const Vector<vec3>* normals);
-	typename Commands::GenerateVAOFromVertexDataCmd* LoadFromVertexData(Vector<VertexData>& ver_data);
+	Commands::CreateVAO* LoadFromArray(float(&vert)[V], float(&tex)[T], float(&normal)[N]);
+	Commands::CreateVAO* LoadFromSettings(const ModelSettings& settings);
+	Commands::CreateVAO* LoadFromVector(Vector<vec3>& vertices, Vector<vec2>* textures, Vector<vec3>* normals);
+	typename Commands::CreateVAO* LoadFromVertexData(Vector<VertexData>& ver_data);
 
 	Scene* m_Scene;
 
@@ -90,40 +92,40 @@ private:
 template<ssize_t V, ssize_t T, ssize_t N>
 ModelLoader::ModelLoader(float(&vert)[V], float(&tex)[T], float(&normal)[N], const Vector<MatrialForRawModel>& mat_vec)
 {
-	VAO& modelVAO = LoadFromArray(vert, tex, normal);
 	m_VertexCount = V / 3LLU; // Get the vertex Count!
-	modelVAO.Unuse();
 	m_IsIndexed = false;
+
+	Commands::CreateVAO* create_vao_cmd = LoadFromArray(vert, tex, normal);
+	// modelVAO.Unuse();
 
 	m_Materials = mat_vec;
 	if (m_Materials.IsEmpty()) {
-		AbstractMaterial default_material("Unknown");
-		m_Materials.EmplaceBack(default_material, m_VertexCount); // default material
+		m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
 	}
 }
 
 template<ssize_t V, ssize_t I, ssize_t T, ssize_t N>
 ModelLoader::ModelLoader(float(&vert)[V], uint32(&indices)[I], float(&tex)[T], float(&normal)[N], const Vector<MatrialForRawModel>& mat_vec)
 {
-	VAO& modelVAO = LoadFromArray(vert, tex, normal);
 	m_VertexCount = I; // Get the vertex Count!
 	m_IsIndexed = true;
 
+	Commands::CreateVAO* create_vao_cmd = LoadFromArray(vert, tex, normal);
+	
+	// Set up indices
 	typename RMI<VBO>::ID indexVboID;
 	VBO* indexVBO = ResourcesManager::GetGRM().Create<VBO>(indexVboID);
 	m_VboIDs.EmplaceBack(indexVboID);
 
-	//Set up indices
-	indexVBO->Generate(BufferTarget::ELEMENT_ARRAY_BUFFER);
-	indexVBO->FillData(indices);
-	modelVAO.Unuse();
-	indexVBO->Unuse();
+	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();
+	Commands::CreateIndexBuffer* create_index_cmd
+		= CmdBucket.AppendCommand<Commands::CreateIndexBuffer>(create_vao_cmd);
+	create_index_cmd->vao = create_vao_cmd->vao;
+	create_index_cmd->settings = VertexSettings::VertexBufferData(indices, I, indexVBO);
 
 	m_Materials = mat_vec;
-	
 	if (m_Materials.IsEmpty()) {
-		AbstractMaterial default_material("Unknown");
-		m_Materials.EmplaceBack(default_material, m_VertexCount); // default material
+		m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
 	}
 }
 
@@ -131,19 +133,23 @@ template<ssize_t I>
 ModelLoader::ModelLoader(const ModelSettings& settings, uint32(&indices)[I])
 {
 	ASSERTF((settings.vertexSize == 0 || settings.vertices == NULL), "Attempt to create a ModelLoader with empty vertecies!");
-	VAO& modelVAO = LoadFromSettings(settings);
 	m_VertexCount = I; // Get the vertex Count!
 	m_IsIndexed = true;
 
+	Commands::CreateVAO* create_vao_cmd = LoadFromSettings(settings);
+
+	// Set up indices
 	typename RMI<VBO>::ID indexVboID;
 	VBO* indexVBO = ResourcesManager::GetGRM().Create<VBO>(indexVboID);
 	m_VboIDs.EmplaceBack(indexVboID);
 
-	//Set up indices
-	indexVBO->Generate(BufferTarget::ELEMENT_ARRAY_BUFFER);
-	indexVBO->FillData(indices);
-	modelVAO.Unuse();
-	indexVBO->Unuse();
+	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();
+	Commands::CreateIndexBuffer* create_index_cmd
+		= CmdBucket.AppendCommand<Commands::CreateIndexBuffer>(create_vao_cmd);
+	create_index_cmd->vao = create_vao_cmd->vao;
+	create_index_cmd->settings = VertexSettings::VertexBufferData(indices, I, indexVBO);
+
+	m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
 }
 
 FORCEINLINE ModelLoader::ModelLoader(ModelLoader&& other) :
@@ -167,6 +173,11 @@ FORCEINLINE const ssize_t ModelLoader::GetVertexCount() const
 }
 
 FORCEINLINE const Vector<MatrialForRawModel>& ModelLoader::GetMaterials() const
+{
+	return m_Materials;
+}
+
+FORCEINLINE Vector<MatrialForRawModel>& ModelLoader::GetMaterials() 
 {
 	return m_Materials;
 }

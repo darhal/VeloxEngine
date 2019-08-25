@@ -20,67 +20,50 @@ void BackendDispatch::DrawIndexed(const void* data)
     DrawElements(real_data->mode, real_data->type, real_data->count, real_data->offset);
 }
 
-void BackendDispatch::GenerateVAO(const void* data)
+void BackendDispatch::CreateVAO(const void * data)
 {
-    const Commands::GenerateVAOCmd* real_data = reinterpret_cast<const Commands::GenerateVAOCmd*>(data);
-    VAO* modelVAO = real_data->m_VAO;
+	const Commands::CreateVAO* real_data = reinterpret_cast<const Commands::CreateVAO*>(data);
+	VAO* modelVAO = real_data->vao;
+	const VertexSettings& settings = real_data->settings;
 
-    modelVAO->Generate();
+	modelVAO->Generate();
 	modelVAO->Use();
 
-    usize index_attrib = 0;
+	const auto& vert_data = settings.vertices_data;
+	const uint32 vert_len = (uint32) vert_data.Length();
+	
+	for (const VertexSettings::VertexBufferData& data : vert_data) {
+		VBO& vbo = *data.vbo;
+		vbo.Generate(BufferTarget::ARRAY_BUFFER);
+		vbo.Use();
+		vbo.FillData(data.data, data.elements_count * data.size);
+		// ::operator delete(data.data);
+	}
 
-    for(const IVariable& var : real_data->m_VariablesSet){
-        typename RMI<VBO>::ID vboID;
-	    VBO* vertexVBO = ResourcesManager::GetGRM().Create<VBO>(vboID);
-	    vertexVBO->Generate(BufferTarget::ARRAY_BUFFER);
-        VariableDesc* desc = var.GetVariableDesc();
-	    vertexVBO->FillData(var.GetDataPtr(), desc->count * desc->size);
-	    modelVAO->BindAttribute<DataType::FLOAT>(index_attrib, *vertexVBO, (uint32) desc->size, 0, 0);
-        index_attrib++;
-    }
+	uint32 index = 0;
+	for (const VertexSettings::VertexAttribute& attribute : settings.attributes) {
+		VBO& vbo = *vert_data[index % vert_len].vbo;
+		modelVAO->BindAttribute<float>(attribute.attrib_index, vbo, attribute.data_type, attribute.size, attribute.stride, attribute.offset);
+		index++;
+	}
 }
 
-void BackendDispatch::GenerateVAOFromVertexData(const void* data)
+void BackendDispatch::CreateIndexBuffer(const void* data)
 {
-    const Commands::GenerateVAOFromVertexDataCmd* real_data = reinterpret_cast<const Commands::GenerateVAOFromVertexDataCmd*>(data);
-    VAO* modelVAO = real_data->m_VAO;
-    const Variable<VertexData, VertexDataDesc>& var = real_data->variable;
-    const VertexDataDesc& desc = var.GetConcreteDesc();
+    const Commands::CreateIndexBuffer* real_data = reinterpret_cast<const Commands::CreateIndexBuffer*>(data);
 
-    modelVAO->Generate();
-	modelVAO->Use();
-
-    typename RMI<VBO>::ID vboID;
-	VBO* vertexVBO = ResourcesManager::GetGRM().Create<VBO>(vboID);
-	vertexVBO->Generate(BufferTarget::ARRAY_BUFFER);
-	vertexVBO->FillData(var.GetDataPtr(), desc.count * desc.size);
-
-    uint32 total = desc.indv_count[0] + desc.indv_count[1] + desc.indv_count[2]; 
-    intptr offset = 0;
-
-    for(uint8 i = 0; i < 3; i++){
-        uint32 count = desc.indv_count[i];
-        modelVAO->BindAttribute<float>(VertexDataDesc::VERTEX + i, *vertexVBO, DataType::FLOAT, count, total, offset);
-        offset += count;
-    }
-}
-
-void BackendDispatch::GenerateIndex(const void* data)
-{
-    const Commands::GenerateIndexCmd* real_data = reinterpret_cast<const Commands::GenerateIndexCmd*>(data);
-    VAO* modelVAO = real_data->m_VAO;
-    const Variable<uint32>& var = real_data->m_IndexVariable;
-    const VariableDesc& desc = var.GetConcreteDesc();
-
-    typename RMI<VBO>::ID indexVboID;
-	VBO* indexVBO = ResourcesManager::GetGRM().Create<VBO>(indexVboID);
+    VAO& modelVAO = *real_data->vao;
+	const VertexSettings::VertexBufferData& indices_data = real_data->settings;
+	VBO& indexVBO = *indices_data.vbo;
 
 	// Set up indices
-	indexVBO->Generate(BufferTarget::ELEMENT_ARRAY_BUFFER);
-	indexVBO->FillData(var.GetDataPtr(), desc.count * desc.size);
-	modelVAO->Unuse();
-	indexVBO->Use();
+	indexVBO.Generate(BufferTarget::ELEMENT_ARRAY_BUFFER);
+	indexVBO.Use();
+	indexVBO.FillData(indices_data.data, indices_data.elements_count * indices_data.size);
+	modelVAO.Unuse();
+	indexVBO.Use();
+
+	// ::operator delete(indices_data.data);
 }
 
 void BackendDispatch::CreateTexture(const void* data)
@@ -90,6 +73,10 @@ void BackendDispatch::CreateTexture(const void* data)
     const TextureSettings& settings = real_data->settings;
 
     tex->Generate(settings);
+
+	if (settings.img_data != NULL) {
+		::operator delete(settings.img_data);
+	}
 }
 
 void BackendDispatch::CreateFrameBuffer(const void * data)

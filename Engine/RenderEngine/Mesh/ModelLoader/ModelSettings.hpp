@@ -11,14 +11,14 @@ struct ModelSettings
 		NORMAL,
 	};
 
-	ssize_t vertexSize;
-	const float* vertices;
+	ssize_t vertexSize = 0;
+	float* vertices = NULL;
 
-	ssize_t textureSize;
-	const float* textures;
+	ssize_t textureSize = 0;
+	float* textures = NULL;
 
-	ssize_t normalSize;
-	const float* normals;
+	ssize_t normalSize = 0;
+	float* normals = NULL;
 
 	FORCEINLINE ModelSettings() : vertexSize(0), vertices(NULL), textureSize(0), textures(NULL), normalSize(0), normals(NULL)
 	{}
@@ -35,7 +35,7 @@ struct ModelSettings
 	FORCEINLINE ModelSettings(float(&vert)[V], float(&tex)[T]) : vertexSize(V), vertices(vert), textureSize(T), textures(tex), normalSize(0), normals(NULL)
 	{}
 
-	FORCEINLINE ModelSettings(const float* vert, ssize vertSize, const float* tex = NULL, ssize texSize = 0, const float* normal = NULL, ssize normalSize = 0) :
+	FORCEINLINE ModelSettings(float* vert, ssize vertSize, float* tex = NULL, ssize texSize = 0, float* normal = NULL, ssize normalSize = 0) :
 		vertexSize(vertSize), vertices(vert),
 		textureSize(texSize), textures(tex),
 		normalSize(normalSize), normals(normal)
