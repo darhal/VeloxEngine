@@ -15,7 +15,7 @@ TextureID AbstractMaterial::AddTexture(const String& path)
     tex_cmd->settings = TextureSettings(TexTarget::TEX2D, img.GetWidth(), img.GetHeight(), img.StealPtr(), 
       	Vector<TexParamConfig>{
 			{TexParam::TEX_WRAP_S , TexWrapping::REPEAT},
-			{TexParam::TEX_WRAP_T, TexWrapping::REPEAT},
+			{TexParam::TEX_WRAP_T, TexWrapping::REPEAT },
 			{TexParam::TEX_MIN_FILTER, TexFilter::LINEAR},
 			{TexParam::TEX_MAG_FILTER, TexFilter::LINEAR}
 		}

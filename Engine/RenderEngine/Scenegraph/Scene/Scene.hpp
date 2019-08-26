@@ -24,7 +24,7 @@ public:
     CONSTEXPR static float SCREEN_WIDTH  = 1920 / 2;
     CONSTEXPR static float SCREEN_HEIGHT = 1080 / 2;
     CONSTEXPR static float NEAR_PLANE    = 0.1f;
-    CONSTEXPR static float FAR_PLANE     = 100.f;
+    CONSTEXPR static float FAR_PLANE     = 10000.f;
 
 public:
     Scene();

@@ -37,6 +37,10 @@ uint32 FBO::Generate(const FramebufferSettings& settings)
 			glFramebufferRenderbuffer(m_target, settings.rbo_attachement, settings.rbo->GetBindingTarget(), settings.rbo->GetID())
 		);
 	}
+
+	const Vector<uint32>& draw_buffers = settings.draw_buffers;
+	SetDrawBuffers(draw_buffers.Front(), draw_buffers.Length());
+	SetReadBuffer(settings.read_buffer);
 	
 	return m_ID;
 }

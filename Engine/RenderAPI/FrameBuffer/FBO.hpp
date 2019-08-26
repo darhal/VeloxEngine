@@ -27,16 +27,24 @@ struct FramebufferSettings
 	};
 
 	FramebufferSettings(
-		const Vector<TextureAttachement>& tex_attachments = {},
-		FBOTarget::framebuffer_target_t target = FBOTarget::FBO,
-		RBO* rbo = NULL,
-		FBOAttachement::framebuffer_attachement_t rbo_attachement = FBOAttachement::DEPTH_STENCIL_ATTACH) :
-		texture_attachments(std::move(tex_attachments)), rbo(rbo), rbo_attachement(rbo_attachement), target(target)
+			const Vector<TextureAttachement>& tex_attachments = {},
+			FBOTarget::framebuffer_target_t target = FBOTarget::FBO,
+			RBO* rbo = NULL,
+			FBOAttachement::framebuffer_attachement_t rbo_attachement = FBOAttachement::DEPTH_STENCIL_ATTACH, 
+			const Vector<uint32>& draw_buffs = {},
+			uint32 read_buff = -1) :
+		texture_attachments(std::move(tex_attachments)), draw_buffers(std::move(draw_buffs)),
+		rbo(rbo), 
+		rbo_attachement(rbo_attachement),
+		read_buffer(read_buff),
+		target(target)
 	{}
 
 	Vector<TextureAttachement> texture_attachments;
+	Vector<uint32> draw_buffers;
 	RBO* rbo = NULL;
 	FBOAttachement::framebuffer_attachement_t rbo_attachement = FBOAttachement::DEPTH_STENCIL_ATTACH;
+	uint32 read_buffer = -1;
 	FBOTarget::framebuffer_target_t target = FBOTarget::FBO;
 };
 
@@ -56,13 +64,14 @@ public:
 	FORCEINLINE void SetDrawBuffer(uint8 color_attachement_id = 0);
 	FORCEINLINE void SetDrawBuffer(FBOColourBuffer::colour_buffer_t col_buf);
 
-	FORCEINLINE void SetReadBuffer(uint8 color_attachement_id = 0);
+	FORCEINLINE void SetReadBuffer(uint32 read_buffer = 0);
 	FORCEINLINE void SetReadBuffer(FBOColourBuffer::colour_buffer_t col_buf);
 
 	template<uint32 S>
 	FORCEINLINE void SetDrawBuffers(const uint32(&color_attachement_id)[S]);
 	template<uint32 S>
 	FORCEINLINE void SetDrawBuffers(const FBOColourBuffer::colour_buffer_t(&col_buf)[S]);
+	FORCEINLINE void SetDrawBuffers(const uint32* draw_buffer, uint32 size);
 
 	bool IsComplete() const;
 
@@ -120,9 +129,10 @@ FORCEINLINE void FBO::SetDrawBuffer(FBOColourBuffer::colour_buffer_t col_buf)
 	glDrawBuffer(col_buf);
 }
 
-FORCEINLINE void FBO::SetReadBuffer(uint8 color_attachement_id)
+FORCEINLINE void FBO::SetReadBuffer(uint32 read_buffer)
 {
-	glReadBuffer(FBOAttachement::COLOR_ATTACH + color_attachement_id);
+	if (read_buffer != uint32(-1))
+		glReadBuffer(read_buffer);
 }
 
 FORCEINLINE void FBO::SetReadBuffer(FBOColourBuffer::colour_buffer_t col_buf)
@@ -140,6 +150,12 @@ template<uint32 S>
 FORCEINLINE void FBO::SetDrawBuffers(const FBOColourBuffer::colour_buffer_t(&col_buf)[S])
 {
 	glDrawBuffers(S, col_buf);
+}
+
+FORCEINLINE void FBO::SetDrawBuffers(const uint32* draw_buffer, uint32 size)
+{
+	if (size && draw_buffer)
+		glDrawBuffers(size, draw_buffer);
 }
 
 FORCEINLINE FBO::FBO(FBO&& other) :

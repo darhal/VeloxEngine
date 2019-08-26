@@ -19,6 +19,8 @@ TRE_NS_START
 class GraphicsResourcesManager
 {
 public:
+	GraphicsResourcesManager() {}
+
     // Create/Generate Function
     template<typename T, typename... Args>
     FORCEINLINE typename RMI<T>::ID Generate(Args&&... args);
@@ -56,6 +58,7 @@ private:
 };
 
 using GRM = GraphicsResourcesManager;
+using GraphicsResources = GraphicsResourcesManager;
 
 #include "GRM.inl"
 

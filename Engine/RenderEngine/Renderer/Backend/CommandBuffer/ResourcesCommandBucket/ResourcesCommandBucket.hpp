@@ -18,7 +18,6 @@ public:
     FORCEINLINE void Submit();
 
 private:
-
 };
 
 template<typename T>

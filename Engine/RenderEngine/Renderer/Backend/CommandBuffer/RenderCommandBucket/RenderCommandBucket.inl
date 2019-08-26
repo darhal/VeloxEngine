@@ -18,7 +18,17 @@ RenderCommandBucket<T>::RenderCommandBucket() :
 }
 
 template<typename T>
-typename RenderCommandBucket<T>::Key RenderCommandBucket<T>::GenerateKey(typename RMI<ShaderProgram>::ID shaderID, typename RMI<VAO>::ID vaoID, typename RMI<Material>::ID matID, uint32 blend_dist) const
+template<typename U>
+U* RenderCommandBucket<T>::CreateCommand(ShaderID shaderID, VaoID vaoID, MaterialID matID, uint32 blend_dist, usize aux_memory)
+{
+	return BaseClass::template AddCommand<U>(
+		this->GenerateKey(shaderID, vaoID, matID, blend_dist),
+		aux_memory
+	);
+}
+
+template<typename T>
+typename RenderCommandBucket<T>::Key RenderCommandBucket<T>::GenerateKey(ShaderID shaderID, VaoID vaoID, MaterialID matID, uint32 blend_dist) const
 {
     Key key = 0;
 
@@ -36,7 +46,7 @@ typename RenderCommandBucket<T>::Key RenderCommandBucket<T>::GenerateKey(typenam
 }
 
 template<typename T>
-bool RenderCommandBucket<T>::DecodeKey(Key key, typename RMI<ShaderProgram>::ID& shaderID, typename RMI<VAO>::ID& vaoID, typename RMI<Material>::ID& matID) const
+bool RenderCommandBucket<T>::DecodeKey(Key key, ShaderID& shaderID, VaoID& vaoID, MaterialID& matID) const
 {
     bool is_blend = key >> (sizeof(Key) * BITS_PER_BYTE - 1);
     

@@ -27,9 +27,12 @@ public:
 
     FramebufferCommandBucket();
 
-    Key GenerateKey(FrameBufferPiriority fbo_piriority, typename RMI<ShaderProgram>::ID shaderID, typename RMI<VAO>::ID vaoID, typename RMI<Material>::ID matID) const;
+	template<typename U>
+	U* CreateCommand(FrameBufferPiriority fbo_piriority, ShaderID shaderID, VaoID vaoID, MaterialID matID, usize aux_memory = 0);
 
-    void DecodeKey(Key key, FrameBufferPiriority& fbo_piriority, typename RMI<ShaderProgram>::ID& shaderID, typename RMI<VAO>::ID& vaoID, typename RMI<Material>::ID& matID) const;
+    Key GenerateKey(FrameBufferPiriority fbo_piriority, ShaderID shaderID, VaoID vaoID, MaterialID matID) const;
+
+    void DecodeKey(Key key, FrameBufferPiriority& fbo_piriority, ShaderID& shaderID, VaoID& vaoID, MaterialID& matID) const;
 
     void Submit();
 
@@ -61,16 +64,25 @@ FramebufferCommandBucket<T>::FramebufferCommandBucket() :
     cv(),
     m_IsReading(false)
 {
-    // cv.notify_one();
+}
+
+template<typename T>
+template<typename U>
+U* FramebufferCommandBucket<T>::CreateCommand(FrameBufferPiriority fbo_piriority, ShaderID shaderID, VaoID vaoID, MaterialID matID, usize aux_memory)
+{
+	return BaseClass::template AddCommand<U>(
+		this->GenerateKey(fbo_piriority, shaderID, vaoID, matID), 
+		aux_memory
+	);
 }
 
 template<typename T>
 typename FramebufferCommandBucket<T>::Key FramebufferCommandBucket<T>::GenerateKey
 	(
         FrameBufferPiriority fbo_piriority, 
-        typename RMI<ShaderProgram>::ID shaderID, 
-        typename RMI<VAO>::ID vaoID, 
-        typename RMI<Material>::ID matID
+        ShaderID shaderID, 
+        VaoID vaoID, 
+        MaterialID matID
 	) const
 {
     Key key = 0;
@@ -92,7 +104,7 @@ typename FramebufferCommandBucket<T>::Key FramebufferCommandBucket<T>::GenerateK
 }
 
 template<typename T>
-void FramebufferCommandBucket<T>::DecodeKey(Key key, FrameBufferPiriority& fbo_piriority, typename RMI<ShaderProgram>::ID& shaderID, typename RMI<VAO>::ID& vaoID, typename RMI<Material>::ID& matID) const
+void FramebufferCommandBucket<T>::DecodeKey(Key key, FrameBufferPiriority& fbo_piriority, ShaderID& shaderID, VaoID& vaoID, MaterialID& matID) const
 {    
     fbo_piriority.pirority = FrameBufferPiriority::Piroirty_t(
         key >> (sizeof(RMI<VAO>::Index) + sizeof(RMI<Material>::Index) + sizeof(RMI<ShaderProgram>::Index) + sizeof(RMI<RenderTarget>::Index)) * BITS_PER_BYTE);
@@ -117,7 +129,7 @@ void FramebufferCommandBucket<T>::Submit()
     MaterialID lastMatID = -1;
     VaoID lastVaoID = -1;
     ShaderID lastShaderID = -1;
-	FrameBufferPiriority lastFbo_pirority {RenderTargetID(-1), 0};
+	FrameBufferPiriority lastFbo_pirority{ RenderTargetID(-1), 0 };
     ShaderProgram* lastShader = NULL;
     const uint32 max = m_SecondCurrent;
     const uint32 start = m_StartLocation;
@@ -189,7 +201,6 @@ void FramebufferCommandBucket<T>::Submit()
         } while (packet != NULL);
     }
 
-    // std::lock_guard<std::mutex> lk(mtx);
     m_IsReading = 0;
     cv.notify_one();
 }
@@ -203,7 +214,6 @@ void FramebufferCommandBucket<T>::Clear()
         BaseClass::m_Current = BaseClass::DEFAULT_MAX_ELEMENTS;
     }
     
-    // printf("(WRITE THREAD) CLEAR : CURRENT FOR WRITE = %d\n", BaseClass::m_Current);
     BaseClass::m_CmdAllocator.SetOffset(BaseClass::m_Current * BaseClass::m_Current);
     BaseClass::m_PacketCount = 0;
 }
@@ -222,10 +232,7 @@ bool FramebufferCommandBucket<T>::SwapCmdBuffer()
         m_StartLocation = BaseClass::DEFAULT_MAX_ELEMENTS;
     }
 
-    // printf("(WRITE THREAD) SWAP :READ WILL START FROM Start = %d | EnD =%d\n", m_StartLocation, m_SecondCurrent);
-
     m_IsReading = 1;
-    // lk.unlock();
     return true;
 }
 

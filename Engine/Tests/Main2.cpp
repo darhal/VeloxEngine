@@ -378,7 +378,6 @@ void RenderThread()
 
 	RenderSettings::DEFAULT_STATE.ApplyStates();
 	while (IsWindowOpen) {
-		// clock_t beginFrame = clock();
 		auto start = std::chrono::high_resolution_clock::now();
 
 		if (window.getEvent(ev)) {
@@ -394,26 +393,10 @@ void RenderThread()
 
 		RenderManager::GetRenderer().Render(scene);
 
-		// clock_t endFrame = clock();
 		auto end = std::chrono::high_resolution_clock::now();
 		auto diff = end - start;
 		auto dt = std::chrono::duration<double, std::milli>(diff).count();
 		deltaTime += dt;
-		/*frames++;
-
-		fps = clock_t((1.f / dt) * 1000.f);
-
-		if (dt > maxdt)
-			maxdt = dt;
-
-		if (dt < mindt)
-			mindt = dt;
-
-		avgdt += dt;
-
-		printf("                                                    \r");
-    	printf("\033[1;31m[T1] Delta Time : %lf ms - FPS : %lu\r", dt, fps);
-		fflush(stdout);*/
 
 		window.Present();
 	}
@@ -442,6 +425,7 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 		loader.ProcessData(deagle);
 		scene->AddMeshInstance(&deagle);
 	}
+	deagle.GetTransformationMatrix().translate(vec3(0.f, 3.f, 0.f));
 
 	StaticMesh carrot_box;
 	{
@@ -494,9 +478,13 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 		loader2.GetMaterials().PopBack();
 		AbstractMaterial abst_mat2;
 		abst_mat2.GetRenderStates().cull_enabled = false;
+		abst_mat2.GetParametres().AddParameter<TextureID>("material.diffuse_tex", abst_mat2.AddTexture("res/img/texture_grid.png"));
+		abst_mat2.GetParametres().AddParameter<TextureID>("material.specular_tex", abst_mat2.AddTexture("res/img/texture_grid.png"));
+		abst_mat2.GetParametres().AddParameter<float>("material.shininess", 500.f);
 		loader2.GetMaterials().EmplaceBack(abst_mat2, loader2.GetVertexCount());
 		loader2.ProcessData(plane);
 		scene->AddMeshInstance(&plane);
+		plane.GetTransformationMatrix().scale(vec3(100.f, 0.f, 100.f));
 	
 
 	float quadVertices[] = { // positions      
@@ -508,7 +496,6 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 		1.0f, -1.0f, 0.f,
 		1.0f,  1.0f, 0.f,
 	};
-
 	float quadTexCoords[] = { // texture Coords 
 		0.0f, 1.0f, 
 		0.0f, 0.0f,
@@ -517,8 +504,7 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 		1.0f, 0.0f, 
 		1.0f, 1.0f
 	};
-
-	uint32 indices[] = {0, 1, 2, 3, 4, 5};
+	//uint32 indices[] = {0, 1, 2, 3, 4, 5};
 
 	StaticMesh quad;
 	ModelSettings settings;
@@ -527,12 +513,9 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 	settings.textures = quadTexCoords;
 	settings.textureSize = ARRAY_SIZE(quadTexCoords);
 
-	ModelLoader loader(settings, indices);
-	loader.GetMaterials().PopBack();
-
 	// Creating a frame buffer.
 	auto& res_buffer = RenderManager::GetRenderer().GetResourcesCommandBuffer();
-	TextureID tex_id = 0; FboID fbo_id;
+	TextureID tex_id = 0; FboID fbo_id = 0; RboID rbo_id = 0;
 	Commands::CreateTexture* tex_cmd = res_buffer.AddCommand<Commands::CreateTexture>(0);
 	tex_cmd->texture = ResourcesManager::GetGRM().Create<Texture>(tex_id);
 	tex_cmd->settings = TextureSettings(TexTarget::TEX2D, SCR_WIDTH, SCR_HEIGHT, NULL,
@@ -541,7 +524,15 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 			{ TexParam::TEX_MAG_FILTER, TexFilter::LINEAR }
 		}
 	);
+	Commands::CreateRenderBuffer* rbo_cmd = res_buffer.AppendCommand<Commands::CreateRenderBuffer>(tex_cmd);
+	rbo_cmd->rbo = ResourcesManager::GetGRM().Create<RBO>(rbo_id);
+	rbo_cmd->settings = RenderbufferSettings(SCR_WIDTH, SCR_HEIGHT);
+	Commands::CreateFrameBuffer* fbo_cmd = res_buffer.AppendCommand<Commands::CreateFrameBuffer>(rbo_cmd);
+	fbo_cmd->fbo = ResourcesManager::GetGRM().Create<FBO>(fbo_id);
+	fbo_cmd->settings = FramebufferSettings({ tex_cmd->texture }, FBOTarget::FBO, rbo_cmd->rbo);
 
+	ModelLoader loader(settings);
+	loader.GetMaterials().PopBack();
 	AbstractMaterial abst_mat;
 	abst_mat.GetRenderStates().depth_enabled = false;
 	// abst_mat.GetRenderStates().poly_mode = PolygonMode::polygon_mode_t::LINE;
@@ -549,14 +540,6 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 	abst_mat.GetParametres().AddParameter<TextureID>("screenTexture", tex_id);
 	loader.GetMaterials().EmplaceBack(abst_mat, loader.GetVertexCount());
 	loader.ProcessData(quad, shaderID);
-	// scene->AddMeshInstance(&plane); // Dont add it!
-
-	Commands::CreateRenderBuffer* rbo_cmd = res_buffer.AppendCommand<Commands::CreateRenderBuffer>(tex_cmd);
-	rbo_cmd->rbo = ResourcesManager::GetGRM().Create<RBO>(tex_id);
-	rbo_cmd->settings = RenderbufferSettings(SCR_WIDTH, SCR_HEIGHT);
-	Commands::CreateFrameBuffer* fbo_cmd = res_buffer.AppendCommand<Commands::CreateFrameBuffer>(rbo_cmd);
-	fbo_cmd->fbo = ResourcesManager::GetGRM().Create<FBO>(fbo_id);
-	fbo_cmd->settings = FramebufferSettings({ tex_cmd->texture }, FBOTarget::FBO, rbo_cmd->rbo);
 
 	// Setting up render targets.
 	RenderManager::GetRenderer().GetRenderCommandBuffer().PopRenderTarget();
@@ -567,12 +550,11 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 	rt->m_Width = SCR_WIDTH;
 	rt->m_Height = SCR_HEIGHT;
 	auto key = RenderManager::GetRenderer().GetFramebufferCommandBuffer().GenerateKey(f, shaderID, quad.GetVaoID(), quad.GetSubMeshes().At(0).m_MaterialID);
-	auto cmd = RenderManager::GetRenderer().GetFramebufferCommandBuffer().AddCommand<Commands::DrawIndexedCmd>(key);
+	auto cmd = RenderManager::GetRenderer().GetFramebufferCommandBuffer().AddCommand<Commands::DrawCmd>(key);
 	auto& obj = quad.GetSubMeshes().At(0);
 	cmd->mode = obj.m_Geometry.m_Primitive;
-	cmd->type = obj.m_Geometry.m_DataType;
-	cmd->count = obj.m_Geometry.m_Count;
-	cmd->offset = obj.m_Geometry.m_Offset;
+	cmd->start = 0;
+	cmd->end = loader.GetVertexCount();
 	cmd->model = &quad.GetTransformationMatrix();
 	RenderManager::GetRenderer().GetFramebufferCommandBuffer().SwapCmdBuffer();
 
@@ -583,31 +565,12 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 	// Event ev;
 	// printf("\n");
 	while(IsWindowOpen){
-		//clock_t beginFrame = clock();
-		//auto start = std::chrono::high_resolution_clock::now();
-
 		auto& render_cmd = RenderManager::GetRenderer().GetRenderCommandBuffer();
+
 		if(render_cmd.SwapCmdBuffer()){
 			render_cmd.Clear(); // Clear write side
 			scene->Submit(); // write on write
 		}
-
-		// trees.GetTransformationMatrix().rotateY(clockToMilliseconds(endFrame - beginFrame) / 500);
-		
-		/*auto end = std::chrono::high_resolution_clock::now();
-		auto diff = end - start;
-		auto dt = std::chrono::duration<double, std::milli>(diff).count();
-		frames++;
-
-		// fps = clock_t((1.f / dt) * 1000.f);
-
-		if (dt > maxdt)
-			maxdt = dt;
-
-		if (dt < mindt)
-			mindt = dt;
-
-		avgdt += dt;*/
 	}
 
 	printf("[T2] : MIN FPS = %lf | MAX FPS = %lf | AVG FPS = %lf\n", mindt, maxdt, avgdt / frames);

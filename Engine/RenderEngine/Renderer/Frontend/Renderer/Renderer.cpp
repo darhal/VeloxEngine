@@ -11,7 +11,7 @@ void Renderer::Render(const Scene& scene)
 
 void Renderer::Init()
 {
-    VBO vertexUBO(BufferTarget::UNIFORM_BUFFER);
+    /*VBO vertexUBO(BufferTarget::UNIFORM_BUFFER);
 	vertexUBO.FillData(NULL, 2 * sizeof(mat4));
 	vertexUBO.Unbind();
 
@@ -19,7 +19,7 @@ void Renderer::Init()
         ShaderProgram& shader = shader_id.second;
         shader.SetUniformBlockBinding("VertexBlock", 0);
 		shader.BindBufferBase(vertexUBO, 0);
-    }
+    }*/
 }
 
 void Renderer::PreRender()

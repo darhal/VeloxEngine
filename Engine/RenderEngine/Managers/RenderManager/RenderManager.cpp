@@ -7,6 +7,7 @@ RenderManager RenderManager::s_ManagerInstance;
 
 RenderManager::RenderManager()
 {
+	m_Renderer.Init();
 }
 
 Renderer& RenderManager::GetRenderer()

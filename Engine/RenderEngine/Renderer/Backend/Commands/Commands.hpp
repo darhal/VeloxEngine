@@ -54,6 +54,8 @@ namespace Commands
 
     struct CreateIndexBuffer
     {
+		typedef VAO Resource;
+
 		VertexSettings::VertexBufferData settings;
         VAO* vao;
 
@@ -62,6 +64,8 @@ namespace Commands
 
 	struct CreateVAO
 	{
+		typedef VAO Resource;
+
 		VertexSettings settings;
 		VAO* vao;
 
@@ -70,6 +74,8 @@ namespace Commands
 
     struct CreateTexture
     {
+		typedef Texture Resource;
+
         TextureSettings settings;
         Texture* texture;
         
@@ -78,6 +84,8 @@ namespace Commands
 
 	struct CreateFrameBuffer
 	{
+		typedef Framebuffer Resource;
+
 		FramebufferSettings settings;
 		Framebuffer* fbo;
 
@@ -86,8 +94,11 @@ namespace Commands
 
 	struct CreateRenderBuffer
 	{
+		typedef Renderbuffer Resource;
+
 		RenderbufferSettings settings;
 		Renderbuffer* rbo;
+
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateRenderBuffer;
 	};
 };

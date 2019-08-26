@@ -41,9 +41,12 @@ public:
 
     RenderCommandBucket();
 
-    Key GenerateKey(typename RMI<ShaderProgram>::ID shaderID, typename RMI<VAO>::ID vaoID, typename RMI<Material>::ID matID, uint32 blend_dist = 0) const;
+	template<typename U>
+	U* CreateCommand(ShaderID shaderID, VaoID vaoID, MaterialID matID, uint32 blend_dist = 0, usize aux_memory = 0);
 
-    bool DecodeKey(Key key, typename RMI<ShaderProgram>::ID& shaderID, typename RMI<VAO>::ID& vaoID, typename RMI<Material>::ID& matID) const;
+    Key GenerateKey(ShaderID shaderID, VaoID vaoID, MaterialID matID, uint32 blend_dist = 0) const;
+
+    bool DecodeKey(Key key, ShaderID& shaderID, VaoID& vaoID, MaterialID& matID) const;
 
     void Submit(const Scene& scene);
 
