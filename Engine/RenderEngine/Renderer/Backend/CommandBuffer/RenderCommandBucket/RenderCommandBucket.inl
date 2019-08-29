@@ -63,8 +63,9 @@ bool RenderCommandBucket<T>::DecodeKey(Key key, ShaderID& shaderID, VaoID& vaoID
 }
 
 template<typename T>
-void RenderCommandBucket<T>::Submit(const Scene& scene)
+void RenderCommandBucket<T>::Submit()
 {
+	
 	for (FboID current_target = 0; current_target < m_RenderTargetCount; current_target++) {
 
 		const RenderTarget& render_target = m_RenderTargetStack[current_target];
@@ -74,8 +75,11 @@ void RenderCommandBucket<T>::Submit(const Scene& scene)
 		ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
 		ClearBuffers();
 
-		Mat4f pv = scene.GetProjectionMatrix() * scene.GetCurrentCamera().GetViewMatrix();
-
+		Mat4f pv;
+		if (render_target.m_Projection && render_target.m_View) {
+			pv = (*render_target.m_Projection) * (*render_target.m_View);
+		}
+		
 		Key lastKey = -1;
 		MaterialID lastMatID = -1;
 		VaoID lastVaoID = -1;
@@ -100,7 +104,7 @@ void RenderCommandBucket<T>::Submit(const Scene& scene)
 				if (shaderID != lastShaderID) {
 					lastShader = &ResourcesManager::GetGRM().Get<ShaderProgram>(shaderID);
 					lastShader->Bind();
-					lastShader->SetVec3("viewPos", scene.GetCurrentCamera().Position);
+					// lastShader->SetVec3("viewPos", scene.GetCurrentCamera().Position);
 					lastShaderID = shaderID;
 				}
 

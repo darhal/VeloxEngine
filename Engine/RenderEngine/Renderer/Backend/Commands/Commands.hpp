@@ -54,8 +54,6 @@ namespace Commands
 
     struct CreateIndexBuffer
     {
-		typedef VAO Resource;
-
 		VertexSettings::VertexBufferData settings;
         VAO* vao;
 
@@ -64,40 +62,48 @@ namespace Commands
 
 	struct CreateVAO
 	{
-		typedef VAO Resource;
+		typedef VAO            Resource;
+		typedef VertexSettings Settings;
+		typedef typename RMI<Resource>::ID ID;
 
 		VertexSettings settings;
-		VAO* vao;
+		union { VAO* vao; VAO* resource; };
 
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateVAO;
 	};
 
     struct CreateTexture
     {
-		typedef Texture Resource;
+		typedef Texture         Resource;
+		typedef TextureSettings Settings;
+		typedef typename RMI<Resource>::ID ID;
 
         TextureSettings settings;
-        Texture* texture;
+		union { Texture* texture; Texture* resource; };
         
         CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateTexture;
     };
 
 	struct CreateFrameBuffer
 	{
-		typedef Framebuffer Resource;
+		typedef Framebuffer         Resource;
+		typedef FramebufferSettings Settings;
+		typedef typename RMI<Resource>::ID ID;
 
 		FramebufferSettings settings;
-		Framebuffer* fbo;
+		union { Framebuffer* fbo; Framebuffer* resource; };
 
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateFrameBuffer;
 	};
 
 	struct CreateRenderBuffer
 	{
-		typedef Renderbuffer Resource;
+		typedef Renderbuffer         Resource;
+		typedef RenderbufferSettings Settings;
+		typedef typename RMI<Resource>::ID ID;
 
 		RenderbufferSettings settings;
-		Renderbuffer* rbo;
+		union { Renderbuffer* rbo; Renderbuffer* resource; };
 
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateRenderBuffer;
 	};

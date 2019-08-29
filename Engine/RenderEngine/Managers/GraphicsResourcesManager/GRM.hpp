@@ -28,6 +28,9 @@ public:
     template<typename T, typename... Args>
     FORCEINLINE T* Create(typename RMI<T>::ID& id, Args&&... args);
 
+	template<typename T, typename... Args>
+	FORCEINLINE T* Create(typename RMI<T>::ID* id, Args&&... args);
+
     // Add Function
     template<typename T>
     FORCEINLINE typename RMI<T>::ID Add(T&& res);

@@ -18,6 +18,8 @@ struct RenderbufferSettings
 		: width(w), height(h), internal_format(internal_format)
 	{}
 
+	// RenderbufferSettings(RenderbufferSettings&& other) = default;
+
 	uint32 width, height;
 	RBOInternal::rbo_internal_format_t internal_format;
 };

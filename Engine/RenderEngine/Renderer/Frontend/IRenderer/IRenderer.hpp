@@ -15,11 +15,10 @@ class IRenderer
 {
 public:
     typedef RenderSettings::RenderCmdBuffer		 RenderCmdBuffer     ; 
-    typedef RenderSettings::ResourcesCmdBuffer	 ResourcesCmdBuffer  ;
 	typedef RenderSettings::FramebufferCmdBuffer FramebufferCmdBuffer;
 
 public:
-    virtual void Render(const Scene& scene) = 0;
+    virtual void Render() = 0;
 
     virtual void PreRender() = 0;
 
@@ -29,19 +28,14 @@ public:
 
     RenderCmdBuffer& GetRenderCommandBuffer() { return m_RenderCommandBuffer; }
 
-    ResourcesCmdBuffer& GetResourcesCommandBuffer() { return m_ResourcesCommandBuffer; }
-
 	FramebufferCmdBuffer& GetFramebufferCommandBuffer() { return m_FramebufferCommandBuffer; }
 
     const RenderCmdBuffer& GetRenderCommandBuffer() const { return m_RenderCommandBuffer; }
-
-    const ResourcesCmdBuffer& GetResourcesCommandBuffer() const { return m_ResourcesCommandBuffer; }
 
 	const FramebufferCmdBuffer& GetFramebufferCommandBuffer() const { return m_FramebufferCommandBuffer; }
 
 protected:
     RenderCmdBuffer m_RenderCommandBuffer;
-    ResourcesCmdBuffer m_ResourcesCommandBuffer;
 	FramebufferCmdBuffer m_FramebufferCommandBuffer;
 };
 

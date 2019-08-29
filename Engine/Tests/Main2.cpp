@@ -391,7 +391,7 @@ void RenderThread()
 		vertexUBO.SubFillData(&view, sizeof(mat4), sizeof(mat4));
 		vertexUBO.Unbind();
 
-		RenderManager::GetRenderer().Render(scene);
+		RenderManager::Update();
 
 		auto end = std::chrono::high_resolution_clock::now();
 		auto diff = end - start;
@@ -485,7 +485,7 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 		loader2.ProcessData(plane);
 		scene->AddMeshInstance(&plane);
 		plane.GetTransformationMatrix().scale(vec3(100.f, 0.f, 100.f));
-	
+
 
 	float quadVertices[] = { // positions      
 		// positions  
@@ -514,24 +514,29 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 	settings.textureSize = ARRAY_SIZE(quadTexCoords);
 
 	// Creating a frame buffer.
-	auto& res_buffer = RenderManager::GetRenderer().GetResourcesCommandBuffer();
 	TextureID tex_id = 0; FboID fbo_id = 0; RboID rbo_id = 0;
-	Commands::CreateTexture* tex_cmd = res_buffer.AddCommand<Commands::CreateTexture>(0);
-	tex_cmd->texture = ResourcesManager::GetGRM().Create<Texture>(tex_id);
-	tex_cmd->settings = TextureSettings(TexTarget::TEX2D, SCR_WIDTH, SCR_HEIGHT, NULL,
+	auto& rrc = RenderManager::GetRRC();
+	//Commands::CreateTexture* tex_cmd = res_buffer.AddCommand<Commands::CreateTexture>(0);
+	//tex_cmd->texture = ResourcesManager::GetGRM().Create<Texture>(tex_id);
+	auto tex_settings = TextureSettings(TexTarget::TEX2D, SCR_WIDTH, SCR_HEIGHT, NULL,
 		Vector<TexParamConfig>{
 			{ TexParam::TEX_MIN_FILTER, TexFilter::LINEAR },
 			{ TexParam::TEX_MAG_FILTER, TexFilter::LINEAR }
 		}
 	);
-	Commands::CreateRenderBuffer* rbo_cmd = res_buffer.AppendCommand<Commands::CreateRenderBuffer>(tex_cmd);
-	rbo_cmd->rbo = ResourcesManager::GetGRM().Create<RBO>(rbo_id);
-	rbo_cmd->settings = RenderbufferSettings(SCR_WIDTH, SCR_HEIGHT);
-	Commands::CreateFrameBuffer* fbo_cmd = res_buffer.AppendCommand<Commands::CreateFrameBuffer>(rbo_cmd);
-	fbo_cmd->fbo = ResourcesManager::GetGRM().Create<FBO>(fbo_id);
-	fbo_cmd->settings = FramebufferSettings({ tex_cmd->texture }, FBOTarget::FBO, rbo_cmd->rbo);
+	auto tex_cmd = rrc.CreateResource<Commands::CreateTexture>(&tex_id, tex_settings);
 
-	ModelLoader loader(settings);
+	//Commands::CreateRenderBuffer* rbo_cmd = res_buffer.AppendCommand<Commands::CreateRenderBuffer>(tex_cmd);
+	//rbo_cmd->rbo = ResourcesManager::GetGRM().Create<RBO>(rbo_id);
+	//rbo_cmd->settings = RenderbufferSettings(SCR_WIDTH, SCR_HEIGHT);
+	auto rbo_cmd = rrc.CreateResourceAfter<Commands::CreateRenderBuffer>(tex_cmd, NULL, RenderbufferSettings(SCR_WIDTH, SCR_HEIGHT));
+
+	//Commands::CreateFrameBuffer* fbo_cmd = res_buffer.AppendCommand<Commands::CreateFrameBuffer>(rbo_cmd);
+	//fbo_cmd->fbo = ResourcesManager::GetGRM().Create<FBO>(fbo_id);
+	//fbo_cmd->settings = FramebufferSettings({ tex_cmd->texture }, FBOTarget::FBO, rbo_cmd->rbo);
+	auto fbo_cmd = rrc.CreateResourceAfter<Commands::CreateFrameBuffer>(rbo_cmd, &fbo_id, FramebufferSettings({ tex_cmd->texture }, FBOTarget::FBO, rbo_cmd->rbo));
+
+	ModelLoader loader(settings, indices2);
 	loader.GetMaterials().PopBack();
 	AbstractMaterial abst_mat;
 	abst_mat.GetRenderStates().depth_enabled = false;
@@ -543,24 +548,27 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 
 	// Setting up render targets.
 	RenderManager::GetRenderer().GetRenderCommandBuffer().PopRenderTarget();
-	RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(fbo_id, SCR_WIDTH, SCR_HEIGHT));
+	RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(fbo_id, SCR_WIDTH, SCR_HEIGHT, scene->GetProjectionMatrix(), &scene->GetCurrentCamera()->GetViewMatrix()));
 
 	Renderer::FramebufferCmdBuffer::FrameBufferPiriority f;
 	RenderTarget* rt = ResourcesManager::GetGRM().Create<RenderTarget>(f.render_target_id);
 	rt->m_Width = SCR_WIDTH;
 	rt->m_Height = SCR_HEIGHT;
-	auto key = RenderManager::GetRenderer().GetFramebufferCommandBuffer().GenerateKey(f, shaderID, quad.GetVaoID(), quad.GetSubMeshes().At(0).m_MaterialID);
+	/*auto key = RenderManager::GetRenderer().GetFramebufferCommandBuffer().GenerateKey(f, shaderID, quad.GetVaoID(), quad.GetSubMeshes().At(0).m_MaterialID);
 	auto cmd = RenderManager::GetRenderer().GetFramebufferCommandBuffer().AddCommand<Commands::DrawCmd>(key);
 	auto& obj = quad.GetSubMeshes().At(0);
 	cmd->mode = obj.m_Geometry.m_Primitive;
 	cmd->start = 0;
 	cmd->end = loader.GetVertexCount();
 	cmd->model = &quad.GetTransformationMatrix();
+	RenderManager::GetRenderer().GetFramebufferCommandBuffer().SwapCmdBuffer();*/
+
+	quad.Submit(RenderManager::GetRenderer().GetFramebufferCommandBuffer(), rt);
 	RenderManager::GetRenderer().GetFramebufferCommandBuffer().SwapCmdBuffer();
 
-	clock_t fps = 0, avgfps = 0, maxfps = 0, deltaTime = 0, minfps = 9999999;
-	uint64 frames = 1;
-	double avgdt = 0, maxdt = 0, mindt = 9999999;
+	//clock_t fps = 0, avgfps = 0, maxfps = 0, deltaTime = 0, minfps = 9999999;
+	//uint64 frames = 1;
+	//double avgdt = 0, maxdt = 0, mindt = 9999999;
 
 	// Event ev;
 	// printf("\n");
@@ -573,7 +581,7 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 		}
 	}
 
-	printf("[T2] : MIN FPS = %lf | MAX FPS = %lf | AVG FPS = %lf\n", mindt, maxdt, avgdt / frames);
+	//printf("[T2] : MIN FPS = %lf | MAX FPS = %lf | AVG FPS = %lf\n", mindt, maxdt, avgdt / frames);
 }
 
 void output(int x)

@@ -44,6 +44,11 @@ struct VertexSettings
 		uint8 attrib_index;
 	};
 
+	/*VertexSettings(VertexSettings&& other) : 
+		vertices_data(std::move(other.vertices_data)), 
+		attributes(std::move(other.attributes))
+	{}*/
+
 	Vector<VertexBufferData> vertices_data;
 	Vector<VertexAttribute> attributes;
 };

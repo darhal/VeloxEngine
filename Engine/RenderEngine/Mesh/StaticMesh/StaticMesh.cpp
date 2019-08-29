@@ -39,4 +39,20 @@ void StaticMesh::Submit(RenderCommandBuffer& CmdBucket, const Vec3f& CameraPosit
 	}
 }
 
+void StaticMesh::Submit(FramebufferCommandBuffer& CmdBucket, RenderTarget* render_target, FramebufferCommandBuffer::FrameBufferPiriority::Piroirty_t piroirty)
+{
+	for (RawSubMesh& obj : m_Meshs) {
+		const Material& material = ResourcesManager::GetGRM().Get<Material>(obj.m_MaterialID);
+
+		auto key = CmdBucket.GenerateKey({ render_target->m_FboID, piroirty }, material.GetTechnique().GetShaderID(), m_VaoID, obj.m_MaterialID);
+		auto draw_cmd = CmdBucket.AddCommand<Commands::DrawIndexedCmd>(key);
+
+		draw_cmd->mode = obj.m_Geometry.m_Primitive;
+		draw_cmd->type = obj.m_Geometry.m_DataType;
+		draw_cmd->count = obj.m_Geometry.m_Count;
+		draw_cmd->offset = obj.m_Geometry.m_Offset;
+		draw_cmd->model = &m_ModelTransformation;
+	}
+}
+
 TRE_NS_END

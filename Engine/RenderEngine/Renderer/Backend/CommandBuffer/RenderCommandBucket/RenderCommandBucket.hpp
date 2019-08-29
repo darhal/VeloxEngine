@@ -8,7 +8,6 @@
 #include "Core/Misc/Maths/Maths.hpp"
 #include "Core/Misc/Defines/Common.hpp"
 
-#include "RenderEngine/Scenegraph/Scene/Scene.hpp"
 #include "RenderEngine/Renderer/Frontend/Camera/Camera.hpp"
 #include "RenderEngine/Renderer/Backend/RenderTarget/RenderTarget.hpp"
 #include "RenderEngine/Managers/ResourcesManager/ResourcesManager.hpp"
@@ -33,11 +32,11 @@ TRE_NS_START
 ********************************************************************************************/
 
 template<typename T>
-class RenderCommandBucket : public ICommandBuffer<RenderCommandBucket<T>, T, const Scene&>
+class RenderCommandBucket : public ICommandBuffer<RenderCommandBucket<T>, T>
 {
 public:
     typedef T Key;
-    typedef ICommandBuffer<RenderCommandBucket<T>, T, const Scene&> BaseClass;
+    typedef ICommandBuffer<RenderCommandBucket<T>, T> BaseClass;
 
     RenderCommandBucket();
 
@@ -48,7 +47,7 @@ public:
 
     bool DecodeKey(Key key, ShaderID& shaderID, VaoID& vaoID, MaterialID& matID) const;
 
-    void Submit(const Scene& scene);
+    void Submit();
 
     void Clear();
 

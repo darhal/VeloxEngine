@@ -399,7 +399,7 @@
     <ClInclude Include="RenderEngine\Renderer\Common\Common.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Frontend\Camera\Camera.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Frontend\IRenderer\IRenderer.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Frontend\RenderContext\RenderContext.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Frontend\RenderResourceContext\RenderResourceContext.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Frontend\Renderer\Renderer.hpp" />
     <ClInclude Include="RenderEngine\Scenegraph\SceneNode\SceneNode.hpp" />
     <ClInclude Include="RenderEngine\Scenegraph\Scene\Scene.hpp" />

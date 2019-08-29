@@ -24,6 +24,8 @@ public:
 
     void Submit(RenderCommandBuffer& CmdBucket, const Vec3f& CameraPosition);
 
+	void Submit(FramebufferCommandBuffer& CmdBucket, RenderTarget* render_target, FramebufferCommandBuffer::FrameBufferPiriority::Piroirty_t piroirty = 0);
+
     FORCEINLINE const Vector<RawSubMesh>& GetSubMeshes() const;
 
 	FORCEINLINE VaoID GetVaoID() { return m_VaoID; }

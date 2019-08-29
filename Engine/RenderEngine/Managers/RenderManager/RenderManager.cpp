@@ -15,9 +15,25 @@ Renderer& RenderManager::GetRenderer()
     return RenderManager::GetInstance().m_Renderer;
 }
 
+RenderResourceContext& RenderManager::GetRenderResourceContext()
+{
+	return RenderManager::GetInstance().m_RRC;
+}
+
+RenderResourceContext& RenderManager::GetRRC()
+{
+	return RenderManager::GetRenderResourceContext();
+}
+
 RenderManager& RenderManager::GetInstance()
 {
     return RenderManager::s_ManagerInstance;
+}
+
+void RenderManager::Update()
+{
+	GetRRC().GetResourcesCommandBuffer().Submit();
+	GetRenderer().Render();
 }
 
 TRE_NS_END

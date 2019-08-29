@@ -151,7 +151,11 @@ void FramebufferCommandBucket<T>::Submit()
 
             if (fbo_pirority.render_target_id != lastFbo_pirority.render_target_id){
 				RenderTarget& current_rt = resources_manager.Get<RenderTarget>(fbo_pirority.render_target_id);
-				pv = current_rt.m_Projection * current_rt.m_View;
+
+				if (current_rt.m_Projection && current_rt.m_View) {
+					pv = *current_rt.m_Projection * *current_rt.m_View;
+				}
+				
 				glViewport(0, 0, current_rt.m_Width, current_rt.m_Height);
 				FBO& current_fbo = resources_manager.Get<FBO>(current_rt.m_FboID);
                 current_fbo.Use();

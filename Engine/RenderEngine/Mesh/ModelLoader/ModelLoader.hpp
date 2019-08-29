@@ -117,7 +117,7 @@ ModelLoader::ModelLoader(float(&vert)[V], uint32(&indices)[I], float(&tex)[T], f
 	VBO* indexVBO = ResourcesManager::GetGRM().Create<VBO>(indexVboID);
 	m_VboIDs.EmplaceBack(indexVboID);
 
-	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();
+	auto& CmdBucket = RenderManager::GetRRC().GetResourcesCommandBuffer();
 	Commands::CreateIndexBuffer* create_index_cmd
 		= CmdBucket.AppendCommand<Commands::CreateIndexBuffer>(create_vao_cmd);
 	create_index_cmd->vao = create_vao_cmd->vao;
@@ -143,7 +143,7 @@ ModelLoader::ModelLoader(const ModelSettings& settings, uint32(&indices)[I])
 	VBO* indexVBO = ResourcesManager::GetGRM().Create<VBO>(indexVboID);
 	m_VboIDs.EmplaceBack(indexVboID);
 
-	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();
+	auto& CmdBucket = RenderManager::GetRRC().GetResourcesCommandBuffer();
 	Commands::CreateIndexBuffer* create_index_cmd
 		= CmdBucket.AppendCommand<Commands::CreateIndexBuffer>(create_vao_cmd);
 	create_index_cmd->vao = create_vao_cmd->vao;

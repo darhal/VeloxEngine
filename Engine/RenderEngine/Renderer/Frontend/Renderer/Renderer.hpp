@@ -12,7 +12,7 @@ public:
 
     void PreRender() override;
 
-    void Render(const Scene& scene) override;
+    void Render() override;
 
     void PostRender() override;
 

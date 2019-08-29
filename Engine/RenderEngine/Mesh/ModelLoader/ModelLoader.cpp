@@ -19,7 +19,7 @@ ModelLoader::ModelLoader(Vector<vec3>& vertices, Vector<uint32>& indices, Vector
 	VBO* indexVBO = ResourcesManager::GetGRM().Create<VBO>(indexVboID);
 	m_VboIDs.EmplaceBack(indexVboID);
 
-	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();
+	auto& CmdBucket = RenderManager::GetRRC().GetResourcesCommandBuffer();
 	Commands::CreateIndexBuffer* create_index_cmd
 		= CmdBucket.AppendCommand<Commands::CreateIndexBuffer>(create_vao_cmd);
 	create_index_cmd->vao = create_vao_cmd->vao;
@@ -72,7 +72,7 @@ ModelLoader::ModelLoader(Vector<VertexData>& ver_data, Vector<uint32>& indices, 
 	VBO* indexVBO = ResourcesManager::GetGRM().Create<VBO>(vboID);
 	m_VboIDs.EmplaceBack(vboID);
 
-	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();	
+	auto& CmdBucket = RenderManager::GetRRC().GetResourcesCommandBuffer();
 	Commands::CreateIndexBuffer* create_index_cmd
 		= CmdBucket.AppendCommand<Commands::CreateIndexBuffer>(create_vao_cmd);
 	create_index_cmd->vao = create_vao_cmd->vao;
@@ -105,7 +105,7 @@ Commands::CreateVAO* ModelLoader::LoadFromArray(float(&vert)[V], float(&tex)[T],
 {
 	VAO* modelVAO = ResourcesManager::GetGRM().Create<VAO>(m_VaoID);
 
-	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();
+	auto& CmdBucket = RenderManager::GetRRC().GetResourcesCommandBuffer();
 	Commands::CreateVAO* create_vao_cmd
 		= CmdBucket.template AddCommand<Commands::CreateVAO>(typename IRenderer::ResourcesCmdBuffer::Key(-1));
 	create_vao_cmd->vao = modelVAO;
@@ -147,9 +147,9 @@ Commands::CreateVAO* ModelLoader::LoadFromVector(Vector<vec3>& vertices, Vector<
 	uint8 layout = 0;
 	VAO* modelVAO = ResourcesManager::GetGRM().Create<VAO>(m_VaoID);
 
-	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();
+	auto& CmdBucket = RenderManager::GetRRC().GetResourcesCommandBuffer();
 	Commands::CreateVAO* create_vao_cmd
-		= CmdBucket.template AddCommand<Commands::CreateVAO>(typename IRenderer::ResourcesCmdBuffer::Key(-1));
+		= CmdBucket.template AddCommand<Commands::CreateVAO>(typename RenderResourceContext::ResourcesCmdBuffer::Key(-1));
 	create_vao_cmd->vao = modelVAO;
 	create_vao_cmd->settings = VertexSettings();
 
@@ -188,9 +188,9 @@ Commands::CreateVAO* ModelLoader::LoadFromVertexData(Vector<VertexData>& ver_dat
 	VBO* vbo = ResourcesManager::GetGRM().Create<VBO>(vboID);
 	m_VboIDs.EmplaceBack(vboID);
 
-	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();
+	auto& CmdBucket = RenderManager::GetRRC().GetResourcesCommandBuffer();
 	Commands::CreateVAO* create_vao_cmd
-		= CmdBucket.template AddCommand<Commands::CreateVAO>(typename IRenderer::ResourcesCmdBuffer::Key(-1));
+		= CmdBucket.template AddCommand<Commands::CreateVAO>(typename RenderResourceContext::ResourcesCmdBuffer::Key(-1));
 	create_vao_cmd->vao = modelVAO;
 	create_vao_cmd->settings = VertexSettings();
 
@@ -217,9 +217,9 @@ Commands::CreateVAO* ModelLoader::LoadFromSettings(const ModelSettings& settings
 	uint8 layout = 0;
 	VAO* modelVAO = ResourcesManager::GetGRM().Create<VAO>(m_VaoID);
 
-	IRenderer::ResourcesCmdBuffer& CmdBucket = RenderManager::GetRenderer().GetResourcesCommandBuffer();
+	auto& CmdBucket = RenderManager::GetRRC().GetResourcesCommandBuffer();
 	Commands::CreateVAO* create_vao_cmd
-		= CmdBucket.template AddCommand<Commands::CreateVAO>(typename IRenderer::ResourcesCmdBuffer::Key(-1));
+		= CmdBucket.template AddCommand<Commands::CreateVAO>(typename RenderResourceContext::ResourcesCmdBuffer::Key(-1));
 	create_vao_cmd->vao = modelVAO;
 	create_vao_cmd->settings = VertexSettings();
 

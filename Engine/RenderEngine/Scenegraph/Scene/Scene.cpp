@@ -43,7 +43,7 @@ void Scene::Submit()
 
 void Scene::Render() const
 {
-    RenderManager::GetRenderer().Render(*this);
+    RenderManager::GetRenderer().Render();
 }
 
 TRE_NS_END

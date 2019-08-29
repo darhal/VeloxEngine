@@ -37,6 +37,7 @@ public:
 	float MovementSpeed;
 	float MouseSensitivity;
 	float Zoom;
+	mat4 view_mat;
 
 	// Constructor with vectors
 	Camera(vec3 position = vec3(0.0f, 0.0f, 0.0f), vec3 up = vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
@@ -58,9 +59,10 @@ public:
 	}
 
 	// Returns the view matrix calculated using Euler Angles and the LookAt Matrix
-	mat4 GetViewMatrix() const
+	mat4& GetViewMatrix()
 	{
-		return mat4::look_at(Position, Position + Front, Up);
+		view_mat = mat4::look_at(Position, Position + Front, Up);
+		return view_mat;
 	}
 
 	// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)

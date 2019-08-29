@@ -45,6 +45,22 @@ struct TextureSettings
 		target(target), datatype(datatype), internalFormat(internalFormat), format(format)
 	{}
 
+	/*TextureSettings(TextureSettings&& other) :
+		paramList(std::move(other.paramList)),
+		img_data(other.img_data),
+		width(other.width), height(other.height), lod(other.lod),
+		target(other.target), datatype(other.datatype), internalFormat(other.internalFormat),
+		format(other.format)
+	{}
+
+	TextureSettings(const TextureSettings& other) :
+		paramList(std::move(other.paramList)),
+		img_data(other.img_data),
+		width(other.width), height(other.height), lod(other.lod),
+		target(other.target), datatype(other.datatype), internalFormat(other.internalFormat),
+		format(other.format)
+	{}*/
+
 	Vector<TexParamConfig> paramList = {};
 	void* img_data = NULL;
 	int32 width, height, lod = 0;

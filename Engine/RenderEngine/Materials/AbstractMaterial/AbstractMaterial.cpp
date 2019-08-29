@@ -6,7 +6,7 @@ TRE_NS_START
 
 TextureID AbstractMaterial::AddTexture(const String& path)
 {
-    auto& res_buffer = RenderManager::GetRenderer().GetResourcesCommandBuffer();
+    auto& res_buffer = RenderManager::GetRRC().GetResourcesCommandBuffer();
     Image img(path.Buffer());
     TextureID tex_id = 0;
 
@@ -20,7 +20,7 @@ TextureID AbstractMaterial::AddTexture(const String& path)
 			{TexParam::TEX_MAG_FILTER, TexFilter::LINEAR}
 		}
     );
-        
+   
     return tex_id;
 }
 

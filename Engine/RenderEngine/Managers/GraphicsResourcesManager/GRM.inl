@@ -14,6 +14,20 @@ FORCEINLINE T* GraphicsResourcesManager::Create(typename RMI<T>::ID& id, Args&&.
     return &container.Lookup(id).second;
 }
 
+// Create Function
+template<typename T, typename... Args>
+FORCEINLINE T* GraphicsResourcesManager::Create(typename RMI<T>::ID* id, Args&&... args)
+{
+	typename RMI<T>::Container& container = GraphicsResourcesManager::GetResourceContainer<T>();
+	if (id) {
+		*id = container.Emplace(std::forward<Args>(args)...);
+		return &container.Lookup(*id).second;
+	}else {
+		auto res_id = container.Emplace(std::forward<Args>(args)...);
+		return &container.Lookup(res_id).second;
+	}
+}
+
 template<typename T>
 FORCEINLINE typename RMI<T>::ID GraphicsResourcesManager::Add(T&& res)
 {

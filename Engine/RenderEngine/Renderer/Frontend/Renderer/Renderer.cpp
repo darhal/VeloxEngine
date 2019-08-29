@@ -1,11 +1,11 @@
 #include "Renderer.hpp"
+#include <RenderEngine/Mesh/IPrimitiveMesh/IPrimitiveMesh.hpp>
 
 TRE_NS_START
 
-void Renderer::Render(const Scene& scene)
+void Renderer::Render()
 {
-    m_ResourcesCommandBuffer.Submit();
-    m_RenderCommandBuffer.Submit(scene);
+    m_RenderCommandBuffer.Submit();
 	m_FramebufferCommandBuffer.Submit();
 }
 
@@ -28,6 +28,11 @@ void Renderer::PreRender()
 }
 
 void Renderer::PostRender()
+{
+
+}
+
+void SubmitToFBO(IPrimitiveMesh* mesh)
 {
 
 }

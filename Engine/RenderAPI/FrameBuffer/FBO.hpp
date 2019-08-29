@@ -40,6 +40,13 @@ struct FramebufferSettings
 		target(target)
 	{}
 
+	/*FramebufferSettings(FramebufferSettings&& other) : 
+		texture_attachments(std::move(other.texture_attachments)),
+		draw_buffers(std::move(other.draw_buffers)),
+		rbo(other.rbo), rbo_attachement(other.rbo_attachement),
+		read_buffer(other.read_buffer), target(other.target)
+	{}*/
+
 	Vector<TextureAttachement> texture_attachments;
 	Vector<uint32> draw_buffers;
 	RBO* rbo = NULL;
