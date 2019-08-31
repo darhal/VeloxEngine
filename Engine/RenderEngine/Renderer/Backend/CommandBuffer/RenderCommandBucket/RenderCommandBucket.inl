@@ -12,7 +12,6 @@ RenderCommandBucket<T>::RenderCommandBucket() :
     m_IsReading(false)
 {
 	RenderTarget render_t;
-	render_t.m_FboID = RenderSettings::DEFAULT_FRAMEBUFFER;
 	this->PushRenderTarget(render_t);
     // cv.notify_one();
 }
@@ -65,12 +64,12 @@ bool RenderCommandBucket<T>::DecodeKey(Key key, ShaderID& shaderID, VaoID& vaoID
 template<typename T>
 void RenderCommandBucket<T>::Submit()
 {
-	
 	for (FboID current_target = 0; current_target < m_RenderTargetCount; current_target++) {
 
 		const RenderTarget& render_target = m_RenderTargetStack[current_target];
 		const FBO& fbo = ResourcesManager::GetGRM().Get<FBO>(render_target.m_FboID);
 		glViewport(0, 0, render_target.m_Width, render_target.m_Height);
+		//printf("(Render*) Framebuffer id = %d\n", render_target.m_FboID);
 		fbo.Use();
 		ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
 		ClearBuffers();

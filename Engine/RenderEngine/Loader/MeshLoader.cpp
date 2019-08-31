@@ -194,6 +194,8 @@ void MeshLoader::LoadFile(const char* path)
 	}
 	m_ObjectCount++;
 	fclose(file);
+
+	printf("Loading OBJ is done successfully.\n");
 }
 
 void MeshLoader::ProcessData(Vector<ModelLoader>& arrayOfObjects)

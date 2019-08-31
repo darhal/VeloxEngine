@@ -51,12 +51,7 @@ ModelLoader::ModelLoader(const ModelSettings& settings)
 {
 	ASSERTF((settings.vertexSize == 0 || settings.vertices == NULL), "Attempt to create a ModelLoader with empty vertecies!");
 
-	m_VertexCount = settings.vertexSize / 3LLU; // Get the vertex Count!
-
-	Commands::CreateVAO* create_vao_cmd = LoadFromSettings(settings);
-	// modelVAO.Unuse(); // maybe append another command to order it to unuse the vao.
-
-	m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
+	this->SetupFromArrayHelper(settings, settings.indices, settings.indexSize);
 }
 
 ModelLoader::ModelLoader(Vector<VertexData>& ver_data, Vector<uint32>& indices, const Vector<MatrialForRawModel>& mat_vec)
@@ -98,6 +93,33 @@ ModelLoader::ModelLoader(Vector<VertexData>& ver_data, const Vector<MatrialForRa
 	if (m_Materials.IsEmpty()) {
 		m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
 	}
+}
+
+void ModelLoader::SetupFromArrayHelper(const ModelSettings& settings, uint32* indices, uint32 size)
+{
+	ASSERTF((settings.vertexSize == 0 || settings.vertices == NULL), "Attempt to create a ModelLoader with empty vertecies!");
+	
+	Commands::CreateVAO* create_vao_cmd = LoadFromSettings(settings);
+
+	if (indices && size) {
+		m_IsIndexed = true;
+		m_VertexCount = size; // Get the vertex Count!
+
+		// Set up indices
+		typename RMI<VBO>::ID indexVboID;
+		VBO* indexVBO = ResourcesManager::GetGRM().Create<VBO>(indexVboID);
+		m_VboIDs.EmplaceBack(indexVboID);
+
+		auto& CmdBucket = RenderManager::GetRRC().GetResourcesCommandBuffer();
+		Commands::CreateIndexBuffer* create_index_cmd
+			= CmdBucket.AppendCommand<Commands::CreateIndexBuffer>(create_vao_cmd);
+		create_index_cmd->vao = create_vao_cmd->vao;
+		create_index_cmd->settings = VertexSettings::VertexBufferData(indices, size, indexVBO);
+	}else {
+		m_VertexCount = settings.vertexSize / 3LLU; // Get the vertex Count!
+	}
+	
+	m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
 }
 
 template<ssize_t V, ssize_t T, ssize_t N>

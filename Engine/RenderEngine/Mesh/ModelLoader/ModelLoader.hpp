@@ -45,9 +45,6 @@ public:
 
 	ModelLoader(const ModelSettings& settings);
 
-	template<ssize_t I>
-	ModelLoader(const ModelSettings& settings, uint32(&indices)[I]);
-
 	ModelLoader(Vector<vec3>& vertices, Vector<uint32>& indices, Vector<vec2>* textures = NULL, Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = {});
 	ModelLoader(Vector<vec3>& vertices, Vector<vec2>* textures = NULL, Vector<vec3>* normals = NULL, const Vector<MatrialForRawModel>& mat_vec = {});
 
@@ -79,6 +76,8 @@ private:
 	Commands::CreateVAO* LoadFromSettings(const ModelSettings& settings);
 	Commands::CreateVAO* LoadFromVector(Vector<vec3>& vertices, Vector<vec2>* textures, Vector<vec3>* normals);
 	typename Commands::CreateVAO* LoadFromVertexData(Vector<VertexData>& ver_data);
+
+	void SetupFromArrayHelper(const ModelSettings& settings, uint32* indices, uint32 size);
 
 	Scene* m_Scene;
 
@@ -127,29 +126,6 @@ ModelLoader::ModelLoader(float(&vert)[V], uint32(&indices)[I], float(&tex)[T], f
 	if (m_Materials.IsEmpty()) {
 		m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
 	}
-}
-
-template<ssize_t I>
-ModelLoader::ModelLoader(const ModelSettings& settings, uint32(&indices)[I])
-{
-	ASSERTF((settings.vertexSize == 0 || settings.vertices == NULL), "Attempt to create a ModelLoader with empty vertecies!");
-	m_VertexCount = I; // Get the vertex Count!
-	m_IsIndexed = true;
-
-	Commands::CreateVAO* create_vao_cmd = LoadFromSettings(settings);
-
-	// Set up indices
-	typename RMI<VBO>::ID indexVboID;
-	VBO* indexVBO = ResourcesManager::GetGRM().Create<VBO>(indexVboID);
-	m_VboIDs.EmplaceBack(indexVboID);
-
-	auto& CmdBucket = RenderManager::GetRRC().GetResourcesCommandBuffer();
-	Commands::CreateIndexBuffer* create_index_cmd
-		= CmdBucket.AppendCommand<Commands::CreateIndexBuffer>(create_vao_cmd);
-	create_index_cmd->vao = create_vao_cmd->vao;
-	create_index_cmd->settings = VertexSettings::VertexBufferData(indices, I, indexVBO);
-
-	m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
 }
 
 FORCEINLINE ModelLoader::ModelLoader(ModelLoader&& other) :

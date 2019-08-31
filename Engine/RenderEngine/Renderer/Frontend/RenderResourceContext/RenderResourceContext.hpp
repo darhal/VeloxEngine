@@ -20,6 +20,8 @@ public:
 	template<typename Cmd, typename Cmd2>
 	typename Cmd* CreateResourceAfter(Cmd2* cmd, typename Cmd::ID* out_id_ptr, const typename Cmd::Settings& settings);
 
+	FORCEINLINE void Update();
+
 private:
 	ResourcesCmdBuffer m_ResourcesCommandBuffer;
 };
@@ -40,6 +42,11 @@ typename Cmd* RenderResourceContext::CreateResourceAfter(Cmd2* cmd, typename Cmd
 	res_creation_cmd->resource = ResourcesManager::GetGRM().Create<typename Cmd::Resource>(out_id_ptr);
 	res_creation_cmd->settings = settings;
 	return res_creation_cmd;
+}
+
+FORCEINLINE void RenderResourceContext::Update()
+{
+	m_ResourcesCommandBuffer.Submit();
 }
 
 TRE_NS_END

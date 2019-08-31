@@ -14,7 +14,7 @@ public:
 
     virtual void Submit(RenderCommandBuffer& CmdBucket, const Vec3f& CameraPosition) = 0; // Should be pure virtual
 
-	virtual void Submit(FramebufferCommandBuffer& CmdBucket, RenderTarget* render_target, FramebufferCommandBuffer::FrameBufferPiriority::Piroirty_t piroirty) = 0; // Should be pure virtual
+	virtual void Submit(FramebufferCommandBuffer& CmdBucket, RenderTargetID render_target_id, FramebufferCommandBuffer::FrameBufferPiriority::Piroirty_t piroirty) = 0; // Should be pure virtual
 private:
     
 };

@@ -96,6 +96,8 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
+      <LanguageStandard>
+      </LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -108,6 +110,8 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
+      <LanguageStandard>
+      </LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -122,6 +126,8 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
+      <LanguageStandard>
+      </LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -138,6 +144,8 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
+      <LanguageStandard>
+      </LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -258,6 +266,9 @@
     <ClCompile Include="RenderEngine\Mesh\StaticMesh\StaticMesh.cpp" />
     <ClCompile Include="RenderEngine\Renderer\Backend\Dispatcher\DrawCallsDispatcher.cpp" />
     <ClCompile Include="RenderEngine\Renderer\Common\Common.cpp" />
+    <ClCompile Include="RenderEngine\Renderer\Frontend\Lights\DirectionalLight\DirectionalLight.cpp" />
+    <ClCompile Include="RenderEngine\Renderer\Frontend\Lights\PointLight\PointLight.cpp" />
+    <ClCompile Include="RenderEngine\Renderer\Frontend\Lights\SpotLight\SpotLight.cpp" />
     <ClCompile Include="RenderEngine\Renderer\Frontend\Renderer\Renderer.cpp" />
     <ClCompile Include="RenderEngine\Scenegraph\SceneNode\SceneNode.cpp" />
     <ClCompile Include="RenderEngine\Scenegraph\Scene\Scene.cpp" />
@@ -399,6 +410,10 @@
     <ClInclude Include="RenderEngine\Renderer\Common\Common.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Frontend\Camera\Camera.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Frontend\IRenderer\IRenderer.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Frontend\Lights\DirectionalLight\DirectionalLight.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Frontend\Lights\ILight\ILight.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Frontend\Lights\PointLight\PointLight.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Frontend\Lights\SpotLight\SpotLight.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Frontend\RenderResourceContext\RenderResourceContext.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Frontend\Renderer\Renderer.hpp" />
     <ClInclude Include="RenderEngine\Scenegraph\SceneNode\SceneNode.hpp" />

@@ -30,12 +30,12 @@ void RiggedStaticMesh::Submit(RenderCommandBuffer& CmdBucket, const Vec3f& Camer
 	}
 }
 
-void RiggedStaticMesh::Submit(FramebufferCommandBuffer& CmdBucket, RenderTarget* render_target, FramebufferCommandBuffer::FrameBufferPiriority::Piroirty_t piroirty)
+void RiggedStaticMesh::Submit(FramebufferCommandBuffer& CmdBucket, RenderTargetID render_target_id, FramebufferCommandBuffer::FrameBufferPiriority::Piroirty_t piroirty)
 {
 	for (RiggedRawSubMesh& obj : m_Meshs) {
 		const Material& material = ResourcesManager::GetGRM().Get<Material>(obj.m_MaterialID);
 
-		auto key = CmdBucket.GenerateKey({render_target->m_FboID, piroirty}, material.GetTechnique().GetShaderID(), m_VaoID, obj.m_MaterialID);
+		auto key = CmdBucket.GenerateKey({ render_target_id, piroirty}, material.GetTechnique().GetShaderID(), m_VaoID, obj.m_MaterialID);
 		auto draw_cmd = CmdBucket.AddCommand<Commands::DrawIndexedCmd>(key);
 
 		draw_cmd->mode = obj.m_Geometry.m_Primitive;

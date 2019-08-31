@@ -18,6 +18,8 @@ public:
     static RenderManager& GetInstance();
 
 	static void Update();
+
+	static void Init();
     
 private:
     RenderManager();

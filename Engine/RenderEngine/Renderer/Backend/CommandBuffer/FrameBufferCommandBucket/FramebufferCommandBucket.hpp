@@ -151,6 +151,7 @@ void FramebufferCommandBucket<T>::Submit()
 
             if (fbo_pirority.render_target_id != lastFbo_pirority.render_target_id){
 				RenderTarget& current_rt = resources_manager.Get<RenderTarget>(fbo_pirority.render_target_id);
+				//printf("(FBR*) Framebuffer id = %d\n", current_rt.m_FboID);
 
 				if (current_rt.m_Projection && current_rt.m_View) {
 					pv = *current_rt.m_Projection * *current_rt.m_View;

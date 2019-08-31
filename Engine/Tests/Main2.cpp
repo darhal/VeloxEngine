@@ -40,96 +40,6 @@
 
 using namespace TRE;
 
-// set up vertex data (and buffer(s)) and configure vertex attributes
-// ------------------------------------------------------------------
-float vertices[] = {
-	-0.5f, -0.5f, -0.5f, 
-	0.5f, -0.5f, -0.5f, 
-	0.5f,  0.5f, -0.5f,  
-	0.5f,  0.5f, -0.5f, 
-	-0.5f,  0.5f, -0.5f,  
-	-0.5f, -0.5f, -0.5f, 
-
-	-0.5f, -0.5f,  0.5f,  
-	0.5f, -0.5f,  0.5f,  
-	0.5f,  0.5f,  0.5f,  
-	0.5f,  0.5f,  0.5f,  
-	-0.5f,  0.5f,  0.5f,  
-	-0.5f, -0.5f,  0.5f, 
-
-	-0.5f,  0.5f,  0.5f,  
-	-0.5f,  0.5f, -0.5f, 
-	-0.5f, -0.5f, -0.5f,  
-	-0.5f, -0.5f, -0.5f,  
-	-0.5f, -0.5f,  0.5f, 
-	-0.5f,  0.5f,  0.5f,  
-
-	0.5f,  0.5f,  0.5f,  
-	0.5f,  0.5f, -0.5f,  
-	0.5f, -0.5f, -0.5f,  
-	0.5f, -0.5f, -0.5f,  
-	0.5f, -0.5f,  0.5f, 
-	0.5f,  0.5f,  0.5f, 
-
-	-0.5f, -0.5f, -0.5f,  
-	0.5f, -0.5f, -0.5f,  
-	0.5f, -0.5f,  0.5f,  
-	0.5f, -0.5f,  0.5f,  
-	-0.5f, -0.5f,  0.5f,  
-	-0.5f, -0.5f, -0.5f,  
-
-	-0.5f,  0.5f, -0.5f,  
-	0.5f,  0.5f, -0.5f,  
-	0.5f,  0.5f,  0.5f,  
-	0.5f,  0.5f,  0.5f,  
-	-0.5f,  0.5f,  0.5f, 
-	-0.5f,  0.5f, -0.5f,  
-};
-
-float texCoord[] = {
-	0.0f, 0.0f,
-	1.0f, 0.0f,
-	1.0f, 1.0f,
-	1.0f, 1.0f,
-	0.0f, 1.0f,
-	0.0f, 0.0f,
-
-	0.0f, 0.0f,
-	1.0f, 0.0f,
-	1.0f, 1.0f,
-	1.0f, 1.0f,
-	0.0f, 1.0f,
-	0.0f, 0.0f,
-
-	1.0f, 0.0f,
-	1.0f, 1.0f,
-	0.0f, 1.0f,
-	0.0f, 1.0f,
-	0.0f, 0.0f,
-	1.0f, 0.0f,
-
-	1.0f, 0.0f,
-	1.0f, 1.0f,
-	0.0f, 1.0f,
-	0.0f, 1.0f,
-	0.0f, 0.0f,
-	1.0f, 0.0f,
-
-	0.0f, 1.0f,
-	1.0f, 1.0f,
-	1.0f, 0.0f,
-	1.0f, 0.0f,
-	0.0f, 0.0f,
-	0.0f, 1.0f,
-
-	0.0f, 1.0f,
-	1.0f, 1.0f,
-	1.0f, 0.0f,
-	.0f, 0.0f,
-	0.0f, 0.0f,
-	0.0f, 1.0f
-};
-
 // world space positions of our cubes
 vec3 cubePositions[] = {
 	vec3(0.0f,  0.0f,  0.0f),
@@ -145,8 +55,8 @@ vec3 cubePositions[] = {
 };
 
 // settings
-const unsigned int SCR_WIDTH = 1920 / 2;
-const unsigned int SCR_HEIGHT = 1080 / 2;
+const unsigned int SCR_WIDTH = 1900/2;
+const unsigned int SCR_HEIGHT = 1000/2;
 
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
@@ -160,7 +70,7 @@ double  averageFrameTimeMilliseconds = 33.333;
 bool vsync = true;
 bool start = false;
 int32 speed = 1;
-vec3 LightPos = vec3(-1.0f, 5.0f, -0.3f);
+vec3 LightPos = vec3(-0.2f, -1.0f, -0.3f);
 
 double clockToMilliseconds(clock_t ticks){
     // units/(units/time) => time (seconds) * 1000 = milliseconds
@@ -229,7 +139,23 @@ std::atomic<uint8> IsWindowOpen;
 void LoadObjects(Scene* scene)
 {
 	String mesh_file_path;
-	StaticMesh deagle;
+
+	/*StaticMesh* room = new StaticMesh();
+	{
+		mesh_file_path.Clear();
+		mesh_file_path = "res/obj/lowpoly/room/room_r.obj";
+		MeshLoader obj_loader(mesh_file_path.Buffer());
+
+		for(auto& mat : obj_loader.GetMaterialLoader().GetMaterials()){
+			mat.second.GetRenderStates().cull_enabled = false;
+		}
+
+		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
+		loader.ProcessData(*room, 1);
+		scene->AddMeshInstance(room);
+	}*/
+
+	StaticMesh* deagle = new StaticMesh();
 	{
 		mesh_file_path.Clear();
 		mesh_file_path = "res/obj/lowpoly/deagle.obj";
@@ -238,59 +164,66 @@ void LoadObjects(Scene* scene)
 		obj_loader.GetMaterialLoader().GetMaterialFromName("Fire.001").GetRenderStates().blend_enabled = true;
 		obj_loader.GetMaterialLoader().GetMaterialFromName("Fire.001").GetRenderStates().cull_enabled = false;
 		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
-		loader.ProcessData(deagle);
-		scene->AddMeshInstance(&deagle);
+		loader.ProcessData(*deagle);
+		scene->AddMeshInstance(deagle);
 	}
+	deagle->GetTransformationMatrix().translate(vec3(0.f, 3.f, 0.f));
 
-	StaticMesh carrot_box;
+	StaticMesh* carrot_box = new StaticMesh();
 	{
 		mesh_file_path.Clear();
 		mesh_file_path = "res/obj/lowpoly/carrot_box.obj";
 		// res_dir.SearchRecursive("carrot_box.obj", mesh_file_path);
 		MeshLoader obj_loader(mesh_file_path.Buffer());
 		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
-		loader.ProcessData(carrot_box, 1);
-		scene->AddMeshInstance(&carrot_box);
-
+		loader.ProcessData(*carrot_box, 1);
+		scene->AddMeshInstance(carrot_box);
 	}
-	carrot_box.GetTransformationMatrix().translate(LightPos - vec3(-5, 0, 0));
+	carrot_box->GetTransformationMatrix().translate(vec3(10.f, 5.f, -3.f));
 
-	StaticMesh trees;
+	StaticMesh* trees = new StaticMesh();
 	{
 		mesh_file_path.Clear();
 		mesh_file_path = "res/obj/lowpoly/all_combined_smooth.obj";
 		//res_dir.SearchRecursive("all_combined_smooth.obj", mesh_file_path);
 		MeshLoader obj_loader(mesh_file_path.Buffer());
 		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
-		loader.ProcessData(trees, 1);
-		scene->AddMeshInstance(&trees);
+		loader.ProcessData(*trees, 1);
+		scene->AddMeshInstance(trees);
 
 	}
-	trees.GetTransformationMatrix().translate(vec3(0, 0, 6));
+	trees->GetTransformationMatrix().translate(vec3(0, 0, 6));
 
 	float planeVertices[] = {
 		// positions          // texture Coords 
-		 5.0f, -0.5f,  5.0f,  
-		-5.0f, -0.5f,  5.0f,
-		-5.0f, -0.5f, -5.0f,
+		50.0f, -0.5f,  50.0f,
+		-50.0f, -0.5f,  50.0f,
+		-50.0f, -0.5f, -50.0f,
 
-		 5.0f, -0.5f,  5.0f,
-		-5.0f, -0.5f, -5.0f,
-		 5.0f, -0.5f, -5.0f,  
+		 50.0f, -0.5f,  50.0f,
+		-50.0f, -0.5f, -50.0f,
+		50.0f, -0.5f, -50.0f,
 	};
-
 	float planeTexCoords[] = {
-		2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f,
-		2.0f, 0.0f, 0.0f, 2.0f, 2.0f, 2.0f
+		20.0f, 0.0f, 0.0f, 0.0f, 0.0f, 20.0f,
+		20.0f, 0.0f, 0.0f, 20.0f, 20.0f, 20.0f
 	};
+	uint32 indices2[] = { 0, 1, 2, 3, 4, 5 };
 
-	uint32 indices[] = { 0, 1, 2, 3, 4, 5 };
-
-	StaticMesh plane;
-	ModelSettings settings(planeVertices, planeTexCoords, planeVertices);
-	ModelLoader loader(settings, indices);
-	loader.ProcessData(plane);
-	scene->AddMeshInstance(&plane);
+	StaticMesh* plane = new StaticMesh();
+	ModelSettings settings2(planeVertices, planeTexCoords, planeVertices, indices2);
+	settings2.CopyData();
+	ModelLoader loader2(settings2);
+	loader2.GetMaterials().PopBack();
+	AbstractMaterial abst_mat2;
+	abst_mat2.GetRenderStates().cull_enabled = false;
+	abst_mat2.GetParametres().AddParameter<TextureID>("material.diffuse_tex", abst_mat2.AddTexture("res/img/ground/brown_mud_diff.png"));
+	abst_mat2.GetParametres().AddParameter<TextureID>("material.specular_tex", abst_mat2.AddTexture("res/img/ground/brown_mud_spec.png"));
+	abst_mat2.GetParametres().AddParameter<float>("material.shininess", 500.f);
+	loader2.GetMaterials().EmplaceBack(abst_mat2, loader2.GetVertexCount());
+	loader2.ProcessData(*plane);
+	scene->AddMeshInstance(plane);
+	//plane->GetTransformationMatrix().scale(vec3(50.f, 0.f, 50.f));
 }
 
 void RenderThread()
@@ -304,7 +237,7 @@ void RenderThread()
 	printf("- GLSL Version  	: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 	printf("- Hardware Threads 	: %d\n", std::thread::hardware_concurrency()); 
 
-	Scene scene;
+	Scene& scene = RenderManager::GetRenderer().GetScene();
 
 	typename RMI<ShaderProgram>::ID shaderID, texShaderID, scrShader;
 	
@@ -346,9 +279,9 @@ void RenderThread()
 		shader.AddUniform("model");
 		shader.AddUniform("viewPos");
 
-		shader.AddUniform("light.ambient");
+		//shader.AddUniform("light.ambient");
 		shader.AddUniform("light.diffuse");
-		shader.AddUniform("light.specular");
+		//shader.AddUniform("light.specular");
 		shader.AddUniform("light.position");
 
 		shader.AddUniform("material.ambient");
@@ -359,9 +292,8 @@ void RenderThread()
 		shader.AddUniform("material.diffuse_tex");
 		shader.AddUniform("material.specular_tex");
 
-		shader.SetVec3("light.ambient", 0.09f, 0.09f, 0.09f);
-		shader.SetVec3("light.diffuse", 1.0f, 1.0f, 1.0f);
-		shader.SetVec3("light.specular", 0.1f, 0.1f, 0.1f);
+		// shader.SetVec3("light.ambient", 0.09f, 0.09f, 0.09f);
+		shader.SetVec3("light.diffuse", 0.7f, 0.7f, 0.7f);
 		shader.SetVec3("light.position", LightPos);
 		shader.SetFloat("material.alpha", 1.f);
 		shader.SetFloat("material.shininess", 1.0f);
@@ -411,97 +343,145 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 #if defined(OS_LINUX)
 	Directory res_dir("res/");
 #endif
-	// LoadObjects(scene);
-	String mesh_file_path;
-	StaticMesh deagle;
-	{
-		mesh_file_path.Clear();
-		mesh_file_path = "res/obj/lowpoly/deagle.obj";
-		// res_dir.SearchRecursive("deagle.obj", mesh_file_path);
-		MeshLoader obj_loader(mesh_file_path.Buffer());
-		obj_loader.GetMaterialLoader().GetMaterialFromName("Fire.001").GetRenderStates().blend_enabled = true;
-		obj_loader.GetMaterialLoader().GetMaterialFromName("Fire.001").GetRenderStates().cull_enabled = false;
-		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
-		loader.ProcessData(deagle);
-		scene->AddMeshInstance(&deagle);
+	RenderManager::GetRenderer().GetRenderCommandBuffer().GetRenderTarget(0)->m_Projection = scene->GetProjectionMatrix();
+	RenderManager::GetRenderer().GetRenderCommandBuffer().GetRenderTarget(0)->m_View = &scene->GetCurrentCamera()->GetViewMatrix();
+	RenderManager::GetRenderer().GetRenderCommandBuffer().GetRenderTarget(0)->m_Width = SCR_WIDTH;
+	RenderManager::GetRenderer().GetRenderCommandBuffer().GetRenderTarget(0)->m_Height = SCR_HEIGHT;
+	//RenderManager::Init();
+
+	LoadObjects(scene);
+
+	// RenderManager::GetRRC().GetResourcesCommandBuffer().SwapCmdBuffer();
+
+	while(IsWindowOpen){
+		auto& render_cmd = RenderManager::GetRenderer().GetRenderCommandBuffer();
+
+		if(render_cmd.SwapCmdBuffer()){
+			render_cmd.Clear(); // Clear write side
+			scene->Submit(); // write on write
+		}
 	}
-	deagle.GetTransformationMatrix().translate(vec3(0.f, 3.f, 0.f));
 
-	StaticMesh carrot_box;
-	{
-		mesh_file_path.Clear();
-		mesh_file_path = "res/obj/lowpoly/carrot_box.obj";
-		// res_dir.SearchRecursive("carrot_box.obj", mesh_file_path);
-		MeshLoader obj_loader(mesh_file_path.Buffer());
-		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
-		loader.ProcessData(carrot_box, 1);
-		scene->AddMeshInstance(&carrot_box);
+	//printf("[T2] : MIN FPS = %lf | MAX FPS = %lf | AVG FPS = %lf\n", mindt, maxdt, avgdt / frames);
+}
 
+void output(int x)
+{
+	printf("X is %d\n", x);
+}
+
+int main()
+{
+	RenderThread();
+}
+
+void PrintScreenshot()
+{
+	Color* pixels = new Color[SCR_WIDTH * SCR_HEIGHT];
+	glReadPixels(0, 0, SCR_WIDTH, SCR_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	Image img = Image(SCR_WIDTH, SCR_HEIGHT, pixels);
+	img.Save("test.png", ImageFileFormat::PNG);
+	printf("Screenshot taken.\n");
+	delete[] pixels;
+}
+
+void HandleEvent(Scene* scene, const Event& e)
+{
+	if (e.Type == Event::TE_RESIZE) {
+		glViewport(0, 0, e.Window.Width, e.Window.Height);
+		scene->CreateProjectionMatrix(Vec2f(e.Window.Width, e.Window.Height), Scene::NEAR_PLANE, Scene::FAR_PLANE);
+		printf("DETECTING RESIZE EVENT(%d, %d)\n", e.Window.Width, e.Window.Height);
+	}else if (e.Type == Event::TE_KEY_DOWN) {
+		if (e.Key.Code == Key::F11) {
+			PrintScreenshot();
+			printf("Taking screenshot...\n");
+		}
+		switch (e.Key.Code) {
+		case Key::Up:
+			speed += 1;
+			printf("Changing camera speed to %d\n", speed);
+			break;
+		case Key::Down:
+			speed -= 1;
+			printf("Changing camera speed to %d\n", speed);
+			break;
+		case Key::Space:
+			start = !start;
+			deltaTime = 0;
+			break;
+		case Key::Z:
+			scene->GetCurrentCamera()->ProcessKeyboard(FORWARD, speed * (float)clockToMilliseconds(deltaTime)/1000.f);
+			break;
+		case Key::S:
+			scene->GetCurrentCamera()->ProcessKeyboard(BACKWARD, speed * (float)clockToMilliseconds(deltaTime)/1000.f);
+			break;
+		case Key::Q:
+			scene->GetCurrentCamera()->ProcessKeyboard(LEFT, speed * (float)clockToMilliseconds(deltaTime)/1000.f);
+			break;
+		case Key::D:
+			scene->GetCurrentCamera()->ProcessKeyboard(RIGHT, speed * (float)clockToMilliseconds(deltaTime)/1000.f);
+			break;
+		default:
+			break;
+		}
+	}else if (e.Type == Event::TE_MOUSE_MOVE) {
+		float xpos = (float)e.Mouse.X;
+		float ypos = (float)e.Mouse.Y;
+		if (firstMouse) {
+			lastX = xpos;
+			lastY = ypos;
+			firstMouse = false;
+		}
+
+		float xoffset = xpos - lastX;
+		float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+		lastX = xpos;
+		lastY = ypos;
+
+		scene->GetCurrentCamera()->ProcessMouseMovement(xoffset, yoffset);
 	}
-	carrot_box.GetTransformationMatrix().translate(LightPos - vec3(-5, 0, 0));
+}
 
-	StaticMesh trees;
-	{
-		mesh_file_path.Clear();
-		mesh_file_path = "res/obj/lowpoly/all_combined_smooth.obj";
-		//res_dir.SearchRecursive("all_combined_smooth.obj", mesh_file_path);
-		MeshLoader obj_loader(mesh_file_path.Buffer());
-		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
-		loader.ProcessData(trees, 1);
-		scene->AddMeshInstance(&trees);
+/*void clip(const Window& win)
+{
+	RECT _clip;
+	HWND _window = win.window;
 
-	}
-	trees.GetTransformationMatrix().translate(vec3(0, 0, 6));
+	//Create a RECT out of the window
+	GetWindowRect(_window, &_clip);
 
-	
-		float planeVertices[] = {
-			// positions          // texture Coords 
-			 5.0f, -0.5f,  5.0f,
-			-5.0f, -0.5f,  5.0f,
-			-5.0f, -0.5f, -5.0f,
+	//Modify the rect slightly, so the frame doesn't get clipped with
+	_clip.left += 5;
+	_clip.top += 30;
+	_clip.right -= 5;
+	_clip.bottom -= 5;
 
-			 5.0f, -0.5f,  5.0f,
-			-5.0f, -0.5f, -5.0f,
-			 5.0f, -0.5f, -5.0f,
-		};
+	//Clip the RECT
+	ClipCursor(&_clip);
+	ShowCursor(FALSE);
 
-		float planeTexCoords[] = {
-			2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f,
-			2.0f, 0.0f, 0.0f, 2.0f, 2.0f, 2.0f
-		};
+}*/
 
-		uint32 indices2[] = { 0, 1, 2, 3, 4, 5 };
-
-		StaticMesh plane;
-		ModelSettings settings2(planeVertices, planeTexCoords, planeVertices);
-		ModelLoader loader2(settings2, indices2);
-		loader2.GetMaterials().PopBack();
-		AbstractMaterial abst_mat2;
-		abst_mat2.GetRenderStates().cull_enabled = false;
-		abst_mat2.GetParametres().AddParameter<TextureID>("material.diffuse_tex", abst_mat2.AddTexture("res/img/texture_grid.png"));
-		abst_mat2.GetParametres().AddParameter<TextureID>("material.specular_tex", abst_mat2.AddTexture("res/img/texture_grid.png"));
-		abst_mat2.GetParametres().AddParameter<float>("material.shininess", 500.f);
-		loader2.GetMaterials().EmplaceBack(abst_mat2, loader2.GetVertexCount());
-		loader2.ProcessData(plane);
-		scene->AddMeshInstance(&plane);
-		plane.GetTransformationMatrix().scale(vec3(100.f, 0.f, 100.f));
+//#endif
 
 
-	float quadVertices[] = { // positions      
-		// positions  
-		-1.0f, 1.0f, 0.f, 
+/*********************
+	float quadVertices[] = { // positions
+		// positions
+		-1.0f, 1.0f, 0.f,
 		-1.0f, -1.0f, 0.f,
 		1.0f, -1.0f, 0.f,
 		-1.0f, 1.0f, 0.f,
 		1.0f, -1.0f, 0.f,
 		1.0f,  1.0f, 0.f,
 	};
-	float quadTexCoords[] = { // texture Coords 
-		0.0f, 1.0f, 
+	float quadTexCoords[] = { // texture Coords
+		0.0f, 1.0f,
 		0.0f, 0.0f,
-		1.0f, 0.0f, 
-		0.0f, 1.0f, 
-		1.0f, 0.0f, 
+		1.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 0.0f,
 		1.0f, 1.0f
 	};
 	//uint32 indices[] = {0, 1, 2, 3, 4, 5};
@@ -554,130 +534,15 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 	RenderTarget* rt = ResourcesManager::GetGRM().Create<RenderTarget>(f.render_target_id);
 	rt->m_Width = SCR_WIDTH;
 	rt->m_Height = SCR_HEIGHT;
-	/*auto key = RenderManager::GetRenderer().GetFramebufferCommandBuffer().GenerateKey(f, shaderID, quad.GetVaoID(), quad.GetSubMeshes().At(0).m_MaterialID);
-	auto cmd = RenderManager::GetRenderer().GetFramebufferCommandBuffer().AddCommand<Commands::DrawCmd>(key);
-	auto& obj = quad.GetSubMeshes().At(0);
-	cmd->mode = obj.m_Geometry.m_Primitive;
-	cmd->start = 0;
-	cmd->end = loader.GetVertexCount();
-	cmd->model = &quad.GetTransformationMatrix();
-	RenderManager::GetRenderer().GetFramebufferCommandBuffer().SwapCmdBuffer();*/
+	//auto key = RenderManager::GetRenderer().GetFramebufferCommandBuffer().GenerateKey(f, shaderID, quad.GetVaoID(), quad.GetSubMeshes().At(0).m_MaterialID);
+	//auto cmd = RenderManager::GetRenderer().GetFramebufferCommandBuffer().AddCommand<Commands::DrawCmd>(key);
+	//auto& obj = quad.GetSubMeshes().At(0);
+	//cmd->mode = obj.m_Geometry.m_Primitive;
+	//cmd->start = 0;
+	//cmd->end = loader.GetVertexCount();
+	//cmd->model = &quad.GetTransformationMatrix();
+	//RenderManager::GetRenderer().GetFramebufferCommandBuffer().SwapCmdBuffer();
 
-	quad.Submit(RenderManager::GetRenderer().GetFramebufferCommandBuffer(), rt);
+	quad.Submit(RenderManager::GetRenderer().GetFramebufferCommandBuffer(), f.render_target_id);
 	RenderManager::GetRenderer().GetFramebufferCommandBuffer().SwapCmdBuffer();
-
-	//clock_t fps = 0, avgfps = 0, maxfps = 0, deltaTime = 0, minfps = 9999999;
-	//uint64 frames = 1;
-	//double avgdt = 0, maxdt = 0, mindt = 9999999;
-
-	// Event ev;
-	// printf("\n");
-	while(IsWindowOpen){
-		auto& render_cmd = RenderManager::GetRenderer().GetRenderCommandBuffer();
-
-		if(render_cmd.SwapCmdBuffer()){
-			render_cmd.Clear(); // Clear write side
-			scene->Submit(); // write on write
-		}
-	}
-
-	//printf("[T2] : MIN FPS = %lf | MAX FPS = %lf | AVG FPS = %lf\n", mindt, maxdt, avgdt / frames);
-}
-
-void output(int x)
-{
-	printf("X is %d\n", x);
-}
-
-int main()
-{
-	RenderThread();
-}
-
-void PrintScreenshot()
-{
-	Color* pixels = new Color[SCR_WIDTH * SCR_HEIGHT];
-	glReadPixels(0, 0, SCR_WIDTH, SCR_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-	Image img = Image(SCR_WIDTH, SCR_HEIGHT, pixels);
-	img.Save("test.png", ImageFileFormat::PNG);
-	printf("Screenshot taken.\n");
-	delete[] pixels;
-}
-
-void HandleEvent(Scene* scene, const Event& e)
-{
-	if (e.Type == Event::TE_RESIZE) {
-		glViewport(0, 0, e.Window.Width, e.Window.Height);
-		scene->CreateProjectionMatrix(Vec2f(e.Window.Width, e.Window.Height), Scene::NEAR_PLANE, Scene::FAR_PLANE);
-		printf("DETECTING RESIZE EVENT(%d, %d)\n", e.Window.Width, e.Window.Height);
-	}else if (e.Type == Event::TE_KEY_DOWN) {
-		if (e.Key.Code == Key::F11) {
-			PrintScreenshot();
-			printf("Taking screenshot...\n");
-		}
-		switch (e.Key.Code) {
-		case Key::Up:
-			speed += 1;
-			break;
-		case Key::Down:
-			speed -= 1;
-			break;
-		case Key::Space:
-			start = !start;
-			deltaTime = 0;
-			break;
-		case Key::Z:
-			scene->GetCurrentCamera()->ProcessKeyboard(FORWARD, (float)clockToMilliseconds(deltaTime)/1000.f);
-			break;
-		case Key::S:
-			scene->GetCurrentCamera()->ProcessKeyboard(BACKWARD, (float)clockToMilliseconds(deltaTime)/1000.f);
-			break;
-		case Key::Q:
-			scene->GetCurrentCamera()->ProcessKeyboard(LEFT, (float)clockToMilliseconds(deltaTime)/1000.f);
-			break;
-		case Key::D:
-			scene->GetCurrentCamera()->ProcessKeyboard(RIGHT, (float)clockToMilliseconds(deltaTime)/1000.f);
-			break;
-		default:
-			break;
-		}
-	}else if (e.Type == Event::TE_MOUSE_MOVE) {
-		float xpos = (float)e.Mouse.X;
-		float ypos = (float)e.Mouse.Y;
-		if (firstMouse) {
-			lastX = xpos;
-			lastY = ypos;
-			firstMouse = false;
-		}
-
-		float xoffset = xpos - lastX;
-		float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-		lastX = xpos;
-		lastY = ypos;
-
-		scene->GetCurrentCamera()->ProcessMouseMovement(xoffset, yoffset);
-	}
-}
-
-/*void clip(const Window& win)
-{
-	RECT _clip;
-	HWND _window = win.window;
-
-	//Create a RECT out of the window
-	GetWindowRect(_window, &_clip);
-
-	//Modify the rect slightly, so the frame doesn't get clipped with
-	_clip.left += 5;
-	_clip.top += 30;
-	_clip.right -= 5;
-	_clip.bottom -= 5;
-
-	//Clip the RECT
-	ClipCursor(&_clip);
-	ShowCursor(FALSE);
-
-}*/
-
-//#endif
+*********************/

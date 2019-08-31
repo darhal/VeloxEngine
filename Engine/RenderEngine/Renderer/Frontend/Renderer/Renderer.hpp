@@ -2,6 +2,7 @@
 
 #include "Core/Misc/Defines/Common.hpp"
 #include "RenderEngine/Renderer/Frontend/IRenderer/IRenderer.hpp"
+#include <RenderEngine/Scenegraph/Scene/Scene.hpp>
 
 TRE_NS_START
 
@@ -17,7 +18,10 @@ public:
     void PostRender() override;
 
     void Init() override;
+
+	Scene& GetScene() { return scene; }
 private:
+	Scene scene;
 };
 
 TRE_NS_END

@@ -7,7 +7,7 @@ RenderManager RenderManager::s_ManagerInstance;
 
 RenderManager::RenderManager()
 {
-	m_Renderer.Init();
+	// m_Renderer.Init(); Dont init now till we have the context ready
 }
 
 Renderer& RenderManager::GetRenderer()
@@ -30,9 +30,14 @@ RenderManager& RenderManager::GetInstance()
     return RenderManager::s_ManagerInstance;
 }
 
+void RenderManager::Init()
+{
+	GetRenderer().Init();
+}
+
 void RenderManager::Update()
 {
-	GetRRC().GetResourcesCommandBuffer().Submit();
+	GetRRC().Update();
 	GetRenderer().Render();
 }
 

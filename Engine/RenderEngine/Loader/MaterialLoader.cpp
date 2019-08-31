@@ -32,9 +32,6 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 			vec3 ambient;
 			int32 res = sscanf(buffer, "Ka %f %f %f", &ambient.x, &ambient.y, &ambient.z);
 			ASSERTF(res != 3, "Attempt to parse a corrupted MTL file 'usemtl', failed while reading the ambient component (Line : %" SZu ").", current_line);
-			// m_NameToMaterial[current_name].GetTechnique().SetUniformVec3(); 
-			// m_NameToMaterial[current_name].m_Ambient = ambient;
-			//printf("Ka %f %f %f\n", ambient.x, ambient.y, ambient.z);
 			last_material->GetParametres().AddParameter<vec3>("material.ambient", ambient);
 		}else if (IsEqual(buffer, "Kd")) {
 			vec3 diffuse;
@@ -96,6 +93,11 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 AbstractMaterial& MaterialLoader::GetMaterialFromName(const char* name)
 {
 	return m_NameToMaterial[name];
+}
+
+Map<String, AbstractMaterial>& MaterialLoader::GetMaterials()
+{
+	return m_NameToMaterial;
 }
 
 TRE_NS_END
