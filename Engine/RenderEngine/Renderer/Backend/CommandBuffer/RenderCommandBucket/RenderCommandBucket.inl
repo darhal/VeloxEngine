@@ -1,16 +1,22 @@
 
 template<typename T>
 RenderCommandBucket<T>::RenderCommandBucket() :
-	BaseClass(&RenderCommandBucket<T>::Submit, NUMBER_OF_BUFFERS, AUX_MEMORY),
-	m_RenderTargetStack((RenderTarget*) BaseClass::m_KeyPacketPtrAllocator.Allocate(AUX_MEMORY)),
+	BaseClass(&RenderCommandBucket<T>::Submit, NUMBER_OF_BUFFERS, AUX_MEMORY, CMDS_PER_RENDER_TARGETS_SIZE),
+	m_RenderTargetStack(NULL),
+	m_SecondCurrent(NULL),
+	m_ReadWriteKeysCountOffset(),
     m_StartLocation(BaseClass::DEFAULT_MAX_ELEMENTS), 
-    m_SecondCurrent(BaseClass::DEFAULT_MAX_ELEMENTS), 
 	m_RenderTargetCount(0),
     m_LastStateHash(RenderSettings::DEFAULT_STATE_HASH),
     mtx(),
     cv(),
     m_IsReading(false)
 {
+	m_ReadWriteKeysCountOffset[READ_BUFFER] = NUMBER_OF_RT;
+	m_ReadWriteKeysCountOffset[WRITE_BUFFER] = 0;
+	m_SecondCurrent = (uint32*) BaseClass::m_KeyPacketPtrAllocator.Allocate(CMDS_COUNT_PRE_RT_SIZE);
+	m_RenderTargetStack = (RenderTarget*) BaseClass::m_KeyPacketPtrAllocator.Allocate(RENDER_TARGET_SIZE);
+	
 	RenderTarget render_t;
 	this->PushRenderTarget(render_t);
     // cv.notify_one();
@@ -24,6 +30,33 @@ U* RenderCommandBucket<T>::CreateCommand(ShaderID shaderID, VaoID vaoID, Materia
 		this->GenerateKey(shaderID, vaoID, matID, blend_dist),
 		aux_memory
 	);
+}
+
+template<typename T>
+template<typename U>
+U* RenderCommandBucket<T>::AddCommandInAllRenderTargets(Key key, usize aux_memory)
+{
+	CmdPacket packet = CommandPacket::Create<U>(BaseClass::m_CmdAllocator, aux_memory);
+
+	{
+		const uint32 current = BaseClass::m_Current;
+		const uint32& rt_key_offset = m_ReadWriteKeysCountOffset[WRITE_BUFFER];
+		BaseClass::m_Packets[current] = packet;
+
+		for (uint32 i = 0; i < m_RenderTargetCount; i++) {
+			uint32& tr_count = m_SecondCurrent[i + rt_key_offset];
+			new (BaseClass::m_Keys + tr_count) Pair<Key, uint32>(key, current); // the bug might be here!
+			// printf("[Adding command] m_SecondCurrent Index = %d | At Keys Index = %d (Key = %llu | Value = %d) [BASECLASS::CURRENT = %d]\n", i + rt_key_offset, tr_count, key, current, BaseClass::m_Current);
+			tr_count++;
+		}
+
+		BaseClass::m_Current++;
+		BaseClass::m_PacketCount++;
+	}
+
+	CommandPacket::StoreNextCommandPacket(packet, NULL);
+	CommandPacket::StoreBackendDispatchFunction(packet, U::DISPATCH_FUNCTION);
+	return CommandPacket::GetCommand<U>(packet);
 }
 
 template<typename T>
@@ -66,6 +99,7 @@ void RenderCommandBucket<T>::Submit()
 {
 	for (FboID current_target = 0; current_target < m_RenderTargetCount; current_target++) {
 
+		const uint32& rt_key_offset = m_ReadWriteKeysCountOffset[READ_BUFFER];
 		const RenderTarget& render_target = m_RenderTargetStack[current_target];
 		const FBO& fbo = ResourcesManager::GetGRM().Get<FBO>(render_target.m_FboID);
 		glViewport(0, 0, render_target.m_Width, render_target.m_Height);
@@ -84,12 +118,14 @@ void RenderCommandBucket<T>::Submit()
 		VaoID lastVaoID = -1;
 		ShaderID lastShaderID = -1;
 		ShaderProgram* lastShader = NULL;
-		const uint32 max = m_SecondCurrent;
-		const uint32 start = m_StartLocation;
+		const uint32 max = m_SecondCurrent[rt_key_offset + current_target];
+		const uint32 start = m_StartLocation + current_target * RT_KEYS_STRIDE;
+		//printf("[Render Target : %d] Start = %d | End [INDEX : %d] = %d\n", current_target, start, rt_key_offset + current_target, max);
 
 		for (uint32 i = start; i < max; i++) {
 			const Pair<Key, uint32>& k = BaseClass::m_Keys[i];
 			Key key = k.first;
+			//printf("\t[RENDER] Key Index = %d - Key = %d - Cmd Index = %d\n", i, key, k.second);
 			CmdPacket packet = BaseClass::m_Packets[k.second];
 
 			if (key != lastKey) {
@@ -149,15 +185,24 @@ void RenderCommandBucket<T>::Submit()
 template<typename T>
 void RenderCommandBucket<T>::Clear()
 {
+	const uint32& rt_key_offset = m_ReadWriteKeysCountOffset[WRITE_BUFFER];
+
     if (m_StartLocation) {
         BaseClass::m_Current = 0;
     }else{
         BaseClass::m_Current = BaseClass::DEFAULT_MAX_ELEMENTS;
     }
+	
+	for (uint32 i = 0; i < m_RenderTargetCount; i++) {
+		m_SecondCurrent[i + rt_key_offset] = BaseClass::m_Current + i * RT_KEYS_STRIDE;
+		//printf("[CLEAR] m_SecondCurrent Index = %d | Amount = %d\n", i + rt_key_offset, BaseClass::m_Current + i * RT_KEYS_STRIDE);
+	}
     
     // printf("(WRITE THREAD) CLEAR : CURRENT FOR WRITE = %d\n", BaseClass::m_Current);
     BaseClass::m_CmdAllocator.SetOffset(BaseClass::m_Current * BaseClass::m_Current);
     BaseClass::m_PacketCount = 0;
+
+	//Dump();
 }
 
 template<typename T>
@@ -166,18 +211,21 @@ bool RenderCommandBucket<T>::SwapCmdBuffer()
     std::unique_lock<std::mutex> lk(mtx);
     cv.wait(lk, [this]{return !m_IsReading;});
 
-    m_SecondCurrent = BaseClass::m_Current;
-    
+	//m_SecondCurrent[offset] = BaseClass::m_Current;
+	const uint32 read_buffer = m_ReadWriteKeysCountOffset[READ_BUFFER];
+	m_ReadWriteKeysCountOffset[READ_BUFFER] = m_ReadWriteKeysCountOffset[WRITE_BUFFER];
+	m_ReadWriteKeysCountOffset[WRITE_BUFFER] = read_buffer;
+
     if (m_StartLocation){
         m_StartLocation = 0;
     }else{
         m_StartLocation = BaseClass::DEFAULT_MAX_ELEMENTS;
     }
 
-    // printf("(WRITE THREAD) SWAP :READ WILL START FROM Start = %d | EnD =%d\n", m_StartLocation, m_SecondCurrent);
-
+	//Dump();
+	//printf("[SWAP] Swapping...\n");
     m_IsReading = 1;
-    // lk.unlock();
+    lk.unlock();
     return true;
 }
 
@@ -185,6 +233,11 @@ template<typename T>
 void RenderCommandBucket<T>::PushRenderTarget(const RenderTarget& render_target)
 {
 	memcpy(m_RenderTargetStack + m_RenderTargetCount, &render_target, sizeof(RenderTarget));
+
+	m_SecondCurrent[m_RenderTargetCount + m_ReadWriteKeysCountOffset[READ_BUFFER]] = BaseClass::DEFAULT_MAX_ELEMENTS + m_RenderTargetCount * RT_KEYS_STRIDE;
+	m_SecondCurrent[m_RenderTargetCount + m_ReadWriteKeysCountOffset[WRITE_BUFFER]] = m_RenderTargetCount * RT_KEYS_STRIDE;
+	//printf("[PUSH RENDER TARGET] m_SecondCurrent Index = %d | Amount = %d\n", m_RenderTargetCount + m_ReadWriteKeysCountOffset[READ_BUFFER], BaseClass::DEFAULT_MAX_ELEMENTS + m_RenderTargetCount * RT_KEYS_STRIDE);
+	//printf("[PUSH RENDER TARGET] m_SecondCurrent Index = %d | Amount = %d\n", m_RenderTargetCount + m_ReadWriteKeysCountOffset[WRITE_BUFFER], m_RenderTargetCount * RT_KEYS_STRIDE);
 	m_RenderTargetCount++;
 }
 
@@ -203,4 +256,23 @@ RenderTarget* RenderCommandBucket<T>::GetRenderTarget(uint32 index)
 	}
 
 	return NULL;
+}
+
+template<typename T>
+void RenderCommandBucket<T>::Dump()
+{
+	const uint32& rt_key_offset = m_ReadWriteKeysCountOffset[READ_BUFFER];
+	printf("******************************************************************\n");
+
+	for (FboID current_target = 0; current_target < m_RenderTargetCount; current_target++) {
+		const uint32 max = m_SecondCurrent[rt_key_offset + current_target];
+		const uint32 start = m_StartLocation + current_target * RT_KEYS_STRIDE;
+		printf("\t*** (DUMP)[Render Target : %d] Start = %d | End [INDEX : %d] = %d ***\n", current_target, start, rt_key_offset + current_target, max);
+		for (uint32 i = start; i < max; i++) {
+			const Pair<Key, uint32>& k = BaseClass::m_Keys[i];
+			Key key = k.first;
+			printf("\t\t* (DUMP)[RENDER] Key Index = %d - Key = %d - Cmd Index = %d *\n", i, key, k.second);
+		}
+	}
+	printf("******************************************************************\n");
 }

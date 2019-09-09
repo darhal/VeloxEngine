@@ -15,7 +15,7 @@ class ICommandBuffer
 public:
     typedef T Key;
     
-    ICommandBuffer(void(SuperClass::*submit_func)(Args...), uint32 mem_multiplier = 1, uint32 aux_memory = 0) ;
+    ICommandBuffer(void(SuperClass::*submit_func)(Args...), uint32 mem_multiplier = 1, uint32 aux_memory = 0, uint32 extra_keys_memory = 0) ;
     /*[----------------------------------------------------------------------------------]*/
     /* |                        |                  |                     |                */
     /* start of packet          start of packet 2  Start of key          Start of key2    */
@@ -43,8 +43,10 @@ protected:
     void(SuperClass::*m_SubmitFunc)(Args...);
     uint32 m_Current, m_PacketCount;
 
-    CONSTEXPR static uint32 DEFAULT_MAX_ELEMENTS = 1023;
-    CONSTEXPR static uint32 DEFAULT_SIZE         = DEFAULT_MAX_ELEMENTS * (sizeof(Pair<Key, uint32>) + sizeof(void**));
+    CONSTEXPR static uint32 DEFAULT_MAX_ELEMENTS  = 1023;
+    CONSTEXPR static uint32 DEFAULT_SIZE          = DEFAULT_MAX_ELEMENTS * (sizeof(Pair<Key, uint32>) + sizeof(void**));
+	CONSTEXPR static uint32 KEY_DEFAULT_SIZE      = DEFAULT_MAX_ELEMENTS * sizeof(Pair<Key, uint32>);
+	CONSTEXPR static uint32 COMMANDS_DEFAULT_SIZE = DEFAULT_MAX_ELEMENTS * sizeof(void**);
 };
 
 #include "ICommandBuffer.inl"

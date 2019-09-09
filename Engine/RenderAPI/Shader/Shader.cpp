@@ -12,6 +12,7 @@ TRE_NS_START
 Shader::Shader(const char* path, ShaderType::shader_type_t t) : type(t)
 {
 	FILE* file = fopen(path, "r");
+
 	if (file != NULL) {
 		fseek(file, 0, SEEK_END);
 		const long size = ftell(file);
@@ -19,10 +20,12 @@ Shader::Shader(const char* path, ShaderType::shader_type_t t) : type(t)
 		fseek(file, 0, SEEK_SET);
 		char byte;
 		uint64 index = 0;
+
 		while ((byte = fgetc(file)) != EOF) {
 			buffer[index] = byte;
 			index++;
 		}
+
 		buffer[index] = '\0';
 		fclose(file);
 		ID = glCreateShader((uint32)t);

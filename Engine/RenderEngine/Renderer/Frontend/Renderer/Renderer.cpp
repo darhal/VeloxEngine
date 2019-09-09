@@ -30,6 +30,7 @@ void Renderer::Init()
 	const unsigned int SHADOW_HEIGHT = 1080 / 2;
 	auto& rrc = RenderManager::GetRRC();
 
+	RenderManager::GetRenderer().GetRenderCommandBuffer().PopRenderTarget();
 	// Shadows framebuffer.
 	/*{
 		TextureID tex_id = 0; FboID fbo_id = 0;
@@ -47,8 +48,7 @@ void Renderer::Init()
 			tex_cmd, &fbo_id, FramebufferSettings({ tex_attach }, FBOTarget::FBO, NULL, FBOAttachement::NONE, { FBOColourBuffer::NONE }, FBOColourBuffer::NONE)
 			);
 
-		RenderManager::GetRenderer().GetRenderCommandBuffer().PopRenderTarget();
-		RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(fbo_id, SHADOW_WIDTH, SHADOW_HEIGHT, scene.GetProjectionMatrix(), &scene.GetCurrentCamera()->GetViewMatrix()));
+		RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(fbo_id, SHADOW_WIDTH, SHADOW_HEIGHT, NULL, NULL));
 	}*/
 
 	// Post-processing framebuffer.

@@ -76,6 +76,7 @@ uint32 ShaderProgram::GetUniformBlockIndex(const char* name) const
 
 void ShaderProgram::SetUniformBlockBinding(const char* name, uint32 index) const
 {
+
 	Call_GL(glUniformBlockBinding(m_ID, GetUniformBlockIndex(name), index));
 }
 
@@ -183,8 +184,10 @@ void ShaderProgram::CheckCompileErrors(uint32 shader, const char* type)
 #if defined(_DEBUG)
 	int32 success;
 	char infoLog[1024];
+
 	if (strncmp(type, "PROGRAM", strlen(type)) == 0){
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
 		if (success == false){
 			glGetShaderInfoLog(shader, 1024, NULL, infoLog);
 			///std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
@@ -192,6 +195,7 @@ void ShaderProgram::CheckCompileErrors(uint32 shader, const char* type)
 		}
 	}else{
 		glGetProgramiv(shader, GL_LINK_STATUS, &success);
+
 		if (success == false){
 			glGetProgramInfoLog(shader, 1024, NULL, infoLog);
 			///std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;

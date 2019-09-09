@@ -21,7 +21,7 @@ void RiggedStaticMesh::Submit(RenderCommandBuffer& CmdBucket, const Vec3f& Camer
 		}
 
         typename RenderCommandBuffer::Key key = CmdBucket.GenerateKey(material.GetTechnique().GetShaderID(), m_VaoID, obj.m_MaterialID, blend_dist);
-		Commands::DrawIndexedCmd* draw_cmd = CmdBucket.template AddCommand<Commands::DrawIndexedCmd>(key);
+		Commands::DrawIndexedCmd* draw_cmd = CmdBucket.template AddCommandInAllRenderTargets<Commands::DrawIndexedCmd>(key);
 		draw_cmd->mode = obj.m_Geometry.m_Primitive;
 		draw_cmd->type = obj.m_Geometry.m_DataType;
 		draw_cmd->count = obj.m_Geometry.m_Count;

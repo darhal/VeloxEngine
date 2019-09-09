@@ -1,12 +1,12 @@
 template<typename SuperClass, typename T, typename... Args>
-ICommandBuffer<SuperClass, T, Args...>::ICommandBuffer(void(SuperClass::*submit_func)(Args...), uint32 mem_multiplier, uint32 aux_memory)
+ICommandBuffer<SuperClass, T, Args...>::ICommandBuffer(void(SuperClass::*submit_func)(Args...), uint32 mem_multiplier, uint32 aux_memory, uint32 extra_keys_memory)
     : 
-    m_KeyPacketPtrAllocator(DEFAULT_SIZE * mem_multiplier + aux_memory, true),
+    m_KeyPacketPtrAllocator((DEFAULT_SIZE + extra_keys_memory) * mem_multiplier + aux_memory, true),
     m_CmdAllocator(DEFAULT_MAX_ELEMENTS * DEFAULT_MAX_ELEMENTS * mem_multiplier, true),
     m_Keys(NULL), m_Packets(NULL),
     m_SubmitFunc(submit_func), m_Current(0), m_PacketCount(0)
 {
-    usize total_mem = DEFAULT_SIZE * mem_multiplier;
+    usize total_mem = (DEFAULT_SIZE + extra_keys_memory) * mem_multiplier;
     uint8* free_mem = (uint8*) m_KeyPacketPtrAllocator.Allocate(total_mem);
     m_Packets = (void**) free_mem;
     m_Keys    = (Pair<Key, uint32>*) (free_mem + (sizeof(void**) * DEFAULT_MAX_ELEMENTS * mem_multiplier));

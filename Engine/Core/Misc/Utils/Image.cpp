@@ -114,7 +114,9 @@ void Image::Load(uint8* pixels, uint size)
 void Image::Load(const std::string& filename)
 {
 	// Unload image
-	if (image) delete[] image;
+	if (image) 
+		delete[] image;
+
 	image = 0;
 	width = 0;
 	height = 0;
@@ -141,7 +143,7 @@ void Image::Load(const std::string& filename)
 	else if (data.Compare(0, 4, (const uint8*)"\x89PNG"))
 		LoadPNG(data);
 	else {
-		ASSERTF(true, "Image file format not supported!");
+		ASSERTF(true, "Image file format not supported (File : %s)!", filename.c_str());
 	}
 }
 

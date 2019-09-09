@@ -217,13 +217,14 @@ void LoadObjects(Scene* scene)
 	loader2.GetMaterials().PopBack();
 	AbstractMaterial abst_mat2;
 	abst_mat2.GetRenderStates().cull_enabled = false;
-	abst_mat2.GetParametres().AddParameter<TextureID>("material.diffuse_tex", abst_mat2.AddTexture("res/img/ground/brown_mud_diff.png"));
-	abst_mat2.GetParametres().AddParameter<TextureID>("material.specular_tex", abst_mat2.AddTexture("res/img/ground/brown_mud_spec.png"));
+	abst_mat2.GetParametres().AddParameter<TextureID>("material.diffuse_tex", abst_mat2.AddTexture("res/img/ground.jpg"));
+	abst_mat2.GetParametres().AddParameter<TextureID>("material.specular_tex", abst_mat2.AddTexture("res/img/ground.jpg"));
 	abst_mat2.GetParametres().AddParameter<float>("material.shininess", 500.f);
 	loader2.GetMaterials().EmplaceBack(abst_mat2, loader2.GetVertexCount());
 	loader2.ProcessData(*plane);
 	scene->AddMeshInstance(plane);
-	//plane->GetTransformationMatrix().scale(vec3(50.f, 0.f, 50.f));
+
+	// plane->GetTransformationMatrix().scale(vec3(50.f, 0.f, 50.f));
 }
 
 void RenderThread()
@@ -251,19 +252,8 @@ void RenderThread()
 		Shader("res/Shader/cam.fs", ShaderType::FRAGMENT)
 	);
 
-	ResourcesManager::GetGRM().Create<ShaderProgram>(scrShader,
-		Shader("res/Shader/screen.vs", ShaderType::VERTEX),
-		Shader("res/Shader/screen.fs", ShaderType::FRAGMENT)
-	);
-	
-	ShaderProgram& shader = ResourcesManager::GetGRM().Get<ShaderProgram>(scrShader);
-	shader.BindAttriute(0, "aPos");
-	shader.BindAttriute(1, "aTexCoord");
-	shader.LinkProgram();
-	shader.SetInt(shader.AddUniform("screenTexture").second, 0);
-
 	VBO vertexUBO(BufferTarget::UNIFORM_BUFFER);
-	vertexUBO.FillData(NULL, 2 * sizeof(mat4));
+	vertexUBO.FillData(NULL, 3 * sizeof(mat4));
 	vertexUBO.Unbind();
 
 	for (auto& shader_id : ResourcesManager::GetGRM().GetResourceContainer<ShaderProgram>()){
@@ -275,6 +265,8 @@ void RenderThread()
 		shader.LinkProgram();
 		shader.Use();
 
+		shader.AddUniform("Projection1");
+		shader.AddUniform("View1");
 		shader.AddUniform("MVP");
 		shader.AddUniform("model");
 		shader.AddUniform("viewPos");
@@ -297,7 +289,22 @@ void RenderThread()
 		shader.SetVec3("light.position", LightPos);
 		shader.SetFloat("material.alpha", 1.f);
 		shader.SetFloat("material.shininess", 1.0f);
+		
+		vertexUBO.Bind();
+		shader.SetUniformBlockBinding("VertexBlock", 0);
+		shader.BindBufferRange(vertexUBO, 0, 0, 2 * sizeof(mat4));
 	}
+
+	ResourcesManager::GetGRM().Create<ShaderProgram>(scrShader,
+		Shader("res/Shader/screen.vs", ShaderType::VERTEX),
+		Shader("res/Shader/screen.fs", ShaderType::FRAGMENT)
+	);
+
+	ShaderProgram& shader = ResourcesManager::GetGRM().Get<ShaderProgram>(scrShader);
+	shader.BindAttriute(0, "aPos");
+	shader.BindAttriute(1, "aTexCoord");
+	shader.LinkProgram();
+	shader.SetInt(shader.AddUniform("screenTexture").second, 0);
 
 	IsWindowOpen = true;
 	std::thread prepareThread(PrepareThread, &scene, &window);
@@ -318,9 +325,13 @@ void RenderThread()
 
 		IsWindowOpen = window.isOpen();
 
-		mat4 view = scene.GetCurrentCamera()->GetViewMatrix();
-		vertexUBO.SubFillData(scene.GetProjectionMatrix(), 0, sizeof(mat4));
-		vertexUBO.SubFillData(&view, sizeof(mat4), sizeof(mat4));
+		vertexUBO.Bind();
+		mat4 t_proj = scene.GetProjectionMatrix()->transpose();
+		mat4 t_view = scene.GetCurrentCamera()->GetViewMatrix().transpose();
+		mat4 t_proj_view = t_view * t_proj;
+		vertexUBO.SubFillData(&t_proj, 0, sizeof(mat4));
+		vertexUBO.SubFillData(&t_view, sizeof(mat4), sizeof(mat4));
+		vertexUBO.SubFillData(&t_proj_view, 2 * sizeof(mat4), sizeof(mat4));
 		vertexUBO.Unbind();
 
 		RenderManager::Update();
@@ -347,11 +358,16 @@ void PrepareThread(Scene* scene, TRE::Window* window)
 	RenderManager::GetRenderer().GetRenderCommandBuffer().GetRenderTarget(0)->m_View = &scene->GetCurrentCamera()->GetViewMatrix();
 	RenderManager::GetRenderer().GetRenderCommandBuffer().GetRenderTarget(0)->m_Width = SCR_WIDTH;
 	RenderManager::GetRenderer().GetRenderCommandBuffer().GetRenderTarget(0)->m_Height = SCR_HEIGHT;
-	//RenderManager::Init();
+	RenderManager::Init();
+
+	//auto lightProjection = mat4::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.f, 7.5f);
+	//auto lightView = mat4::look_at(LightPos, vec3(0.f, 0.f, 0.f), vec3(0.0, 1.0, 0.0));
+	//RenderManager::GetRenderer().GetRenderCommandBuffer().GetRenderTarget(0)->m_Projection = &lightProjection;
+	//RenderManager::GetRenderer().GetRenderCommandBuffer().GetRenderTarget(0)->m_View = &lightView;
 
 	LoadObjects(scene);
 
-	// RenderManager::GetRRC().GetResourcesCommandBuffer().SwapCmdBuffer();
+	//RenderManager::GetRRC().GetResourcesCommandBuffer().SwapCmdBuffer();
 
 	while(IsWindowOpen){
 		auto& render_cmd = RenderManager::GetRenderer().GetRenderCommandBuffer();
