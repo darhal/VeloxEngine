@@ -1,4 +1,6 @@
 #include "RiggedStaticMesh.hpp"
+
+#include <RenderEngine/Managers/RenderManager/RenderManager.hpp>
 #include "RenderEngine/Managers/ResourcesManager/ResourcesManager.hpp"
 #include "RenderEngine/Renderer/Backend/CommandBuffer/RenderCommandBucket/RenderCommandBucket.hpp"
 
@@ -20,13 +22,21 @@ void RiggedStaticMesh::Submit(RenderCommandBuffer& CmdBucket, const Vec3f& Camer
 			blend_dist = (1 << RenderSettings::BLEND_DISTANCE_BITS) | (static_cast<uint32>(compressed_float.second_rep) >> bits_to_shift);
 		}
 
-        typename RenderCommandBuffer::Key key = CmdBucket.GenerateKey(material.GetTechnique().GetShaderID(), m_VaoID, obj.m_MaterialID, blend_dist);
-		Commands::DrawIndexedCmd* draw_cmd = CmdBucket.template AddCommandInAllRenderTargets<Commands::DrawIndexedCmd>(key);
+		// Submit for shadow mapping
+		uint32 cmd_id;
+		MaterialID shadow_material_id = RenderManager::GetRenderer().GetShadowMaterialID();
+		const Material& shadow_mat = ResourcesManager::GetGRM().Get<Material>(shadow_material_id);
+		typename RenderCommandBuffer::Key key = CmdBucket.GenerateKey(shadow_mat.GetTechnique().GetShaderID(), m_VaoID, shadow_material_id, blend_dist);
+		Commands::DrawIndexedCmd* draw_cmd = CmdBucket.template CreateCommandOnRenderTarget<Commands::DrawIndexedCmd>(key, 0, 0, &cmd_id);
 		draw_cmd->mode = obj.m_Geometry.m_Primitive;
 		draw_cmd->type = obj.m_Geometry.m_DataType;
 		draw_cmd->count = obj.m_Geometry.m_Count;
 		draw_cmd->offset = obj.m_Geometry.m_Offset;
-        draw_cmd->model = &obj.m_ModelTransformation;
+		draw_cmd->model = &obj.m_ModelTransformation;
+
+		// Submit for main rendering
+		key = CmdBucket.GenerateKey(material.GetTechnique().GetShaderID(), m_VaoID, obj.m_MaterialID, blend_dist);
+		CmdBucket.AddCommandToRenderTarget(cmd_id, key, CmdBucket.GetRenderTargetsCount() - 1);
 	}
 }
 

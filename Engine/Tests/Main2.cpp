@@ -71,6 +71,8 @@ bool vsync = true;
 bool start = false;
 int32 speed = 1;
 vec3 LightPos = vec3(-0.2f, -1.0f, -0.3f);
+mat4 lightProjection = mat4::ortho(-10.f, 10.f, -10.f, 10.f, 1.f, 7.5f);
+mat4 lightView = mat4::look_at(LightPos, vec3(0.f, 0.f, 0.f), vec3(0.f, 1.f, 0.f));
 
 double clockToMilliseconds(clock_t ticks){
     // units/(units/time) => time (seconds) * 1000 = milliseconds
@@ -163,6 +165,9 @@ void LoadObjects(Scene* scene)
 		MeshLoader obj_loader(mesh_file_path.Buffer());
 		obj_loader.GetMaterialLoader().GetMaterialFromName("Fire.001").GetRenderStates().blend_enabled = true;
 		obj_loader.GetMaterialLoader().GetMaterialFromName("Fire.001").GetRenderStates().cull_enabled = false;
+		for (auto& mat_node : obj_loader.GetMaterialLoader().GetMaterials()) {
+			mat_node.second.GetParametres().AddParameter<TextureID>("shadowMap", RenderManager::GetRenderer().GetShadowMap());
+		}
 		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
 		loader.ProcessData(*deagle);
 		scene->AddMeshInstance(deagle);
@@ -175,6 +180,9 @@ void LoadObjects(Scene* scene)
 		mesh_file_path = "res/obj/lowpoly/carrot_box.obj";
 		// res_dir.SearchRecursive("carrot_box.obj", mesh_file_path);
 		MeshLoader obj_loader(mesh_file_path.Buffer());
+		for (auto& mat_node : obj_loader.GetMaterialLoader().GetMaterials()) {
+			mat_node.second.GetParametres().AddParameter<TextureID>("shadowMap", RenderManager::GetRenderer().GetShadowMap());
+		}
 		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
 		loader.ProcessData(*carrot_box, 1);
 		scene->AddMeshInstance(carrot_box);
@@ -187,6 +195,9 @@ void LoadObjects(Scene* scene)
 		mesh_file_path = "res/obj/lowpoly/all_combined_smooth.obj";
 		//res_dir.SearchRecursive("all_combined_smooth.obj", mesh_file_path);
 		MeshLoader obj_loader(mesh_file_path.Buffer());
+		for (auto& mat_node : obj_loader.GetMaterialLoader().GetMaterials()) {
+			mat_node.second.GetParametres().AddParameter<TextureID>("shadowMap", RenderManager::GetRenderer().GetShadowMap());
+		}
 		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
 		loader.ProcessData(*trees, 1);
 		scene->AddMeshInstance(trees);
@@ -219,6 +230,7 @@ void LoadObjects(Scene* scene)
 	abst_mat2.GetRenderStates().cull_enabled = false;
 	abst_mat2.GetParametres().AddParameter<TextureID>("material.diffuse_tex", abst_mat2.AddTexture("res/img/ground.jpg"));
 	abst_mat2.GetParametres().AddParameter<TextureID>("material.specular_tex", abst_mat2.AddTexture("res/img/ground.jpg"));
+	abst_mat2.GetParametres().AddParameter<TextureID>("shadowMap", RenderManager::GetRenderer().GetShadowMap());
 	abst_mat2.GetParametres().AddParameter<float>("material.shininess", 500.f);
 	loader2.GetMaterials().EmplaceBack(abst_mat2, loader2.GetVertexCount());
 	loader2.ProcessData(*plane);
@@ -240,7 +252,7 @@ void RenderThread()
 
 	Scene& scene = RenderManager::GetRenderer().GetScene();
 
-	typename RMI<ShaderProgram>::ID shaderID, texShaderID, scrShader;
+	typename RMI<ShaderProgram>::ID shaderID, texShaderID, scrShader, shadowMapDepthID;
 	
 	ResourcesManager::GetGRM().Create<ShaderProgram>(shaderID, 
 		Shader("res/Shader/texture.vs", ShaderType::VERTEX),
@@ -253,7 +265,7 @@ void RenderThread()
 	);
 
 	VBO vertexUBO(BufferTarget::UNIFORM_BUFFER);
-	vertexUBO.FillData(NULL, 3 * sizeof(mat4));
+	vertexUBO.FillData(NULL, 4 * sizeof(mat4) + sizeof(vec4));
 	vertexUBO.Unbind();
 
 	for (auto& shader_id : ResourcesManager::GetGRM().GetResourceContainer<ShaderProgram>()){
@@ -265,17 +277,15 @@ void RenderThread()
 		shader.LinkProgram();
 		shader.Use();
 
-		shader.AddUniform("Projection1");
-		shader.AddUniform("View1");
 		shader.AddUniform("MVP");
 		shader.AddUniform("model");
-		shader.AddUniform("viewPos");
+		shader.AddUniform("shadowMap");
 
-		//shader.AddUniform("light.ambient");
 		shader.AddUniform("light.diffuse");
-		//shader.AddUniform("light.specular");
 		shader.AddUniform("light.position");
-
+		//shader.AddUniform("light.specular");
+		//shader.AddUniform("light.ambient");
+		
 		shader.AddUniform("material.ambient");
 		shader.AddUniform("material.diffuse");
 		shader.AddUniform("material.specular");
@@ -292,7 +302,7 @@ void RenderThread()
 		
 		vertexUBO.Bind();
 		shader.SetUniformBlockBinding("VertexBlock", 0);
-		shader.BindBufferRange(vertexUBO, 0, 0, 2 * sizeof(mat4));
+		shader.BindBufferRange(vertexUBO, 0, 0, 4 * sizeof(mat4) + sizeof(vec4));
 	}
 
 	ResourcesManager::GetGRM().Create<ShaderProgram>(scrShader,
@@ -300,11 +310,22 @@ void RenderThread()
 		Shader("res/Shader/screen.fs", ShaderType::FRAGMENT)
 	);
 
+	ResourcesManager::GetGRM().Create<ShaderProgram>(shadowMapDepthID,
+		Shader("res/Shader/shadow_mapping_depth.vs", ShaderType::VERTEX),
+		Shader("res/Shader/shadow_mapping_depth.fs", ShaderType::FRAGMENT)
+	);
+
 	ShaderProgram& shader = ResourcesManager::GetGRM().Get<ShaderProgram>(scrShader);
 	shader.BindAttriute(0, "aPos");
 	shader.BindAttriute(1, "aTexCoord");
 	shader.LinkProgram();
 	shader.SetInt(shader.AddUniform("screenTexture").second, 0);
+
+	ShaderProgram& shadow_shader = ResourcesManager::GetGRM().Get<ShaderProgram>(shadowMapDepthID);
+	shadow_shader.BindAttriute(0, "aPos");
+	shadow_shader.LinkProgram();
+	shadow_shader.AddUniform("MVP");
+	shadow_shader.AddUniform("model");
 
 	IsWindowOpen = true;
 	std::thread prepareThread(PrepareThread, &scene, &window);
@@ -329,9 +350,12 @@ void RenderThread()
 		mat4 t_proj = scene.GetProjectionMatrix()->transpose();
 		mat4 t_view = scene.GetCurrentCamera()->GetViewMatrix().transpose();
 		mat4 t_proj_view = t_view * t_proj;
+		mat4 t_light_space_mat = (lightProjection * lightView).transpose();
 		vertexUBO.SubFillData(&t_proj, 0, sizeof(mat4));
 		vertexUBO.SubFillData(&t_view, sizeof(mat4), sizeof(mat4));
 		vertexUBO.SubFillData(&t_proj_view, 2 * sizeof(mat4), sizeof(mat4));
+		vertexUBO.SubFillData(&t_light_space_mat, 3 * sizeof(mat4), sizeof(mat4));
+		vertexUBO.SubFillData(&scene.GetCurrentCamera()->Position, 4 * sizeof(mat4), sizeof(vec4));
 		vertexUBO.Unbind();
 
 		RenderManager::Update();

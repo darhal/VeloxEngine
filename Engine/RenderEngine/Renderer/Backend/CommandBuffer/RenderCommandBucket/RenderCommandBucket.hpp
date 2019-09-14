@@ -46,10 +46,17 @@ public:
     RenderCommandBucket();
 
 	template<typename U>
-	U* CreateCommand(ShaderID shaderID, VaoID vaoID, MaterialID matID, uint32 blend_dist = 0, usize aux_memory = 0);
+	U* CreateCommand(ShaderID shaderID, VaoID vaoID, MaterialID matID, uint32 blend_dist = 0, usize aux_memory = 0, uint8 render_target = 0);
 
 	template<typename U>
-	U* AddCommandInAllRenderTargets(Key key, usize aux_memory = 0);
+	U* CreateCommandOnAllRenderTargets(Key key, usize aux_memory = 0);
+
+	template<typename U>
+	U* CreateCommandOnRenderTarget(Key key, usize aux_memory = 0, uint8 render_target = 0, uint32* cmd_id = NULL);
+
+	void AddCommandToRenderTarget(uint32 cmd_id, Key key, uint8 render_target = 0);
+
+	void AddCommandByID(uint32 cmd_id, ShaderID shaderID, VaoID vaoID, MaterialID matID, uint32 blend_dist = 0, uint8 render_target = 0);
 
     Key GenerateKey(ShaderID shaderID, VaoID vaoID, MaterialID matID, uint32 blend_dist = 0) const;
 
@@ -66,6 +73,8 @@ public:
 	void PopRenderTarget();
 
 	RenderTarget* GetRenderTarget(uint32 index);
+
+	const FboID& GetRenderTargetsCount() const;
 
 	void Dump();
 

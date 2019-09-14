@@ -20,8 +20,8 @@ in vec3 FragPos;
 in vec3 Normal;  
 in vec2 TexCoords;  
 in vec4 FragPosLightSpace;
-  
-uniform vec3 viewPos;
+in vec3 viewPos;
+
 uniform Material material;
 uniform Light light;
 uniform sampler2D shadowMap;
@@ -83,7 +83,7 @@ void main()
 {
 	vec3 viewDir = normalize(viewPos - FragPos);
 	vec3 norm = normalize(Normal);
-	//float shadow = ShadowCalculation(FragPosLightSpace);
+	float shadow = ShadowCalculation(FragPosLightSpace);
 
-    FragColor = CalculateDirectionalLight(light, norm, viewDir, 0.0);
+    FragColor = CalculateDirectionalLight(light, norm, viewDir, shadow);
 } 

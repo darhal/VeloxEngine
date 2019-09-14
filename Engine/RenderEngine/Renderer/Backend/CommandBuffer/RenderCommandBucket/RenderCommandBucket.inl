@@ -24,17 +24,27 @@ RenderCommandBucket<T>::RenderCommandBucket() :
 
 template<typename T>
 template<typename U>
-U* RenderCommandBucket<T>::CreateCommand(ShaderID shaderID, VaoID vaoID, MaterialID matID, uint32 blend_dist, usize aux_memory)
+U* RenderCommandBucket<T>::CreateCommand(ShaderID shaderID, VaoID vaoID, MaterialID matID, uint32 blend_dist, usize aux_memory, uint8 render_target)
 {
-	return BaseClass::template AddCommand<U>(
+	return this->CreateCommandOnRenderTarget<U>(
 		this->GenerateKey(shaderID, vaoID, matID, blend_dist),
-		aux_memory
+		aux_memory, render_target
+	);
+}
+
+template<typename T>
+void RenderCommandBucket<T>::AddCommandByID(uint32 cmd_id, ShaderID shaderID, VaoID vaoID, MaterialID matID, uint32 blend_dist, uint8 render_target)
+{
+	this->AddCommandToRenderTarget(
+		cmd_id,
+		this->GenerateKey(shaderID, vaoID, matID, blend_dist),
+		render_target
 	);
 }
 
 template<typename T>
 template<typename U>
-U* RenderCommandBucket<T>::AddCommandInAllRenderTargets(Key key, usize aux_memory)
+U* RenderCommandBucket<T>::CreateCommandOnAllRenderTargets(Key key, usize aux_memory)
 {
 	CmdPacket packet = CommandPacket::Create<U>(BaseClass::m_CmdAllocator, aux_memory);
 
@@ -45,7 +55,7 @@ U* RenderCommandBucket<T>::AddCommandInAllRenderTargets(Key key, usize aux_memor
 
 		for (uint32 i = 0; i < m_RenderTargetCount; i++) {
 			uint32& tr_count = m_SecondCurrent[i + rt_key_offset];
-			new (BaseClass::m_Keys + tr_count) Pair<Key, uint32>(key, current); // the bug might be here!
+			new (BaseClass::m_Keys + tr_count) Pair<Key, uint32>(key, current);
 			// printf("[Adding command] m_SecondCurrent Index = %d | At Keys Index = %d (Key = %llu | Value = %d) [BASECLASS::CURRENT = %d]\n", i + rt_key_offset, tr_count, key, current, BaseClass::m_Current);
 			tr_count++;
 		}
@@ -57,6 +67,43 @@ U* RenderCommandBucket<T>::AddCommandInAllRenderTargets(Key key, usize aux_memor
 	CommandPacket::StoreNextCommandPacket(packet, NULL);
 	CommandPacket::StoreBackendDispatchFunction(packet, U::DISPATCH_FUNCTION);
 	return CommandPacket::GetCommand<U>(packet);
+}
+
+template<typename T>
+template<typename U>
+U* RenderCommandBucket<T>::CreateCommandOnRenderTarget(Key key, usize aux_memory, uint8 render_target, uint32* cmd_id)
+{
+	CmdPacket packet = CommandPacket::Create<U>(BaseClass::m_CmdAllocator, aux_memory);
+
+	{
+		const uint32 current = BaseClass::m_Current;
+
+		if (cmd_id)
+			*cmd_id = current;
+
+		const uint32& rt_key_offset = m_ReadWriteKeysCountOffset[WRITE_BUFFER];
+		BaseClass::m_Packets[current] = packet;
+
+		uint32& tr_count = m_SecondCurrent[render_target + rt_key_offset];
+		new (BaseClass::m_Keys + tr_count) Pair<Key, uint32>(key, current);
+		tr_count++;
+
+		BaseClass::m_Current++;
+		BaseClass::m_PacketCount++;
+	}
+
+	CommandPacket::StoreNextCommandPacket(packet, NULL);
+	CommandPacket::StoreBackendDispatchFunction(packet, U::DISPATCH_FUNCTION);
+	return CommandPacket::GetCommand<U>(packet);
+}
+
+template<typename T>
+void RenderCommandBucket<T>::AddCommandToRenderTarget(uint32 cmd_id, Key key, uint8 render_target)
+{
+	const uint32& rt_key_offset = m_ReadWriteKeysCountOffset[WRITE_BUFFER];
+	uint32& tr_count = m_SecondCurrent[render_target + rt_key_offset];
+	new (BaseClass::m_Keys + tr_count) Pair<Key, uint32>(key, cmd_id);
+	tr_count++;
 }
 
 template<typename T>
@@ -256,6 +303,12 @@ RenderTarget* RenderCommandBucket<T>::GetRenderTarget(uint32 index)
 	}
 
 	return NULL;
+}
+
+template<typename T>
+const FboID& RenderCommandBucket<T>::GetRenderTargetsCount() const
+{
+	return m_RenderTargetCount;
 }
 
 template<typename T>

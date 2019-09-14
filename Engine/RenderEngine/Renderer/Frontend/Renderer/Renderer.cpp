@@ -29,27 +29,31 @@ void Renderer::Init()
 	const unsigned int SHADOW_WIDTH = 1920 / 2;
 	const unsigned int SHADOW_HEIGHT = 1080 / 2;
 	auto& rrc = RenderManager::GetRRC();
+	
+	AbstractMaterial abst_mat;
+	//abst_mat.GetParametres().AddParameter<mat4>("lightSpaceMatrix", lightProjection * lightView);
+	m_ShadowMaterial = ResourcesManager::GetGRM().Generate<Material>(abst_mat, 3); // the second arg is shadow shader id
 
 	RenderManager::GetRenderer().GetRenderCommandBuffer().PopRenderTarget();
 	// Shadows framebuffer.
-	/*{
-		TextureID tex_id = 0; FboID fbo_id = 0;
+	{
+		FboID fbo_id = 0;
 		auto tex_settings = TextureSettings(TexTarget::TEX2D, SHADOW_WIDTH, SHADOW_HEIGHT, NULL,
 			Vector<TexParamConfig>{
 				{ TexParam::TEX_MIN_FILTER, TexFilter::NEAREST },
 				{ TexParam::TEX_MAG_FILTER, TexFilter::NEAREST },
 				{ TexParam::TEX_WRAP_S, TexWrapping::CLAMP_BORDER },
 				{ TexParam::TEX_WRAP_T, TexWrapping::CLAMP_BORDER },
-		}, DataType::FLOAT, 0, TexInternalFormat::DepthComponent, TexFormat::DepthComponent
+			}, DataType::FLOAT, 0, TexInternalFormat::DepthComponent, TexFormat::DepthComponent
 		);
-		auto tex_cmd = rrc.CreateResource<Commands::CreateTexture>(&tex_id, tex_settings);
+		auto tex_cmd = rrc.CreateResource<Commands::CreateTexture>(&m_ShadowMap, tex_settings);
 		FramebufferSettings::TextureAttachement tex_attach{ tex_cmd->texture, FBOAttachement::DEPTH_ATTACH };
 		auto fbo_cmd = rrc.CreateResourceAfter<Commands::CreateFrameBuffer>(
 			tex_cmd, &fbo_id, FramebufferSettings({ tex_attach }, FBOTarget::FBO, NULL, FBOAttachement::NONE, { FBOColourBuffer::NONE }, FBOColourBuffer::NONE)
-			);
+		);
 
-		RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(fbo_id, SHADOW_WIDTH, SHADOW_HEIGHT, NULL, NULL));
-	}*/
+		RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(fbo_id, SHADOW_WIDTH, SHADOW_HEIGHT, &lightProjection, &lightView));
+	}
 
 	// Post-processing framebuffer.
 	{
