@@ -18,9 +18,9 @@ struct Light {
 
 in vec3 FragPos;  
 in vec3 Normal;  
-in vec2 TexCoords;  
-in vec4 FragPosLightSpace;
+in vec2 TexCoords;
 in vec3 viewPos;
+in vec4 FragPosLightSpace;
  
 uniform Material material;
 uniform Light light;

@@ -109,6 +109,8 @@ uint32 Texture::Generate(const TextureSettings& settings)
 		Call_GL(glTexParameteri(settings.target, p.param, p.val));
 	}
 
+	glTexParameterfv(settings.target, GL_TEXTURE_BORDER_COLOR, &settings.borderColor.x);
+
 	// load image, create texture and generate mipmaps
 	Call_GL(
 		glTexImage2D(settings.target, settings.lod, settings.internalFormat, settings.width, settings.height, 0, settings.format, settings.datatype, settings.img_data)

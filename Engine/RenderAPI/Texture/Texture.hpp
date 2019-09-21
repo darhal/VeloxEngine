@@ -5,6 +5,8 @@
 #include <Core/Context/Extensions.hpp>
 #include <Core/Misc/Utils/Color.hpp>
 #include <Core/DataStructure/Vector/Vector.hpp>
+#include <Core/Misc/Maths/Common.hpp>
+#include <Core/Misc/Maths/Maths.hpp>
 
 #include <RenderAPI/Common.hpp>
 #include <RenderAPI/GlobalState/GLState.hpp>
@@ -40,9 +42,9 @@ struct TextureSettings
 		const Vector<TexParamConfig>& paramList = {},
 		DataType::data_type_t datatype = DataType::UBYTE, int32 lod = 0,
 		TexInternalFormat::tex_internal_format_t internalFormat = TexInternalFormat::RGBA,
-		TexFormat::tex_format_t format = TexFormat::RGBA) : 
+		TexFormat::tex_format_t format = TexFormat::RGBA, const vec4& border_color = vec4(0.f, 0.f, 0.f, 0.f)) :
 		paramList(std::move(paramList)), img_data(data), width(width), height(height), lod(lod), 
-		target(target), datatype(datatype), internalFormat(internalFormat), format(format)
+		target(target), datatype(datatype), internalFormat(internalFormat), format(format), borderColor(border_color)
 	{}
 
 	/*TextureSettings(TextureSettings&& other) :
@@ -68,6 +70,7 @@ struct TextureSettings
 	DataType::data_type_t datatype = DataType::UBYTE;
 	TexInternalFormat::tex_internal_format_t internalFormat = TexInternalFormat::RGBA;
 	TexFormat::tex_format_t format = TexFormat::RGBA;
+	vec4 borderColor = vec4(0.f, 0.f, 0.f, 0.f);
 
 	~TextureSettings() {}
 };

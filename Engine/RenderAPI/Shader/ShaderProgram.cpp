@@ -45,7 +45,7 @@ void ShaderProgram::BindAttriute(uint32 index, const String& name)
 
 void ShaderProgram::LinkProgram()
 {
-	Call_GL(glLinkProgram(m_ID));
+	glLinkProgram(m_ID);
 	CheckCompileErrors(m_ID, "PROGRAM");
 
 	// delete the shaders as they're linked into our program now and no longer necessery

@@ -37,7 +37,7 @@ void BackendDispatch::CreateVAO(const void * data)
 		vbo.Generate(BufferTarget::ARRAY_BUFFER);
 		vbo.Use();
 		vbo.FillData(data.data, data.elements_count * data.size);
-		// ::operator delete(data.data);
+		::operator delete(data.data);
 	}
 
 	uint32 index = 0;
@@ -64,7 +64,7 @@ void BackendDispatch::CreateIndexBuffer(const void* data)
 	modelVAO.Unuse();
 	indexVBO.Use();
 
-	// ::operator delete(indices_data.data);
+	::operator delete(indices_data.data);
 }
 
 void BackendDispatch::CreateTexture(const void* data)

@@ -44,7 +44,7 @@ void Renderer::Init()
 				{ TexParam::TEX_MAG_FILTER, TexFilter::NEAREST },
 				{ TexParam::TEX_WRAP_S, TexWrapping::CLAMP_BORDER },
 				{ TexParam::TEX_WRAP_T, TexWrapping::CLAMP_BORDER },
-			}, DataType::FLOAT, 0, TexInternalFormat::DepthComponent, TexFormat::DepthComponent
+			}, DataType::FLOAT, 0, TexInternalFormat::DepthComponent, TexFormat::DepthComponent, vec4(1.f, 1.f, 1.f, 1.f)
 		);
 		auto tex_cmd = rrc.CreateResource<Commands::CreateTexture>(&m_ShadowMap, tex_settings);
 		FramebufferSettings::TextureAttachement tex_attach{ tex_cmd->texture, FBOAttachement::DEPTH_ATTACH };

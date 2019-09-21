@@ -70,9 +70,6 @@ double  averageFrameTimeMilliseconds = 33.333;
 bool vsync = true;
 bool start = false;
 int32 speed = 1;
-vec3 LightPos = vec3(-0.2f, -1.0f, -0.3f);
-mat4 lightProjection = mat4::ortho(-10.f, 10.f, -10.f, 10.f, 1.f, 7.5f);
-mat4 lightView = mat4::look_at(LightPos, vec3(0.f, 0.f, 0.f), vec3(0.f, 1.f, 0.f));
 
 double clockToMilliseconds(clock_t ticks){
     // units/(units/time) => time (seconds) * 1000 = milliseconds
@@ -296,7 +293,7 @@ void RenderThread()
 
 		// shader.SetVec3("light.ambient", 0.09f, 0.09f, 0.09f);
 		shader.SetVec3("light.diffuse", 0.7f, 0.7f, 0.7f);
-		shader.SetVec3("light.position", LightPos);
+		shader.SetVec3("light.position", RenderManager::GetRenderer().LightPos);
 		shader.SetFloat("material.alpha", 1.f);
 		shader.SetFloat("material.shininess", 1.0f);
 		
@@ -350,7 +347,7 @@ void RenderThread()
 		mat4 t_proj = scene.GetProjectionMatrix()->transpose();
 		mat4 t_view = scene.GetCurrentCamera()->GetViewMatrix().transpose();
 		mat4 t_proj_view = t_view * t_proj;
-		mat4 t_light_space_mat = (lightProjection * lightView).transpose();
+		mat4 t_light_space_mat = (RenderManager::GetRenderer().lightProjection * RenderManager::GetRenderer().lightView).transpose();
 		vertexUBO.SubFillData(&t_proj, 0, sizeof(mat4));
 		vertexUBO.SubFillData(&t_view, sizeof(mat4), sizeof(mat4));
 		vertexUBO.SubFillData(&t_proj_view, 2 * sizeof(mat4), sizeof(mat4));
