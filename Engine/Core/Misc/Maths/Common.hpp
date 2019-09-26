@@ -6,6 +6,8 @@
 
 TRE_NS_START
 
+#define MATH_PI 3.14159265358979323846
+
 template<uint8 N, typename TYPE, proc_type Q>
 struct Vec;
 

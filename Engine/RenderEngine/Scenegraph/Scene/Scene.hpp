@@ -50,6 +50,8 @@ public:
 
 	uint32 GetLightsCount() const;
 
+	Vector<ILight*>& GetLights();
+
     void Submit();
 
     void Render() const;

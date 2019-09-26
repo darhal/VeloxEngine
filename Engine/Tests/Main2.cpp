@@ -39,6 +39,12 @@
 #include <RenderEngine/Managers/RenderManager/RenderManager.hpp>
 
 #include <RenderEngine/Renderer/Backend/UBO/UBO.hpp>
+#include <RenderEngine/Renderer/Frontend/Lights/ILight/ILight.hpp>
+#include <RenderEngine/Renderer/Frontend/Lights/PointLight/PointLight.hpp>
+#include <RenderEngine/Renderer/Frontend/Lights/SpotLight/SpotLight.hpp>
+#include <RenderEngine/Renderer/Frontend/Lights/DirectionalLight/DirectionalLight.hpp>
+
+#include "ShaderValidator.hpp"
 
 using namespace TRE;
 
@@ -156,6 +162,23 @@ void LoadObjects(Scene* scene)
 		scene->AddMeshInstance(room);
 	}*/
 
+	StaticMesh* jet = new StaticMesh();
+	{
+		mesh_file_path.Clear();
+		mesh_file_path = "res/obj/jet/f35.obj";
+		// res_dir.SearchRecursive("deagle.obj", mesh_file_path);
+		MeshLoader obj_loader(mesh_file_path.Buffer());
+		for (auto& mat_node : obj_loader.GetMaterialLoader().GetMaterials()) {
+			mat_node.second.GetParametres().AddParameter<TextureID>("shadowMap", RenderManager::GetRenderer().GetShadowMap());
+		}
+		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
+		loader.ProcessData(*jet);
+		scene->AddMeshInstance(jet);
+	}
+	jet->GetTransformationMatrix().scale(vec3(0.1, 0.1, 0.1));
+	jet->GetTransformationMatrix().rotate(vec3(0.f, 1.f, 0.f), 90.f);
+	jet->GetTransformationMatrix().translate(vec3(45.f, 0.f, 0.f));
+
 	StaticMesh* deagle = new StaticMesh();
 	{
 		mesh_file_path.Clear();
@@ -253,6 +276,9 @@ void RenderThread()
 
 	typename RMI<ShaderProgram>::ID shaderID, texShaderID, scrShader, shadowMapDepthID, shadowDebugID;
 	
+	ShaderValidator("res/Shader/texture.vs", "res/Shader/texture.fs");
+	ShaderValidator("res/Shader/cam.vs", "res/Shader/cam.fs");
+
 	ResourcesManager::GetGRM().Create<ShaderProgram>(shaderID, 
 		Shader("res/Shader/texture.vs", ShaderType::VERTEX),
 		Shader("res/Shader/texture.fs", ShaderType::FRAGMENT)
@@ -264,24 +290,20 @@ void RenderThread()
 	);
 
 	UBO vertexUBO(NULL, 4 * sizeof(mat4) + sizeof(vec4));
+	UBO lightUBO(NULL, 8 * sizeof(mat4) + sizeof(uint32));
 
 	for (auto& shader_id : ResourcesManager::GetGRM().GetResourceContainer<ShaderProgram>()){
 		ShaderProgram& shader = shader_id.second;
 
-		shader.BindAttriute(0, "aPos");
-		shader.BindAttriute(1, "aNormals");
-		shader.BindAttriute(2, "aTexCoord");
+		//shader.BindAttriute(0, "aPos");
+		//shader.BindAttriute(1, "aNormals");
+		//shader.BindAttriute(2, "aTexCoord");
 		shader.LinkProgram();
 		shader.Use();
 
 		shader.AddUniform("MVP");
 		shader.AddUniform("model");
-		
-		shader.AddUniform("light.diffuse");
-		shader.AddUniform("light.position");
-		//shader.AddUniform("light.specular");
-		//shader.AddUniform("light.ambient");
-		
+				
 		shader.AddUniform("material.ambient");
 		shader.AddUniform("material.diffuse");
 		shader.AddUniform("material.specular");
@@ -291,14 +313,14 @@ void RenderThread()
 		shader.AddSamplerSlot("material.specular_tex");
 		shader.AddSamplerSlot("material.diffuse_tex");
 
-		// shader.SetVec3("light.ambient", 0.09f, 0.09f, 0.09f);
-		shader.SetVec3("light.diffuse", 0.7f, 0.7f, 0.7f);
-		shader.SetVec3("light.position", RenderManager::GetRenderer().LightPos);
 		shader.SetFloat("material.alpha", 1.f);
 		shader.SetFloat("material.shininess", 1.0f);
 		
-		shader.SetUniformBlockBinding("VertexBlock", 0);
+		shader.SetUniformBlockBinding("VertexUBO", 0);
 		shader.BindBufferBase(vertexUBO, 0);
+
+		shader.SetUniformBlockBinding("LightUBO", 1);
+		shader.BindBufferBase(lightUBO, 1);
 	}
 
 	ResourcesManager::GetGRM().Create<ShaderProgram>(scrShader,
@@ -336,6 +358,32 @@ void RenderThread()
 	debug_shadow_shader.AddUniform("far_plane");
 	debug_shadow_shader.AddSamplerSlot("depthMap");
 
+	DirectionalLight* dir_light = new DirectionalLight();
+	dir_light->SetDirection(vec3(-2.0f, 8.0f, -1.0f));
+	dir_light->SetLightColor(vec3(1.0, 1.0, 1.0));
+	scene.AddLight(dir_light);
+
+	/*PointLight* point_light = new PointLight();
+	point_light->SetPosition(vec3(2.0f, 5.0f, -15.0f));
+	point_light->SetLightColor(vec3(1.0, 0.5, 0.0));
+	point_light->SetConstant(1.0f);
+	point_light->SetLinear(0.09);
+	point_light->SetQuadratic(0.032);
+	scene.AddLight(point_light);*/
+
+	/*SpotLight* spot_light = new SpotLight();
+	spot_light->SetLightColor(vec3(0.7, 0.7, 0.7));
+	spot_light->SetPosition(scene.GetCurrentCamera()->Position);
+	spot_light->SetDirection(scene.GetCurrentCamera()->Front);
+	spot_light->SetCutOff(cos(12.5f * MATH_PI / 180.0));
+	spot_light->SetOuterCutOff(cos(17.5f * MATH_PI / 180.0));
+	spot_light->SetConstant(1.0);
+	spot_light->SetLinear(0.022);
+	spot_light->SetQuadratic(0.0019f);
+	scene.AddLight(spot_light);
+	spot_light->SetPosition(scene.GetCurrentCamera()->Position);
+	spot_light->SetDirection(scene.GetCurrentCamera()->Front);
+	*/
 
 	IsWindowOpen = true;
 	std::thread prepareThread(PrepareThread, &scene, &window);
@@ -366,6 +414,16 @@ void RenderThread()
 		vertexUBO.Update({ &t_proj_view, 2 * sizeof(mat4), sizeof(mat4)});
 		vertexUBO.Update({ &t_light_space_mat, 3 * sizeof(mat4), sizeof(mat4) });
 		vertexUBO.Update({ &scene.GetCurrentCamera()->Position, 4 * sizeof(mat4), sizeof(vec4) });
+		vertexUBO.GetVBO().Unbind();
+
+		vertexUBO.GetVBO().Bind();
+		uint32 offset = 0;
+		for (auto& light : scene.GetLights()) {
+			lightUBO.Update({ const_cast<Mat4f*>(&light->GetLightMatrix()), offset, sizeof(mat4) });
+			offset += sizeof(mat4);
+		}
+		uint32 length = scene.GetLights().Size();
+		lightUBO.Update({ &length, 8 * sizeof(mat4), sizeof(uint32) });
 		vertexUBO.GetVBO().Unbind();
 
 		RenderManager::Update();

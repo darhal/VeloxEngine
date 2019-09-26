@@ -423,6 +423,7 @@
     <ClInclude Include="RenderEngine\Variables\VariablesSet\VariablesSet.hpp" />
     <ClInclude Include="RenderEngine\Variables\Variables\IVariable.hpp" />
     <ClInclude Include="RenderEngine\Variables\Variables\Variable.hpp" />
+    <ClInclude Include="Tests\ShaderValidator.hpp" />
     <ClInclude Include="Tests\ThreadBarrier.hpp" />
   </ItemGroup>
   <ItemGroup>

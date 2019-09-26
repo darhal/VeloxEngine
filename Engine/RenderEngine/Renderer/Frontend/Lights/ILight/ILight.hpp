@@ -15,7 +15,9 @@ public:
 		SPOT = 2,
 	};
 
-	void SetType(LightType type) { m_LightData.m[0][3] = (float) type; };
+	FORCEINLINE void SetType(LightType type) { m_LightData.m[0][3] = (float) type; };
+
+	FORCEINLINE const Mat4f& GetLightMatrix() const { return m_LightData; };
 
 protected:
 	Mat4f m_LightData;

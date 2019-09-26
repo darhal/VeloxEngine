@@ -1,3 +1,11 @@
+// Function prototypes : 
+mat3 GetMaterialColor();
+vec3 CalculateLight(mat4 light, vec3 normal, vec3 viewDir, vec3 fragPos);
+vec3 CalculateDirectionalLight(mat4 light, vec3 normal, vec3 viewDir);
+vec3 CalculatePointLight(mat4 light, vec3 normal, vec3 viewDir, vec3 fragPos);
+vec3 CalculateSpotLight(mat4 light, vec3 normal, vec3 viewDir, vec3 fragPos);
+
+
 // For colored object
 mat3 GetMaterialColor()
 {

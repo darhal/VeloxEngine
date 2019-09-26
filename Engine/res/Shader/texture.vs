@@ -1,7 +1,8 @@
 #version 330 core
-in vec3 aPos;
-in vec3 aNormals;
-in vec2 aTexCoord;
+
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormals;
+layout (location = 2) in vec2 aTexCoord;
 
 uniform mat4 MVP;
 uniform mat4 model;
@@ -12,7 +13,7 @@ out vec3 Normal;
 out vec2 TexCoords;
 out vec4 FragPosLightSpace;
 
-layout (std140) uniform VertexBlock
+layout (std140) uniform VertexUBO
 {
 							// base alignment	| aligned offset
 	mat4 Projection;		// 16 * 4		 	|	0

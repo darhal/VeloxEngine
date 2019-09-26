@@ -40,7 +40,12 @@ public:
 	FORCEINLINE Matrix(bool);
 
 	template<proc_type proc>
-	FORCEINLINE Matrix(const Vec<4, float, proc>& vec0, const Vec<4, float, proc>& vec1, const Vec<4, float, proc>& vec2, const Vec<4, float, proc>& vec3);
+	FORCEINLINE Matrix(
+		const Vec<4, float, proc>& vec0, 
+		const Vec<4, float, proc>& vec1 = Vec<4, float, proc>(0.f, 0.f, 0.f, 0.f),
+		const Vec<4, float, proc>& vec2 = Vec<4, float, proc>(0.f, 0.f, 0.f, 0.f),
+		const Vec<4, float, proc>& vec3 = Vec<4, float, proc>(0.f, 0.f, 0.f, 0.f)
+	);
 
 	FORCEINLINE Matrix(
 		float x0, float y0, float z0, float w0,

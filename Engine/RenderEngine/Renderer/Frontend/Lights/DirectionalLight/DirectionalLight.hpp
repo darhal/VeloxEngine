@@ -10,7 +10,7 @@ class DirectionalLight : public ILight
 public:
 	DirectionalLight();
 
-	void SetPosition(const vec3& pos);
+	void SetDirection(const vec3& dir);
 
 	void SetLightColor(const vec3& color);
 private:

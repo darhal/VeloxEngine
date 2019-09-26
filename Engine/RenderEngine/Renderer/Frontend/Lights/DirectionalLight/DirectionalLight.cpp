@@ -7,11 +7,11 @@ DirectionalLight::DirectionalLight()
 	SetType(ILight::DIRECTIONAL);
 };
 
-void DirectionalLight::SetPosition(const vec3& pos)
+void DirectionalLight::SetDirection(const vec3& dir)
 {
-	m_LightData.m[0][0] = pos.x;
-	m_LightData.m[0][1] = pos.y;
-	m_LightData.m[0][2] = pos.z;
+	m_LightData.m[0][0] = dir.x;
+	m_LightData.m[0][1] = dir.y;
+	m_LightData.m[0][2] = dir.z;
 }
 
 void DirectionalLight::SetLightColor(const vec3& color)
