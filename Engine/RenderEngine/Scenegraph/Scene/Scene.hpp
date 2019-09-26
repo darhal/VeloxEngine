@@ -11,6 +11,7 @@
 TRE_NS_START
 
 class IPrimitiveMesh;
+class ILight;
 
 template<typename T>
 class RenderCommandBucket;
@@ -45,6 +46,10 @@ public:
 
     void AddMeshInstance(IPrimitiveMesh* primitive_mesh);
 
+	void AddLight(ILight* light);
+
+	uint32 GetLightsCount() const;
+
     void Submit();
 
     void Render() const;
@@ -53,6 +58,7 @@ private:
     Camera* m_CurrentCamera;
     Vector<Camera> m_Cameras;
     Vector<IPrimitiveMesh*> m_Meshs;
+	Vector<ILight*> m_Lights;
 
     SceneNode m_Root;
 

@@ -144,15 +144,16 @@ bool RenderCommandBucket<T>::DecodeKey(Key key, ShaderID& shaderID, VaoID& vaoID
 template<typename T>
 void RenderCommandBucket<T>::Submit()
 {
+	ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
+	const uint32& rt_key_offset = m_ReadWriteKeysCountOffset[READ_BUFFER];
+
 	for (FboID current_target = 0; current_target < m_RenderTargetCount; current_target++) {
 
-		const uint32& rt_key_offset = m_ReadWriteKeysCountOffset[READ_BUFFER];
 		const RenderTarget& render_target = m_RenderTargetStack[current_target];
 		const FBO& fbo = ResourcesManager::GetGRM().Get<FBO>(render_target.m_FboID);
 		glViewport(0, 0, render_target.m_Width, render_target.m_Height);
 		//printf("(Render*) Framebuffer id = %d\n", render_target.m_FboID);
 		fbo.Use();
-		ClearColor({ 51.f, 76.5f, 76.5f, 255.f });
 		ClearBuffers();
 
 		Mat4f pv;

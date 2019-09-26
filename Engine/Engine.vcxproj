@@ -265,6 +265,7 @@
     <ClCompile Include="RenderEngine\Mesh\StaticMesh\RiggedStaticMesh.cpp" />
     <ClCompile Include="RenderEngine\Mesh\StaticMesh\StaticMesh.cpp" />
     <ClCompile Include="RenderEngine\Renderer\Backend\Dispatcher\DrawCallsDispatcher.cpp" />
+    <ClCompile Include="RenderEngine\Renderer\Backend\UBO\UBO.cpp" />
     <ClCompile Include="RenderEngine\Renderer\Common\Common.cpp" />
     <ClCompile Include="RenderEngine\Renderer\Frontend\Lights\DirectionalLight\DirectionalLight.cpp" />
     <ClCompile Include="RenderEngine\Renderer\Frontend\Lights\PointLight\PointLight.cpp" />
@@ -405,8 +406,8 @@
     <ClInclude Include="RenderEngine\Renderer\Backend\Commands\Commands.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Backend\Dispatcher\DrawCallsDispatcher.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Backend\RenderTarget\RenderTarget.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Backend\ShaderManager\ShaderManager.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Backend\StateGroups\StateGroup.hpp" />
+    <ClInclude Include="RenderEngine\Renderer\Backend\UBO\UBO.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Common\Common.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Frontend\Camera\Camera.hpp" />
     <ClInclude Include="RenderEngine\Renderer\Frontend\IRenderer\IRenderer.hpp" />

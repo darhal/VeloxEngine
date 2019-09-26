@@ -1,4 +1,5 @@
 #version 330 core
+
 in vec3 aPos;
 in vec3 aNormals;
 in vec2 aTexCoord;
@@ -12,15 +13,15 @@ out vec3 viewPos;
 out vec2 TexCoords;
 out vec4 FragPosLightSpace;
 
-layout (std140) uniform VertexBlock
+layout (std140) uniform VertexUBO
 {
-							// base alignment	| aligned offset
-	mat4 Projection;		// 16 * 4		 	|	0
-	mat4 View;				// 16 * 4			|	64
-	mat4 ProjectionView;	// 16 * 4			|	128
-	mat4 lightSpaceMatrix;	// 16 * 4			|	192
-	vec3 ViewPosition;		// 16				|	192+64
-}; 
+								// base alignment	| aligned offset
+	mat4 Projection;			// 16 * 4		 	|	0
+	mat4 View;					// 16 * 4			|	64
+	mat4 ProjectionView;		// 16 * 4			|	128
+	mat4 lightSpaceMatrix;		// 16 * 4			|	192
+	vec3 ViewPosition;			// 16				|	192+64
+};
 
 void main()
 {

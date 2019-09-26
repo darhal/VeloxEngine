@@ -48,6 +48,8 @@ public:
 
     void SetupAllUniforms(const AbstractMaterial& abstract_material);
 
+	void SetupAllSamplerSlots(const ShaderProgram& shader, const AbstractMaterial& abstract_material);
+
 private:
     MaterialParametresContainer m_MaterialParams;
     ShaderID m_ShaderID;
@@ -105,6 +107,7 @@ void Technique::SetupAllUniformsFromSameType(const ShaderProgram& shader, const 
 		this->template SetUniform<UNIFORM_TYPE>(shader.GetUniform(var.first), var.second);
 	}
 }
+
 
 FORCEINLINE typename Technique::MaterialParametresContainer& Technique::GetMaterialParametresContainer()
 {

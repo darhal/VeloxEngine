@@ -7,6 +7,7 @@
 #include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <initializer_list>
 #include <RenderAPI/Common.hpp>
+#include <RenderEngine/Renderer/Backend/UBO/UBO.hpp> // Probably should be moved to RenderAPI
 
 TRE_NS_START
 
@@ -21,6 +22,7 @@ public:
 	uint32 m_ID;
 	Vector<Shader> m_Shaders;
 	HashMap<String, int32, PROBING> m_Uniforms;
+	HashMap<String*, uint8, PROBING> m_Samplers;
 
 public:
 	ShaderProgram();
@@ -35,7 +37,13 @@ public:
 
 	void LinkProgram();
 
-	const Uniform& AddUniform(const String& name);
+	Uniform& AddUniform(const String& name);
+
+	uint8 AddSamplerSlot(Uniform& uniform);
+
+	uint8 AddSamplerSlot(const String& name);
+
+	uint8 GetSamplerSlot(Uniform& uniform) const;
 
 	const Uniform& GetUniform(const String& name) const;
 
@@ -46,6 +54,8 @@ public:
 	void BindBufferBase(const VBO& vbo, uint32 bind_point) const;
 
 	void BindBufferRange(const VBO& vbo, uint32 bind_point, uint32 offset, uint32 size);
+
+	void BindBufferBase(const UBO& ubo, uint32 bind_point) const;
 
 	~ShaderProgram();
 

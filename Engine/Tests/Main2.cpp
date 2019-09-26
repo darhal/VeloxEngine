@@ -38,6 +38,8 @@
 #include <RenderEngine/Renderer/Backend/CommandBuffer/RenderCommandBucket/RenderCommandBucket.hpp>
 #include <RenderEngine/Managers/RenderManager/RenderManager.hpp>
 
+#include <RenderEngine/Renderer/Backend/UBO/UBO.hpp>
+
 using namespace TRE;
 
 // world space positions of our cubes
@@ -228,7 +230,7 @@ void LoadObjects(Scene* scene)
 	abst_mat2.GetParametres().AddParameter<TextureID>("material.diffuse_tex", abst_mat2.AddTexture("res/img/ground.jpg"));
 	abst_mat2.GetParametres().AddParameter<TextureID>("material.specular_tex", abst_mat2.AddTexture("res/img/ground.jpg"));
 	abst_mat2.GetParametres().AddParameter<TextureID>("shadowMap", RenderManager::GetRenderer().GetShadowMap());
-	abst_mat2.GetParametres().AddParameter<float>("material.shininess", 500.f);
+	abst_mat2.GetParametres().AddParameter<float>("material.shininess", 8.f);
 	loader2.GetMaterials().EmplaceBack(abst_mat2, loader2.GetVertexCount());
 	loader2.ProcessData(*plane);
 	scene->AddMeshInstance(plane);
@@ -249,7 +251,7 @@ void RenderThread()
 
 	Scene& scene = RenderManager::GetRenderer().GetScene();
 
-	typename RMI<ShaderProgram>::ID shaderID, texShaderID, scrShader, shadowMapDepthID;
+	typename RMI<ShaderProgram>::ID shaderID, texShaderID, scrShader, shadowMapDepthID, shadowDebugID;
 	
 	ResourcesManager::GetGRM().Create<ShaderProgram>(shaderID, 
 		Shader("res/Shader/texture.vs", ShaderType::VERTEX),
@@ -261,9 +263,7 @@ void RenderThread()
 		Shader("res/Shader/cam.fs", ShaderType::FRAGMENT)
 	);
 
-	VBO vertexUBO(BufferTarget::UNIFORM_BUFFER);
-	vertexUBO.FillData(NULL, 4 * sizeof(mat4) + sizeof(vec4));
-	vertexUBO.Unbind();
+	UBO vertexUBO(NULL, 4 * sizeof(mat4) + sizeof(vec4));
 
 	for (auto& shader_id : ResourcesManager::GetGRM().GetResourceContainer<ShaderProgram>()){
 		ShaderProgram& shader = shader_id.second;
@@ -276,8 +276,7 @@ void RenderThread()
 
 		shader.AddUniform("MVP");
 		shader.AddUniform("model");
-		shader.AddUniform("shadowMap");
-
+		
 		shader.AddUniform("light.diffuse");
 		shader.AddUniform("light.position");
 		//shader.AddUniform("light.specular");
@@ -288,8 +287,9 @@ void RenderThread()
 		shader.AddUniform("material.specular");
 		shader.AddUniform("material.alpha");
 		shader.AddUniform("material.shininess");
-		shader.AddUniform("material.diffuse_tex");
-		shader.AddUniform("material.specular_tex");
+		shader.AddSamplerSlot("shadowMap");
+		shader.AddSamplerSlot("material.specular_tex");
+		shader.AddSamplerSlot("material.diffuse_tex");
 
 		// shader.SetVec3("light.ambient", 0.09f, 0.09f, 0.09f);
 		shader.SetVec3("light.diffuse", 0.7f, 0.7f, 0.7f);
@@ -297,9 +297,8 @@ void RenderThread()
 		shader.SetFloat("material.alpha", 1.f);
 		shader.SetFloat("material.shininess", 1.0f);
 		
-		vertexUBO.Bind();
 		shader.SetUniformBlockBinding("VertexBlock", 0);
-		shader.BindBufferRange(vertexUBO, 0, 0, 4 * sizeof(mat4) + sizeof(vec4));
+		shader.BindBufferBase(vertexUBO, 0);
 	}
 
 	ResourcesManager::GetGRM().Create<ShaderProgram>(scrShader,
@@ -312,17 +311,31 @@ void RenderThread()
 		Shader("res/Shader/shadow_mapping_depth.fs", ShaderType::FRAGMENT)
 	);
 
+	ResourcesManager::GetGRM().Create<ShaderProgram>(shadowDebugID,
+		Shader("res/Shader/shadow_debug_quad.vs", ShaderType::VERTEX),
+		Shader("res/Shader/shadow_debug_quad.fs", ShaderType::FRAGMENT)
+	);
+
 	ShaderProgram& shader = ResourcesManager::GetGRM().Get<ShaderProgram>(scrShader);
 	shader.BindAttriute(0, "aPos");
 	shader.BindAttriute(1, "aTexCoord");
 	shader.LinkProgram();
-	shader.SetInt(shader.AddUniform("screenTexture").second, 0);
+	shader.AddSamplerSlot("screenTexture");
 
 	ShaderProgram& shadow_shader = ResourcesManager::GetGRM().Get<ShaderProgram>(shadowMapDepthID);
 	shadow_shader.BindAttriute(0, "aPos");
 	shadow_shader.LinkProgram();
 	shadow_shader.AddUniform("MVP");
 	shadow_shader.AddUniform("model");
+	
+	ShaderProgram& debug_shadow_shader = ResourcesManager::GetGRM().Get<ShaderProgram>(shadowDebugID);
+	debug_shadow_shader.BindAttriute(0, "aPos");
+	debug_shadow_shader.BindAttriute(1, "aTexCoords");
+	debug_shadow_shader.LinkProgram();
+	debug_shadow_shader.AddUniform("near_plane");
+	debug_shadow_shader.AddUniform("far_plane");
+	debug_shadow_shader.AddSamplerSlot("depthMap");
+
 
 	IsWindowOpen = true;
 	std::thread prepareThread(PrepareThread, &scene, &window);
@@ -343,17 +356,17 @@ void RenderThread()
 
 		IsWindowOpen = window.isOpen();
 
-		vertexUBO.Bind();
 		mat4 t_proj = scene.GetProjectionMatrix()->transpose();
 		mat4 t_view = scene.GetCurrentCamera()->GetViewMatrix().transpose();
 		mat4 t_proj_view = t_view * t_proj;
 		mat4 t_light_space_mat = (RenderManager::GetRenderer().lightProjection * RenderManager::GetRenderer().lightView).transpose();
-		vertexUBO.SubFillData(&t_proj, 0, sizeof(mat4));
-		vertexUBO.SubFillData(&t_view, sizeof(mat4), sizeof(mat4));
-		vertexUBO.SubFillData(&t_proj_view, 2 * sizeof(mat4), sizeof(mat4));
-		vertexUBO.SubFillData(&t_light_space_mat, 3 * sizeof(mat4), sizeof(mat4));
-		vertexUBO.SubFillData(&scene.GetCurrentCamera()->Position, 4 * sizeof(mat4), sizeof(vec4));
-		vertexUBO.Unbind();
+		vertexUBO.GetVBO().Bind();
+		vertexUBO.Update({ &t_proj, 0, sizeof(mat4) });
+		vertexUBO.Update({ &t_view, sizeof(mat4), sizeof(mat4) });
+		vertexUBO.Update({ &t_proj_view, 2 * sizeof(mat4), sizeof(mat4)});
+		vertexUBO.Update({ &t_light_space_mat, 3 * sizeof(mat4), sizeof(mat4) });
+		vertexUBO.Update({ &scene.GetCurrentCamera()->Position, 4 * sizeof(mat4), sizeof(vec4) });
+		vertexUBO.GetVBO().Unbind();
 
 		RenderManager::Update();
 

@@ -1,4 +1,7 @@
 #version 330 core
+
+#define MAX_LIGHTS 10;
+
 out vec4 FragColor;
 
 struct Material {
@@ -25,6 +28,13 @@ in vec4 FragPosLightSpace;
 uniform Material material;
 uniform Light light;
 uniform sampler2D shadowMap;
+
+layout (std140) uniform LightUBO
+{
+								// base alignment	| aligned offset
+	mat4 Lights[MAX_LIGHTS];	// 16 * 4 * MAX		|	0
+	uint NumLights; 			// 4				|	16 * 4 * MAX
+}; 
 
 vec4 CalculateDirectionalLight(Light light, vec3 normal, vec3 viewDir, float shadow)
 {

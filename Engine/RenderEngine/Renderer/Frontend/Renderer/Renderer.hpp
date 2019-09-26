@@ -26,7 +26,7 @@ public:
 	const TextureID& GetShadowMap() const { return m_ShadowMap; }
 
 	vec3 LightPos = vec3(-2.0f, 8.0f, -1.0f);
-	mat4 lightProjection = mat4::ortho(-10.f, 10.f, -10.f, 10.f, 1.f, 7.5f);
+	mat4 lightProjection = mat4::ortho(-30.f, 30.f, -30.f, 30.f, 1.f, 20.0f);
 	mat4 lightView = mat4::look_at(LightPos, vec3(0.f, 0.f, 0.f), vec3(0.f, 1.f, 0.f));
 private:
 	Scene scene;

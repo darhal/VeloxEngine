@@ -27,23 +27,33 @@ void StaticMesh::Submit(RenderCommandBuffer& CmdBucket, const Vec3f& CameraPosit
 			printf("Real distance : %f (%x) | Compressed distancec = %f (%x)\n", converter1.first_rep, converter1.second_rep, compressed_float.first_rep, compressed_float.second_rep);
 			std::cout << "Real distance : " << std::bitset<32>(converter1.second_rep) << " | Compressed distance : " << std::bitset<32>(compressed_float.second_rep) << std::endl;
 			std::cout << "BLEND_DIST KEY = : " << std::bitset<32>(blend_dist) << std::endl; */
-		}
+			
+			// Submit for main rendering
+			uint32 cmd_id;
+			typename RenderCommandBuffer::Key key = CmdBucket.GenerateKey(material.GetTechnique().GetShaderID(), m_VaoID, obj.m_MaterialID, blend_dist);
+			Commands::DrawIndexedCmd* draw_cmd = CmdBucket.template CreateCommandOnRenderTarget<Commands::DrawIndexedCmd>(key, 0, CmdBucket.GetRenderTargetsCount() - 1, &cmd_id);
+			draw_cmd->mode = obj.m_Geometry.m_Primitive;
+			draw_cmd->type = obj.m_Geometry.m_DataType;
+			draw_cmd->count = obj.m_Geometry.m_Count;
+			draw_cmd->offset = obj.m_Geometry.m_Offset;
+			draw_cmd->model = &m_ModelTransformation;
+		}else {
+			// Submit for shadow mapping
+			uint32 cmd_id;
+			MaterialID shadow_material_id = RenderManager::GetRenderer().GetShadowMaterialID();
+			const Material& shadow_mat = ResourcesManager::GetGRM().Get<Material>(shadow_material_id);
+			typename RenderCommandBuffer::Key key = CmdBucket.GenerateKey(shadow_mat.GetTechnique().GetShaderID(), m_VaoID, shadow_material_id, blend_dist);
+			Commands::DrawIndexedCmd* draw_cmd = CmdBucket.template CreateCommandOnRenderTarget<Commands::DrawIndexedCmd>(key, 0, 0, &cmd_id);
+			draw_cmd->mode = obj.m_Geometry.m_Primitive;
+			draw_cmd->type = obj.m_Geometry.m_DataType;
+			draw_cmd->count = obj.m_Geometry.m_Count;
+			draw_cmd->offset = obj.m_Geometry.m_Offset;
+			draw_cmd->model = &m_ModelTransformation;
 
-		// Submit for shadow mapping
-		uint32 cmd_id;
-		MaterialID shadow_material_id = RenderManager::GetRenderer().GetShadowMaterialID();
-		const Material& shadow_mat = ResourcesManager::GetGRM().Get<Material>(shadow_material_id);
-		typename RenderCommandBuffer::Key key = CmdBucket.GenerateKey(shadow_mat.GetTechnique().GetShaderID(), m_VaoID, shadow_material_id, blend_dist);
-		Commands::DrawIndexedCmd* draw_cmd = CmdBucket.template CreateCommandOnRenderTarget<Commands::DrawIndexedCmd>(key, 0, 0, &cmd_id);
-		draw_cmd->mode = obj.m_Geometry.m_Primitive;
-		draw_cmd->type = obj.m_Geometry.m_DataType;
-		draw_cmd->count = obj.m_Geometry.m_Count;
-		draw_cmd->offset = obj.m_Geometry.m_Offset;
-		draw_cmd->model = &m_ModelTransformation;
-		
-		// Submit for main rendering
-        key = CmdBucket.GenerateKey(material.GetTechnique().GetShaderID(), m_VaoID, obj.m_MaterialID, blend_dist);
-		CmdBucket.AddCommandToRenderTarget(cmd_id, key, CmdBucket.GetRenderTargetsCount() - 1);
+			// Submit for main rendering
+			key = CmdBucket.GenerateKey(material.GetTechnique().GetShaderID(), m_VaoID, obj.m_MaterialID, blend_dist);
+			CmdBucket.AddCommandToRenderTarget(cmd_id, key, CmdBucket.GetRenderTargetsCount() - 1);
+		}
 	}
 }
 

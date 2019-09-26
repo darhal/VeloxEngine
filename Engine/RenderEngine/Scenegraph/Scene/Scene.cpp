@@ -28,6 +28,16 @@ void Scene::AddMeshInstance(IPrimitiveMesh* primitive_mesh)
     m_Meshs.EmplaceBack(primitive_mesh);
 }
 
+void Scene::AddLight(ILight* light)
+{
+	m_Lights.EmplaceBack(light);
+}
+
+uint32 Scene::GetLightsCount() const
+{
+	m_Lights.Size();
+}
+
 void Scene::Submit()
 {
     auto& cmd_buffer = RenderManager::GetRenderer().GetRenderCommandBuffer();

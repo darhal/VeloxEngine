@@ -58,7 +58,26 @@ void ShaderProgram::AddShader(const Shader& shader)
 	m_Shaders.EmplaceBack(shader);
 }
 
-const ShaderProgram::Uniform& ShaderProgram::AddUniform(const String& name)
+uint8 ShaderProgram::AddSamplerSlot(const String& name)
+{
+	Uniform& uniform = this->AddUniform(name);
+	return this->AddSamplerSlot(uniform);
+}
+
+uint8 ShaderProgram::AddSamplerSlot(Uniform& uniform)
+{
+	auto current_slot = m_Samplers.GetSize();
+	this->SetInt(uniform.second, current_slot);
+	m_Samplers.Emplace(&uniform.first, current_slot);
+	return (uint8) current_slot;
+}
+
+uint8 ShaderProgram::GetSamplerSlot(Uniform& uniform) const
+{
+	return m_Samplers.GetPairPtr(&uniform.first)->second;
+}
+
+ShaderProgram::Uniform& ShaderProgram::AddUniform(const String& name)
 {
 	int32 slot = glGetUniformLocation(m_ID, name.Buffer());
 	return m_Uniforms.Emplace(std::move(name), slot);
@@ -88,6 +107,11 @@ void ShaderProgram::BindBufferBase(const VBO& vbo, uint32 bind_point) const
 void ShaderProgram::BindBufferRange(const VBO& vbo, uint32 bind_point, uint32 offset, uint32 size)
 {
 	Call_GL(glBindBufferRange(GL_UNIFORM_BUFFER, bind_point, vbo.GetID(), offset, size));
+}
+
+void ShaderProgram::BindBufferBase(const UBO& ubo, uint32 bind_point) const
+{
+	Call_GL(glBindBufferBase(GL_UNIFORM_BUFFER, bind_point, ubo.GetVBO().GetID()));
 }
 
 // activate the shader
