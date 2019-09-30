@@ -26,11 +26,12 @@ void Renderer::Init()
 
 	const unsigned int SCR_WIDTH = 1920 / 2;
 	const unsigned int SCR_HEIGHT = 1080 / 2;
-	const unsigned int SHADOW_WIDTH = 1920 / 2;
-	const unsigned int SHADOW_HEIGHT = 1080 / 2;
+	const unsigned int SHADOW_WIDTH = 1024;
+	const unsigned int SHADOW_HEIGHT = 1024;
 	auto& rrc = RenderManager::GetRRC();
 	
-	AbstractMaterial abst_mat;
+	RenderManager::GetRenderer().GetRenderCommandBuffer().PopRenderTarget();
+	/*AbstractMaterial abst_mat;
 	//abst_mat.GetParametres().AddParameter<mat4>("lightSpaceMatrix", lightProjection * lightView);
 	m_ShadowMaterial = ResourcesManager::GetGRM().Generate<Material>(abst_mat, 3); // the second arg is shadow shader id
 
@@ -53,8 +54,7 @@ void Renderer::Init()
 		);
 
 		RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(fbo_id, SHADOW_WIDTH, SHADOW_HEIGHT, &lightProjection, &lightView));
-		RenderManager::GetRenderer().GetRenderCommandBuffer().PushRenderTarget(RenderTarget(0, SCR_WIDTH, SCR_HEIGHT, scene.GetProjectionMatrix(), &scene.GetCurrentCamera()->GetViewMatrix()));
-	}
+	}*/
 
 	// Post-processing framebuffer.
 	{
@@ -92,7 +92,6 @@ void Renderer::Init()
 		loader.GetMaterials().PopBack();
 		AbstractMaterial* abst_mat = new AbstractMaterial();
 		abst_mat->GetRenderStates().depth_enabled = false;
-		ShaderID shaderID = 2; // 4; // for depth testing
 
 		// Creating a frame buffer.
 		TextureID tex_id = 0; FboID fbo_id = 0; RboID rbo_id = 0;
@@ -106,10 +105,11 @@ void Renderer::Init()
 		auto rbo_cmd = rrc.CreateResourceAfter<Commands::CreateRenderBuffer>(tex_cmd, NULL, RenderbufferSettings(SCR_WIDTH, SCR_HEIGHT));
 		auto fbo_cmd = rrc.CreateResourceAfter<Commands::CreateFrameBuffer>(rbo_cmd, &fbo_id, FramebufferSettings({ tex_cmd->texture }, FBOTarget::FBO, rbo_cmd->rbo));
 
+		ShaderID shaderID = 2; // for depth testing
 		abst_mat->GetParametres().AddParameter<TextureID>("screenTexture", tex_id);
 		//abst_mat->GetParametres().AddParameter<TextureID>("depthMap", RenderManager::GetRenderer().GetShadowMap());
 		//abst_mat->GetParametres().AddParameter<float>("near_plane", 1.0f);
-		//abst_mat->GetParametres().AddParameter<float>("far_plane", 20.0f);
+		//abst_mat->GetParametres().AddParameter<float>("far_plane", 10.f);
 		loader.GetMaterials().EmplaceBack(*abst_mat, loader.GetVertexCount());
 		loader.ProcessData(*quad, shaderID);
 

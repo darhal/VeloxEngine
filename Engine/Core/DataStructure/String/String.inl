@@ -201,7 +201,7 @@ INLINE T BasicString<T>::At(usize i) const
 template<typename T>
 INLINE T BasicString<T>::Back() const
 {
-	return this->Buffer()[this->Length()-1];
+	return this->Buffer()[this->Size()-1];
 }
 
 template<typename T>

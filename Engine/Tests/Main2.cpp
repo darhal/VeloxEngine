@@ -162,7 +162,7 @@ void LoadObjects(Scene* scene)
 		scene->AddMeshInstance(room);
 	}*/
 
-	StaticMesh* jet = new StaticMesh();
+	/*StaticMesh* jet = new StaticMesh();
 	{
 		mesh_file_path.Clear();
 		mesh_file_path = "res/obj/jet/f35.obj";
@@ -177,7 +177,7 @@ void LoadObjects(Scene* scene)
 	}
 	jet->GetTransformationMatrix().scale(vec3(0.1, 0.1, 0.1));
 	jet->GetTransformationMatrix().rotate(vec3(0.f, 1.f, 0.f), 90.f);
-	jet->GetTransformationMatrix().translate(vec3(45.f, 0.f, 0.f));
+	jet->GetTransformationMatrix().translate(vec3(45.f, 0.f, 0.f));*/
 
 	StaticMesh* deagle = new StaticMesh();
 	{
@@ -187,9 +187,9 @@ void LoadObjects(Scene* scene)
 		MeshLoader obj_loader(mesh_file_path.Buffer());
 		obj_loader.GetMaterialLoader().GetMaterialFromName("Fire.001").GetRenderStates().blend_enabled = true;
 		obj_loader.GetMaterialLoader().GetMaterialFromName("Fire.001").GetRenderStates().cull_enabled = false;
-		for (auto& mat_node : obj_loader.GetMaterialLoader().GetMaterials()) {
+		/*for (auto& mat_node : obj_loader.GetMaterialLoader().GetMaterials()) {
 			mat_node.second.GetParametres().AddParameter<TextureID>("shadowMap", RenderManager::GetRenderer().GetShadowMap());
-		}
+		}*/
 		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
 		loader.ProcessData(*deagle);
 		scene->AddMeshInstance(deagle);
@@ -202,9 +202,9 @@ void LoadObjects(Scene* scene)
 		mesh_file_path = "res/obj/lowpoly/carrot_box.obj";
 		// res_dir.SearchRecursive("carrot_box.obj", mesh_file_path);
 		MeshLoader obj_loader(mesh_file_path.Buffer());
-		for (auto& mat_node : obj_loader.GetMaterialLoader().GetMaterials()) {
+		/*for (auto& mat_node : obj_loader.GetMaterialLoader().GetMaterials()) {
 			mat_node.second.GetParametres().AddParameter<TextureID>("shadowMap", RenderManager::GetRenderer().GetShadowMap());
-		}
+		}*/
 		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
 		loader.ProcessData(*carrot_box, 1);
 		scene->AddMeshInstance(carrot_box);
@@ -217,9 +217,9 @@ void LoadObjects(Scene* scene)
 		mesh_file_path = "res/obj/lowpoly/all_combined_smooth.obj";
 		//res_dir.SearchRecursive("all_combined_smooth.obj", mesh_file_path);
 		MeshLoader obj_loader(mesh_file_path.Buffer());
-		for (auto& mat_node : obj_loader.GetMaterialLoader().GetMaterials()) {
+		/*for (auto& mat_node : obj_loader.GetMaterialLoader().GetMaterials()) {
 			mat_node.second.GetParametres().AddParameter<TextureID>("shadowMap", RenderManager::GetRenderer().GetShadowMap());
-		}
+		}*/
 		ModelLoader loader(std::move(obj_loader.LoadAsOneObject()));
 		loader.ProcessData(*trees, 1);
 		scene->AddMeshInstance(trees);
@@ -250,9 +250,9 @@ void LoadObjects(Scene* scene)
 	loader2.GetMaterials().PopBack();
 	AbstractMaterial abst_mat2;
 	abst_mat2.GetRenderStates().cull_enabled = false;
-	abst_mat2.GetParametres().AddParameter<TextureID>("material.diffuse_tex", abst_mat2.AddTexture("res/img/ground.jpg"));
-	abst_mat2.GetParametres().AddParameter<TextureID>("material.specular_tex", abst_mat2.AddTexture("res/img/ground.jpg"));
-	abst_mat2.GetParametres().AddParameter<TextureID>("shadowMap", RenderManager::GetRenderer().GetShadowMap());
+	abst_mat2.GetParametres().AddParameter<TextureID>("material.diffuse_tex", abst_mat2.AddTexture("res/img/wood.png"));
+	abst_mat2.GetParametres().AddParameter<TextureID>("material.specular_tex", abst_mat2.AddTexture("res/img/wood.png"));
+	// abst_mat2.GetParametres().AddParameter<TextureID>("shadowMap", RenderManager::GetRenderer().GetShadowMap());
 	abst_mat2.GetParametres().AddParameter<float>("material.shininess", 8.f);
 	loader2.GetMaterials().EmplaceBack(abst_mat2, loader2.GetVertexCount());
 	loader2.ProcessData(*plane);
@@ -309,7 +309,7 @@ void RenderThread()
 		shader.AddUniform("material.specular");
 		shader.AddUniform("material.alpha");
 		shader.AddUniform("material.shininess");
-		shader.AddSamplerSlot("shadowMap");
+		// shader.AddSamplerSlot("shadowMap");
 		shader.AddSamplerSlot("material.specular_tex");
 		shader.AddSamplerSlot("material.diffuse_tex");
 
@@ -359,13 +359,13 @@ void RenderThread()
 	debug_shadow_shader.AddSamplerSlot("depthMap");
 
 	DirectionalLight* dir_light = new DirectionalLight();
-	dir_light->SetDirection(vec3(-2.0f, 8.0f, -1.0f));
+	dir_light->SetDirection(vec3(2.0f, -4.0f, 0.0f));
 	dir_light->SetLightColor(vec3(1.0, 1.0, 1.0));
 	scene.AddLight(dir_light);
 
 	/*PointLight* point_light = new PointLight();
-	point_light->SetPosition(vec3(2.0f, 5.0f, -15.0f));
-	point_light->SetLightColor(vec3(1.0, 0.5, 0.0));
+	point_light->SetPosition(vec3(-2.0f, 4.0f, -1.0f));
+	point_light->SetLightColor(vec3(1.0, 1.0, 1.0));
 	point_light->SetConstant(1.0f);
 	point_light->SetLinear(0.09);
 	point_light->SetQuadratic(0.032);
@@ -382,8 +382,7 @@ void RenderThread()
 	spot_light->SetQuadratic(0.0019f);
 	scene.AddLight(spot_light);
 	spot_light->SetPosition(scene.GetCurrentCamera()->Position);
-	spot_light->SetDirection(scene.GetCurrentCamera()->Front);
-	*/
+	spot_light->SetDirection(scene.GetCurrentCamera()->Front);*/
 
 	IsWindowOpen = true;
 	std::thread prepareThread(PrepareThread, &scene, &window);
@@ -413,13 +412,13 @@ void RenderThread()
 		vertexUBO.Update({ &t_view, sizeof(mat4), sizeof(mat4) });
 		vertexUBO.Update({ &t_proj_view, 2 * sizeof(mat4), sizeof(mat4)});
 		vertexUBO.Update({ &t_light_space_mat, 3 * sizeof(mat4), sizeof(mat4) });
-		vertexUBO.Update({ &scene.GetCurrentCamera()->Position, 4 * sizeof(mat4), sizeof(vec4) });
+		vertexUBO.Update({ &scene.GetCurrentCamera()->Position, 4 * sizeof(mat4), sizeof(vec3) });
 		vertexUBO.GetVBO().Unbind();
 
 		vertexUBO.GetVBO().Bind();
 		uint32 offset = 0;
 		for (auto& light : scene.GetLights()) {
-			lightUBO.Update({ const_cast<Mat4f*>(&light->GetLightMatrix()), offset, sizeof(mat4) });
+			lightUBO.Update({ const_cast<mat4*>(&light->GetLightMatrix()), offset, sizeof(mat4) });
 			offset += sizeof(mat4);
 		}
 		uint32 length = scene.GetLights().Size();
@@ -480,7 +479,21 @@ void output(int x)
 
 int main()
 {
-	RenderThread();
+	// RenderThread();
+	Directory dir("D:\\EngineDev\\TrikytaEngine3D\\Engine\\res");
+	Vector<Directory> content;
+	dir.GetContentEx(content);
+	printf("Parent Dir : %s\n", dir.GetParent().GetPath().Buffer());
+	for (const Directory& f : content) {
+		printf("File : %s\n", f.GetPath().Buffer());
+	}
+
+	String out;
+	if (dir.SearchRecursive("Carrot.obj", out)) {
+		printf("Out path : %s\n", out.Buffer());
+	}
+
+	getchar();
 }
 
 void PrintScreenshot()

@@ -15,21 +15,22 @@ out vec4 FragPosLightSpace;
 
 layout (std140) uniform VertexUBO
 {
-							// base alignment	| aligned offset
-	mat4 Projection;		// 16 * 4		 	|	0
-	mat4 View;				// 16 * 4			|	64
-	mat4 ProjectionView;	// 16 * 4			|	128
-	mat4 lightSpaceMatrix;	// 16 * 4			|	192
-	vec3 ViewPosition;		// 16				|	192+64
+								// base alignment	| aligned offset
+	mat4 Projection;			// 16 * 4		 	|	0
+	mat4 View;					// 16 * 4			|	64
+	mat4 ProjectionView;		// 16 * 4			|	128
+	mat4 lightSpaceMatrix;		// 16 * 4			|	192
+	vec3 ViewPosition;			// 16				|	192+64
 }; 
 
 
 void main()
 {
-    FragPos = vec3(model * vec4(aPos, 1.0));
-    Normal = mat3(transpose(inverse(model))) * aNormals;  
 	TexCoords = aTexCoord;
-	FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 	viewPos = ViewPosition;
+	FragPos = vec3(model * vec4(aPos, 1.0));
+	FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
+    Normal = mat3(transpose(inverse(model))) * aNormals;  
+	
 	gl_Position =  ProjectionView * model * vec4(aPos, 1.0);
 }

@@ -172,6 +172,7 @@ private:
 	};
 
 	friend class File;
+	friend class Directory;
 };
 
 template<typename T>

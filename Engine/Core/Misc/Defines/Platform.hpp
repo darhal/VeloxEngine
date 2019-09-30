@@ -62,7 +62,7 @@
 
 // Detect operating system
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(WIN64)
-	#define OS_WINDOWS
+	#define OS_WINDOWS 0
 #elif defined(__linux__) || defined(__linux)
 	#define OS_LINUX
 #elif defined(__unix)

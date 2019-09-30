@@ -35,7 +35,7 @@ void Scene::AddLight(ILight* light)
 
 uint32 Scene::GetLightsCount() const
 {
-	return m_Lights.Size();
+	return (uint32) m_Lights.Size();
 }
 
 Vector<ILight*>& Scene::GetLights()

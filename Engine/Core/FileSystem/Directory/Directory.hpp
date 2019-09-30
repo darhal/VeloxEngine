@@ -11,7 +11,10 @@
     #include <dirent.h>
     #include <unistd.h>
 #elif defined(OS_WINDOWS)
-    // TODO;
+	#include <windows.h>
+	#include <pathcch.h>
+	#include <fileapi.h>
+	#include <handleapi.h>
 #endif
 
 TRE_NS_START
@@ -20,6 +23,8 @@ class Directory
 {
 public:
     Directory(const String& path);
+	
+	~Directory();
 
     bool IsRepository() const;
 
@@ -58,11 +63,14 @@ private:
     String m_DirPath;
 
 #if defined(OS_LINUX) || defined(OS_UNIX)
-    struct stat m_Informations;
-#elif defined(OS_WINDOWS)
-    // TODO;
-#endif
 
+    struct stat m_Informations;
+
+#elif defined(OS_WINDOWS)
+
+	HANDLE m_Handler;
+	WIN32_FIND_DATA m_Informations;
+#endif
 };
 
 TRE_NS_END
