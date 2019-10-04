@@ -215,7 +215,7 @@ void ShaderProgram::CheckCompileErrors(uint32 shader, const char* type)
 		if (success == false){
 			glGetShaderInfoLog(shader, 1024, NULL, infoLog);
 			///std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
-			Log(LogType::ERR, "(SHADER_COMPILATION_ERROR) in the '%s'.\n-->DEBUG INFO  : %s", type, infoLog);
+			Log::Write(Log::ERR, "(SHADER_COMPILATION_ERROR) in the '%s'.\n-->DEBUG INFO  : %s", type, infoLog);
 		}
 	}else{
 		glGetProgramiv(shader, GL_LINK_STATUS, &success);
@@ -223,7 +223,7 @@ void ShaderProgram::CheckCompileErrors(uint32 shader, const char* type)
 		if (success == false){
 			glGetProgramInfoLog(shader, 1024, NULL, infoLog);
 			///std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
-			Log(LogType::ERR, "(PROGRAM_LINKING_ERROR) in the '%s'.\n-->DEBUG INFO : %s", type, infoLog);
+			Log::Write(Log::ERR, "(PROGRAM_LINKING_ERROR) in the '%s'.\n-->DEBUG INFO : %s", type, infoLog);
 		}
 	}
 #endif

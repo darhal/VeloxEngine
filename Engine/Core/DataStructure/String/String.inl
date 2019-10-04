@@ -1,3 +1,7 @@
+#include "String.hpp"
+
+TRE_NS_START
+
 template<typename T>
 BasicString<T>::BasicString()
 {
@@ -280,7 +284,7 @@ void BasicString<T>::Copy(const BasicString<T>& str, usize pos, usize offset)
 	//ASSERTF((offset > slen), "Bad usage of String::Copy() pos or offset is out of bound.");
 	const T* buffer_ptr = str.Buffer();
 	usize end = pos + offset;
-	if (end >= slen) end = slen - 1;
+	if (end >= slen) end = slen;
 	if (offset < SSO_SIZE) {
 		SetSmallLength(end - pos + 1);
 		for (usize i = pos, j = 0; i < end; i++, j++) {
@@ -307,6 +311,97 @@ template<typename T>
 INLINE ssize BasicString<T>::Find(const BasicString<T>& pattren) const
 {
 	return 0;//SearchBoyerMoore(*this, pattren);
+}
+
+template<typename T>
+INLINE Vector<BasicString<T>> BasicString<T>::Split(T delimter)
+{
+	Vector<BasicString<T>> fragments;
+	usize start_off = 0;
+	T* str_buffer = this->EditableBuffer();
+	T* pch = this->FindFirstHelper(str_buffer, delimter);
+	T* last_pch = str_buffer - 1;
+
+	if (pch != NULL) {
+		while (pch != NULL) {
+			fragments.EmplaceBack(std::move(this->SubString(start_off, pch - last_pch - 1)));
+			start_off = pch - str_buffer + 1;
+			last_pch = pch;
+			pch = this->FindFirstHelper(pch + 1, delimter);
+		}
+
+		fragments.EmplaceBack(std::move(this->SubString(start_off, this->Length() + str_buffer - str_buffer)));
+	}
+
+	return fragments;
+}
+
+template<typename T>
+INLINE int32 BasicString<T>::FindFirst(T delimter)
+{
+	T* str_buffer = this->EditableBuffer();
+	T* pch = this->FindFirstHelper(str_buffer, delimter);
+
+	if (pch)
+		return (int32) (pch - str_buffer);
+
+	return -1;
+}
+
+template<typename T>
+INLINE int32 BasicString<T>::FindLast(T delimter)
+{
+	T* str_buffer = this->EditableBuffer();
+	T* pch = this->FindLastHelper(str_buffer, delimter, this->Length());
+
+	if (pch)
+		return (int32) (pch - str_buffer);
+
+	return -1;
+}
+
+template<typename T>
+INLINE void BasicString<T>::EraseAfterTheLast(T delimter)
+{
+	T* str_buffer = this->EditableBuffer();
+	T* pch = this->FindLastHelper(str_buffer, delimter, this->Length());
+	*pch = 0;
+	this->SetLength(pch - str_buffer);
+}
+
+template<typename T>
+INLINE void BasicString<T>::EraseAfterTheFirst(T delimter)
+{
+	T* str_buffer = this->EditableBuffer();
+	T* pch = this->FindFirstHelper(str_buffer, delimter);
+	*pch = 0;
+	this->SetLength(pch - str_buffer);
+}
+
+template<typename T>
+INLINE T* BasicString<T>::FindLastHelper(T* buffer, T delimter, usize length)
+{
+	T* start = buffer + length;
+	for (usize i = length; start != buffer; i--) {
+		if (buffer[i] == delimter) {
+			return buffer + i;
+		}
+	}
+
+	return NULL;
+}
+
+template<typename T>
+INLINE T* BasicString<T>::FindFirstHelper(T* buffer, T delimter) 
+{
+	usize len = this->Length();
+	for (usize i = 0; i < len; i++) {
+		if (buffer[i] == delimter) {
+			return buffer + i;
+		}
+	}
+
+	return NULL;
 }
 
 //Copy ctor copy assignement
@@ -436,6 +531,16 @@ INLINE usize BasicString<T>::Length() const
 #endif
 }
 
+template<typename T>
+INLINE usize BasicString<T>::Length()
+{
+#if ENDIANNESS == LITTLE_ENDIAN
+	return this->IsSmall() ? SSO_SIZE - m_Data[SSO_MI] : (m_Length << 1) >> 1;
+#else
+	return this->IsSmall() ? SSO_SIZE - (m_Data[SSO_MI] >> 1) : m_Length >> 1;
+#endif
+}
+
 /********** PRIVATE FUNCTIONS **********/
 
 template<typename T>
@@ -496,3 +601,5 @@ template class BasicString<char>;
 template class BasicString<char16_t>;
 template class BasicString<wchar_t>;
 //template class BasicString<int>; //char32_t
+
+TRE_NS_END

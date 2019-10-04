@@ -32,11 +32,12 @@ Lets imagine its 4 here
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/Misc/Maths/Utils.hpp>
+#include <Core/DataStructure/Vector/Vector.hpp>
 #include <limits>
 #include <type_traits>
 #include <ostream>
 #include <iterator>
-#include <string.h>
+#include <cstring>
 
 TRE_NS_START
 
@@ -82,6 +83,7 @@ public:
 	void Insert(usize pos, const BasicString<T>& str);
 	void Copy(const BasicString<T>& str, usize pos, usize offset);
 
+	INLINE usize		   Length()							         ;
 	INLINE const T*	   	   Buffer()							    const;
 	INLINE usize		   Length()							    const;
 	INLINE usize		   Size()								const;
@@ -93,6 +95,14 @@ public:
 	INLINE BasicString<T>  SubString(usize pos, usize off)	    const;
 	INLINE bool		   	   IsEmpty()							const;
 
+	INLINE Vector<BasicString<T>> Split(T delimter);
+	INLINE int32 FindLast(T delimter);
+	INLINE int32 FindFirst(T delimter);
+	INLINE void EraseAfterTheLast(T delimter);
+	INLINE void EraseAfterTheFirst(T delimter);
+
+	INLINE T* FindLastHelper(T* buffer, T delimter, usize length);
+	INLINE T* FindFirstHelper(T* buffer, T delimter);
 
 	INLINE Iterator begin() noexcept;
 	INLINE Iterator end() noexcept;
@@ -429,8 +439,10 @@ std::ostream& operator<<(std::ostream& os, const BasicString<T>& m) {
 	return os << m.Buffer();
 }
 
-#include "String.inl"
+// #include "String.inl"
 
 typedef BasicString<char> String;
 
 TRE_NS_END
+
+#include "String.inl"

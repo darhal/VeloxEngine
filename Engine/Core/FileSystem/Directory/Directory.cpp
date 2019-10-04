@@ -217,7 +217,7 @@ bool Directory::SearchRecursiveHelper(const String& target, String& out_path, St
 Directory::Directory(const String& path) : m_DirPath(path)
 {
 	m_Handler = FindFirstFileA(path.Buffer(), &m_Informations);
-	ASSERTF(m_Handler == INVALID_HANDLE_VALUE, "Failed to load direcoty informations (Windows implementation)");
+	ASSERTF(m_Handler == INVALID_HANDLE_VALUE, "Failed to load direcoty informations (Windows implementation) [Path : %s]", path.Buffer());
 }
 
 Directory::~Directory()
@@ -331,7 +331,7 @@ Directory Directory::GetParent() const
 {
 	// TODO : Needs more work.
 	String parentDir(m_DirPath.Buffer());
-	*(strrchr(parentDir.EditableBuffer(), '\\') + 1) = 0;
+	parentDir.EraseAfterTheLast('\\');
 	return Directory(parentDir.Buffer());
 }
 

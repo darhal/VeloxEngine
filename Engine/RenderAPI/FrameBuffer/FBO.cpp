@@ -52,7 +52,7 @@ bool FBO::IsComplete() const
 	if (glCheckFramebufferStatus(m_target) == GL_FRAMEBUFFER_COMPLETE) 
 		return true;
 
-	Log(LogType::ERR, "FRAMEBUFFER : Framebuffer is not complete! (ID = %d)", m_ID);
+	Log::Write(Log::ERR, "FRAMEBUFFER : Framebuffer is not complete! (ID = %d)", m_ID);
 	return false;
 }
 

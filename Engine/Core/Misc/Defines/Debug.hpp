@@ -12,23 +12,29 @@
 	#define _DEBUG // Enable debugging for now !
 #endif
 
-inline static void PrintDate()
-{
-	time_t t = time(NULL);
-	struct tm tm = *localtime(&t);
-	char buffer[26];
-	strftime(buffer, 26, "[%Y-%m-%d %H:%M:%S]", &tm);
-	printf("%s", buffer);
-}
-
 #if not defined(_DEBUG) || defined(NDEBUG)
 	#define ASSERTF(condition, ...) ;
 	#define ASSERT(condition) ;
 #else
-	#include <string.h>
+	#include <Core/Misc/Utils/Logging.hpp>
 
 	#if defined(COMPILER_MSVC) && (CPU_ARCH == CPU_ARCH_x86)
 		#define DEBUG_BREAK() __asm { int 3 }
+	#elif defined(OS_WINDOWS) && (CPU_ARCH == CPU_ARCH_x86_64)
+		#include <Windows.h>
+		#include <debugapi.h>
+
+		typedef LONG(NTAPI *NtSuspendProcess)(IN HANDLE ProcessHandle);
+
+		FORCEINLINE void Suspend(DWORD processId)
+		{
+			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
+			NtSuspendProcess pfnNtSuspendProcess = (NtSuspendProcess) GetProcAddress(GetModuleHandle("ntdll"), "NtSuspendProcess");
+			pfnNtSuspendProcess(processHandle);
+			CloseHandle(processHandle);
+		}
+
+		#define DEBUG_BREAK() Suspend(GetCurrentProcessId());
 	#elif defined(OS_UNIX) || defined(OS_LINUX)
 		#include <signal.h>
 		#define DEBUG_BREAK() raise(SIGINT);
@@ -51,24 +57,17 @@ inline static void PrintDate()
 
 	#define ASSERTF(condition, ...) \
 		if ((bool)(condition)){ \
-			PrintDate(); \
-			fprintf(stderr, "[TrikytaEngine]"); \
-			fprintf(stderr, "[ASSERT]: Assert occured in "); \
-			fprintf(stderr, "(%s:%d) ", __FILENAME__, __LINE__); \
-			fprintf(stderr, ##__VA_ARGS__);	\
-			fprintf(stderr, ".\n"); \
+			char assert_msg[215]; \
+			snprintf(assert_msg, 215, ##__VA_ARGS__); \
+			LOG::Write(LOG::ASSERT, "Assert occured in (%s:%d) %s.", __FILENAME__, __LINE__, assert_msg); \
 			DEBUG_BREAK(); \
 		}\
 
 	#define ASSERT(condition) \
 		if ((bool)(condition)){ \
-			PrintDate(); \
-			fprintf(stderr, "[TrikytaEngine]"); \
-			fprintf(stderr, "[ASSERT]: Assert occured in "); \
-			fprintf(stderr, "(%s:%d) ", __FILENAME__, __LINE__); \
-			fprintf(stderr, ".\n"); \
+			LOG::Write(LOG::ASSERT, "Assert occured in (%s:%d).", __FILENAME__, __LINE__); \
 			DEBUG_BREAK(); \
-		}\
+		} \
 
 	#define assert ASSERT
 	#define _assert ASSERT

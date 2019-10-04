@@ -479,6 +479,15 @@ void output(int x)
 
 int main()
 {
+	LOG::Write("Test %s", "Hi how are you ?");
+	LOG::Write(LOG::WARN, "Well Im fine and you ? %d", 5);
+	LOG::Write(LOG::ERR, "This is an error fake one!");
+	LOG::Write(LOG::FATAL, "This is a fatal error fake one!");
+	LOG::Write(LOG::ASSERT, "This is an example of an assert");
+	LOG::Write(LOG::DEBUG, "This is an example of an debug message");
+	LOG::Write(LOG::DISPLAY, "This is an example of a DISPLAY info message");
+	LOG::Write(LOG::OTHER, "This is an example of an other message");
+
 	// RenderThread();
 	Directory dir("D:\\EngineDev\\TrikytaEngine3D\\Engine\\res");
 	Vector<Directory> content;

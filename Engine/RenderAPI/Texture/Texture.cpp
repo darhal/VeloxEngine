@@ -35,7 +35,7 @@ Texture::Texture
 			glGenerateMipmap(target)
 		);
 	}else{
-		Log(LogType::ERR, "Failed to load texture\n");
+		Log::Write(Log::ERR, "Failed to load texture\n");
 	}
 }
 
@@ -61,7 +61,7 @@ Texture::Texture(const char* path, const TextureSettings& settings) : m_ID(0), m
 		);
 	}
 	else {
-		Log(LogType::ERR, "Failed to load texture\n");
+		Log::Write(Log::ERR, "Failed to load texture\n");
 	}
 }
 
@@ -91,7 +91,7 @@ void Texture::LoadImg(const Image& img, DataType::data_type_t datatype, TexInter
 	if (data) {
 		Call_GL(glTexImage2D(m_target, 0, internalFormat, width, height, 0, format, datatype, data));
 	}else{
-		Log(LogType::ERR, "Failed to load texture\n");
+		Log::Write(Log::ERR, "Failed to load texture\n");
 	}
 }
 
