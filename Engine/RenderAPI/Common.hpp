@@ -30,7 +30,7 @@
                     case GL_OUT_OF_MEMORY:          error = String("OUT_OF_MEMORY");          break; \
                     case GL_INVALID_FRAMEBUFFER_OPERATION:  error = String("INVALID_FRAMEBUFFER_OPERATION");  break; \
                 } \
-        		Log::Write(Log::ERR, "(OPEN GL ERROR) {%s} Occured at (%s:%d) after attempting to call %s\n", error.Buffer(), __FILENAME__, __LINE__, TO_STR(GL_CALL_FUNCTION)); \
+        		Log::Write(Log::ERR, "(OPEN GL ERROR) {%s} Occured at (%s:%d) after attempting to call %s", error.Buffer(), __FILENAME__, __LINE__, TO_STR(GL_CALL_FUNCTION)); \
     		} \
 		} \
 

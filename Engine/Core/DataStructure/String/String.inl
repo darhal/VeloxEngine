@@ -310,7 +310,7 @@ INLINE BasicString<T> BasicString<T>::SubString(usize pos, usize off) const
 template<typename T>
 INLINE ssize BasicString<T>::Find(const BasicString<T>& pattren) const
 {
-	return 0;//SearchBoyerMoore(*this, pattren);
+	return SearchBoyerMoore(*this, pattren);
 }
 
 template<typename T>

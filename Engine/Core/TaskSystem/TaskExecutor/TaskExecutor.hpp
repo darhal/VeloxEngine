@@ -23,6 +23,10 @@ class TaskExecutor
 public:
     TaskExecutor(TaskManager* tmanager, uint8 id);
 
+	Task* CreateTask(TaskFunction func, uint32 aux_mem = 0);
+
+	Task* CreateTaskAsChild(Task* parent, TaskFunction func, uint32 aux_mem = 0);
+
     void DoWork();
 
     void Execute(Task* t);
@@ -40,6 +44,10 @@ public:
     bool HasTaskCompleted(const Task* t) const;
 
     WorkStealingQueue* GetWorkerThreadQueue() const;
+
+	void Activate(bool is_active);
+
+	bool IsActive() const;
 private:
     TaskManager* m_TaskManager;
     uint8 m_WorkerID;

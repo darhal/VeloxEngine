@@ -6,15 +6,15 @@
 #include <Core/Misc/Defines/Common.hpp>
 
 #if defined(COMPILER_MSVC)
-	#pragma warning(disable:4996)
+#	pragma warning(disable:4996)
 #endif
 
 #if defined(OS_WINDOWS)
-	#include <Windows.h>
-	#include <processenv.h>
-	#include <ConsoleApi2.h>
-	#undef min
-	#undef max
+#	include <Windows.h>
+#	include <processenv.h>
+#	include <ConsoleApi2.h>
+#	undef min
+#	undef max
 #endif
 
 TRE_NS_START
@@ -47,6 +47,12 @@ public:
 		va_end(arg);
 	}
 
+private:
+	CONSTEXPR static const char* logtype2str[] = { "INFO", "WARNING", "ERROR", "FATAL", "ASSERT", "DEBUG", "DISPLAY", "OTHER" };
+	/* GREEN, YELLOW, RED, DARK RED, PURPLE, GREY, CYAN, DEFAULT*/
+	CONSTEXPR static const uint8 logtype2color[] = { 10, 14, 12, 4, 13, 8, 11, 15}; 
+	CONSTEXPR static const usize MAX_MESSAGE_BUFFER = 1024;
+
 	static void WriteHelper(LogType logtype, const char* msg, va_list ap)
 	{
 		char text_message_buffer[MAX_MESSAGE_BUFFER];
@@ -59,14 +65,7 @@ public:
 
 		Log::SetColor(Log::GetColorFromLogType(logtype));
 		printf("%s\n", text_message_buffer);
-		Log::ResetColors();
 	}
-
-private:
-	CONSTEXPR static const char* logtype2str[] = { "INFO", "WARNING", "ERROR", "FATAL", "ASSERT", "DEBUG", "DISPLAY", "OTHER" };
-	/* GREEN, YELLOW, RED, DARK RED, PURPLE, GREY, CYAN, DEFAULT*/
-	CONSTEXPR static const uint8 logtype2color[] = { 10, 14, 12, 4, 13, 8, 11, 15}; 
-	CONSTEXPR static const usize MAX_MESSAGE_BUFFER = 1024;
 
 	FORCEINLINE static const char* GetStringFromLogType(LogType v) {
 		return logtype2str[v];
@@ -86,8 +85,8 @@ private:
 	FORCEINLINE static void SetColor(uint8 color_code)
 	{
 #if defined(OS_WINDOWS)
-		const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-		SetConsoleTextAttribute(hConsole, color_code);
+		// const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		// SetConsoleTextAttribute(hConsole, color_code);
 #endif
 	}
 

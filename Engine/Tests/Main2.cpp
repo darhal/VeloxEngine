@@ -88,58 +88,6 @@ void HandleEvent(Scene* scene, const Event&);
 void clip(const TRE::Window&);
 void PrepareThread(Scene* scene, TRE::Window*);
 
-void empty_job1(Job* t, const void*)
-{
-	printf("Hello! From %d\n", t->m_WorkerID);
-}
-
-void empty_job2(Job* t, const void*)
-{
-	printf("Hello! From %d\n", t->m_WorkerID);
-}
-
-
-void DoJobs1(TaskExecutor* ts, int8 x)
-{
-	Task* root = Task::CreateTask(&empty_job1);
-	ts->Run(root);
-	for (usize i = 0; i < 7; i++){
-		Task* t = Task::CreateTask(&empty_job1);
-		ts->Run(t);
-	}
-	ts->Wait(root);
-}
-
-void DoJobs2(TaskExecutor* ts, int8 x)
-{
-	Task* root = Task::CreateTask(&empty_job1);
-	ts->Run(root);
-	for (usize i = 0; i < 3; i++){
-		Task* t = Task::CreateTask(&empty_job2);
-		ts->Run(t);
-	}
-	ts->Wait(root);
-}
-
-/*
-	MULTI THREADED:
-		T1 : Render Thread (Handles also events)
-		T2 : Updte Thread (Updates the command buffer)
-		TEST1 :
-			[T2] : MIN FPS = 247| MAX FPS = 100000 | AVG FPS = 1194
-			[T1] : MIN FPS = 60| MAX FPS = 8403 | AVG FPS = 905
-		TEST2 :
-			[T2] : MIN FPS = 313| MAX FPS = 90909 | AVG FPS = 1312
-			[T1] : MIN FPS = 30| MAX FPS = 6944 | AVG FPS = 819
-
-	---------------------------------------------------------------------------
-	SINGLE THREADED:
-		TEST1:
-			[T1] : MIN FPS = 340| MAX FPS = 3816 | AVG FPS = 967
-		TEST2:
-			[T1] : MIN FPS = 348| MAX FPS = 3174 | AVG FPS = 881
-*/
-
 std::atomic<uint8> IsWindowOpen;
 
 
@@ -477,32 +425,48 @@ void output(int x)
 	printf("X is %d\n", x);
 }
 
+void empty_job1(Job* t, const void*)
+{
+	printf("Hello I'm empty_job0! From Thread %d\n", t->m_WorkerID);
+}
+
+void empty_job2(Job* t, const void*)
+{
+	printf("Hello I'm empty_job1! From Thread %d\n", t->m_WorkerID);
+}
+
+
+void DoJobs1(TaskExecutor* ts)
+{
+	Task* root = ts->CreateTask(&empty_job1);
+	ts->Run(root);
+	for (usize i = 0; i < 5; i++) {
+		Task* t = ts->CreateTask(&empty_job1);
+		ts->Run(t);
+	}
+	ts->Wait(root);
+}
+
+void DoJobs2(TaskExecutor* ts)
+{
+	Task* root = ts->CreateTask(&empty_job1);
+	ts->Run(root);
+	for (usize i = 0; i < 3; i++) {
+		Task* t = ts->CreateTask(&empty_job2);
+		ts->Run(t);
+	}
+	ts->Wait(root);
+}
+
 int main()
 {
-	LOG::Write("Test %s", "Hi how are you ?");
-	LOG::Write(LOG::WARN, "Well Im fine and you ? %d", 5);
-	LOG::Write(LOG::ERR, "This is an error fake one!");
-	LOG::Write(LOG::FATAL, "This is a fatal error fake one!");
-	LOG::Write(LOG::ASSERT, "This is an example of an assert");
-	LOG::Write(LOG::DEBUG, "This is an example of an debug message");
-	LOG::Write(LOG::DISPLAY, "This is an example of a DISPLAY info message");
-	LOG::Write(LOG::OTHER, "This is an example of an other message");
-
-	// RenderThread();
-	Directory dir("D:\\EngineDev\\TrikytaEngine3D\\Engine\\res");
-	Vector<Directory> content;
-	dir.GetContentEx(content);
-	printf("Parent Dir : %s\n", dir.GetParent().GetPath().Buffer());
-	for (const Directory& f : content) {
-		printf("File : %s\n", f.GetPath().Buffer());
-	}
-
-	String out;
-	if (dir.SearchRecursive("Carrot.obj", out)) {
-		printf("Out path : %s\n", out.Buffer());
-	}
-
+	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
+	TaskManager tm(2);
+	tm.Init();
+	tm.AddWorker(0, &DoJobs1);
+	tm.AddWorker(1, &DoJobs2);
 	getchar();
+	// RenderThread();
 }
 
 void PrintScreenshot()

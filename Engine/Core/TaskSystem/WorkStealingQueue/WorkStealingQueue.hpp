@@ -54,12 +54,11 @@ FORCEINLINE int32 WorkStealingQueue::Init(int32 capacity, void* buffer, usize bu
 	bufferNext += capacity * sizeof(Task*);
 
 	ASSERT(bufferNext - (uint8_t*)buffer != (intptr_t)minBufferSize);
+	ASSERTF((capacity & (capacity - 1)) != 0, "WorkStealingQueue must have capacity of power of 2!");
 
 	for (int32 iEntry = 0; iEntry < capacity; iEntry += 1) {
 		m_Entries[iEntry] = NULL;
 	}
-
-	printf("Queue initlised !\n");
 
 	m_Top = 0;
 	m_Bottom = 0;
@@ -107,12 +106,11 @@ FORCEINLINE Task* WorkStealingQueue::Pop()
 				job = NULL;
 			}
 
+			m_Entries[bottom & (m_Capacity - 1)] = NULL;
 			m_Bottom = top + 1;
 			return job;
 		}
-
-	}
-	else {
+	}else {
 		// queue already empty
 		m_Bottom = top;
 		return NULL;
@@ -131,7 +129,7 @@ FORCEINLINE Task* WorkStealingQueue::Steal()
 	uint64_t bottom = m_Bottom;
 
 	if (top < bottom) {
-		Task *job = m_Entries[top & (m_Capacity - 1)];
+		Task* job = m_Entries[top & (m_Capacity - 1)];
 
 		// CAS serves as a compiler barrier as-is.
 		if (!std::atomic_compare_exchange_strong(&m_Top, &top, top + 1)) {
@@ -141,8 +139,7 @@ FORCEINLINE Task* WorkStealingQueue::Steal()
 
 		m_Entries[top & (m_Capacity - 1)] = NULL;
 		return job;
-	}
-	else {
+	}else {
 		return NULL; // queue empty
 	}
 }

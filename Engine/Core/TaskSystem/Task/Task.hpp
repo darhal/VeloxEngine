@@ -20,33 +20,9 @@ struct Task
         void* m_Data;
     };
  
+    //FORCEINLINE static Task* CreateTask(TaskFunction func, uint32 aux_mem = 0);
 
-    FORCEINLINE static Task* CreateTask(TaskFunction func);
-
-    FORCEINLINE static Task* CreateTaskAsChild(Task* parent, TaskFunction func);
+    //FORCEINLINE static Task* CreateTaskAsChild(Task* parent, TaskFunction func, uint32 aux_mem = 0);
 };
-
-FORCEINLINE Task* Task::CreateTask(TaskFunction func)
-{
-    Task* task = (Task*) operator new(sizeof(Task));
-    task->m_Function = func;
-    task->m_Parent = nullptr;
-    task->m_UnfinishedJobs = 1;
- 
-    return task;
-}
-
-FORCEINLINE Task* Task::CreateTaskAsChild(Task* parent, TaskFunction func)
-{
-    parent->m_UnfinishedJobs++;
- 
-    Task* task = (Task*) operator new(sizeof(Task));
-    task->m_Function = func;
-    task->m_Parent = nullptr;
-    task->m_UnfinishedJobs = 1;
- 
-    return task;
-}
-
 
 TRE_NS_END
