@@ -425,16 +425,30 @@ void output(int x)
 	printf("X is %d\n", x);
 }
 
-void empty_job1(Job* t, const void*)
+void empty_job1(TaskExecutor* te, Job* t, const void*)
 {
-	printf("Hello I'm empty_job0! From Thread %d\n", t->m_WorkerID);
+	printf("Hello I'm empty_job0 ! From Thread %d\n", te->GetWorkerID());
 }
 
-void empty_job2(Job* t, const void*)
+void empty_job2(TaskExecutor* te, Job* t, const void*)
 {
-	printf("Hello I'm empty_job1! From Thread %d\n", t->m_WorkerID);
+	printf("Hello I'm empty_job1 ! From Thread %d\n", te->GetWorkerID());
 }
 
+void parallelJob1(TaskExecutor* te, Job* j, uint32* data, uint32 count)
+{
+	printf("Hey Im from Thread : %d\n", te->GetWorkerID());
+	for (uint32 i = 0; i < count; i++) {
+		printf("\tHey I have %d\n", data[i]);
+	}
+	printf("End of message\n");
+}
+
+
+void continuation(TaskExecutor* te, Job* t, const void*)
+{
+	printf("should after the first (continuation)\n");
+}
 
 void DoJobs1(TaskExecutor* ts)
 {
@@ -442,26 +456,36 @@ void DoJobs1(TaskExecutor* ts)
 	ts->Run(root);
 	for (usize i = 0; i < 5; i++) {
 		Task* t = ts->CreateTask(&empty_job1);
+		ts->AddContinuation(t, ts->CreateTask(continuation));
 		ts->Run(t);
 	}
 	ts->Wait(root);
+
+	/*uint32 data[100];
+	for (uint i = 0; i < 100; i++) {
+		data[i] = i;
+	}
+	Task* root = ts->ParallelFor(data, 100, parallelJob1, CountSplitter(5));
+	ts->Run(root);
+	ts->Wait(root);*/
 }
 
 void DoJobs2(TaskExecutor* ts)
 {
-	Task* root = ts->CreateTask(&empty_job1);
+	Task* root = ts->CreateTask(&empty_job2);
 	ts->Run(root);
 	for (usize i = 0; i < 3; i++) {
 		Task* t = ts->CreateTask(&empty_job2);
 		ts->Run(t);
 	}
 	ts->Wait(root);
+	// ts->DoWork();
 }
 
 int main()
 {
 	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
-	TaskManager tm(2);
+	TaskManager tm;
 	tm.Init();
 	tm.AddWorker(0, &DoJobs1);
 	tm.AddWorker(1, &DoJobs2);

@@ -9,18 +9,20 @@ TaskExecutor::TaskExecutor(TaskManager* tmanager, uint8 id) :
 {
 }
 
-Task* TaskExecutor::CreateTask(TaskFunction func, uint32 aux_mem)
+Task* TaskExecutor::CreateTask(TaskFunction func, const void* data, uint32 aux_mem)
 {
 	Task* task = m_TaskManager->AllocateTask(m_WorkerID);
 	task->m_Function = func;
 	task->m_Parent = NULL;
 	task->m_UnfinishedJobs = 1;
+	task->m_ContinuationCount = 0;
 	// TODO: Add au memory allocation if ncesseray otherwise put it in the padding
+	memcpy(&task->m_Data, data, aux_mem);
 
 	return task;
 }
 
-Task* TaskExecutor::CreateTaskAsChild(Task* parent, TaskFunction func, uint32 aux_mem)
+Task* TaskExecutor::CreateTaskAsChild(Task* parent, TaskFunction func, const void* data, uint32 aux_mem)
 {
 	parent->m_UnfinishedJobs++;
 
@@ -28,9 +30,17 @@ Task* TaskExecutor::CreateTaskAsChild(Task* parent, TaskFunction func, uint32 au
 	task->m_Function = func;
 	task->m_Parent = NULL;
 	task->m_UnfinishedJobs = 1;
+	task->m_ContinuationCount = 0;
 	// TODO: Add au memory allocation if ncesseray otherwise put it in the padding
+	memcpy(&task->m_Data, data, aux_mem);
 
 	return task;
+}
+
+void TaskExecutor::AddContinuation(Task* ancestor, Task* continuation)
+{
+	const uint32 count = ancestor->m_ContinuationCount++;
+	ancestor->m_Continuations[count] = continuation;
 }
 
 void TaskExecutor::Activate(bool is_active)
@@ -44,6 +54,11 @@ void TaskExecutor::Activate(bool is_active)
 bool TaskExecutor::IsActive() const
 {
 	return m_IsWorkerThreadActive;
+}
+
+uint8 TaskExecutor::GetWorkerID() const
+{
+	return m_WorkerID;
 }
 
 bool TaskExecutor::IsEmptyTask(Task* t) const
@@ -80,11 +95,11 @@ Task* TaskExecutor::GetTask()
             return NULL;
         }
 
-        stolenJob->m_WorkerID = m_WorkerID;
+        // stolenJob->m_WorkerID = m_WorkerID;
         return stolenJob;
     }
 
-    job->m_WorkerID = m_WorkerID;
+	// job->m_WorkerID = m_WorkerID;
     return job;
 }
 
@@ -101,7 +116,7 @@ void TaskExecutor::DoWork()
 
 void TaskExecutor::Execute(Task* t)
 {
-    (t->m_Function)(t, t->m_Data);
+    (t->m_Function)(this, t, t->m_Data);
     this->Finish(t);
 }
 
@@ -118,6 +133,10 @@ void TaskExecutor::Finish(Task* t)
         if (t->m_Parent) {
             this->Finish(t->m_Parent);
         }
+
+		for (uint32 i = 0; i < t->m_ContinuationCount; i++) {
+			this->Run(t->m_Continuations[i]);
+		}
  
         t->m_UnfinishedJobs--;
     }

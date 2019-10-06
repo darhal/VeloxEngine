@@ -364,6 +364,8 @@
     <ClInclude Include="Core\Misc\Utils\zlib\zconf.h" />
     <ClInclude Include="Core\Misc\Utils\zlib\zlib.h" />
     <ClInclude Include="Core\Misc\Utils\zlib\zutil.h" />
+    <ClInclude Include="Core\TaskSystem\ParallelTask\ParallelTask.hpp" />
+    <ClInclude Include="Core\TaskSystem\ParallelTask\TaskSplitters.hpp" />
     <ClInclude Include="Core\TaskSystem\TaskExecutor\TaskExecutor.hpp" />
     <ClInclude Include="Core\TaskSystem\TaskManager\TaskManager.hpp" />
     <ClInclude Include="Core\TaskSystem\Task\Task.hpp" />
