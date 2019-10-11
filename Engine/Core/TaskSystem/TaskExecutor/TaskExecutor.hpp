@@ -78,15 +78,17 @@ void TaskExecutor::ParallelForTask(TaskExecutor* te, Task* task, const void* tas
 		const uint32 leftCount = data->count / 2;
 		const TaskData leftData(data->data, leftCount, data->function, splitter);
 		Job* left = te->CreateTaskAsChild(task, &TaskExecutor::ParallelForTask<TaskData>, &leftData, sizeof(TaskData));
-		te->Run(left);
-
+	
 		const uint32 rightCount = data->count - leftCount;
 		const TaskData rightData(data->data + leftCount, rightCount, data->function, splitter);
 		Job* right = te->CreateTaskAsChild(task, &TaskExecutor::ParallelForTask<TaskData>, &rightData, sizeof(TaskData));
+
+		te->Run(left);
 		te->Run(right);
 	}
 	else {
 		// execute the function on the range of data
+
 		(data->function)(te, task, data->data, data->count);
 	}
 }

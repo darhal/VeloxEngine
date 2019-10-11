@@ -267,7 +267,7 @@ template<typename T>
 template<typename NUMERIC_TYPE>
 T& BasicString<T>::operator[] (const NUMERIC_TYPE i)
 {
-	ASSERTF((Absolute(i) > (ssize)m_Length), "Bad usage of [] with BasicString class, given index out of bounds.");
+	ASSERTF(((usize)Absolute(i) > (usize)m_Length), "Bad usage of [] with BasicString class, given index out of bounds.");
 	return this->EditableBuffer[i];
 }
 
@@ -275,7 +275,7 @@ template<typename T>
 template<typename NUMERIC_TYPE>
 const T& BasicString<T>::operator[] (const NUMERIC_TYPE i) const
 {
-	ASSERTF((Absolute(i) > (ssize)m_Length), "Bad usage of [] with BasicString class, given index out of bounds.");
+	ASSERTF(((usize)Absolute(i) > (usize)m_Length), "Bad usage of [] with BasicString class, given index out of bounds.");
 	return this->Buffer[i];
 }
 

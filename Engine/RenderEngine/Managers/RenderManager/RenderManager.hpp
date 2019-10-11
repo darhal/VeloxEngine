@@ -22,7 +22,7 @@ public:
 	static void Init();
     
 private:
-    RenderManager();
+	RenderManager();
 
     Renderer m_Renderer;
 

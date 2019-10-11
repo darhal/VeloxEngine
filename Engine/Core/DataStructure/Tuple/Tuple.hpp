@@ -37,6 +37,12 @@ struct Tuple : public Tuple<REST...> {
 	{
 		return GetHelper<index>(*this);
 	}
+
+	template<uint32 index>
+	auto Get() const -> decltype(GetHelper<index>(*this))
+	{
+		return GetHelper<index>(*this);
+	}
 };
 
 template<typename FIRST>
@@ -67,6 +73,12 @@ struct Tuple<FIRST> {
 
 	template<uint32 index>
 	auto Get() -> decltype(GetHelper<index>(*this))
+	{
+		return GetHelper<index>(*this);
+	}
+
+	template<uint32 index>
+	auto Get() const -> decltype(GetHelper<index>(*this))
 	{
 		return GetHelper<index>(*this);
 	}

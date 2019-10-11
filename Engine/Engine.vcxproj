@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -158,6 +158,10 @@
     <ClCompile Include="Core\Context\Context_Win32.cpp" />
     <ClCompile Include="Core\Context\Context_X11.cpp" />
     <ClCompile Include="Core\Context\Extensions.cpp" />
+    <ClCompile Include="Core\ECS\Component\BaseComponent.cpp" />
+    <ClCompile Include="Core\ECS\Manager\ECS.cpp" />
+    <ClCompile Include="Core\ECS\System\BaseSystem.cpp" />
+    <ClCompile Include="Core\ECS\System\SystemList.cpp" />
     <ClCompile Include="Core\FileSystem\AsyncFile\AsyncFileManager.cpp" />
     <ClCompile Include="Core\FileSystem\Directory\Directory.cpp" />
     <ClCompile Include="Core\FileSystem\File\File.cpp" />
@@ -300,6 +304,11 @@
     <ClInclude Include="Core\DataStructure\Tuple\Pair.hpp" />
     <ClInclude Include="Core\DataStructure\Tuple\Tuple.hpp" />
     <ClInclude Include="Core\DataStructure\Vector\Vector.hpp" />
+    <ClInclude Include="Core\ECS\Component\BaseComponent.hpp" />
+    <ClInclude Include="Core\ECS\Manager\ECS.hpp" />
+    <ClInclude Include="Core\ECS\Listener\Listener.hpp" />
+    <ClInclude Include="Core\ECS\System\BaseSystem.hpp" />
+    <ClInclude Include="Core\ECS\System\SystemList.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />
     <ClInclude Include="Core\FileSystem\AsyncFile\AsyncFileManager.hpp" />
     <ClInclude Include="Core\FileSystem\Directory\Directory.hpp" />
@@ -441,6 +450,7 @@
     <None Include="Core\DataStructure\PackedArray\RefPackedArray.inl" />
     <None Include="Core\DataStructure\String\String.inl" />
     <None Include="Core\DataStructure\Vector\Vector.inl" />
+    <None Include="Core\ECS\Entity\IEntity\IEntity.hpp" />
     <None Include="Core\Misc\Maths\Vec1.inl" />
     <None Include="Core\Misc\Maths\Vec2.inl" />
     <None Include="Core\Misc\Maths\Vec3.inl" />

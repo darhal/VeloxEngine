@@ -49,6 +49,8 @@ public:
 	FORCEINLINE bool PopBack();
 	FORCEINLINE bool PopFront();
 
+	FORCEINLINE void Resize(usize new_size);
+
 	FORCEINLINE bool IsEmpty() const;
 	FORCEINLINE usize Capacity() const;
 	FORCEINLINE usize Length() const;
@@ -62,6 +64,7 @@ public:
 	//FORCEINLINE const T* At(usize i);
 	//FORCEINLINE const T* operator[](usize i);
 
+	FORCEINLINE T& Get(usize i);
 	FORCEINLINE T& At(usize i);
 	FORCEINLINE T& operator[](usize i);
 	FORCEINLINE const T& At(usize i) const;

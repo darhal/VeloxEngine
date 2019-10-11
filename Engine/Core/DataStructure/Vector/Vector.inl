@@ -110,6 +110,19 @@ FORCEINLINE bool Vector<T>::Reserve(usize sz)
 }
 
 template<typename T>
+FORCEINLINE void Vector<T>::Resize(usize new_size)
+{
+	if (new_size < m_Length) {
+		usize offset = m_Length - new_size;
+		DestroyObjects(m_Data + new_size, offset);
+		m_Length = new_size;
+	}else if (new_size > m_Length) {
+		this->Reserve(new_size);
+		m_Length = new_size;
+	}
+}
+
+template<typename T>
 FORCEINLINE T& Vector<T>::Insert(usize i, const T& obj)
 {
 	ASSERTF((i == 0 || i > m_Length + 1), "Given index is out of bound please choose from [1..%" SZu "].", m_Length + 1);
@@ -311,6 +324,12 @@ FORCEINLINE const T* Vector<T>::operator[](usize i)
 	if (i >= m_Length) return NULL;
 	return At(i);
 }*/
+
+template<typename T>
+FORCEINLINE T& Vector<T>::Get(usize i)
+{
+	return At(i);
+}
 
 template<typename T>
 FORCEINLINE T& Vector<T>::At(usize i)

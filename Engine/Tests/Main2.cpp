@@ -43,10 +43,16 @@
 #include <RenderEngine/Renderer/Frontend/Lights/PointLight/PointLight.hpp>
 #include <RenderEngine/Renderer/Frontend/Lights/SpotLight/SpotLight.hpp>
 #include <RenderEngine/Renderer/Frontend/Lights/DirectionalLight/DirectionalLight.hpp>
-
+#include <Core/DataStructure/Tuple/Tuple.hpp>
 #include "ShaderValidator.hpp"
 
+#include <Core/ECS/Manager/ECS.hpp>
+
+
 using namespace TRE;
+
+
+
 
 // world space positions of our cubes
 vec3 cubePositions[] = {
@@ -452,45 +458,96 @@ void continuation(TaskExecutor* te, Job* t, const void*)
 
 void DoJobs1(TaskExecutor* ts)
 {
-	Task* root = ts->CreateTask(&empty_job1);
+	/*Task* root = ts->CreateTask(&empty_job1);
 	ts->Run(root);
 	for (usize i = 0; i < 5; i++) {
 		Task* t = ts->CreateTask(&empty_job1);
 		ts->AddContinuation(t, ts->CreateTask(continuation));
 		ts->Run(t);
 	}
-	ts->Wait(root);
+	ts->Wait(root);*/
 
-	/*uint32 data[100];
-	for (uint i = 0; i < 100; i++) {
+	uint32 data[20];
+	for (uint i = 0; i < 20; i++) {
 		data[i] = i;
 	}
-	Task* root = ts->ParallelFor(data, 100, parallelJob1, CountSplitter(5));
+	Task* root = ts->ParallelFor(data, 20, parallelJob1, CountSplitter(5));
 	ts->Run(root);
-	ts->Wait(root);*/
+	ts->Wait(root);
 }
 
 void DoJobs2(TaskExecutor* ts)
 {
-	Task* root = ts->CreateTask(&empty_job2);
+	/*Task* root = ts->CreateTask(&empty_job2);
 	ts->Run(root);
 	for (usize i = 0; i < 3; i++) {
 		Task* t = ts->CreateTask(&empty_job2);
 		ts->Run(t);
 	}
-	ts->Wait(root);
-	// ts->DoWork();
+	ts->Wait(root);*/
+	ts->DoWork();
 }
+
+struct TestComponent : public Component<TestComponent>
+{
+	TestComponent(uint32 id) : smthg(id) {}
+	uint32 smthg;
+};
+
+struct TestComponent2 : public Component<TestComponent2>
+{
+	TestComponent2(const String& str) : test(str) {}
+	String test;
+};
+
+
+class TestSystem : public BaseSystem
+{
+public:
+	TestSystem() : BaseSystem()
+	{
+		AddComponentType(TestComponent::ID);
+		AddComponentType(TestComponent2::ID);
+	}
+
+	virtual void UpdateComponents(float delta, BaseComponent** components)
+	{
+		TestComponent* test = (TestComponent*) components[0];
+		TestComponent2* test2 = (TestComponent2*) components[1];
+		LOG::Write("Updating the componenet : %d", test->smthg);
+		LOG::Write("Updating the componenet : %s", test2->test.Buffer());
+	}
+};
+
+class EntityA : public IEntity
+{
+
+};
 
 int main()
 {
 	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
-	TaskManager tm;
+
+	IEntity* entity2 = (IEntity*) ECS::CreateEntity<EntityA>();
+	EntityA* entity = ECS::CreateEntity<EntityA>();
+	entity->CreateComponent<TestComponent>(5);
+	entity->CreateComponent<TestComponent2>("Hello there!");
+
+	SystemList mainSystems;
+	TestSystem test_system;
+	mainSystems.AddSystem(&test_system);
+	ECS::UpdateSystems(mainSystems, 0.0);
+
+	/*TaskManager tm;
 	tm.Init();
 	tm.AddWorker(0, &DoJobs1);
 	tm.AddWorker(1, &DoJobs2);
 	getchar();
+
+	const Tuple<uint32, char, uint16> test(0, 0, 0);
+	test.Get<1>();*/
 	// RenderThread();
+	getchar();
 }
 
 void PrintScreenshot()
