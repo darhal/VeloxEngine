@@ -47,15 +47,15 @@ public:
 
 	FORCEINLINE Quaternion operator*(float r);
 
-	Quaternion operator*(const Quaternion& r);
+	FORCEINLINE Quaternion operator*(const Quaternion& r);
 
-	Quaternion operator*(const Vec3f& r);
+	FORCEINLINE Quaternion operator*(const Vec3f& r);
 
-	Quaternion operator-(const Quaternion& r);
+	FORCEINLINE Quaternion operator-(const Quaternion& r);
 
-	Quaternion operator+(const Quaternion& r);
+	FORCEINLINE Quaternion operator+(const Quaternion& r);
 
-	float Dot(const Quaternion& r);
+	FORCEINLINE float Dot(const Quaternion& r);
 
 	Mat4f ToRotationMatrix();
 
@@ -107,7 +107,7 @@ FORCEINLINE Quaternion Quaternion::operator*(float r)
 	return Quaternion(coord * r);
 }
 
-Quaternion Quaternion::operator*(const Quaternion& r)
+FORCEINLINE Quaternion Quaternion::operator*(const Quaternion& r)
 {
 	float w_ = coord.w * r.coord.w - coord.x * r.coord.x - coord.y * r.coord.y - coord.z * r.coord.z;
 	float x_ = coord.x * r.coord.w + coord.w * r.coord.x + coord.y * r.coord.z - coord.z * r.coord.y;
@@ -117,7 +117,7 @@ Quaternion Quaternion::operator*(const Quaternion& r)
 	return Quaternion(x_, y_, z_, w_);
 }
 
-Quaternion Quaternion::operator*(const Vec3f& r)
+FORCEINLINE Quaternion Quaternion::operator*(const Vec3f& r)
 {
 	float w_ = -coord.x * r.x - coord.y * r.y - coord.z * r.z;
 	float x_ = coord.w * r.x + coord.y * r.z - coord.z * r.y;
@@ -127,17 +127,17 @@ Quaternion Quaternion::operator*(const Vec3f& r)
 	return Quaternion(x_, y_, z_, w_);
 }
 
-Quaternion Quaternion::operator-(const Quaternion& r)
+FORCEINLINE Quaternion Quaternion::operator-(const Quaternion& r)
 {
 	return Quaternion(coord - r.coord);
 }
 
-Quaternion Quaternion::operator+(const Quaternion& r)
+FORCEINLINE Quaternion Quaternion::operator+(const Quaternion& r)
 {
 	return Quaternion(coord + r.coord);
 }
 
-float Quaternion::Dot(const Quaternion& r)
+FORCEINLINE float Quaternion::Dot(const Quaternion& r)
 {
 	return coord.dot_product(r.coord);
 }
