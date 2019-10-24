@@ -66,7 +66,7 @@ uint8 ShaderProgram::AddSamplerSlot(const String& name)
 
 uint8 ShaderProgram::AddSamplerSlot(Uniform& uniform)
 {
-	auto current_slot = m_Samplers.GetSize();
+	uint32 current_slot = (uint32) m_Samplers.GetSize();
 	this->SetInt(uniform.second, current_slot);
 	m_Samplers.Emplace(&uniform.first, current_slot);
 	return (uint8) current_slot;

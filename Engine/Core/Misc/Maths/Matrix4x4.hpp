@@ -16,6 +16,9 @@ TRE_NS_START
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
 class Matrix;
 
+typedef Matrix<float, SIMD, 4, 4> mat4;
+typedef Matrix<float, SIMD, 4, 4> Mat4f;
+
 template<>
 struct Matrix<float, SIMD, 4, 4>
 {
@@ -26,10 +29,17 @@ public:
 		__m128 rows[4];
 		float m[4][4];
 		float data[16];
-		Vec<4, float, SIMD> v0;
-		Vec<4, float, SIMD> v1; 
-		Vec<4, float, SIMD> v2; 
-		Vec<4, float, SIMD> v3; 
+
+		struct {
+			Vec<4, float, SIMD> v0;
+			Vec<4, float, SIMD> v1;
+			Vec<4, float, SIMD> v2;
+			Vec<4, float, SIMD> v3;
+		};
+
+		struct {
+			Vec<4, float, SIMD> v[4];
+		};
 	};
 
 	FORCEINLINE Matrix();
@@ -100,6 +110,9 @@ public:
 	FORCEINLINE friend class_type operator - (const class_type&, const class_type&);
 	FORCEINLINE friend class_type operator + (const class_type&);
 	FORCEINLINE friend class_type operator - (const class_type&);
+
+	FORCEINLINE Vec4f& operator[](uint32 i) { return v[i]; }
+	FORCEINLINE const Vec4f& operator[](uint32 i) const { return v[i]; }
 
 	template<typename T>
 	friend FORCEINLINE class_type operator*(const class_type& mat, T scalar);

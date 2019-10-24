@@ -18,7 +18,7 @@ void StaticMesh::Submit(RenderCommandBuffer& CmdBucket, const Vec3f& CameraPosit
 			float distance_from_cam = (m_ModelTransformation.v3.xyz - CameraPosition).length();
 
 			UConverter<float, uint32> compressed_float;
-			compressed_float.first_rep = CompressFloat(distance_from_cam, bits_to_shift);
+			compressed_float.first_rep = Math::CompressFloat(distance_from_cam, bits_to_shift);
 
 			blend_dist = (1 << RenderSettings::BLEND_DISTANCE_BITS) | (static_cast<uint32>(compressed_float.second_rep) >> bits_to_shift);
 

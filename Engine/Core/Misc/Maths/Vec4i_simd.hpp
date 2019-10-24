@@ -1,16 +1,12 @@
 #pragma once
 
+#include <Core/Misc/Defines/PlatformSIMDInclude.hpp>
 #include "Vec.hpp"
+#include "VecN.hpp"
 #include "Vec2.hpp"
 #include "Vec3.hpp"
-#include <Core/Misc/Defines/PlatformSIMDInclude.hpp>
 
 TRE_NS_START
-
-template<typename TYPE>
-struct Vec<2, TYPE, normal>;
-template<typename TYPE>
-struct Vec<3, TYPE, normal>;
 
 // Select between two sources, byte by byte. Used in various functions and operators
 // Corresponds to this pseudocode:

@@ -1,14 +1,24 @@
 #pragma once
 
-#include <math.h>
+#include <Core/Misc/Defines/Common.hpp>
 #include <float.h>
+#include "Maths.hpp"
 #include "Vec.hpp"
+#include <math.h>
+#include "VecN.hpp"
+#include "Vec1.hpp"
+#include "Vec2.hpp"
+#include "Vec3.hpp"
+#include "Vec4.hpp"
+#include "Vec4f_simd.hpp"
+#include "Vec4i_simd.hpp"
+#include "Matrix.hpp"
+#include "Matrix4x4.hpp"
+#include "Quaternion.hpp"
 
 TRE_NS_START
 
-#define MATH_PI 3.14159265358979323846
-
-template<uint8 N, typename TYPE, proc_type Q>
+/*template<uint8 N, typename TYPE, proc_type Q>
 struct Vec;
 
 template<typename TYPE>
@@ -40,8 +50,6 @@ typedef Vec<3, float, normal> Vec3f;
 typedef Vec<4, float, normal> vec4;
 typedef Vec<4, float, normal> Vec4f;
 typedef Matrix<float, SIMD, 4, 4> mat4;
-typedef Matrix<float, SIMD, 4, 4> Mat4f;
+typedef Matrix<float, SIMD, 4, 4> Mat4f;*/
 
 TRE_NS_END
-
-#include "Utils.hpp"

@@ -3,7 +3,7 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/Memory/Utils/Utils.hpp>
-#include <Core/Misc/Maths/Utils.hpp>
+#include <Core/Misc/Maths/Maths.hpp>
 #include <initializer_list>
 #include <iterator>
 

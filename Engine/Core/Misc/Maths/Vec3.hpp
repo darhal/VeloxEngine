@@ -1,10 +1,17 @@
 #pragma once
 
-#include "Common.hpp"
+#include "Maths.hpp"
 #include "Vec.hpp"
+#include "VecN.hpp"
 #include "Vec2.hpp"
 
 TRE_NS_START
+
+template<typename T>
+using Vec3 = TRE::Vec<3, T, normal>;
+
+typedef Vec<3, float, normal> vec3;
+typedef Vec<3, float, normal> Vec3f;
 
 #define DECLARE_UNARY_VEC3_OPERATOR(opr, proctype) \
 	template<typename TYPE> \
@@ -103,9 +110,6 @@ struct Vec<3, TYPE, normal>
 
 	
 };
-
-typedef Vec<3, float, normal> vec3;
-typedef Vec<3, float, normal> Vec3f;
 
 template<typename T>
 FORCEINLINE Vec<3, T, normal> operator~(Vec<3, T, normal> const& v);

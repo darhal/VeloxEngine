@@ -62,25 +62,25 @@ FORCEINLINE bool operator!=(const Vec<1, TYPE, normal>& v1, const Vec<1, TYPE, n
 template<>
 FORCEINLINE bool operator==(const Vec<1, float, normal>& v1, const Vec<1, float, normal>& v2)
 {
-	return (isEqual(v1.x, v2.x));
+	return (Math::FloatEqual(v1.x, v2.x));
 }
 
 template<>
 FORCEINLINE bool operator!=(const Vec<1, float, normal>& v1, const Vec<1, float, normal>& v2)
 {
-	return !(isEqual(v1.x, v2.x));
+	return !(Math::FloatEqual(v1.x, v2.x));
 }
 
 template<>
 FORCEINLINE bool operator==(const Vec<1, double, normal>& v1, const Vec<1, double, normal>& v2)
 {
-	return (isEqual(static_cast<float>(v1.x), static_cast<float>(v2.x)));
+	return (Math::FloatEqual(v1.x, v2.x));
 }
 
 template<>
 FORCEINLINE bool operator!=(const Vec<1, double, normal>& v1, const Vec<1, double, normal>& v2)
 {
-	return !(isEqual(static_cast<float>(v1.x), static_cast<float>(v2.x)));
+	return !(Math::FloatEqual(v1.x, v2.x));
 }
 
 DECLARE_UNARY_VEC1_OPERATOR(=, normal)

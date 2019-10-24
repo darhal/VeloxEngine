@@ -1,16 +1,14 @@
 #pragma once
 
 #include "Vec.hpp"
+#include "VecN.hpp"
 #include "Vec2.hpp"
 #include "Vec3.hpp"
 #include <Core/Misc/Defines/PlatformSIMDInclude.hpp>
 
 TRE_NS_START
 
-template<typename TYPE>
-struct Vec<2, TYPE, normal>;
-template<typename TYPE>
-struct Vec<3, TYPE, normal>;
+typedef Vec<4, float, SIMD> Vec4f;
 
 template<>
 struct Vec<4, float, SIMD>{

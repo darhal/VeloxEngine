@@ -1,5 +1,6 @@
 #pragma once
-#include <Core/Misc/Maths/Maths.hpp>
+
+#include <Core/Misc/Maths/Common.hpp>
 #include <vector>
 
 using namespace TRE;
@@ -118,9 +119,9 @@ private:
 	{
 		// Calculate the new Front vector
 		vec3 front;
-		front.x = cos(rad(Yaw)) * cos(rad(Pitch));
-		front.y = sin(rad(Pitch));
-		front.z = sin(rad(Yaw)) * cos(rad(Pitch));
+		front.x = Math::Cos(Math::ToRad(Yaw)) * Math::Cos(Math::ToRad(Pitch));
+		front.y = Math::Sin(Math::ToRad(Pitch));
+		front.z = Math::Sin(Math::ToRad(Yaw)) * Math::Cos(Math::ToRad(Pitch));
 		Front = front.unit();
 		// Also re-calculate the Right and Up vector
 		Right = Front.cross_product(WorldUp).unit();  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.

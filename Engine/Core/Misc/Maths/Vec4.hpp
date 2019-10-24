@@ -1,11 +1,17 @@
 #pragma once
 
-#include "Common.hpp"
+#include "Maths.hpp"
 #include "Vec.hpp"
+#include "VecN.hpp"
 #include "Vec2.hpp"
 #include "Vec3.hpp"
 
 TRE_NS_START
+
+template<typename T>
+using Vec4 = TRE::Vec<4, T, normal>;
+
+typedef Vec<4, float, normal> vec4;
 
 #define DECLARE_UNARY_VEC4_OPERATOR(opr, proctype) \
 	template<typename TYPE> \
@@ -104,9 +110,6 @@ struct Vec<4, TYPE, normal>
 	FORCEINLINE TYPE distance(const class_type&) const;
 	FORCEINLINE const Vec<4, TYPE, normal> unit() const;
 };
-
-typedef Vec<4, float, normal> vec4;
-typedef Vec<4, float, normal> Vec4f;
 
 template<typename T>
 FORCEINLINE Vec<4, T, normal> operator~(Vec<4, T, normal> const& v);

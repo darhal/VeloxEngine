@@ -233,7 +233,7 @@ template<typename T>
 FORCEINLINE void Vector<T>::Erease(usize start, usize end)
 {
 	ASSERTF((start > m_Length || end > m_Length), "[%" SZu "..%" SZu "] interval isn't included in the range [0..%" SZu "]", start, end, m_Length);
-	usize size = Absolute<ssize>(ssize(end) - ssize(start));
+	usize size = Math::Abs<ssize>(ssize(end) - ssize(start));
 	T* start_ptr = m_Data + start;
 	T* end_ptr = m_Data + end;
 	do {

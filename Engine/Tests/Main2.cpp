@@ -375,7 +375,7 @@ void RenderThread()
 			lightUBO.Update({ const_cast<mat4*>(&light->GetLightMatrix()), offset, sizeof(mat4) });
 			offset += sizeof(mat4);
 		}
-		uint32 length = scene.GetLights().Size();
+		uint32 length = (uint32) scene.GetLights().Size();
 		lightUBO.Update({ &length, 8 * sizeof(mat4), sizeof(uint32) });
 		vertexUBO.GetVBO().Unbind();
 

@@ -256,4 +256,7 @@ FORCEINLINE TYPE Matrix<TYPE, proc, R, C>::determinant() {
 	return determinant_helper(m, R);
 }
 
+template<typename T, usize l, usize c>
+using Mat4 = TRE::Matrix<T, normal, l, c>;
+
 TRE_NS_END

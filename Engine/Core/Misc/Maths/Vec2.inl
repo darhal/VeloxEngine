@@ -66,25 +66,25 @@ FORCEINLINE bool operator!=(const Vec<2, TYPE, normal>& v1, const Vec<2, TYPE, n
 template<>
 FORCEINLINE bool operator==(const Vec<2, float, normal>& v1, const Vec<2, float, normal>& v2)
 {
-	return (isEqual(v1.x, v2.x) && isEqual(v1.y, v2.y));
+	return (Math::FloatEqual(v1.x, v2.x) && Math::FloatEqual(v1.y, v2.y));
 }
 
 template<>
 FORCEINLINE bool operator!=(const Vec<2, float, normal>& v1, const Vec<2, float, normal>& v2)
 {
-	return !isEqual(v1.x, v2.x) && !isEqual(v1.y, v2.y);
+	return !Math::FloatEqual(v1.x, v2.x) && !Math::FloatEqual(v1.y, v2.y);
 }
 
 template<>
 FORCEINLINE bool operator==(const Vec<2, double, normal>& v1, const Vec<2, double, normal>& v2)
 {
-	return (isEqual(static_cast<float>(v1.x), static_cast<float>(v2.x)) && isEqual(static_cast<float>(v1.y), static_cast<float>(v2.y)));
+	return (Math::FloatEqual(static_cast<float>(v1.x), static_cast<float>(v2.x)) && Math::FloatEqual(static_cast<float>(v1.y), static_cast<float>(v2.y)));
 }
 
 template<>
 FORCEINLINE bool operator!=(const Vec<2, double, normal>& v1, const Vec<2, double, normal>& v2)
 {
-	return !(isEqual(static_cast<float>(v1.x), static_cast<float>(v2.x))) && !(isEqual(static_cast<float>(v1.y), static_cast<float>(v2.y)));
+	return !(Math::FloatEqual(static_cast<float>(v1.x), static_cast<float>(v2.x))) && !(Math::FloatEqual(static_cast<float>(v1.y), static_cast<float>(v2.y)));
 }
 
 DECLARE_UNARY_VEC2_OPERATOR(=, normal)

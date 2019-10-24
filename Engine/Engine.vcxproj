@@ -170,6 +170,7 @@
     <ClCompile Include="Core\Memory\Allocators\StackAlloc\AlignedStackAllocator.cpp" />
     <ClCompile Include="Core\Memory\Allocators\StackAlloc\DoubleStackAllocator.cpp" />
     <ClCompile Include="Core\Memory\Allocators\StackAlloc\StackAllocator.cpp" />
+    <ClCompile Include="Core\Misc\Maths\Quaternion.cpp" />
     <ClCompile Include="Core\Misc\Utils\Common.cpp" />
     <ClCompile Include="Core\Misc\Utils\Image.cpp" />
     <ClCompile Include="Core\Misc\Utils\libjpeg\jaricom.c" />
@@ -337,7 +338,7 @@
     <ClInclude Include="Core\Misc\Maths\Maths.hpp" />
     <ClInclude Include="Core\Misc\Maths\Matrix.hpp" />
     <ClInclude Include="Core\Misc\Maths\Matrix4x4.hpp" />
-    <ClInclude Include="Core\Misc\Maths\Utils.hpp" />
+    <ClInclude Include="Core\Misc\Maths\Quaternion.hpp" />
     <ClInclude Include="Core\Misc\Maths\Vec.hpp" />
     <ClInclude Include="Core\Misc\Maths\Vec1.hpp" />
     <ClInclude Include="Core\Misc\Maths\Vec2.hpp" />

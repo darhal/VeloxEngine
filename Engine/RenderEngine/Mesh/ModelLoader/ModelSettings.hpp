@@ -13,42 +13,42 @@ struct ModelSettings
 		INDEX,
 	};
 
-	ssize_t vertexSize = 0;
+	uint32 vertexSize = 0;
+	uint32 textureSize = 0;
+	uint32 normalSize = 0;
+	uint32 indexSize = 0;
+
 	float* vertices = NULL;
-
-	ssize_t textureSize = 0;
 	float* textures = NULL;
-
-	ssize_t normalSize = 0;
 	float* normals = NULL;
-
-	ssize_t indexSize = 0;
 	uint32* indices = NULL;
 
 	FORCEINLINE ModelSettings() 
-		: vertexSize(0), vertices(NULL), textureSize(0), textures(NULL), normalSize(0), normals(NULL), indexSize(0), indices(NULL)
+		: vertexSize(0), textureSize(0), normalSize(0), indexSize(0), 
+		vertices(NULL), textures(NULL),  normals(NULL), indices(NULL)
 	{}
 
-	template<ssize_t V, ssize_t T, ssize_t N, ssize_t I>
+	template<uint32 V, uint32 T, uint32 N, uint32 I>
 	FORCEINLINE ModelSettings(float(&vert)[V], float(&tex)[T], float(&normal)[N], uint32(&indices)[I]) 
-		: vertexSize(V), vertices(vert), textureSize(T), textures(tex), normalSize(N), normals(normal), indexSize(I), indices(indices)
+		: vertexSize(V), textureSize(T), normalSize(N), indexSize(I), 
+		vertices(vert), textures(tex), normals(normal), indices(indices)
 	{}
 
-	template<ssize_t V>
+	template<uint32 V>
 	FORCEINLINE ModelSettings(float(&vert)[V]) 
-		: vertexSize(V), vertices(vert), textureSize(0), textures(NULL), normalSize(0), normals(NULL), indexSize(0), indices(NULL)
+		: vertexSize(V), normalSize(0), textureSize(0), indexSize(0), 
+		vertices(vert), textures(NULL), normals(NULL), indices(NULL)
 	{}
 
-	template<ssize_t V, ssize_t T>
+	template<uint32 V, uint32 T>
 	FORCEINLINE ModelSettings(float(&vert)[V], float(&tex)[T]) : 
-		vertexSize(V), vertices(vert), textureSize(T), textures(tex), normalSize(0), normals(NULL), indexSize(0), indices(NULL)
+		vertexSize(V), textureSize(T), normalSize(0), indexSize(0), 
+		vertices(vert), textures(tex), normals(NULL), indices(NULL)
 	{}
 
-	FORCEINLINE ModelSettings(float* vert, ssize vertSize, float* tex = NULL, ssize texSize = 0, float* normal = NULL, ssize normalSize = 0, uint32* indices = NULL, ssize_t inSize = 0) :
-		vertexSize(vertSize), vertices(vert),
-		textureSize(texSize), textures(tex),
-		normalSize(normalSize), normals(normal),
-		indexSize(inSize), indices(indices)
+	FORCEINLINE ModelSettings(float* vert, uint32 vertSize, float* tex = NULL, uint32 texSize = 0, float* normal = NULL, uint32 normalSize = 0, uint32* indices = NULL, uint32 inSize = 0) :
+		vertexSize(vertSize), textureSize(texSize), normalSize(normalSize), indexSize(inSize),
+		vertices(vert), textures(tex), normals(normal), indices(indices)
 	{}
 
 	template<VERTEX_DATA VD, typename std::enable_if<VD == VERTEX, bool>::type = true, ssize_t V>

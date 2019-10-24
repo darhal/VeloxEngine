@@ -99,7 +99,8 @@ void MeshLoader::LoadFile(const char* path)
 						//printf("\n");
 						break;
 					}else if (c >= '0' && c <= '9') {
-						int32 len = ParseUint64(buffer + buffer_index, &data);
+						//int32 len = ParseUint64(buffer + buffer_index, &data);
+						int32 len =  sscanf(buffer + buffer_index, "%u", &data);
 						if (len >= 1) {
 							switch (indicator) {
 							case 0: // Vertex Position.
@@ -124,7 +125,8 @@ void MeshLoader::LoadFile(const char* path)
 								norm = m_Normals[m_ObjectCount].At(ni);
 								break;
 							}
-							buffer_index += len;
+
+							//buffer_index += len;
 						}else {
 							buffer_index++;
 						}

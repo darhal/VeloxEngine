@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/Misc/Defines/Common.hpp>
+#include "Maths.hpp"
 
 TRE_NS_START
 

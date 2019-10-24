@@ -1,8 +1,13 @@
 #pragma once
 
-#include "Common.hpp"
+#include "Maths.hpp"
 #include "Vec.hpp"
+#include "VecN.hpp"
 
+TRE_NS_START
+
+typedef Vec<1, float, normal> vec1;
+typedef Vec<1, float, normal> Vec1f;
 
 #define DECLARE_UNARY_VEC1_OPERATOR(opr, proctype) \
 	template<typename TYPE> \
@@ -32,7 +37,6 @@
 		return Vec<1, TYPE, proctype>(v1.x  opr  v2.x); \
 	} \
 
-TRE_NS_START
 
 template<typename TYPE>
 struct Vec<1, TYPE, normal>
@@ -72,9 +76,6 @@ struct Vec<1, TYPE, normal>
 	FORCEINLINE Vec<1, TYPE, normal>& operator--(void);	//prefix--: no parameter, returns a reference
 	FORCEINLINE Vec<1, TYPE, normal> operator--(int);		//postfix--: dummy parameter, returns a value	
 };
-
-typedef Vec<1, float, normal> vec1;
-typedef Vec<1, float, normal> Vec1f;
 
 template<typename T>
 FORCEINLINE Vec<1, T, normal> operator~(Vec<1, T, normal> const& v);

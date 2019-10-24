@@ -39,7 +39,7 @@ uint32 FBO::Generate(const FramebufferSettings& settings)
 	}
 
 	const Vector<uint32>& draw_buffers = settings.draw_buffers;
-	SetDrawBuffers(draw_buffers.Front(), draw_buffers.Length());
+	SetDrawBuffers(draw_buffers.Front(), (uint32) draw_buffers.Length());
 	SetReadBuffer(settings.read_buffer);
 	
 	return m_ID;

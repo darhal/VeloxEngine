@@ -1,9 +1,16 @@
 #pragma once
 
-#include "Common.hpp"
+#include "Maths.hpp"
+#include "VecN.hpp"
 #include "Vec.hpp"
 
 TRE_NS_START
+
+template<typename T>
+using Vec2 = TRE::Vec<2, T, normal>;
+
+typedef Vec<2, float, normal> vec2;
+typedef Vec<2, float, normal> Vec2f;
 
 #define DECLARE_UNARY_VEC2_OPERATOR(opr, proctype) \
 	template<typename TYPE> \
@@ -95,9 +102,6 @@ struct Vec<2, TYPE, normal>
 	FORCEINLINE const Vec<2, TYPE, normal> unit() const;
 	
 };
-
-typedef Vec<2, float, normal> vec2;
-typedef Vec<2, float, normal> Vec2f;
 
 template<typename T>
 FORCEINLINE Vec<2, T, normal> operator~(Vec<2, T, normal> const& v);

@@ -2,7 +2,7 @@
 
 #include "Shader.hpp"
 #include <Core/Misc/Defines/Common.hpp>
-#include <Core/Misc/Maths/Maths.hpp>
+#include <Core/Misc/Maths/Common.hpp>
 #include <Core/DataStructure/Vector/Vector.hpp>
 #include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <initializer_list>
