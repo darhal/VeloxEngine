@@ -114,6 +114,18 @@ FORCEINLINE static void CopyRangeTo(T* begin, T* dest, usize len)
 }
 
 template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type = false>
+FORCEINLINE static void FillRange(const T& obj, T* dest, usize len)
+{
+	usize i = 0;
+	while (i < len) {
+		new (dest) T(obj);
+		dest++;
+		i++;
+	}
+	//memcpy(dest, begin, len * sizeof(T));
+}
+
+template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type = false>
 FORCEINLINE static void MoveRangeTo(T* begin, T* dest, usize len)
 {
 	usize i = 0;
@@ -160,6 +172,18 @@ template<typename T, typename std::enable_if<std::is_pod<T>::value, bool>::type 
 FORCEINLINE static void CopyRangeTo(T* begin, T* dest, usize len)
 {
 	memcpy(dest, begin, len * sizeof(T));
+	//printf("Pod Copy\n");
+}
+
+template<typename T, typename std::enable_if<std::is_pod<T>::value, bool>::type = true>
+FORCEINLINE static void FillRange(const T& obj, T* dest, usize len)
+{
+	usize i = 0;
+	while (i < len) {
+		dest[i] = obj;
+		dest++;
+		i++;
+	}
 	//printf("Pod Copy\n");
 }
 

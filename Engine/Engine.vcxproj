@@ -158,6 +158,7 @@
     <ClCompile Include="Core\Context\Context_Win32.cpp" />
     <ClCompile Include="Core\Context\Context_X11.cpp" />
     <ClCompile Include="Core\Context\Extensions.cpp" />
+    <ClCompile Include="Core\DataStructure\StringBuffer\StringBuffer.inl" />
     <ClCompile Include="Core\ECS\Component\BaseComponent.cpp" />
     <ClCompile Include="Core\ECS\Manager\ECS.cpp" />
     <ClCompile Include="Core\ECS\System\BaseSystem.cpp" />
@@ -291,8 +292,9 @@
     <ClInclude Include="Core\DataStructure\BinaryTrees\BinaryTree.hpp" />
     <ClInclude Include="Core\DataStructure\BinaryTrees\BST.hpp" />
     <ClInclude Include="Core\DataStructure\BinaryTrees\RedBlackTree.hpp" />
+    <ClInclude Include="Core\DataStructure\FixedString\FixedString.hpp" />
     <ClInclude Include="Core\DataStructure\Function\Function.hpp" />
-    <ClInclude Include="Core\DataStructure\HashMap\Hash.hpp" />
+    <ClInclude Include="Core\DataStructure\HashMap\HashFunction.hpp" />
     <ClInclude Include="Core\DataStructure\HashMap\HashMap.hpp" />
     <ClInclude Include="Core\DataStructure\HashMap\Map.hpp" />
     <ClInclude Include="Core\DataStructure\LinkedList\List\List.hpp" />
@@ -301,6 +303,7 @@
     <ClInclude Include="Core\DataStructure\PackedArray\RefPackedArray.hpp" />
     <ClInclude Include="Core\DataStructure\Queue\Queue.hpp" />
     <ClInclude Include="Core\DataStructure\Stack\Stack.hpp" />
+    <ClInclude Include="Core\DataStructure\StringBuffer\StringBuffer.hpp" />
     <ClInclude Include="Core\DataStructure\String\String.hpp" />
     <ClInclude Include="Core\DataStructure\Tuple\Pair.hpp" />
     <ClInclude Include="Core\DataStructure\Tuple\Tuple.hpp" />

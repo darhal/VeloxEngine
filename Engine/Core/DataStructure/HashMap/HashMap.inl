@@ -129,7 +129,7 @@ FORCEINLINE usize HashMap<K, V, PROBING, SIZE>::GetSize() const
 template<typename K, typename V, usize S>
 FORCEINLINE usize HashMap<K, V, CHAINING, S>::CalculateIndex(const K& key) const
 {
-	usize hash = Hash(key);
+	usize hash = Hash::GetHash(key);
 	return hash % S;
 }
 
@@ -213,7 +213,7 @@ FORCEINLINE V* HashMap<K, V, PROBING, S>::Get(const K& key) const
 		return NULL;
 
 	uint32 x = 0;
-	usize hash = Hash(key);
+	usize hash = Hash::GetHash(key);
 	usize initialIndex = this->CalculateIndex(hash, x);
 	HashTab_t listAdr = m_HashTable + initialIndex;
 
@@ -286,7 +286,7 @@ FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode* HashMap<K, V, PROBING,
 		return NULL;
 
 	uint32 x = 0;
-	usize hash = Hash(key);
+	usize hash = Hash::GetHash(key);
 	usize initialIndex = this->CalculateIndex(hash, x);
 	HashTab_t listAdr = m_HashTable + initialIndex;
 
@@ -351,7 +351,7 @@ template<typename K, typename V, usize S>
 FORCEINLINE void HashMap<K, V, PROBING, S>::Remove(const K& key)
 {
 	uint32 x = 0;
-	usize hash = Hash(key);
+	usize hash = Hash::GetHash(key);
 	usize initialIndex = this->CalculateIndex(hash, x);
 	HashTab_t listAdr = m_HashTable + initialIndex;
 
@@ -457,7 +457,7 @@ FORCEINLINE typename HashMap<K, V, PROBING, S>::HashTab_t HashMap<K, V, PROBING,
 {
 	uint32 x = 0;
 	K& key = (src->first);
-	usize hash = Hash(key);
+	usize hash = Hash::GetHash(key);
 	usize initialIndex = this->CalculateIndex(hash, x);
 	HashTab_t listAdr = dest + initialIndex;
 	HashTab_t startAdr = listAdr;
@@ -481,7 +481,7 @@ template<typename K, typename V, usize S>
 FORCEINLINE typename HashMap<K, V, PROBING, S>::HashTab_t HashMap<K, V, PROBING, S>::InternalListCheck(const K& key)
 {
 	uint32 x = 0;
-	usize hash = Hash(key);
+	usize hash = Hash::GetHash(key);
 	usize initialIndex = this->CalculateIndex(hash, x);
 
 	if (!m_HashTable) {
@@ -541,7 +541,7 @@ template<typename K, typename V, usize S>
 FORCEINLINE typename HashMap<K, V, PROBING, S>::HashTab_t HashMap<K, V, PROBING, S>::GetOrEmplace(const K& key)
 {
 	uint32 x = 0;
-	usize hash = Hash(key);
+	usize hash = Hash::GetHash(key);
 	usize initialIndex = this->CalculateIndex(hash, x);
 
 	if (!m_HashTable) {
@@ -606,7 +606,7 @@ FORCEINLINE usize HashMap<K, V, PROBING, S>::CalculateIndex(const usize hash, co
 template<typename K, typename V, usize S>
 FORCEINLINE usize HashMap<K, V, PROBING, S>::CalculateHash(const K& key) const
 {
-	return Hash(key);
+	return Hash::GetHash(key);
 }
 
 template<typename K, typename V, usize S>

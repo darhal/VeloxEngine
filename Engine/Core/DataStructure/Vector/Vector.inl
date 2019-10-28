@@ -11,6 +11,12 @@ FORCEINLINE Vector<T>::Vector(usize sz) : m_Data(NULL), m_Length(0), m_Capacity(
 }
 
 template<typename T>
+FORCEINLINE Vector<T>::Vector(usize sz, const T& obj) : m_Data(NULL), m_Length(0), m_Capacity(sz)
+{
+	this->Fill(obj, m_Capacity);
+}
+
+template<typename T>
 template<usize S>
 Vector<T>::Vector(T(&arr)[S]) : m_Data(NULL), m_Length(S), m_Capacity(S)
 {
@@ -53,6 +59,17 @@ Vector<T>::~Vector()
 		Deallocate<T>(m_Data, m_Length);
 		m_Data = NULL;
 	}
+}
+
+template<typename T>
+FORCEINLINE void Vector<T>::Fill(const T& obj, usize length)
+{
+	if (!length)
+		length = m_Capacity;
+
+	this->Reserve(length);
+	FillRange<T>(obj, m_Data, length);
+	m_Length = length;
 }
 
 template<typename T>
@@ -232,7 +249,7 @@ FORCEINLINE Vector<T>& Vector<T>::operator+=(Vector<T>&& other)
 template<typename T>
 FORCEINLINE void Vector<T>::Erease(usize start, usize end)
 {
-	ASSERTF((start > m_Length || end > m_Length), "[%" SZu "..%" SZu "] interval isn't included in the range [0..%" SZu "]", start, end, m_Length);
+	ASSERTF((start >= m_Length || end >= m_Length), "[%" SZu "..%" SZu "] interval isn't included in the range [0..%" SZu "]", start, end, m_Length - 1);
 	usize size = Math::Abs<ssize>(ssize(end) - ssize(start));
 	T* start_ptr = m_Data + start;
 	T* end_ptr = m_Data + end;
@@ -246,13 +263,21 @@ FORCEINLINE void Vector<T>::Erease(usize start, usize end)
 template<typename T>
 FORCEINLINE void Vector<T>::Erease(Iterator itr)
 {
-	ASSERTF((itr >= m_Data + m_Length || itr < m_Data), "The given iterator doesn't belong to the Vector.");
-	(*itr).~T();
-	T* itr_ptr = itr.m_Current;
-	usize start = usize(itr_ptr - m_Data);
+	T* itr_ptr = itr.GetPtr();
+	ASSERTF((itr_ptr >= m_Data + m_Length || itr_ptr < m_Data), "The given iterator doesn't belong to the Vector.");
+	(*itr_ptr).~T();
+	/*usize start = usize(itr_ptr - m_Data);
 	usize end = usize(m_Data + m_Length - itr_ptr);
-	MoveRange(m_Data + end + 1, m_Data + start, m_Length - end);
+	MoveRange(m_Data + end + 1, m_Data + start, m_Length - end);*/
+	T* last_ptr = m_Data + m_Length - 1;
+	new (itr_ptr) T(std::move(*last_ptr));
 	m_Length -= 1;
+}
+
+template<typename T>
+FORCEINLINE void Vector<T>::Erease(usize index)
+{
+	return this->Erease(this->begin() + index);
 }
 
 template<typename T>

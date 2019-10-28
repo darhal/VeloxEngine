@@ -45,6 +45,8 @@
 #include <RenderEngine/Renderer/Frontend/Lights/DirectionalLight/DirectionalLight.hpp>
 #include <Core/DataStructure/Tuple/Tuple.hpp>
 #include "ShaderValidator.hpp"
+#include <Core/DataStructure/StringBuffer/StringBuffer.hpp>
+#include <Core/DataStructure/FixedString/FixedString.hpp>
 
 #include <Core/ECS/Manager/ECS.hpp>
 
@@ -524,11 +526,12 @@ class EntityA : public IEntity
 
 };
 
+
 int main()
 {
 	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
 
-	IEntity* entity2 = (IEntity*) ECS::CreateEntity<EntityA>();
+	/*IEntity* entity2 = (IEntity*) ECS::CreateEntity<EntityA>();
 	EntityA* entity = ECS::CreateEntity<EntityA>();
 	entity->CreateComponent<TestComponent>(5);
 	entity->CreateComponent<TestComponent2>("Hello there!");
@@ -536,7 +539,12 @@ int main()
 	SystemList mainSystems;
 	TestSystem test_system;
 	mainSystems.AddSystem(&test_system);
-	ECS::UpdateSystems(mainSystems, 0.0);
+	ECS::UpdateSystems(mainSystems, 0.0);*/
+
+	auto fstring = FString::FString("hello");
+	printf("String : %s | Hash : %lld\n", fstring.GetString(), fstring.GetHash());
+	FixedString<char, 927> str2("competitive programming is a mind sport usually held over the Internet or a local network, involving participants trying to program according to provided specifications. Contestants are referred to as sport programmers. Competitive programming is recognized and supported by several multinational software and Internet companies, such as Google[1][2] and Facebook.[3] There are several organizations who host programming competitions on a regular basis.A programming competition generally involves the host presenting a set of logical or mathematical problems to the contestants(who can vary in number from tens to several thousands), and contestants are required to write computer programs capable of solving each problem.Judging is based mostly upon number of problems solved and time spent for writing successful solutions, but may also include other factors(quality of output produced, execution time, program size, etc.)");
+	printf("String : %s | Hash : %lld\n", str2.GetString(), str2.GetHash());
 
 	/*TaskManager tm;
 	tm.Init();

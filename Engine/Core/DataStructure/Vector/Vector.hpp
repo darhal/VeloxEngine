@@ -21,6 +21,8 @@ public:
 public:
 	FORCEINLINE Vector();
 
+	FORCEINLINE Vector(usize sz, const T& obj);
+
 	FORCEINLINE Vector(usize sz);
 	
 	Vector(const std::initializer_list<T>& list);
@@ -45,9 +47,11 @@ public:
 	FORCEINLINE T& PushFront(const T& obj);
 	FORCEINLINE void Erease(usize start, usize end);
 	FORCEINLINE void Erease(Iterator itr);
+	FORCEINLINE void Erease(usize index);
 	FORCEINLINE void Clear();
 	FORCEINLINE bool PopBack();
 	FORCEINLINE bool PopFront();
+	FORCEINLINE void Fill(const T& obj, usize length = 0);
 
 	FORCEINLINE void Resize(usize new_size);
 
@@ -124,8 +128,8 @@ public:
 		DataType* operator->() { return m_Current; }
 		const DataType* operator->() const { return m_Current; }
 
-		DataType* getPtr() const { return m_Current; }
-		const DataType* getConstPtr() const { return m_Current; }
+		DataType* GetPtr() const { return m_Current; }
+		const DataType* GetConstPtr() const { return m_Current; }
 
 		GIterator<DataType>& operator+=(const ptrdiff_t& movement) { m_Current += movement; return (*this); }
 		GIterator<DataType>& operator-=(const ptrdiff_t& movement) { m_Current -= movement; return (*this); }

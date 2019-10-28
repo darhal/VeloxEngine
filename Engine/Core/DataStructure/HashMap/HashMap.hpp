@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iterator>
-#include "Hash.hpp"
+#include "HashFunction.hpp"
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Memory/Utils/Utils.hpp>
 #include <Core/DataStructure/Tuple/Pair.hpp>

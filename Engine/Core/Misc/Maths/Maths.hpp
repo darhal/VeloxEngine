@@ -51,7 +51,6 @@ struct Math
 	template<typename T, typename std::enable_if<std::is_unsigned<T>::value == true, bool>::type = true>
 	FORCEINLINE static const T Abs(T x) { return x; }
 
-
 	/*
 	*Floating point operations : 
 	*/
