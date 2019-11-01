@@ -3,6 +3,7 @@
 #include <initializer_list>
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
+#include <Core/Memory/Utils/Utils.hpp>
 #include <type_traits>
 
 TRE_NS_START
@@ -18,6 +19,9 @@ public:
 	Array();
 	template<typename... Args>
 	Array(Args&&... args);
+
+	Array(const Array<T, S>& other);
+	Array<T, S>& operator=(const Array<T, S>& other);
 	//Array(const std::initializer_list<T>& list);
 	~Array();
 
@@ -45,6 +49,7 @@ public:
 	FORCEINLINE void Clear();
 
 	FORCEINLINE usize Length() const;
+	FORCEINLINE usize Size() const;
 	FORCEINLINE usize Capacity() const;
 	FORCEINLINE bool IsEmpty() const;
 
@@ -96,6 +101,20 @@ template<typename T, usize S>
 template<typename... Args>
 Array<T, S>::Array(Args&&... args) : m_Length(sizeof...(Args)), m_Data{ static_cast<T>(std::forward<Args>(args))... }
 {
+}
+
+template<typename T, usize S>
+Array<T, S>::Array(const Array<T, S>& other) : m_Length(other.m_Length)
+{
+	CopyRangeTo(other.m_Data, m_Data, m_Length);
+}
+
+
+template<typename T, usize S>
+Array<T, S>& Array<T, S>::operator=(const Array<T, S>& other)
+{
+	m_Length = other.m_Length;
+	CopyRangeTo(other.m_Data, m_Data, m_Length);
 }
 
 template<typename T, usize S>
@@ -174,6 +193,12 @@ template<typename T, usize S>
 FORCEINLINE usize Array<T, S>::Length() const
 {
 	return m_Length;
+}
+
+template<typename T, usize S>
+FORCEINLINE usize Array<T, S>::Size() const
+{
+	return this->Length();
 }
 
 template<typename T, usize S>

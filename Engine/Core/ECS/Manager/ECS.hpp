@@ -44,8 +44,11 @@ private:
 	static void DeleteComponent(ComponentID id, uint32 mem_index);
 	static bool RemoveComponentInternal(IEntity& entity, uint32 component_id);
 	static BaseComponent* GetComponentInternal(IEntity& entity, Vector<uint8>& component_buffer, uint32 component_id);
-	static void UpdateSystemWithMultipleComponents(SystemList& system_list, uint32 index, float delta, const Vector<uint32>& component_types, Vector<BaseComponent*>& component_param, Vector<Vector<uint8>*>& component_arrays);
-	static uint32 FindLeastCommonComponent(const Vector<uint32>& component_types, const Vector<uint32>& component_flags);
+	static void UpdateSystemWithMultipleComponents(
+		SystemList& system_list, uint32 index, float delta, const BaseSystem::SystemComponent* component_types_flags, 
+		Vector<BaseComponent*>& component_param, Vector<Vector<uint8>*>& component_arrays
+	);
+	static uint32 FindLeastCommonComponent(const BaseSystem::SystemComponent* component_types_flags, uint32 N);
 };
 
 template<typename Entity, typename... Args>

@@ -292,6 +292,7 @@
     <ClInclude Include="Core\DataStructure\BinaryTrees\BinaryTree.hpp" />
     <ClInclude Include="Core\DataStructure\BinaryTrees\BST.hpp" />
     <ClInclude Include="Core\DataStructure\BinaryTrees\RedBlackTree.hpp" />
+    <ClInclude Include="Core\DataStructure\Bitset\Bitset.hpp" />
     <ClInclude Include="Core\DataStructure\FixedString\FixedString.hpp" />
     <ClInclude Include="Core\DataStructure\Function\Function.hpp" />
     <ClInclude Include="Core\DataStructure\HashMap\HashFunction.hpp" />

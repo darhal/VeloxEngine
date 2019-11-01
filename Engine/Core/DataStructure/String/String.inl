@@ -481,7 +481,6 @@ BasicString<T>::BasicString(BasicString<T>&& other)
 		m_Capacity = other.m_Capacity;
 		SetNormalLength(len);
 		other.SetSmallLength(1); // Pervent the other string from deleting when it go out of scope
-
 	}
 }
 

@@ -51,6 +51,21 @@ struct Math
 	template<typename T, typename std::enable_if<std::is_unsigned<T>::value == true, bool>::type = true>
 	FORCEINLINE static const T Abs(T x) { return x; }
 
+	template<typename T>
+	FORCEINLINE static const T Floor(T x) { return floor(x); }
+
+	template<typename T>
+	FORCEINLINE static const T Round(T x) { return round(x); }
+
+	template<typename T>
+	FORCEINLINE static const T Ceil(T x) { return ceil(x); }
+
+	template<typename T>
+	FORCEINLINE static const T Log(T x) { return log(x); }
+
+	template<typename T>
+	FORCEINLINE static const T Log(T x, uint32 base) { return log(x) / log(base); }
+
 	/*
 	*Floating point operations : 
 	*/

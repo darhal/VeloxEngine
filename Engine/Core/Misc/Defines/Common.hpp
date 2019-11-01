@@ -2,6 +2,7 @@
 
 #include "Platform.hpp"
 #include <inttypes.h>
+#include <limits.h>
 
 //Include known-size integer files, based on compiler. Some compilers do not have these
 //files, so they must be created manually.
@@ -133,7 +134,7 @@ typedef uintptr_t uintptr;
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define ABS(a)	 ((a < 0) ? -a : a)
 
-#define BITS_PER_BYTE 8
+#define BITS_PER_BYTE CHAR_BIT
 
 
 /******************* SUPRESS WARNINGS *******************/

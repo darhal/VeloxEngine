@@ -130,48 +130,52 @@ void ECS::UpdateSystems(SystemList& system_list, float delta)
 	Vector<Vector<uint8>*> component_arrays;
 
 	for (uint32 i = 0; i < systems_sz; i++) {
-		const Vector<uint32>& component_types = system_list[i]->GetComponentTypes();
+		const BaseSystem::SystemComponent* component_types_flags = system_list[i]->GetSystemComponents();
+		uint32 component_types_size = system_list[i]->GetComponentsCount();
 
-		if (component_types.Size() == 1) {
-			uint32 typeSize = BaseComponent::GetTypeSize(component_types[0]);
-			Vector<uint8>& comp_buffer = m_Components[component_types[0]];
+		if (component_types_size == 1) {
+			uint32 typeSize = BaseComponent::GetTypeSize(component_types_flags[0].first);
+			Vector<uint8>& comp_buffer = m_Components[component_types_flags[0].first];
 
 			for (uint32 j = 0; j < (uint32) comp_buffer.Size(); j += typeSize) {
 				BaseComponent* component = (BaseComponent*) &comp_buffer[j];
 				system_list[j]->UpdateComponents(delta, &component);
 			}
 		}else {
-			UpdateSystemWithMultipleComponents(system_list, i, delta, component_types, component_param, component_arrays);
+			UpdateSystemWithMultipleComponents(system_list, i, delta, component_types_flags, component_param, component_arrays);
 		}
 	}
 }
 
-void ECS::UpdateSystemWithMultipleComponents(SystemList& system_list, uint32 index, float delta, const Vector<uint32>& component_types, Vector<BaseComponent*>& component_param, Vector<Vector<uint8>*>& component_arrays)
+void ECS::UpdateSystemWithMultipleComponents(SystemList& system_list, uint32 index, float delta, 
+	const BaseSystem::SystemComponent* component_types_flags, 
+	Vector<BaseComponent*>& component_param, 
+	Vector<Vector<uint8>*>& component_arrays)
 {
-	const Vector<uint32>& component_flag = system_list[index]->GetComponentFlags();
-	component_param.Resize(MAX(component_param.Size(), component_types.Size()));
-	component_arrays.Resize(MAX(component_arrays.Size(), component_types.Size()));
+	uint32 component_types_size = system_list[index]->GetComponentsCount();
+	component_param.Resize(MAX(component_param.Size(), component_types_size));
+	component_arrays.Resize(MAX(component_arrays.Size(), component_types_size));
 
-	for (uint32 i = 0; i < component_types.Size(); i++) {
-		component_arrays[i] = &m_Components[component_types[i]];
+	for (uint32 i = 0; i < component_types_size; i++) {
+		component_arrays[i] = &m_Components[component_types_flags[i].first]; // type
 	}
 
-	uint32 min_size_index = ECS::FindLeastCommonComponent(component_types, component_flag);
-	uint32 typeSize = BaseComponent::GetTypeSize(component_types[min_size_index]);
+	uint32 min_size_index = ECS::FindLeastCommonComponent(component_types_flags, component_types_size); // type, flag
+	uint32 typeSize = BaseComponent::GetTypeSize(component_types_flags[min_size_index].first);
 	Vector<uint8>& min_comp_buffer = *component_arrays[min_size_index];
 	
 	for (uint32 i = 0; i < (uint32) min_comp_buffer.Size(); i += typeSize) {
 		component_param[min_size_index] = (BaseComponent*) &min_comp_buffer[i];
 		IEntity* entity = static_cast<IEntity*>(component_param[min_size_index]->m_Entity);
-
 		bool is_valid = true;
-		for (uint32 j = 0; j < component_types.Size(); j++) {
+
+		for (uint32 j = 0; j < component_types_size; j++) {
 			if (j == min_size_index) {
 				continue;
 			}
 
-			component_param[j] = ECS::GetComponentInternal(*entity, *component_arrays[j], component_types[j]);
-			if (component_param[j] == NULL && (component_flag[j] & BaseSystem::FLAG_OPTIONAL) == 0) {
+			component_param[j] = ECS::GetComponentInternal(*entity, *component_arrays[j], component_types_flags[j].first);
+			if (component_param[j] == NULL && (component_types_flags[j].second & BaseSystem::FLAG_OPTIONAL) == 0) {
 				is_valid = false;
 				break;
 			}
@@ -183,18 +187,18 @@ void ECS::UpdateSystemWithMultipleComponents(SystemList& system_list, uint32 ind
 	}
 }
 
-uint32 ECS::FindLeastCommonComponent(const Vector<uint32>& component_types, const Vector<uint32>& component_flags)
+uint32 ECS::FindLeastCommonComponent(const BaseSystem::SystemComponent* component_types_flags, uint32 N)
 {
 	uint32 min_index = (uint32) -1;
 	uint32 min_size = (uint32) -1;
 
-	for (uint32 i = 0; i < component_types.Size(); i++) {
-		if ((component_flags[i] & BaseSystem::FLAG_OPTIONAL) != 0)  {
+	for (uint32 i = 0; i < N; i++) {
+		if ((component_types_flags[i].second & BaseSystem::FLAG_OPTIONAL) != 0)  {
 			continue;
 		}
 
-		uint32 type_size = BaseComponent::GetTypeSize(component_types[i]);
-		uint32 size = (uint32) m_Components[component_types[i]].Size() / type_size;
+		uint32 type_size = BaseComponent::GetTypeSize(component_types_flags[i].first);
+		uint32 size = (uint32) m_Components[component_types_flags[i].first].Size() / type_size;
 
 		if (size <= min_size) {
 			min_size = size;
