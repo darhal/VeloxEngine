@@ -66,6 +66,24 @@ struct Math
 	template<typename T>
 	FORCEINLINE static const T Log(T x, uint32 base) { return log(x) / log(base); }
 
+	template<typename T>
+	FORCEINLINE static const T Max(T x, T y) { return MAX(x, y); }
+
+	template<typename T>
+	FORCEINLINE static const T Min(T x, T y) { return MIN(x, y); }
+
+	template<typename Last>
+	FORCEINLINE static const Last MMax(Last x) { return x; }
+
+	template<typename Last>
+	FORCEINLINE static const Last MMin(Last x) { return x; }
+
+	template<typename F, typename... T>
+	FORCEINLINE static const F MMax(F x, T... other) { return Max(x, Math::MMax<T...>(other...)); }
+
+	template<typename F, typename... T>
+	FORCEINLINE static const F MMin(F x, T... other) { return Min(x, Math::MMin<T...>(other...)); }
+
 	/*
 	*Floating point operations : 
 	*/

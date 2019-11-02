@@ -8,11 +8,21 @@ TRE_NS_START
 class Bitset
 {
 public:
+	~Bitset();
+
 	Bitset();
 
 	Bitset(usize n);
 
 	Bitset(usize n, bool init_val);
+
+	Bitset(const Bitset& other);
+
+	Bitset(Bitset&& other);
+
+	Bitset& operator=(const Bitset& other);
+
+	Bitset& operator=(Bitset&& other);
 
 	void Append(bool bit);
 
@@ -31,11 +41,14 @@ public:
 	Bitset& operator|= (const Bitset& other);
 	Bitset& operator&= (const Bitset& other);
 	Bitset& operator^= (const Bitset& other);
-	Bitset& operator~();
+	Bitset& operator~(); // TODO: Needs more testing not sure if it work properly
 	Bitset& operator<<=(usize n);
 	Bitset& operator>>=(usize n);
+	bool operator==(const Bitset& other);
 
-//private:
+	FORCEINLINE bool operator!=(const Bitset& other);
+
+private:
 	CONSTEXPR static uint32 NB_BYTES_SMALL = sizeof(usize*) + sizeof(usize);
 	CONSTEXPR static uint32 NB_BITS_PER_ELEMENT = sizeof(usize) * BITS_PER_BYTE; // Number of bits before we move on to the next element and allocate it
 	CONSTEXPR static uint32 NB_BITS_SMALL =  (sizeof(usize*) + sizeof(usize) - sizeof(uint8)) * BITS_PER_BYTE;
@@ -60,9 +73,11 @@ public:
 
 	FORCEINLINE void SetLength(usize len);
 
-	FORCEINLINE void Reserve(usize cap);
+	FORCEINLINE void Free();
 
-	FORCEINLINE void Fill(bool bit);
+	void Reserve(usize cap);
+
+	void Fill(bool bit);
 
 	union {
 		struct {
@@ -74,7 +89,6 @@ public:
 	};
 	
 };
-
 
 // private members : 
 FORCEINLINE void Bitset::SetSmall(usize nlen)
@@ -110,163 +124,77 @@ FORCEINLINE usize Bitset::Length() const
 	return this->IsSmall() ? (usize)this->GetSmallLength() : this->GetNormalLength();
 }
 
-FORCEINLINE void Bitset::Reserve(usize ncap) // fix this!
-{
-	if (ncap <= NB_BITS_SMALL)
-		return;
-
-	bool is_small = this->IsSmall();
-	uint32 nb_of_usize = (uint32) Math::Ceil((double)ncap / (double)(sizeof(usize) * BITS_PER_BYTE));
-	uint32 curr_nb_of_usize = (uint32)Math::Ceil((double)this->GetNormalLength() / (double)(sizeof(usize) * BITS_PER_BYTE));
-
-	if (is_small) {
-		usize* new_bits = new usize[nb_of_usize];
-		uint32 bytes_to_copy = sizeof(uint8) * (LAST_INDEX); // copy all bytes execpt the last one
-		memcpy(new_bits, m_Data, bytes_to_copy);
-		memset((uint8*)new_bits + bytes_to_copy, 0, nb_of_usize * sizeof(usize) - bytes_to_copy); // set what remains to 0
-		m_Bits = new_bits;
-		this->SetNormal((usize)this->GetSmallLength()); // because it was small, but now its normal
-	}else if(!is_small && nb_of_usize > curr_nb_of_usize) {
-		usize* new_bits = new usize[nb_of_usize];
-		uint32 bytes_to_copy = (uint32) Math::Ceil((double)this->GetNormalLength() / (double)(sizeof(uint8) * BITS_PER_BYTE));
-		memcpy(new_bits, m_Bits, bytes_to_copy * sizeof(uint8)); // copy all bytes execpt the last one
-		memset((uint8*)new_bits + bytes_to_copy, 0, nb_of_usize * sizeof(usize) - bytes_to_copy); // set what remains to 0
-		delete[] m_Bits;
-		m_Bits = new_bits;
-	}
-}
-
-
-FORCEINLINE void Bitset::Fill(bool bit)
-{
-	bool is_small = this->IsSmall();
-
-	if (is_small) {
-		uint8 bit_len = this->GetSmallLength();
-		uint32 nb_of_bytes_to_set = (uint32) Math::Floor((double)bit_len / (double)(sizeof(uint8) * BITS_PER_BYTE));
-		memset(m_Data, bit ? std::numeric_limits<uint8>::max() : 0, nb_of_bytes_to_set * sizeof(uint8));
-		int32 rest_of_bits = (bit_len - nb_of_bytes_to_set * sizeof(uint8) * BITS_PER_BYTE);
-		if (rest_of_bits > 0) {
-			m_Data[nb_of_bytes_to_set] |= (uint16(1) << (rest_of_bits)) - 1;
-		}
-	}else{
-		usize bit_len = this->GetNormalLength();
-		uint32 nb_of_usize_to_set = (uint32) Math::Floor((double)bit_len / (double)(sizeof(usize) * BITS_PER_BYTE));
-		memset(m_Bits, bit ? std::numeric_limits<usize>::max() : 0ULL, nb_of_usize_to_set * sizeof(usize));
-		int32 rest_of_bits = int32(bit_len - nb_of_usize_to_set * sizeof(usize) * BITS_PER_BYTE);
-		if (rest_of_bits > 0) {
-			m_Bits[nb_of_usize_to_set] |= (usize(1) << (rest_of_bits)) - 1;
-		}
-	}
-}
-
-Bitset::Bitset()
+FORCEINLINE Bitset::Bitset()
 {
 }
 
-Bitset::Bitset(usize n)
+FORCEINLINE Bitset::Bitset(usize n)
 {
 	this->Reserve(n);
 	this->SetLength(n);
 }
 
-Bitset::Bitset(usize n, bool init_val)
+FORCEINLINE Bitset::Bitset(usize n, bool init_val)
 {
 	this->Reserve(n);
 	this->SetLength(n);
 	this->Fill(init_val);
 }
 
-void Bitset::Append(bool bit)
+FORCEINLINE void Bitset::Append(uint8 bit)
 {
-	usize len = this->Length();
-	this->Reserve(len + 1);
-	this->SetLength(len + 1);
-	bool is_small = this->IsSmall();
-
-	if (!bit)
-		return;
-
-	if (is_small) {
-
-		uint32 nb_byte_to_look_at = (uint32)Math::Floor((double)len / (double)(sizeof(uint8) * BITS_PER_BYTE));
-		int32 rest_of_bits = (len - nb_byte_to_look_at * sizeof(uint8) * BITS_PER_BYTE);
-		m_Data[nb_byte_to_look_at] ^= (-bit ^ m_Data[nb_byte_to_look_at]) & (uint8(1) << rest_of_bits);
-		return;
-	}
-
-	uint32 nb_of_usize_to_look_at = (uint32)Math::Floor((double)len / (double)(sizeof(usize) * BITS_PER_BYTE));
-	int32 rest_of_bits = int32(len - nb_of_usize_to_look_at * sizeof(usize) * BITS_PER_BYTE);
-	m_Bits[nb_of_usize_to_look_at] ^= (-bit ^ m_Bits[nb_of_usize_to_look_at]) & (usize(1) << rest_of_bits);
+	return this->Append((bool)bit);
 }
 
-void Bitset::Append(uint8 bit)
-{
-	return this->Append(bit);
-}
-
-bool Bitset::Get(uint32 index) const
-{
-	bool is_small = this->IsSmall();
-	
-	if (is_small) {
-		ASSERTF((index >= this->GetSmallLength()), "Bitset index out of range");
-
-		uint32 nb_byte_to_look_at = (uint32)Math::Floor((double)index / (double)(sizeof(uint8) * BITS_PER_BYTE));
-		int32 rest_of_bits = (index - nb_byte_to_look_at * sizeof(uint8) * BITS_PER_BYTE);
-		return m_Data[nb_byte_to_look_at] & (uint16(1) << (rest_of_bits));
-	}
-
-	ASSERTF((index >= this->GetNormalLength()), "Bitset index out of range");
-
-	uint32 nb_of_usize_to_look_at = (uint32)Math::Floor((double)index / (double)(sizeof(usize) * BITS_PER_BYTE));
-	int32 rest_of_bits = int32(index - nb_of_usize_to_look_at * sizeof(usize) * BITS_PER_BYTE);
-	return m_Bits[nb_of_usize_to_look_at] & (usize(1) << (rest_of_bits));
-}
-
-bool Bitset::operator[](uint32 index) const
+FORCEINLINE bool Bitset::operator[](uint32 index) const
 {
 	return this->Get(index);
 }
 
-void Bitset::Set(uint32 index, bool value) // TODO!
+FORCEINLINE void Bitset::Free()
 {
-	bool is_small = this->IsSmall();
-
-	if (is_small) {
-		ASSERTF((index >= this->GetSmallLength()), "Bitset index out of range");
-
-		uint32 nb_byte_to_look_at = (uint32)Math::Floor((double)index / (double)(sizeof(uint8) * BITS_PER_BYTE));
-		int32 rest_of_bits = (index - nb_byte_to_look_at * sizeof(uint8) * BITS_PER_BYTE);
-		m_Data[nb_byte_to_look_at] ^= (-value ^ m_Data[nb_byte_to_look_at]) & (uint8(1) << rest_of_bits);
-		return;
-	}
-
-	ASSERTF((index >= this->GetNormalLength()), "Bitset index out of range");
-
-	uint32 nb_of_usize_to_look_at = (uint32)Math::Floor((double)index / (double)(sizeof(usize) * BITS_PER_BYTE));
-	int32 rest_of_bits = int32(index - nb_of_usize_to_look_at * sizeof(usize) * BITS_PER_BYTE);
-	m_Bits[nb_of_usize_to_look_at] ^= (-value ^ m_Bits[nb_of_usize_to_look_at]) & (usize(1) << rest_of_bits);
+	if (!this->IsSmall())
+		delete[] m_Bits;
 }
 
-FORCEINLINE void Bitset::Toggle(uint32 index)
+FORCEINLINE bool Bitset::operator!=(const Bitset& other)
 {
-	bool is_small = this->IsSmall();
+	return !(*this == other);
+}
 
-	if (is_small) {
-		ASSERTF((index >= this->GetSmallLength()), "Bitset index out of range");
+FORCEINLINE Bitset operator|(const Bitset& a, const Bitset& b)
+{
+	Bitset res(a);
+	res |= b;
+	return res;
+}
 
-		uint32 nb_byte_to_look_at = (uint32)Math::Floor((double)index / (double)(sizeof(uint8) * BITS_PER_BYTE));
-		int32 rest_of_bits = (index - nb_byte_to_look_at * sizeof(uint8) * BITS_PER_BYTE);
-		m_Data[nb_byte_to_look_at] ^= uint8(1) << rest_of_bits;
-		return;
-	}
+FORCEINLINE Bitset operator&(const Bitset& a, const Bitset& b)
+{
+	Bitset res(a);
+	res &= b;
+	return res;
+}
 
-	ASSERTF((index >= this->GetNormalLength()), "Bitset index out of range");
+FORCEINLINE Bitset operator^(const Bitset& a, const Bitset& b)
+{
+	Bitset res(a);
+	res ^= b;
+	return res;
+}
 
-	uint32 nb_of_usize_to_look_at = (uint32)Math::Floor((double)index / (double)(sizeof(usize) * BITS_PER_BYTE));
-	int32 rest_of_bits = int32(index - nb_of_usize_to_look_at * sizeof(usize) * BITS_PER_BYTE);
-	m_Bits[nb_of_usize_to_look_at] ^= (usize(1) << (rest_of_bits));
+FORCEINLINE Bitset operator<<(const Bitset& a, usize n)
+{
+	Bitset res(a);
+	res <<= n;
+	return res;
+}
+
+FORCEINLINE Bitset operator>>(const Bitset& a, usize n)
+{
+	Bitset res(a);
+	res >>= n;
+	return res;
 }
 
 TRE_NS_END

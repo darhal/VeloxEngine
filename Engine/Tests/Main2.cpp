@@ -530,17 +530,50 @@ class EntityA : public IEntity
 
 int main()
 {
-	Bitset bits(119, true);
-	printf("Is small : %s\n", bits.IsSmall() ? "True" : "False");
+	Bitset bits(120, true);
+	Bitset bits2(60, true);
+
+	std::cout << "\nBits:" << std::endl;
+	for (uint32 i = 0; i < bits.Length(); i++) {
+		if (i % 2 && i % 3) {
+			bits.Set(i, false);
+		}
+		std::cout << bits[i];
+	}
+
+	std::cout << "\nBits2:" << std::endl;
+	for (uint32 i = 0; i < bits2.Length(); i++) {
+		if (i >= 15 && i <= 32) {
+			bits2.Set(i, false);
+		}
+		std::cout << bits2[i];
+	}
+
+	bits >>= 10;
+	std::cout << "\nbits >>= 10 :" << std::endl;
+	for (uint32 i = 0; i < bits.Length(); i++) {
+		std::cout << bits[i];
+	}
+
+	Bitset res = bits ^ bits2;
+	std::cout << "\n bits | bits2 :" << std::endl;
+	for (uint32 i = 0; i < bits.Length(); i++) {
+		std::cout << res[i];
+	}
+
+	Bitset res2(res);
+	std::cout << "\n are they equal = ?" << (res2 == res) << std::endl;
+
+	/*std::cout << "Bits : " << std::endl;
 
 	for (uint32 i = 0; i < bits.Length(); i++) {
 		std::cout << bits[i];
-		if (i >= 30) {
+		if (i >= 30 && i <= 60) {
 			bits.Set(i, false);
 		}
 	}
 
-	std::cout << std::endl;
+	std::cout << "Result:" << std::endl;
 	bits.Set(30, false);
 	bits.Toggle(7);
 
@@ -554,9 +587,10 @@ int main()
 		bits.Append(false);
 	}
 
+	std::cout << "Result: (Append)" << std::endl;
 	for (uint32 i = 0; i < bits.Length(); i++) {
 		std::cout << bits[i];
-	}
+	}*/
 
 	/*LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
 

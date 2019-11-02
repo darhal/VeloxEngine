@@ -158,6 +158,7 @@
     <ClCompile Include="Core\Context\Context_Win32.cpp" />
     <ClCompile Include="Core\Context\Context_X11.cpp" />
     <ClCompile Include="Core\Context\Extensions.cpp" />
+    <ClCompile Include="Core\DataStructure\Bitset\Bitset.cpp" />
     <ClCompile Include="Core\DataStructure\StringBuffer\StringBuffer.inl" />
     <ClCompile Include="Core\ECS\Component\BaseComponent.cpp" />
     <ClCompile Include="Core\ECS\Manager\ECS.cpp" />
