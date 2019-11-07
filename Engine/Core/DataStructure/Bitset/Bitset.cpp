@@ -76,6 +76,22 @@ void Bitset::Append(bool bit)
 	m_Bits[nb_of_usize_to_look_at] ^= (-bit ^ m_Bits[nb_of_usize_to_look_at]) & (usize(1) << rest_of_bits);
 }
 
+Bitset::BitsBlock Bitset::operator[](uint32 index)
+{
+	bool is_small = this->IsSmall();
+
+	uint32 nb_byte_to_look_at = (uint32)Math::Floor((double)index / (double)(sizeof(uint8) * BITS_PER_BYTE));
+	int32 rest_of_bits = (index - nb_byte_to_look_at * sizeof(uint8) * BITS_PER_BYTE);
+
+	if (is_small) {
+		ASSERTF((index >= this->GetSmallLength()), "Bitset index out of range");
+		return BitsBlock(m_Data[nb_byte_to_look_at], rest_of_bits);
+	}
+
+	ASSERTF((index >= this->GetNormalLength()), "Bitset index out of range");
+	return BitsBlock(*((uint8*)m_Bits + nb_byte_to_look_at), rest_of_bits);
+}
+
 bool Bitset::Get(uint32 index) const
 {
 	bool is_small = this->IsSmall();
@@ -116,7 +132,7 @@ void Bitset::Set(uint32 index, bool value) // TODO!
 	m_Bits[nb_of_usize_to_look_at] ^= (-value ^ m_Bits[nb_of_usize_to_look_at]) & (usize(1) << rest_of_bits);
 }
 
-FORCEINLINE void Bitset::Toggle(uint32 index)
+void Bitset::Toggle(uint32 index)
 {
 	bool is_small = this->IsSmall();
 
@@ -476,6 +492,19 @@ Bitset& Bitset::operator=(Bitset&& other)
 Bitset::~Bitset()
 {
 	this->Free();
+}
+
+Bitset& Bitset::operator+=(Bitset other)
+{
+	Bitset carry(other.Length() + 1);
+
+	while (other != Bitset(this->Length(), false)) {
+		carry = *this & other;
+		*this ^= other;
+		other = carry >> 1;
+	}
+
+	return *this;
 }
 
 TRE_NS_END

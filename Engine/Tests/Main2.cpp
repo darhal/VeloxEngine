@@ -528,43 +528,70 @@ class EntityA : public IEntity
 
 #include <Core/DataStructure/Bitset/Bitset.hpp>
 
+#define INIT_BENCHMARK std::chrono::time_point<std::chrono::high_resolution_clock> start, end; std::chrono::microseconds duration;
+
+#define BENCHMARK(name, bloc_of_code) \
+	start = std::chrono::high_resolution_clock::now(); \
+	bloc_of_code; \
+	end = std::chrono::high_resolution_clock::now();\
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start); \
+	std::cout << "\nExecution of " << name << " took : " << duration.count() << " microsecond(s)" << std::endl; \
+
 int main()
 {
-	Bitset bits(120, true);
-	Bitset bits2(60, true);
+	Bitset add(64, false);
+	Bitset addy(64, false);
+	addy.Set(0, true);
+
+	while (add != Bitset(64, true)) {
+		add += addy;
+		printf("Binary counting adding 1 at each step LSB[");
+		for (uint32 i = 0; i < add.Length(); i++) {
+			std::cout << add[i];
+		}
+		printf("]MSB\r");
+		//Sleep(150);
+	}
+
+	/*BENCHMARK("ctor",
+		Bitset bits(120, true);
+		Bitset bits2(60, true);
+	)
 
 	std::cout << "\nBits:" << std::endl;
+	
 	for (uint32 i = 0; i < bits.Length(); i++) {
 		if (i % 2 && i % 3) {
-			bits.Set(i, false);
+			BENCHMARK("set", bits.Set(i, false););
 		}
 		std::cout << bits[i];
 	}
 
 	std::cout << "\nBits2:" << std::endl;
+	
 	for (uint32 i = 0; i < bits2.Length(); i++) {
 		if (i >= 15 && i <= 32) {
-			bits2.Set(i, false);
+			BENCHMARK("loop and set 2", bits2.Set(i, false););
 		}
 		std::cout << bits2[i];
 	}
 
-	bits >>= 10;
+	BENCHMARK("shift with 10", bits >>= 10);
 	std::cout << "\nbits >>= 10 :" << std::endl;
 	for (uint32 i = 0; i < bits.Length(); i++) {
 		std::cout << bits[i];
 	}
 
-	Bitset res = bits ^ bits2;
+	BENCHMARK("xor ", Bitset res = bits ^ bits2);
 	std::cout << "\n bits | bits2 :" << std::endl;
 	for (uint32 i = 0; i < bits.Length(); i++) {
 		std::cout << res[i];
 	}
 
-	Bitset res2(res);
+	BENCHMARK("copy ctor ", Bitset res2(res));
+	BENCHMARK("compare res1 == res ", (res2 == res));
 	std::cout << "\n are they equal = ?" << (res2 == res) << std::endl;
-
-	/*std::cout << "Bits : " << std::endl;
+	std::cout << "Bits : " << std::endl;
 
 	for (uint32 i = 0; i < bits.Length(); i++) {
 		std::cout << bits[i];
@@ -582,10 +609,11 @@ int main()
 	}
 
 	std::cout << std::endl;
-	for (int i = 0; i < 32; i++) {
-		bits.Append(true);
-		bits.Append(false);
-	}
+	//BENCHMARK("benchmark of x32768 append true/false ",
+	//for (int i = 0; i < 32768; i++) {
+	//	bits.Append(true);
+	//	bits.Append(false);
+	//});
 
 	std::cout << "Result: (Append)" << std::endl;
 	for (uint32 i = 0; i < bits.Length(); i++) {

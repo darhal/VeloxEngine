@@ -296,6 +296,7 @@
     <ClInclude Include="Core\DataStructure\Bitset\Bitset.hpp" />
     <ClInclude Include="Core\DataStructure\FixedString\FixedString.hpp" />
     <ClInclude Include="Core\DataStructure\Function\Function.hpp" />
+    <ClInclude Include="Core\DataStructure\GUID\GUID.hpp" />
     <ClInclude Include="Core\DataStructure\HashMap\HashFunction.hpp" />
     <ClInclude Include="Core\DataStructure\HashMap\HashMap.hpp" />
     <ClInclude Include="Core\DataStructure\HashMap\Map.hpp" />

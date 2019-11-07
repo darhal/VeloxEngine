@@ -5,8 +5,42 @@
 //https://www.mathsisfun.com/binary-decimal-hexadecimal-converter.html
 TRE_NS_START
 
+
+
 class Bitset
 {
+public:
+	typedef uint8 Block;
+
+	struct BitsBlock
+	{
+		friend class Bitset;
+	public:
+
+		FORCEINLINE BitsBlock(Block& value, uint32 pos) : m_Block(value), m_Mask(Block(1) << pos) {}
+
+		FORCEINLINE operator bool() const { return (m_Block & m_Mask) != 0; }
+		FORCEINLINE bool operator~() const { return (m_Block & m_Mask) == 0; }
+
+		FORCEINLINE BitsBlock& Flip() { this->Flip(); return *this; }
+
+		FORCEINLINE BitsBlock& operator=(bool x) { this->Assign(x);   return *this; } // for b[i] = x
+		FORCEINLINE BitsBlock& operator=(const BitsBlock& rhs) { this->Assign(rhs); return *this; } // for b[i] = b[j]
+
+		FORCEINLINE BitsBlock& operator|=(bool x) { if (x) DoSet();   return *this; }
+		FORCEINLINE BitsBlock& operator&=(bool x) { if (!x) DoReset(); return *this; }
+		FORCEINLINE BitsBlock& operator^=(bool x) { if (x) DoFlip();  return *this; }
+		FORCEINLINE BitsBlock& operator-=(bool x) { if (x) DoReset(); return *this; }
+
+	private:
+		Block& m_Block;
+		const Block m_Mask;
+
+		FORCEINLINE void DoSet() { m_Block |= m_Mask; }
+		FORCEINLINE void DoReset() { m_Block &= ~m_Mask; }
+		FORCEINLINE void DoFlip() { m_Block ^= m_Mask; }
+		FORCEINLINE void Assign(bool x) { x ? DoSet() : DoReset(); }
+	};
 public:
 	~Bitset();
 
@@ -32,6 +66,8 @@ public:
 
 	bool operator[](uint32 index) const;
 
+	BitsBlock operator[](uint32 index);
+
 	void Set(uint32 index, bool value);
 
 	void Toggle(uint32 index);
@@ -39,11 +75,19 @@ public:
 	FORCEINLINE usize Length() const;
 
 	Bitset& operator|= (const Bitset& other);
+
 	Bitset& operator&= (const Bitset& other);
+
 	Bitset& operator^= (const Bitset& other);
+
 	Bitset& operator~(); // TODO: Needs more testing not sure if it work properly
+
 	Bitset& operator<<=(usize n);
+
 	Bitset& operator>>=(usize n);
+
+	Bitset& operator+=(Bitset other);
+
 	bool operator==(const Bitset& other);
 
 	FORCEINLINE bool operator!=(const Bitset& other);
@@ -194,6 +238,13 @@ FORCEINLINE Bitset operator>>(const Bitset& a, usize n)
 {
 	Bitset res(a);
 	res >>= n;
+	return res;
+}
+
+FORCEINLINE Bitset operator+(const Bitset& a, const Bitset& b)
+{
+	Bitset res(a);
+	res += b;
 	return res;
 }
 
