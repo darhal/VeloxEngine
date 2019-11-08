@@ -540,19 +540,19 @@ class EntityA : public IEntity
 
 int main()
 {
-	/*LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
+	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
 
 	EntityA* entity = ECS::CreateEntity<EntityA>();
 	entity->CreateComponent<TestComponent>(5);
 	entity->CreateComponent<TestComponent2>("Hello there!");
 
 	IEntity* entity2 = (IEntity*)ECS::CreateEntity<EntityA>();
-	//entity2->CreateComponent<TestComponent>(5);*/
+	// entity2->CreateComponent<TestComponent>(5);
 
-	/*SystemList mainSystems;
+	SystemList mainSystems;
 	TestSystem test_system;
 	mainSystems.AddSystem(&test_system);
-	ECS::UpdateSystems(mainSystems, 0.0);*/
+	ECS::UpdateSystems(mainSystems, 0.0);
 
 	getchar();
 }
