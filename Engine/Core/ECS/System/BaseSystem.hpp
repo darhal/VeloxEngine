@@ -12,13 +12,15 @@ class BaseSystem
 public:
 	using SystemComponent = Pair<ComponentTypeID, uint32>;
 
-	enum{
+	enum {
 		FLAG_OPTIONAL = 1,
 	};
 
 	BaseSystem() {}
 
 	virtual void UpdateComponents(float delta, BaseComponent** components) {};
+
+	// virtual void UpdateEntities(float delta, IEntity& entity) {};
 
 	/*const Vector<uint32>& GetComponentTypes() const
 	{
@@ -38,6 +40,12 @@ public:
 	uint32 GetComponentsCount() const { return m_ComponentsCount; }
 
 	bool IsValid();
+
+	void AddEntity(IEntity* entity) { m_Entities.EmplaceBack(entity); };
+
+	const Vector<IEntity*>& GetEntities() const { return m_Entities; }
+
+	Vector<IEntity*>& GetEntities() { return m_Entities; }
 protected:
 
 	void AddComponentType(ComponentTypeID componentType, uint32 componentFlag = 0)
@@ -47,15 +55,16 @@ protected:
 	}
 
 	BaseSystem(SystemComponent* comps, uint32 comp_size, uint32 comp_count = 0)
-		: m_Components(comps), m_ComponentsSize(comp_size), m_ComponentsCount(comp_count)
+		: m_Entities(), m_Components(comps), m_ComponentsSize(comp_size), m_ComponentsCount(comp_count)
 	{
 	}
 
-private:	
+private:
+	Vector<IEntity*> m_Entities;
 	SystemComponent* m_Components;
 	uint32 m_ComponentsSize;
 	uint32 m_ComponentsCount;
-
+	
 	friend class ECS;
 };
 

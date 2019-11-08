@@ -123,7 +123,7 @@ struct Math
 		union
 		{
 			double  f_rep;
-			uint64 d_rep;
+			uint64  d_rep;
 		} converter;
 
 		converter.f_rep = x;
@@ -132,6 +132,30 @@ struct Math
 		floatbits &= mask;
 		converter.d_rep = floatbits;
 		return converter.f_rep;
+	}
+
+	FORCEINLINE static usize HashFloat(float x)
+	{
+		union
+		{
+			float  f_rep;
+			uint32 d_rep;
+		} converter;
+
+		converter.f_rep = x;
+		return (usize) converter.d_rep;
+	}
+
+	FORCEINLINE static usize HashDouble(double x)
+	{
+		union
+		{
+			double  f_rep;
+			uint64  d_rep;
+		} converter;
+
+		converter.f_rep = x;
+		return (usize) converter.d_rep;
 	}
 };
 

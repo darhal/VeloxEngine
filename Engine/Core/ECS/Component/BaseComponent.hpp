@@ -14,14 +14,17 @@ typedef void(*ComponentDeleteFunction)(struct BaseComponent*);
 
 struct BaseComponent
 {
+	
 private:
-	static Vector<Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32>>* s_ComponentsTypes;
-
 	friend class ECS;
+
+	static Vector<Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32>>* s_ComponentsTypes;
 
 	EntityHandle m_Entity = NULL;
 public:	
 	static uint32 RegisterComponentType(ComponentCreateFunction createfn, ComponentDeleteFunction freefn, uint32 size);
+
+	FORCEINLINE static usize GetComponentsCount() { return s_ComponentsTypes->Size();}
 
 	FORCEINLINE static ComponentCreateFunction GetTypeCreateFunction(uint32 id)
 	{

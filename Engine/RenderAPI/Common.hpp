@@ -116,7 +116,6 @@ namespace TargetType
 
 		// Renderbuffers:
 		RBO = GL_RENDERBUFFER,
-
 	};
 }
 

@@ -527,6 +527,7 @@ class EntityA : public IEntity
 };
 
 #include <Core/DataStructure/Bitset/Bitset.hpp>
+#include <unordered_map>
 
 #define INIT_BENCHMARK std::chrono::time_point<std::chrono::high_resolution_clock> start, end; std::chrono::microseconds duration;
 
@@ -539,87 +540,6 @@ class EntityA : public IEntity
 
 int main()
 {
-	Bitset add(64, false);
-	Bitset addy(64, false);
-	addy.Set(0, true);
-
-	while (add != Bitset(64, true)) {
-		add += addy;
-		printf("Binary counting adding 1 at each step LSB[");
-		for (uint32 i = 0; i < add.Length(); i++) {
-			std::cout << add[i];
-		}
-		printf("]MSB\r");
-		//Sleep(150);
-	}
-
-	/*BENCHMARK("ctor",
-		Bitset bits(120, true);
-		Bitset bits2(60, true);
-	)
-
-	std::cout << "\nBits:" << std::endl;
-	
-	for (uint32 i = 0; i < bits.Length(); i++) {
-		if (i % 2 && i % 3) {
-			BENCHMARK("set", bits.Set(i, false););
-		}
-		std::cout << bits[i];
-	}
-
-	std::cout << "\nBits2:" << std::endl;
-	
-	for (uint32 i = 0; i < bits2.Length(); i++) {
-		if (i >= 15 && i <= 32) {
-			BENCHMARK("loop and set 2", bits2.Set(i, false););
-		}
-		std::cout << bits2[i];
-	}
-
-	BENCHMARK("shift with 10", bits >>= 10);
-	std::cout << "\nbits >>= 10 :" << std::endl;
-	for (uint32 i = 0; i < bits.Length(); i++) {
-		std::cout << bits[i];
-	}
-
-	BENCHMARK("xor ", Bitset res = bits ^ bits2);
-	std::cout << "\n bits | bits2 :" << std::endl;
-	for (uint32 i = 0; i < bits.Length(); i++) {
-		std::cout << res[i];
-	}
-
-	BENCHMARK("copy ctor ", Bitset res2(res));
-	BENCHMARK("compare res1 == res ", (res2 == res));
-	std::cout << "\n are they equal = ?" << (res2 == res) << std::endl;
-	std::cout << "Bits : " << std::endl;
-
-	for (uint32 i = 0; i < bits.Length(); i++) {
-		std::cout << bits[i];
-		if (i >= 30 && i <= 60) {
-			bits.Set(i, false);
-		}
-	}
-
-	std::cout << "Result:" << std::endl;
-	bits.Set(30, false);
-	bits.Toggle(7);
-
-	for (uint32 i = 0; i < bits.Length(); i++) {
-		std::cout << bits[i];
-	}
-
-	std::cout << std::endl;
-	//BENCHMARK("benchmark of x32768 append true/false ",
-	//for (int i = 0; i < 32768; i++) {
-	//	bits.Append(true);
-	//	bits.Append(false);
-	//});
-
-	std::cout << "Result: (Append)" << std::endl;
-	for (uint32 i = 0; i < bits.Length(); i++) {
-		std::cout << bits[i];
-	}*/
-
 	/*LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
 
 	EntityA* entity = ECS::CreateEntity<EntityA>();
@@ -634,20 +554,6 @@ int main()
 	mainSystems.AddSystem(&test_system);
 	ECS::UpdateSystems(mainSystems, 0.0);*/
 
-	/*auto fstring = FString::FString("hello");
-	printf("String : %s | Hash : %lld\n", fstring.GetString(), fstring.GetHash());
-	FixedString<char, 927> str2("competitive programming is a mind sport usually held over the Internet or a local network, involving participants trying to program according to provided specifications. Contestants are referred to as sport programmers. Competitive programming is recognized and supported by several multinational software and Internet companies, such as Google[1][2] and Facebook.[3] There are several organizations who host programming competitions on a regular basis.A programming competition generally involves the host presenting a set of logical or mathematical problems to the contestants(who can vary in number from tens to several thousands), and contestants are required to write computer programs capable of solving each problem.Judging is based mostly upon number of problems solved and time spent for writing successful solutions, but may also include other factors(quality of output produced, execution time, program size, etc.)");
-	printf("String : %s | Hash : %lld\n", str2.GetString(), str2.GetHash());*/
-
-	/*TaskManager tm;
-	tm.Init();
-	tm.AddWorker(0, &DoJobs1);
-	tm.AddWorker(1, &DoJobs2);
-	getchar();
-
-	const Tuple<uint32, char, uint16> test(0, 0, 0);
-	test.Get<1>();*/
-	// RenderThread();
 	getchar();
 }
 
@@ -822,3 +728,106 @@ void HandleEvent(Scene* scene, const Event& e)
 	quad.Submit(RenderManager::GetRenderer().GetFramebufferCommandBuffer(), f.render_target_id);
 	RenderManager::GetRenderer().GetFramebufferCommandBuffer().SwapCmdBuffer();
 *********************/
+
+/*************BIT SETS
+
+	Bitset add(64, false);
+	Bitset addy(64, false);
+	addy[0] = true;
+	std::unordered_map<usize, Bitset> hashes;
+	hashes.emplace(add.GetHash(), add);
+
+	while (add != Bitset(64, true)) {
+		add += addy;
+		printf("Binary counting adding 1 at each step LSB[");
+		for (uint32 i = 0; i < add.Length(); i++) {
+			std::cout << add[i];
+		}
+		printf("]MSB\r");
+
+		if (hashes.find(add.GetHash()) != hashes.end()) {
+			std::cout << "Collision occured between :" << std::endl;
+			std::cout << "Bitset 1 : ";
+			for (uint32 i = 0; i < add.Length(); i++) {
+				std::cout << add[i];
+			}
+			std::cout << " Hash : " << add.GetHash() << std::endl << "Bitset 1 : ";
+			for (uint32 i = 0; i < hashes[add.GetHash()].Length(); i++) {
+				std::cout << hashes[add.GetHash()][i];
+			}
+			std::cout << " Hash : " << hashes[add.GetHash()].GetHash() << std::endl;
+			break;
+		}
+
+		hashes.emplace(add.GetHash(), add);
+	}
+
+	BENCHMARK("ctor",
+		Bitset bits(120, true);
+		Bitset bits2(60, true);
+	)
+
+	std::cout << "\nBits:" << std::endl;
+
+	for (uint32 i = 0; i < bits.Length(); i++) {
+		if (i % 2 && i % 3) {
+			BENCHMARK("set", bits.Set(i, false););
+		}
+		std::cout << bits[i];
+	}
+
+	std::cout << "\nBits2:" << std::endl;
+
+	for (uint32 i = 0; i < bits2.Length(); i++) {
+		if (i >= 15 && i <= 32) {
+			BENCHMARK("loop and set 2", bits2.Set(i, false););
+		}
+		std::cout << bits2[i];
+	}
+
+	BENCHMARK("shift with 10", bits >>= 10);
+	std::cout << "\nbits >>= 10 :" << std::endl;
+	for (uint32 i = 0; i < bits.Length(); i++) {
+		std::cout << bits[i];
+	}
+
+	BENCHMARK("xor ", Bitset res = bits ^ bits2);
+	std::cout << "\n bits | bits2 :" << std::endl;
+	for (uint32 i = 0; i < bits.Length(); i++) {
+		std::cout << res[i];
+	}
+
+	BENCHMARK("copy ctor ", Bitset res2(res));
+	BENCHMARK("compare res1 == res ", (res2 == res));
+	std::cout << "\n are they equal = ?" << (res2 == res) << std::endl;
+	std::cout << "Bits : " << std::endl;
+
+	for (uint32 i = 0; i < bits.Length(); i++) {
+		std::cout << bits[i];
+		if (i >= 30 && i <= 60) {
+			bits.Set(i, false);
+		}
+	}
+
+	std::cout << "Result:" << std::endl;
+	bits.Set(30, false);
+	bits.Toggle(7);
+
+	for (uint32 i = 0; i < bits.Length(); i++) {
+		std::cout << bits[i];
+	}
+
+	std::cout << std::endl;
+	//BENCHMARK("benchmark of x32768 append true/false ",
+	//for (int i = 0; i < 32768; i++) {
+	//	bits.Append(true);
+	//	bits.Append(false);
+	//});
+
+	std::cout << "Result: (Append)" << std::endl;
+	for (uint32 i = 0; i < bits.Length(); i++) {
+		std::cout << bits[i];
+	}
+
+
+*********/

@@ -22,17 +22,25 @@ ECS::~ECS()
 
 EntityHandle ECS::CreateEntity(BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
 {
+	Bitset signature(BaseComponent::GetComponentsCount());
+
 	IEntity* entity = new IEntity();
 	entity->m_Id = (EntityID) m_Entities.Size();
-
+	
 	for (uint32 i = 0; i < numComponents; i++) {
 		if (!BaseComponent::IsValidTypeID(componentIDs[i])) {
 			delete entity;
 			return NULL;
 		}
 
+		signature.Set(componentIDs[i], true);
 		ECS::AddComponentInternal(*entity, componentIDs[i], components[i]);
 	}
+
+	/*BaseSystem** sys;
+	if ((sys = m_SignatureList.Get(signature)) != NULL) {
+		(*sys)->AddEntity(entity);
+	}*/
 
 	m_Entities.EmplaceBack(entity);
 	return entity;
@@ -56,7 +64,7 @@ void ECS::DeleteEntity(EntityHandle handle)
 BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, BaseComponent* component)
 {
 	ComponentCreateFunction createfn = BaseComponent::GetTypeCreateFunction(component_id);
-	Vector<uint8>& components_buffer = m_Components[component_id];
+	Vector<uint8>& components_buffer = m_Components[component_id]; 
 	uint32 index_memory = createfn(components_buffer, &entity, component);
 	entity.AddComponent(component_id, index_memory);
 	return (BaseComponent*) components_buffer[index_memory];
@@ -132,7 +140,11 @@ void ECS::UpdateSystems(SystemList& system_list, float delta)
 	for (uint32 i = 0; i < systems_sz; i++) {
 		const BaseSystem::SystemComponent* component_types_flags = system_list[i]->GetSystemComponents();
 		uint32 component_types_size = system_list[i]->GetComponentsCount();
+		BaseSystem& system = *system_list[i];
 
+		/*for (IEntity* entity : system.GetEntities()) {
+			system.UpdateEntities(delta, *entity);
+		}*/
 		if (component_types_size == 1) {
 			uint32 typeSize = BaseComponent::GetTypeSize(component_types_flags[0].first);
 			Vector<uint8>& comp_buffer = m_Components[component_types_flags[0].first];

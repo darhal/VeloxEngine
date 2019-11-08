@@ -2,12 +2,15 @@
 
 #include <type_traits>
 #include <Core/Misc/Defines/Common.hpp>
+#include <Core/DataStructure/Bitset/Bitset.hpp>
 #include <Core/DataStructure/Vector/Vector.hpp>
 #include <Core/DataStructure/HashMap/Map.hpp>
+#include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <Core/ECS/Component/BaseComponent.hpp>
 #include <Core/ECS/Entity/IEntity/IEntity.hpp>
 #include <Core/ECS/System/BaseSystem.hpp>
 #include <Core/ECS/System/SystemList.hpp>
+
 
 TRE_NS_START
 
@@ -39,6 +42,7 @@ public:
 private:
 	static Map<ComponentTypeID, Vector<uint8>> m_Components; // index is Component type ID.
 	static Vector<IEntity*> m_Entities;
+	static HashMap<Bitset, BaseSystem*> m_SignatureList;
 
 	static BaseComponent* AddComponentInternal(IEntity& entity, uint32 component_id, BaseComponent* component);
 	static void DeleteComponent(ComponentID id, uint32 mem_index);

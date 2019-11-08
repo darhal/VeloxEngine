@@ -106,6 +106,8 @@ public:
 	INLINE Iterator begin() noexcept;
 	INLINE Iterator end() noexcept;
 
+	INLINE usize GetHash() const;
+
 	template<typename NUMERIC_TYPE>
 	T& operator[](const NUMERIC_TYPE i);
 	template<typename NUMERIC_TYPE>
@@ -425,6 +427,19 @@ static BasicString<T> operator+(const BasicString<T>& lhs, const char* rhs)
 	res = lhs;
 	res.Append(rhs);
 	return res;
+}
+
+template<typename T>
+usize BasicString<T>::GetHash() const
+{
+	const T* str = this->Buffer();
+	usize hash = 5381;
+	uint32 c;
+
+	while (c = *str++)
+		hash = ((hash << 5) + hash) + c;
+
+	return hash;
 }
 
 template<typename T>

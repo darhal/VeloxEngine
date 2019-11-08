@@ -74,6 +74,8 @@ public:
 
 	FORCEINLINE usize Length() const;
 
+	usize GetHash() const;
+
 	Bitset& operator|= (const Bitset& other);
 
 	Bitset& operator&= (const Bitset& other);

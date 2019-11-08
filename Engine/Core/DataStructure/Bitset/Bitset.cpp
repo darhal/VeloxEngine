@@ -507,4 +507,22 @@ Bitset& Bitset::operator+=(Bitset other)
 	return *this;
 }
 
+usize Bitset::GetHash() const
+{
+	size_t hash = 0;
+	const usize* bits = (usize*)m_Data;
+	usize len = this->GetSmallLength();
+
+	if (!this->IsSmall()) {
+		len = this->GetNormalLength();
+		bits = m_Bits;
+	}
+	uint32 nb_usize_bytes = (uint32) Math::Ceil((double)len / (double)(sizeof(usize) * BITS_PER_BYTE));
+
+	for (usize i = 0; i < nb_usize_bytes; i++)
+		hash ^= bits[i];
+
+	return hash;
+}
+
 TRE_NS_END
