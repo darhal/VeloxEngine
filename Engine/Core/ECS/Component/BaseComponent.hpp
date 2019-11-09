@@ -71,6 +71,8 @@ struct Component : public BaseComponent
 	static const ComponentDeleteFunction FREE_FUNCTION;
 	static const usize SIZE;
 	static const ComponentTypeID ID;
+
+	FORCEINLINE usize GetTypeID() { return ID; }
 };
 
 template<typename T>

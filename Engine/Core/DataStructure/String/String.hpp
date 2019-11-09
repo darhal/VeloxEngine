@@ -52,7 +52,9 @@ public:
 	typedef const T* CIterator;
 
 	BasicString();
+
 	BasicString(usize capacity);
+
 	template<usize S>
 	BasicString(const T(&str)[S], bool nop);
 	// template<usize S>
@@ -268,16 +270,16 @@ template<typename T>
 template<typename NUMERIC_TYPE>
 T& BasicString<T>::operator[] (const NUMERIC_TYPE i)
 {
-	ASSERTF(((usize)Absolute(i) > (usize)m_Length), "Bad usage of [] with BasicString class, given index out of bounds.");
-	return this->EditableBuffer[i];
+	ASSERTF((usize)i > (usize)m_Length, "Bad usage of [] with BasicString class, given index out of bounds.");
+	return this->EditableBuffer()[i];
 }
 
 template<typename T>
 template<typename NUMERIC_TYPE>
 const T& BasicString<T>::operator[] (const NUMERIC_TYPE i) const
 {
-	ASSERTF(((usize)Absolute(i) > (usize)m_Length), "Bad usage of [] with BasicString class, given index out of bounds.");
-	return this->Buffer[i];
+	ASSERTF((usize)i > (usize)m_Length, "Bad usage of [] with BasicString class, given index out of bounds.");
+	return this->Buffer()[i];
 }
 
 // The preprocessing function for Boyer Moore's  

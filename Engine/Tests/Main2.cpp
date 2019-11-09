@@ -502,13 +502,10 @@ struct TestComponent2 : public Component<TestComponent2>
 	String test;
 };
 
-class TestSystem : public System<TestSystem>
+class TestSystemA : public System<TestComponent, TestComponent2>
 {
 public:
-	TestSystem() : System({ 
-		SComponent{TestComponent::ID, 0}, 
-		SComponent{TestComponent2::ID, 1} 
-	})
+	TestSystemA()
 	{
 	}
 
@@ -518,6 +515,67 @@ public:
 		TestComponent2* test2 = (TestComponent2*) components[1];
 		LOG::Write("Updating the componenet : %d", test->smthg);
 		LOG::Write("Updating the componenet : %s", test2->test.Buffer());
+	}
+
+	virtual void UpdateEntities(float delta, IEntity& entity)
+	{
+		for (Pair<ComponentTypeID, uint32>& comp : entity.GetComponentsData()) {
+			if (comp.first == TestComponent::ID) {
+				TestComponent& test = *(TestComponent*)(&ECS::GetComponentBuffer(TestComponent::ID)[comp.second]);
+				LOG::Write("Updating the componenet : %d", test.smthg);
+			}else if (comp.first == TestComponent2::ID) {
+				TestComponent2& test2 = *(TestComponent2*)(&ECS::GetComponentBuffer(TestComponent2::ID)[comp.second]);
+				LOG::Write("Updating the componenet : %s", test2.test.Buffer());
+			}
+		}
+	}
+};
+
+class TestSystemB : public System<TestComponent>
+{
+public:
+	TestSystemB()
+	{
+	}
+
+	virtual void UpdateComponents(float delta, BaseComponent** components)
+	{
+		TestComponent* test = (TestComponent*)components[0];
+		LOG::Write("Updating the componenet : %d", test->smthg);
+	}
+
+	virtual void UpdateEntities(float delta, IEntity& entity)
+	{
+		for (Pair<ComponentTypeID, uint32>& comp : entity.GetComponentsData()) {
+			if (comp.first == TestComponent::ID) {
+				TestComponent& test = *(TestComponent*)(&ECS::GetComponentBuffer(TestComponent::ID)[comp.second]);
+				LOG::Write("Updating the componenet : %d", test.smthg);
+			}
+		}
+	}
+};
+
+class TestSystemC : public System<TestComponent2>
+{
+public:
+	TestSystemC()
+	{
+	}
+
+	virtual void UpdateComponents(float delta, BaseComponent** components)
+	{
+		TestComponent2* test2 = (TestComponent2*)components[0];
+		LOG::Write("Updating the componenet : %s", test2->test.Buffer());
+	}
+
+	virtual void UpdateEntities(float delta, IEntity& entity)
+	{
+		for (Pair<ComponentTypeID, uint32>& comp : entity.GetComponentsData()) {
+			if (comp.first == TestComponent2::ID) {
+				TestComponent2& test2 = *(TestComponent2*)(&ECS::GetComponentBuffer(TestComponent2::ID)[comp.second]);
+				LOG::Write("Updating the componenet : %s", test2.test.Buffer());
+			}
+		}
 	}
 };
 
@@ -541,6 +599,10 @@ class EntityA : public IEntity
 int main()
 {
 	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
+	SystemList mainSystems;
+	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
+	test_systemA.RegisterSystem(); test_systemB.RegisterSystem(); test_systemC.RegisterSystem();
+	mainSystems.AddSystem(&test_systemA); mainSystems.AddSystem(&test_systemB); mainSystems.AddSystem(&test_systemC);
 
 	EntityA* entity = ECS::CreateEntity<EntityA>();
 	entity->CreateComponent<TestComponent>(5);
@@ -549,10 +611,25 @@ int main()
 	IEntity* entity2 = (IEntity*)ECS::CreateEntity<EntityA>();
 	// entity2->CreateComponent<TestComponent>(5);
 
-	SystemList mainSystems;
-	TestSystem test_system;
-	mainSystems.AddSystem(&test_system);
-	ECS::UpdateSystems(mainSystems, 0.0);
+	char c;
+	do {
+		ECS::UpdateSystems(mainSystems, 0.0);
+
+		std::cin >> c;
+		if (c == '1') {
+			entity->RemoveComponent<TestComponent>();
+		} else if(c == '2') {
+			entity->RemoveComponent<TestComponent2>();
+		} else if (c == '3') {
+			entity->CreateComponent<TestComponent>(6);
+		} else if (c == '4') {
+			entity->CreateComponent<TestComponent2>("I got added again!");
+		} else if (c == '5') {
+			entity->CreateComponent<TestComponent2>("Yoohoo");
+			entity->CreateComponent<TestComponent>(9);
+		}
+	}while(c !=  'c');
+	
 
 	getchar();
 }

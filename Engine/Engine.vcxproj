@@ -310,6 +310,7 @@
     <ClInclude Include="Core\DataStructure\String\String.hpp" />
     <ClInclude Include="Core\DataStructure\Tuple\Pair.hpp" />
     <ClInclude Include="Core\DataStructure\Tuple\Tuple.hpp" />
+    <ClInclude Include="Core\DataStructure\Utils\Utils.hpp" />
     <ClInclude Include="Core\DataStructure\Vector\Vector.hpp" />
     <ClInclude Include="Core\ECS\Component\BaseComponent.hpp" />
     <ClInclude Include="Core\ECS\Manager\ECS.hpp" />

@@ -1,9 +1,11 @@
 #include "ECS.hpp"
+#include <Core/DataStructure/Utils/Utils.hpp>
 
 TRE_NS_START
 
 Map<ComponentTypeID, Vector<uint8>> ECS::m_Components;
 Vector<IEntity*> ECS::m_Entities;
+HashMap<Bitset, BaseSystem*> ECS::m_SignatureList;
 
 ECS::~ECS()
 {
@@ -20,10 +22,40 @@ ECS::~ECS()
 	}*/
 }
 
+void ECS::RegisterSystem(Bitset sig, BaseSystem* sys)
+{ 
+	printf("System registered! (Signature: %s)\n", Utils::ToString(sig).Buffer());
+	m_SignatureList.Emplace(sig, sys); 
+}
+
+void ECS::AddEntityToMatchingSystem(IEntity* entity)
+{
+	BaseSystem** sys;
+
+	if ((sys = m_SignatureList.Get(entity->m_Signature)) != NULL) {
+		(*sys)->AddEntity(entity);
+		printf("Found a system to add entity to (Entity Sig. : %s)!\n", Utils::ToString(entity->m_Signature).Buffer());
+	}
+}
+
+void ECS::RemoveEntityFromSystem(IEntity* entity)
+{
+	BaseSystem** sys;
+
+	if (((sys = m_SignatureList.Get(entity->m_Signature)) != NULL) && (((*sys)->DoesContainEntity(entity)))) {
+		(*sys)->RemoveEntity(entity);
+		printf("Found a system to remove entity from (Entity Sig. : %s)!\n", Utils::ToString(entity->m_Signature).Buffer());
+	}
+}
+
+void ECS::UpdateEntityMatchingSystem(IEntity* entity)
+{
+	ECS::RemoveEntityFromSystem(entity);
+	ECS::AddEntityToMatchingSystem(entity);
+}
+
 EntityHandle ECS::CreateEntity(BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
 {
-	Bitset signature(BaseComponent::GetComponentsCount());
-
 	IEntity* entity = new IEntity();
 	entity->m_Id = (EntityID) m_Entities.Size();
 	
@@ -33,15 +65,11 @@ EntityHandle ECS::CreateEntity(BaseComponent** components, const ComponentTypeID
 			return NULL;
 		}
 
-		signature.Set(componentIDs[i], true);
+		entity->m_Signature.Set(componentIDs[i], true);
 		ECS::AddComponentInternal(*entity, componentIDs[i], components[i]);
 	}
 
-	/*BaseSystem** sys;
-	if ((sys = m_SignatureList.Get(signature)) != NULL) {
-		(*sys)->AddEntity(entity);
-	}*/
-
+	ECS::AddEntityToMatchingSystem(entity);
 	m_Entities.EmplaceBack(entity);
 	return entity;
 }
@@ -49,17 +77,26 @@ EntityHandle ECS::CreateEntity(BaseComponent** components, const ComponentTypeID
 void ECS::DeleteEntity(EntityHandle handle)
 {
 	IEntity* entity = (IEntity*)(handle);
+	ECS::RemoveEntityFromSystem(entity);
+
 	for (uint32 i = 0; i < entity->m_Components.Size(); i++) {
 		DeleteComponent(entity->m_Components[i].first, entity->m_Components[i].second);
 	}
 
 	uint32 destIndex = entity->m_Id;
-	uint32 srcIndex = (uint32) m_Entities.Size() - 1;
+	ssize srcIndex = (ssize) m_Entities.Size() - 1;
 	delete m_Entities[destIndex];
-	m_Entities[destIndex] = m_Entities[srcIndex];
-	m_Entities[destIndex]->m_Id = destIndex;
+
+	if (srcIndex > 0) {
+		m_Entities[destIndex] = m_Entities[srcIndex];
+		m_Entities[destIndex]->m_Id = destIndex;
+	}
+	
 	m_Entities.PopBack();
 }
+
+// TODO: For the future if you want multiple components per entity then check these two methods and check wether the bitset already contain 1 or 0 at the 
+// ComponentTypeIndex and act accordingaly.
 
 BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, BaseComponent* component)
 {
@@ -67,36 +104,10 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 	Vector<uint8>& components_buffer = m_Components[component_id]; 
 	uint32 index_memory = createfn(components_buffer, &entity, component);
 	entity.AddComponent(component_id, index_memory);
+	ECS::RemoveEntityFromSystem(&entity);
+	entity.m_Signature.Set(component_id, true);
+	ECS::AddEntityToMatchingSystem(&entity);
 	return (BaseComponent*) components_buffer[index_memory];
-}
-
-void ECS::DeleteComponent(ComponentID id, uint32 mem_index)
-{
-	Vector<uint8>& components_buffer = m_Components[id];
-	ComponentDeleteFunction freefn = BaseComponent::GetTypeDeleteFunction(id);
-	uint32 size = BaseComponent::GetTypeSize(id);
-	uint32 srcIndex = (uint32) components_buffer.Size() - size;
-
-	BaseComponent* destComponent = (BaseComponent*) &components_buffer[mem_index];
-	BaseComponent* srcComponent = (BaseComponent*) &components_buffer[srcIndex];
-	freefn(destComponent);
-
-	if (srcIndex == mem_index) {
-		components_buffer.Resize(srcIndex);
-		return;
-	}
-
-	std::memcpy(destComponent, srcComponent, size);
-	IEntity* entity = (IEntity*) srcComponent->m_Entity;
-
-	for (Pair<ComponentTypeID, uint32>& comp : entity->m_Components) {
-		if (comp.first == id && comp.second == srcIndex) {
-			comp.second = mem_index;
-			break;
-		}
-	}
-
-	components_buffer.Resize(srcIndex);
 }
 
 bool ECS::RemoveComponentInternal(IEntity& entity, uint32 component_id)
@@ -109,15 +120,50 @@ bool ECS::RemoveComponentInternal(IEntity& entity, uint32 component_id)
 
 		if (comp.first == component_id) {
 			ECS::DeleteComponent(comp.first, comp.second);
-			uint32 srcIndex = (uint32) entity.m_Components.Size() - 1;
+			ssize srcIndex = (ssize) entity.m_Components.Size() - 1;
 			uint32 destIndex = i;
-			entity.m_Components[destIndex] = entity.m_Components[srcIndex]; // Swap with the last component
+
+			if (srcIndex)
+				entity.m_Components[destIndex] = entity.m_Components[srcIndex]; // Swap with the last component
+
 			entity.m_Components.PopBack();
 			return true;
 		}
 	}
 
 	return false;
+}
+
+void ECS::DeleteComponent(ComponentID id, uint32 mem_index)
+{
+	Vector<uint8>& components_buffer = m_Components[id];
+	ComponentDeleteFunction freefn = BaseComponent::GetTypeDeleteFunction(id);
+	uint32 size = BaseComponent::GetTypeSize(id);
+	uint32 srcIndex = (uint32)components_buffer.Size() - size;
+
+	BaseComponent* destComponent = (BaseComponent*)&components_buffer[mem_index];
+	BaseComponent* srcComponent = (BaseComponent*)&components_buffer[srcIndex];
+	freefn(destComponent);
+
+	if (srcIndex == mem_index) {
+		components_buffer.Resize(srcIndex);
+		return;
+	}
+
+	std::memcpy(destComponent, srcComponent, size);
+	IEntity& entity = *srcComponent->m_Entity;
+	ECS::RemoveEntityFromSystem(&entity);
+	entity.m_Signature.Set(id, false);
+	ECS::AddEntityToMatchingSystem(&entity);
+
+	for (Pair<ComponentTypeID, uint32>& comp : entity.m_Components) {
+		if (comp.first == id && comp.second == srcIndex) {
+			comp.second = mem_index;
+			break;
+		}
+	}
+
+	components_buffer.Resize(srcIndex);
 }
 
 BaseComponent* ECS::GetComponentInternal(IEntity& entity, Vector<uint8>& component_buffer, uint32 component_id)
@@ -134,18 +180,19 @@ BaseComponent* ECS::GetComponentInternal(IEntity& entity, Vector<uint8>& compone
 void ECS::UpdateSystems(SystemList& system_list, float delta)
 {
 	usize systems_sz = system_list.GetSize();
-	Vector<BaseComponent*> component_param;
-	Vector<Vector<uint8>*> component_arrays;
+	//Vector<BaseComponent*> component_param;
+	//Vector<Vector<uint8>*> component_arrays;
 
 	for (uint32 i = 0; i < systems_sz; i++) {
-		const BaseSystem::SystemComponent* component_types_flags = system_list[i]->GetSystemComponents();
-		uint32 component_types_size = system_list[i]->GetComponentsCount();
+		//const BaseSystem::SystemComponent* component_types_flags = system_list[i]->GetSystemComponents();
+		//uint32 component_types_size = system_list[i]->GetComponentsCount();
 		BaseSystem& system = *system_list[i];
 
-		/*for (IEntity* entity : system.GetEntities()) {
+		for (IEntity* entity : system.GetEntities()) {
 			system.UpdateEntities(delta, *entity);
-		}*/
-		if (component_types_size == 1) {
+		}
+
+		/*if (component_types_size == 1) {
 			uint32 typeSize = BaseComponent::GetTypeSize(component_types_flags[0].first);
 			Vector<uint8>& comp_buffer = m_Components[component_types_flags[0].first];
 
@@ -155,11 +202,11 @@ void ECS::UpdateSystems(SystemList& system_list, float delta)
 			}
 		}else {
 			UpdateSystemWithMultipleComponents(system_list, i, delta, component_types_flags, component_param, component_arrays);
-		}
+		}*/
 	}
 }
 
-void ECS::UpdateSystemWithMultipleComponents(SystemList& system_list, uint32 index, float delta, 
+/*void ECS::UpdateSystemWithMultipleComponents(SystemList& system_list, uint32 index, float delta, 
 	const BaseSystem::SystemComponent* component_types_flags, 
 	Vector<BaseComponent*>& component_param, 
 	Vector<Vector<uint8>*>& component_arrays)
@@ -219,6 +266,6 @@ uint32 ECS::FindLeastCommonComponent(const BaseSystem::SystemComponent* componen
 	}
 
 	return min_index;
-}
+}*/
 
 TRE_NS_END

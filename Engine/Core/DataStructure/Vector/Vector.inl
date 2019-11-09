@@ -94,8 +94,9 @@ FORCEINLINE bool Vector<T>::PopBack()
 {
 	if (m_Length <= 0) 
 		return false;
-	m_Data[m_Length - 1].~T();
-	return m_Length--;
+
+	m_Data[--m_Length].~T();
+	return m_Length;
 }
 
 template<typename T>
@@ -104,7 +105,7 @@ FORCEINLINE bool Vector<T>::PopFront()
 	if (m_Length < 0) return false;
 	m_Data[0].~T();
 	MoveRange(m_Data + 1, m_Data, m_Length - 1);
-	return m_Length--;
+	return --m_Length;
 }
 
 template<typename T>

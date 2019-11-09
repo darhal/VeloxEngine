@@ -14,13 +14,13 @@ BasicString<T>::BasicString(usize capacity)
 {
 	if (capacity <= SSO_SIZE) {
 		m_Data[0] = T(0);
-		SetSmallLength(1);
+		SetSmallLength(capacity);
 	}else{
 		usize real_cap = capacity * SPARE_RATE;
 		m_Buffer    = (T*) operator new (sizeof(T) * real_cap); // allocate empty storage
 		m_Buffer[0] = T(0); // init to 0
 		m_Capacity = capacity;
-		SetNormalLength(1);
+		SetNormalLength(capacity);
 	}
 }
 

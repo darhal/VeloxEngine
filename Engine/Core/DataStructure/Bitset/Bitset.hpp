@@ -2,10 +2,10 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Maths/Maths.hpp>
-//https://www.mathsisfun.com/binary-decimal-hexadecimal-converter.html
+
+// https://www.mathsisfun.com/binary-decimal-hexadecimal-converter.html
+
 TRE_NS_START
-
-
 
 class Bitset
 {

@@ -4,13 +4,14 @@
 #include <Core/DataStructure/Vector/Vector.hpp>
 #include <Core/ECS/Component/BaseComponent.hpp>
 #include <Core/DataStructure/Tuple/Pair.hpp>
+#include <Core/DataStructure/Bitset/Bitset.hpp>
 
 TRE_NS_START
 
 class BaseSystem
 {
 public:
-	using SystemComponent = Pair<ComponentTypeID, uint32>;
+	using SystemComponent = ComponentTypeID;
 
 	enum {
 		FLAG_OPTIONAL = 1,
@@ -20,17 +21,7 @@ public:
 
 	virtual void UpdateComponents(float delta, BaseComponent** components) {};
 
-	// virtual void UpdateEntities(float delta, IEntity& entity) {};
-
-	/*const Vector<uint32>& GetComponentTypes() const
-	{
-		return m_ComponentTypes;
-	}
-
-	const Vector<uint32>& GetComponentFlags() const
-	{
-		return m_ComponentFlags;
-	}*/
+	virtual void UpdateEntities(float delta, IEntity& entity) {};
 
 	const SystemComponent* GetSystemComponents() const
 	{
@@ -41,52 +32,48 @@ public:
 
 	bool IsValid();
 
-	void AddEntity(IEntity* entity) { m_Entities.EmplaceBack(entity); };
+	void AddEntity(IEntity* entity);
+
+	void RemoveEntity(IEntity* entity);
 
 	const Vector<IEntity*>& GetEntities() const { return m_Entities; }
 
 	Vector<IEntity*>& GetEntities() { return m_Entities; }
+
+	usize GetEntitiesCount() { return m_Entities.Size(); }
+
+	void RegisterSystem();
+
+	bool DoesContainEntity(IEntity* entity);
 protected:
+	BaseSystem(SystemComponent* comps, uint32 comp_count = 0);
 
-	void AddComponentType(ComponentTypeID componentType, uint32 componentFlag = 0)
-	{
-		ASSERTF(m_ComponentsCount >= m_ComponentsSize, "Can't add new component type to the system, size limit exceded please consider incrementing the size current (count: %d, limit : %d)", m_ComponentsCount, m_ComponentsSize);
-		new (m_Components + (m_ComponentsCount++)) SystemComponent(componentType, componentFlag);
-	}
-
-	BaseSystem(SystemComponent* comps, uint32 comp_size, uint32 comp_count = 0)
-		: m_Entities(), m_Components(comps), m_ComponentsSize(comp_size), m_ComponentsCount(comp_count)
-	{
-	}
-
-private:
+protected:
 	Vector<IEntity*> m_Entities;
+	Bitset m_Signature;
 	SystemComponent* m_Components;
-	uint32 m_ComponentsSize;
 	uint32 m_ComponentsCount;
 	
 	friend class ECS;
 };
 
-template<typename T, uint32 N = 8>
+template<typename... Components>
 class System : public BaseSystem
 {
 protected:
-	typedef BaseSystem::SystemComponent SComponent;
-
-	CONSTEXPR static uint32 COMPONENT_CPACITY = N;
+	CONSTEXPR static uint32 COMPONENT_CPACITY = sizeof...(Components);
 	
-	System() : BaseSystem(m_Components, COMPONENT_CPACITY)
-	{}
-
-	template<typename... Args>
-	System(Args&&... args) : 
-		BaseSystem(m_Components, COMPONENT_CPACITY, sizeof...(Args)), 
-		m_Components{ static_cast<SystemComponent>(std::forward<Args>(args))... }
+	System() : 
+		m_Components{ static_cast<SystemComponent>(Components::ID)... },
+		BaseSystem(m_Components, COMPONENT_CPACITY)
 	{
+		uint32 size = COMPONENT_CPACITY;
+
+		while (size--) {
+			m_Signature.Set(m_Components[size], true);
+		}
 	}
 
-	friend T;
 private:
 	SystemComponent m_Components[COMPONENT_CPACITY];
 };

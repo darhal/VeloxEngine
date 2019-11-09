@@ -11,7 +11,6 @@
 #include <Core/ECS/System/BaseSystem.hpp>
 #include <Core/ECS/System/SystemList.hpp>
 
-
 TRE_NS_START
 
 class ECS
@@ -37,8 +36,18 @@ public:
 	template<typename Component>
 	static FORCEINLINE BaseComponent* GetComponent(IEntity& entity);
 
+	static FORCEINLINE const Vector<uint8>& GetComponentBuffer(ComponentTypeID type_id) { return m_Components[type_id];}
+
 	// Systems : 
 	static void UpdateSystems(SystemList& system_list, float delta);
+
+	static void RegisterSystem(Bitset sig, BaseSystem* sys);
+
+	static void AddEntityToMatchingSystem(IEntity* entity);
+
+	static void RemoveEntityFromSystem(IEntity* entity);
+
+	static void UpdateEntityMatchingSystem(IEntity* entity);
 private:
 	static Map<ComponentTypeID, Vector<uint8>> m_Components; // index is Component type ID.
 	static Vector<IEntity*> m_Entities;
@@ -48,11 +57,11 @@ private:
 	static void DeleteComponent(ComponentID id, uint32 mem_index);
 	static bool RemoveComponentInternal(IEntity& entity, uint32 component_id);
 	static BaseComponent* GetComponentInternal(IEntity& entity, Vector<uint8>& component_buffer, uint32 component_id);
-	static void UpdateSystemWithMultipleComponents(
+	/*static void UpdateSystemWithMultipleComponents(
 		SystemList& system_list, uint32 index, float delta, const BaseSystem::SystemComponent* component_types_flags, 
 		Vector<BaseComponent*>& component_param, Vector<Vector<uint8>*>& component_arrays
 	);
-	static uint32 FindLeastCommonComponent(const BaseSystem::SystemComponent* component_types_flags, uint32 N);
+	static uint32 FindLeastCommonComponent(const BaseSystem::SystemComponent* component_types_flags, uint32 N);*/
 };
 
 template<typename Entity, typename... Args>
@@ -75,7 +84,7 @@ FORCEINLINE Component* ECS::AddComponent(IEntity& entity, Component* component)
 template<typename Component>
 bool ECS::RemoveComponent(IEntity& entity)
 {
-	return ECS::RemoveComponent(entity, Component::ID);
+	return ECS::RemoveComponentInternal(entity, Component::ID);
 }
 
 template<typename Component>
