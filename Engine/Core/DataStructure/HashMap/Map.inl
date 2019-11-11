@@ -55,6 +55,15 @@ FORCEINLINE V& Map<K, V, Alloc_t>::operator[](const K& key)
 }
 
 template<typename K, typename V, typename Alloc_t>
+FORCEINLINE const V& Map<K, V, Alloc_t>::operator[](const K& key) const
+{
+	V* value = this->Get(key);
+	ASSERTF(value == NULL, "Key not found!");
+	return *value;
+}
+
+
+template<typename K, typename V, typename Alloc_t>
 FORCEINLINE void Map<K, V, Alloc_t>::Remove(const K& key)
 {
 	m_RBT.Remove(key);

@@ -16,7 +16,7 @@ enum HashCollisionSolvingMethod
 	CHAINING // Open adressing
 };
 
-template<typename K, typename V, HashCollisionSolvingMethod COLLISION_SOLVING = CHAINING, usize SIZE = 7>
+template<typename K, typename V, HashCollisionSolvingMethod COLLISION_SOLVING = PROBING, usize SIZE = 7>
 class HashMap
 {
 };
@@ -101,7 +101,7 @@ public:
 
 	FORCEINLINE HashNode& Put(K&& key, V&& value);
 
-	FORCEINLINE V* Get(const K& key) const;
+	FORCEINLINE V* GetKeyPtr(const K& key) const;
 
 	FORCEINLINE const V& Get(const K& key);
 

@@ -5,7 +5,8 @@ TRE_NS_START
 
 Map<ComponentTypeID, Vector<uint8>> ECS::m_Components;
 Vector<IEntity*> ECS::m_Entities;
-HashMap<Bitset, BaseSystem*> ECS::m_SignatureList;
+Vector<Archetype> ECS::m_Archetypes;
+HashMap<Bitset, uint32> ECS::m_SigToArchetypes;
 
 ECS::~ECS()
 {
@@ -22,54 +23,28 @@ ECS::~ECS()
 	}*/
 }
 
-void ECS::RegisterSystem(Bitset sig, BaseSystem* sys)
-{ 
-	printf("System registered! (Signature: %s)\n", Utils::ToString(sig).Buffer());
-	m_SignatureList.Emplace(sig, sys); 
-}
-
-void ECS::AddEntityToMatchingSystem(IEntity* entity)
-{
-	BaseSystem** sys;
-
-	if ((sys = m_SignatureList.Get(entity->m_Signature)) != NULL) {
-		(*sys)->AddEntity(entity);
-		printf("Found a system to add entity to (Entity Sig. : %s)!\n", Utils::ToString(entity->m_Signature).Buffer());
-	}
-}
-
-void ECS::RemoveEntityFromSystem(IEntity* entity)
-{
-	BaseSystem** sys;
-
-	if (((sys = m_SignatureList.Get(entity->m_Signature)) != NULL) && (((*sys)->DoesContainEntity(entity)))) {
-		(*sys)->RemoveEntity(entity);
-		printf("Found a system to remove entity from (Entity Sig. : %s)!\n", Utils::ToString(entity->m_Signature).Buffer());
-	}
-}
-
-void ECS::UpdateEntityMatchingSystem(IEntity* entity)
-{
-	ECS::RemoveEntityFromSystem(entity);
-	ECS::AddEntityToMatchingSystem(entity);
-}
 
 EntityHandle ECS::CreateEntity(BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
 {
 	IEntity* entity = new IEntity();
 	entity->m_Id = (EntityID) m_Entities.Size();
-	
-	for (uint32 i = 0; i < numComponents; i++) {
-		if (!BaseComponent::IsValidTypeID(componentIDs[i])) {
-			delete entity;
-			return NULL;
-		}
 
-		entity->m_Signature.Set(componentIDs[i], true);
-		ECS::AddComponentInternal(*entity, componentIDs[i], components[i]);
+	Bitset sig(BaseComponent::GetComponentsCount());
+	for (uint32 i = 0; i < numComponents; i++) {
+		sig.Set(i, true);
 	}
 
-	ECS::AddEntityToMatchingSystem(entity);
+	uint32* arche_index;
+	if ((arche_index = m_SigToArchetypes.GetKeyPtr(sig)) == NULL) {
+		EntityID archtypeid = (EntityID) m_Archetypes.Size();
+		m_SigToArchetypes.Emplace(sig, archtypeid);
+
+		Archetype& archetype = m_Archetypes.EmplaceBack(archtypeid);
+		archetype.AddEntityComponents(*entity, components, componentIDs, numComponents);
+	} else {
+		m_Archetypes[entity->m_ArchetypeId].AddEntityComponents(*entity, components, componentIDs, numComponents);
+	}
+
 	m_Entities.EmplaceBack(entity);
 	return entity;
 }
@@ -77,11 +52,7 @@ EntityHandle ECS::CreateEntity(BaseComponent** components, const ComponentTypeID
 void ECS::DeleteEntity(EntityHandle handle)
 {
 	IEntity* entity = (IEntity*)(handle);
-	ECS::RemoveEntityFromSystem(entity);
-
-	for (uint32 i = 0; i < entity->m_Components.Size(); i++) {
-		DeleteComponent(entity->m_Components[i].first, entity->m_Components[i].second);
-	}
+	m_Archetypes[entity->m_ArchetypeId].RemoveEntityComponents(*entity);
 
 	uint32 destIndex = entity->m_Id;
 	ssize srcIndex = (ssize) m_Entities.Size() - 1;
@@ -95,177 +66,185 @@ void ECS::DeleteEntity(EntityHandle handle)
 	m_Entities.PopBack();
 }
 
-// TODO: For the future if you want multiple components per entity then check these two methods and check wether the bitset already contain 1 or 0 at the 
-// ComponentTypeIndex and act accordingaly.
-
 BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, BaseComponent* component)
 {
-	ComponentCreateFunction createfn = BaseComponent::GetTypeCreateFunction(component_id);
-	Vector<uint8>& components_buffer = m_Components[component_id]; 
-	uint32 index_memory = createfn(components_buffer, &entity, component);
-	entity.AddComponent(component_id, index_memory);
-	ECS::RemoveEntityFromSystem(&entity);
-	entity.m_Signature.Set(component_id, true);
-	ECS::AddEntityToMatchingSystem(&entity);
-	return (BaseComponent*) components_buffer[index_memory];
-}
+	if (entity.m_ArchetypeId != EntityID(-1)) {
+		Archetype& old_archetype = m_Archetypes[entity.m_ArchetypeId];
+		const Bitset& old_sig = old_archetype.GetSignature();
+		Bitset new_sig = old_archetype.GetSignature();
+		new_sig.Set(component_id, true);
+		uint32* arche_index;
+		printf("New signature : %s\n", Utils::ToString(new_sig).Buffer());
+		
+		if ((arche_index = m_SigToArchetypes.GetKeyPtr(new_sig)) == NULL) {
+			printf("No archetypes found.\n");
+			if (old_archetype.GetEntitesCount() == 1) {
+				printf("old archetypes can be transformed.\n");
+				// The old achetype can be transformed to new archetype that will contain our new signature
+				old_archetype.AddComponentType(component_id);
+				old_archetype.AddComponentToEntity(entity, component, component_id);
 
-bool ECS::RemoveComponentInternal(IEntity& entity, uint32 component_id)
-{
-	auto& entity_components = entity.m_Components;
-	usize comp_size = entity_components.Size();
+				// Update the signature to archetype
+				m_SigToArchetypes.Remove(old_sig);
+				m_SigToArchetypes.Emplace(new_sig, entity.m_ArchetypeId);
+			} else { // We have to create new archetype
+				printf("Creating new archetype.\n");
+				// Creating new archetype
+				EntityID archtypeid = (EntityID)m_Archetypes.Size();;
+				m_SigToArchetypes.Emplace(new_sig, archtypeid);
+				Archetype& archetype = m_Archetypes.EmplaceBack(archtypeid);
 
-	for (uint32 i = 0; i < comp_size; i++) {
-		Pair<ComponentTypeID, uint32>& comp = entity_components[i];
+				// Get old components from the former achetype
+				for (auto& components : old_archetype.GetComponentsBuffer()) {
+					// Add old components to the new archetype
+					archetype.AddComponentType(components.first);
+					archetype.AddComponentToEntity(entity, old_archetype.GetComponentInternal(entity, components.second, components.first), components.first);
+				}
 
-		if (comp.first == component_id) {
-			ECS::DeleteComponent(comp.first, comp.second);
-			ssize srcIndex = (ssize) entity.m_Components.Size() - 1;
-			uint32 destIndex = i;
+				// Remove components from the old archetype
+				old_archetype.RemoveEntityComponents(entity); //TODO: carefull here destroctur is being called, mdofiy it to not call it
+				entity.AttachToArchetype(archetype, archetype.m_EntitiesCount++); // Attach the entity to the archetype and entity_count.
+				// add the newly added component
+				archetype.AddComponentType(component_id);
+				return archetype.AddComponentToEntity(entity, component, component_id);
+			}
+		} else { // There is already existing achetype that match the signature
+			printf("There is already existing achetype that match the signature.\n");
+			Archetype& archetype = m_Archetypes[*arche_index];
+			EntityID inetnal_id = archetype.ReseveEntity(); // Reserve place for the new entity
 
-			if (srcIndex)
-				entity.m_Components[destIndex] = entity.m_Components[srcIndex]; // Swap with the last component
+			// Get old components from the former achetype
+			for (auto& components : old_archetype.GetComponentsBuffer()) {
+				// Add old components to the new archetype
+				archetype.UpdateComponentMemoryInternal(inetnal_id, entity, old_archetype.GetComponentInternal(entity, components.second, components.first), components.first);
+			}
 
-			entity.m_Components.PopBack();
-			return true;
+			// Remove components from the old archetype and check wether the old archetype is empty
+			if (!old_archetype.RemoveEntityComponents(entity)) { //TODO: careful here destroctur is being called, mdofiy it to not call it
+				m_SigToArchetypes.Remove(old_sig);
+			}
+
+			entity.AttachToArchetype(archetype, inetnal_id);// attach the entity to the reserved place
+			// add the newly added component
+			return archetype.UpdateComponentMemoryInternal(inetnal_id, entity, component, component_id);
 		}
-	}
+	} else {
+		Bitset new_sig(BaseComponent::GetComponentsCount());
+		new_sig.Set(component_id, true);
+		printf("Does contain key : %d | value : %d | Bitset : %s\n", m_SigToArchetypes.ContainsKey(new_sig), m_SigToArchetypes.Get(new_sig), Utils::ToString(new_sig));
+		uint32* arche_index;
 
-	return false;
-}
-
-void ECS::DeleteComponent(ComponentID id, uint32 mem_index)
-{
-	Vector<uint8>& components_buffer = m_Components[id];
-	ComponentDeleteFunction freefn = BaseComponent::GetTypeDeleteFunction(id);
-	uint32 size = BaseComponent::GetTypeSize(id);
-	uint32 srcIndex = (uint32)components_buffer.Size() - size;
-
-	BaseComponent* destComponent = (BaseComponent*)&components_buffer[mem_index];
-	BaseComponent* srcComponent = (BaseComponent*)&components_buffer[srcIndex];
-	freefn(destComponent);
-
-	if (srcIndex == mem_index) {
-		components_buffer.Resize(srcIndex);
-		return;
-	}
-
-	std::memcpy(destComponent, srcComponent, size);
-	IEntity& entity = *srcComponent->m_Entity;
-	ECS::RemoveEntityFromSystem(&entity);
-	entity.m_Signature.Set(id, false);
-	ECS::AddEntityToMatchingSystem(&entity);
-
-	for (Pair<ComponentTypeID, uint32>& comp : entity.m_Components) {
-		if (comp.first == id && comp.second == srcIndex) {
-			comp.second = mem_index;
-			break;
-		}
-	}
-
-	components_buffer.Resize(srcIndex);
-}
-
-BaseComponent* ECS::GetComponentInternal(IEntity& entity, Vector<uint8>& component_buffer, uint32 component_id)
-{
-	for (Pair<ComponentTypeID, uint32>& comp : entity.m_Components) {
-		if (comp.first == component_id) {
-			return (BaseComponent*) &component_buffer[comp.second];
+		if ((arche_index = m_SigToArchetypes.GetKeyPtr(new_sig)) != NULL) {
+			printf("The entity doesnt have archetype we will create one.\n");
+			// Creating new archetype
+			EntityID archtypeid = (EntityID)m_Archetypes.Size();;
+			m_SigToArchetypes.Emplace(new_sig, archtypeid);
+			Archetype& archetype = m_Archetypes.EmplaceBack(archtypeid);
+			entity.AttachToArchetype(archetype, archetype.m_EntitiesCount++); // Attach the entity to the archetype and entity_count.
+			// add the newly added component
+			archetype.AddComponentType(component_id);
+			return archetype.AddComponentToEntity(entity, component, component_id);
+		} else {
+			printf("There is already existing achetype that match the signature.\n");
+			Archetype& archetype = m_Archetypes[*arche_index];
+			archetype.AddEntity(entity);
+			// add the newly added component
+			return archetype.UpdateComponentMemory(entity, component, component_id);
 		}
 	}
 
 	return NULL;
 }
 
+bool ECS::RemoveComponentInternal(IEntity& entity, uint32 component_id)
+{
+	if (entity.m_ArchetypeId == EntityID(-1)) return false;
+
+	Archetype& old_archetype = m_Archetypes[entity.m_ArchetypeId];
+	const Bitset& old_sig = old_archetype.GetSignature();
+	Bitset new_sig = old_archetype.GetSignature();
+	new_sig.Set(component_id, false);
+	uint32* arche_index;
+
+	if ((arche_index = m_SigToArchetypes.GetKeyPtr(new_sig)) == NULL) {
+		if (old_archetype.GetEntitesCount() == 1) {
+			// The old achetype can be transformed to new archetype, these are done in this order on purpose
+			// So that the components dtor get called before the memory buffer is wiped!
+			old_archetype.RemoveComponent(old_archetype.GetComponentBuffer(component_id), component_id, entity.m_InternalId);
+			old_archetype.RemoveComponentType(component_id);
+
+			// Update the signature to archetype
+			m_SigToArchetypes.Remove(old_sig);
+			m_SigToArchetypes.Emplace(new_sig, entity.m_ArchetypeId);
+		} else { 
+			// Creating new archetype
+			EntityID archtypeid = (EntityID)m_Archetypes.Size();
+			EntityID old_internal_id = entity.m_InternalId;
+			m_SigToArchetypes.Emplace(new_sig, archtypeid);
+			Archetype& archetype = m_Archetypes.EmplaceBack(archtypeid);
+
+			// Get old components from the former achetype
+			for (auto& components : old_archetype.GetComponentsBuffer()) {
+				if (components.first == component_id) //  Don't add the component we are deleting
+					continue;
+
+				// Add other old components to the new archetype
+				archetype.AddComponentType(components.first);
+				archetype.AddComponentToEntity(entity, old_archetype.GetComponentInternal(entity, components.second, components.first), components.first);
+			}
+
+			// Remove components from the old archetype
+			old_archetype.RemoveEntityComponents(entity); // Component dtor being called here
+			entity.AttachToArchetype(archetype, archetype.m_EntitiesCount++); // Attach the entity to the archetype and increment its entity_count.
+		}
+	} else {
+		// There is already existing achetype that match the signature
+		Archetype& archetype = m_Archetypes[*arche_index];
+		EntityID inetnal_id = archetype.ReseveEntity(); // Reserve place for the new entity
+
+		// Get old components from the former achetype
+		for (auto& components : old_archetype.GetComponentsBuffer()) {
+			if (components.first == component_id) //  Don't add the component we are deleting
+				continue;
+
+			// Add old components to the new archetype
+			archetype.UpdateComponentMemoryInternal(inetnal_id, entity, old_archetype.GetComponentInternal(entity, components.second, components.first), components.first);
+		}
+
+		// Remove components from the old archetype and check wether the old archetype is empty
+		if (!old_archetype.RemoveEntityComponents(entity)) { //TODO: careful here destroctur is being called, mdofiy it to not call it
+			m_SigToArchetypes.Remove(old_sig);
+		}
+
+		entity.AttachToArchetype(archetype, inetnal_id);// attach the entity to the reserved place
+	}
+
+	return true;
+}
+
+BaseComponent* ECS::GetComponentInternal(const Archetype& archetype, const IEntity& entity, uint32 component_id)
+{
+	return archetype.GetComponent(entity, component_id);
+}
+
 void ECS::UpdateSystems(SystemList& system_list, float delta)
 {
 	usize systems_sz = system_list.GetSize();
-	//Vector<BaseComponent*> component_param;
-	//Vector<Vector<uint8>*> component_arrays;
 
 	for (uint32 i = 0; i < systems_sz; i++) {
-		//const BaseSystem::SystemComponent* component_types_flags = system_list[i]->GetSystemComponents();
-		//uint32 component_types_size = system_list[i]->GetComponentsCount();
 		BaseSystem& system = *system_list[i];
 
-		for (IEntity* entity : system.GetEntities()) {
-			system.UpdateEntities(delta, *entity);
-		}
-
-		/*if (component_types_size == 1) {
-			uint32 typeSize = BaseComponent::GetTypeSize(component_types_flags[0].first);
-			Vector<uint8>& comp_buffer = m_Components[component_types_flags[0].first];
-
-			for (uint32 j = 0; j < (uint32) comp_buffer.Size(); j += typeSize) {
-				BaseComponent* component = (BaseComponent*) &comp_buffer[j];
-				system_list[j]->UpdateComponents(delta, &component);
+		uint32* index;
+		if ((index = m_SigToArchetypes.GetKeyPtr(system.GetSignature())) != NULL) {
+			printf("Archetype index : %d | System Bitset : %s | Number of components to update : %d\n", *index, Utils::ToString(system.GetSignature()).Buffer(), m_Archetypes[*index].GetEntitesCount());
+			for (auto& components : m_Archetypes[*index].GetComponentsBuffer()) {
+				for (uint32 i = 0; i < components.second.Size(); i += BaseComponent::GetTypeSize(components.first)) {
+					system.UpdateComponents(delta, components.first, (BaseComponent*)&components.second[i]);
+				}
 			}
-		}else {
-			UpdateSystemWithMultipleComponents(system_list, i, delta, component_types_flags, component_param, component_arrays);
-		}*/
-	}
-}
-
-/*void ECS::UpdateSystemWithMultipleComponents(SystemList& system_list, uint32 index, float delta, 
-	const BaseSystem::SystemComponent* component_types_flags, 
-	Vector<BaseComponent*>& component_param, 
-	Vector<Vector<uint8>*>& component_arrays)
-{
-	uint32 component_types_size = system_list[index]->GetComponentsCount();
-	component_param.Resize(MAX(component_param.Size(), component_types_size));
-	component_arrays.Resize(MAX(component_arrays.Size(), component_types_size));
-
-	for (uint32 i = 0; i < component_types_size; i++) {
-		component_arrays[i] = &m_Components[component_types_flags[i].first]; // type
-	}
-
-	uint32 min_size_index = ECS::FindLeastCommonComponent(component_types_flags, component_types_size); // type, flag
-	uint32 typeSize = BaseComponent::GetTypeSize(component_types_flags[min_size_index].first);
-	Vector<uint8>& min_comp_buffer = *component_arrays[min_size_index];
-	
-	for (uint32 i = 0; i < (uint32) min_comp_buffer.Size(); i += typeSize) {
-		component_param[min_size_index] = (BaseComponent*) &min_comp_buffer[i];
-		IEntity* entity = static_cast<IEntity*>(component_param[min_size_index]->m_Entity);
-		bool is_valid = true;
-
-		for (uint32 j = 0; j < component_types_size; j++) {
-			if (j == min_size_index) {
-				continue;
-			}
-
-			component_param[j] = ECS::GetComponentInternal(*entity, *component_arrays[j], component_types_flags[j].first);
-			if (component_param[j] == NULL && (component_types_flags[j].second & BaseSystem::FLAG_OPTIONAL) == 0) {
-				is_valid = false;
-				break;
-			}
-		}
-
-		if (is_valid) {
-			system_list[index]->UpdateComponents(delta, &component_param[0]);
 		}
 	}
 }
 
-uint32 ECS::FindLeastCommonComponent(const BaseSystem::SystemComponent* component_types_flags, uint32 N)
-{
-	uint32 min_index = (uint32) -1;
-	uint32 min_size = (uint32) -1;
-
-	for (uint32 i = 0; i < N; i++) {
-		if ((component_types_flags[i].second & BaseSystem::FLAG_OPTIONAL) != 0)  {
-			continue;
-		}
-
-		uint32 type_size = BaseComponent::GetTypeSize(component_types_flags[i].first);
-		uint32 size = (uint32) m_Components[component_types_flags[i].first].Size() / type_size;
-
-		if (size <= min_size) {
-			min_size = size;
-			min_index = i;
-		}
-	}
-
-	return min_index;
-}*/
 
 TRE_NS_END

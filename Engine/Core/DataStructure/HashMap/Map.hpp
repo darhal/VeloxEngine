@@ -29,6 +29,8 @@ public:
 
 	FORCEINLINE V& operator[](const K& key);
 
+	FORCEINLINE const V& operator[](const K& key) const;
+
 	FORCEINLINE void Remove(const K& key);
 
 	FORCEINLINE bool ContainsKey(const K& key) const;

@@ -160,7 +160,9 @@
     <ClCompile Include="Core\Context\Extensions.cpp" />
     <ClCompile Include="Core\DataStructure\Bitset\Bitset.cpp" />
     <ClCompile Include="Core\DataStructure\StringBuffer\StringBuffer.inl" />
+    <ClCompile Include="Core\ECS\Archetype\Archetype.cpp" />
     <ClCompile Include="Core\ECS\Component\BaseComponent.cpp" />
+    <ClCompile Include="Core\ECS\Entity\IEntity\IEntity.cpp" />
     <ClCompile Include="Core\ECS\Manager\ECS.cpp" />
     <ClCompile Include="Core\ECS\System\BaseSystem.cpp" />
     <ClCompile Include="Core\ECS\System\SystemList.cpp" />
@@ -312,6 +314,7 @@
     <ClInclude Include="Core\DataStructure\Tuple\Tuple.hpp" />
     <ClInclude Include="Core\DataStructure\Utils\Utils.hpp" />
     <ClInclude Include="Core\DataStructure\Vector\Vector.hpp" />
+    <ClInclude Include="Core\ECS\Archetype\Archetype.hpp" />
     <ClInclude Include="Core\ECS\Component\BaseComponent.hpp" />
     <ClInclude Include="Core\ECS\Manager\ECS.hpp" />
     <ClInclude Include="Core\ECS\Listener\Listener.hpp" />

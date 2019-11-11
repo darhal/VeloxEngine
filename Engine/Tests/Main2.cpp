@@ -509,24 +509,15 @@ public:
 	{
 	}
 
-	virtual void UpdateComponents(float delta, BaseComponent** components)
+	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
 	{
-		TestComponent* test = (TestComponent*) components[0];
-		TestComponent2* test2 = (TestComponent2*) components[1];
-		LOG::Write("Updating the componenet : %d", test->smthg);
-		LOG::Write("Updating the componenet : %s", test2->test.Buffer());
-	}
-
-	virtual void UpdateEntities(float delta, IEntity& entity)
-	{
-		for (Pair<ComponentTypeID, uint32>& comp : entity.GetComponentsData()) {
-			if (comp.first == TestComponent::ID) {
-				TestComponent& test = *(TestComponent*)(&ECS::GetComponentBuffer(TestComponent::ID)[comp.second]);
-				LOG::Write("Updating the componenet : %d", test.smthg);
-			}else if (comp.first == TestComponent2::ID) {
-				TestComponent2& test2 = *(TestComponent2*)(&ECS::GetComponentBuffer(TestComponent2::ID)[comp.second]);
-				LOG::Write("Updating the componenet : %s", test2.test.Buffer());
-			}
+		printf("System A [ComponentType : %d]\n", comp_type);
+		if (comp_type == TestComponent::ID) {
+			TestComponent& test = *(TestComponent*)components;
+			LOG::Write("Updating the componenet : %d", test.smthg);
+		} else {
+			TestComponent2& test2 = *(TestComponent2*)components;
+			LOG::Write("Updating the componenet : %s", test2.test.Buffer());
 		}
 	}
 };
@@ -538,19 +529,12 @@ public:
 	{
 	}
 
-	virtual void UpdateComponents(float delta, BaseComponent** components)
+	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
 	{
-		TestComponent* test = (TestComponent*)components[0];
-		LOG::Write("Updating the componenet : %d", test->smthg);
-	}
-
-	virtual void UpdateEntities(float delta, IEntity& entity)
-	{
-		for (Pair<ComponentTypeID, uint32>& comp : entity.GetComponentsData()) {
-			if (comp.first == TestComponent::ID) {
-				TestComponent& test = *(TestComponent*)(&ECS::GetComponentBuffer(TestComponent::ID)[comp.second]);
-				LOG::Write("Updating the componenet : %d", test.smthg);
-			}
+		printf("System B [ComponentType : %d]\n", comp_type);
+		if (comp_type == TestComponent::ID) {
+			TestComponent& test = *(TestComponent*)components;
+			LOG::Write("Updating the componenet : %d", test.smthg);
 		}
 	}
 };
@@ -562,19 +546,12 @@ public:
 	{
 	}
 
-	virtual void UpdateComponents(float delta, BaseComponent** components)
+	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
 	{
-		TestComponent2* test2 = (TestComponent2*)components[0];
-		LOG::Write("Updating the componenet : %s", test2->test.Buffer());
-	}
-
-	virtual void UpdateEntities(float delta, IEntity& entity)
-	{
-		for (Pair<ComponentTypeID, uint32>& comp : entity.GetComponentsData()) {
-			if (comp.first == TestComponent2::ID) {
-				TestComponent2& test2 = *(TestComponent2*)(&ECS::GetComponentBuffer(TestComponent2::ID)[comp.second]);
-				LOG::Write("Updating the componenet : %s", test2.test.Buffer());
-			}
+		printf("System C [ComponentType : %d]\n", comp_type);
+		if (comp_type == TestComponent2::ID) {
+			TestComponent2& test2 = *(TestComponent2*)components;
+			LOG::Write("Updating the componenet : %s", test2.test.Buffer());
 		}
 	}
 };
@@ -586,6 +563,7 @@ class EntityA : public IEntity
 
 #include <Core/DataStructure/Bitset/Bitset.hpp>
 #include <unordered_map>
+#include <Core/DataStructure/Utils/Utils.hpp>
 
 #define INIT_BENCHMARK std::chrono::time_point<std::chrono::high_resolution_clock> start, end; std::chrono::microseconds duration;
 
@@ -598,10 +576,13 @@ class EntityA : public IEntity
 
 int main()
 {
+	/*HashMap<Bitset, bool> map;
+	Bitset new_sig(BaseComponent::GetComponentsCount());
+	new_sig.Set(1, true);
+	printf("Contain key ? : %d (Bitset: %s)\n", map.ContainsKey(new_sig), Utils::ToString(new_sig));*/
 	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
 	SystemList mainSystems;
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
-	test_systemA.RegisterSystem(); test_systemB.RegisterSystem(); test_systemC.RegisterSystem();
 	mainSystems.AddSystem(&test_systemA); mainSystems.AddSystem(&test_systemB); mainSystems.AddSystem(&test_systemC);
 
 	EntityA* entity = ECS::CreateEntity<EntityA>();

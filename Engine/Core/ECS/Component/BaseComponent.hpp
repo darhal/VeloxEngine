@@ -9,7 +9,7 @@ TRE_NS_START
 typedef class IEntity* EntityHandle;
 typedef uint32 ComponentID;
 typedef uint32 ComponentTypeID;
-typedef uint32(*ComponentCreateFunction)(Vector<uint8>&, EntityHandle, struct BaseComponent*);
+typedef struct BaseComponent*(*ComponentCreateFunction)(Vector<uint8>&, uint32, EntityHandle, struct BaseComponent*);
 typedef void(*ComponentDeleteFunction)(struct BaseComponent*);
 
 struct BaseComponent
@@ -47,13 +47,13 @@ public:
 	}
 
 	template<typename Component>
-	static uint32 CreateComponent(Vector<uint8>& memory, EntityHandle entity, BaseComponent* comp)
+	static BaseComponent* CreateComponent(Vector<uint8>& memory, uint32 index, EntityHandle entity, BaseComponent* comp)
 	{
-		uint32 index = (uint32) memory.Size();
-		memory.Resize(index + Component::SIZE);
+		/*uint32 index = (uint32) memory.Size();
+		memory.Resize(index + Component::SIZE);*/
 		Component* component = new(&memory[index]) Component(*(Component*)comp);
 		component->m_Entity = entity;
-		return index;
+		return (BaseComponent*) component;
 	}
 
 	template<typename Component>

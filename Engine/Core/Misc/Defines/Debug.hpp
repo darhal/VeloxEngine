@@ -18,26 +18,14 @@
 #else
 	#include <Core/Misc/Utils/Logging.hpp>
 
-	#if defined(COMPILER_MSVC) && (CPU_ARCH == CPU_ARCH_x86)
-		#define DEBUG_BREAK() __asm { int 3 }
-	#elif defined(OS_WINDOWS) && (CPU_ARCH == CPU_ARCH_x86_64)
-		#include <Windows.h>
-		#include <debugapi.h>
-
-		typedef LONG(NTAPI *NtSuspendProcess)(IN HANDLE ProcessHandle);
-
-		FORCEINLINE void Suspend(DWORD processId)
-		{
-			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
-			NtSuspendProcess pfnNtSuspendProcess = (NtSuspendProcess) GetProcAddress(GetModuleHandle("ntdll"), "NtSuspendProcess");
-			pfnNtSuspendProcess(processHandle);
-			CloseHandle(processHandle);
-		}
-
-		#define DEBUG_BREAK() Suspend(GetCurrentProcessId());
-	#elif defined(OS_UNIX) || defined(OS_LINUX)
+	#if defined(OS_WINDOWS) && (CPU_ARCH == CPU_ARCH_x86_64 || CPU_ARCH == CPU_ARCH_x86)
+        #include <intrin.h>
+		#define DEBUG_BREAK() __debugbreak() 
+	#elif defined(OS_UNIX) || defined(OS_LINUX) && not defined(COMPILER_GCC)
 		#include <signal.h>
 		#define DEBUG_BREAK() raise(SIGINT);
+    #elif defined(OS_UNIX) || defined(OS_LINUX) || defined(OS_APPLE)
+        #define DEBUG_BREAK() __builtin_trap();
 	#else
 		#define DEBUG_BREAK()
 	#endif

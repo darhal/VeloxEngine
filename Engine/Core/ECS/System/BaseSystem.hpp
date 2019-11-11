@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/Misc/Defines/Common.hpp>
+#include <Core/DataStructure/HashMap/Map.hpp>
 #include <Core/DataStructure/Vector/Vector.hpp>
 #include <Core/ECS/Component/BaseComponent.hpp>
 #include <Core/DataStructure/Tuple/Pair.hpp>
@@ -11,49 +12,20 @@ TRE_NS_START
 class BaseSystem
 {
 public:
-	using SystemComponent = ComponentTypeID;
-
 	enum {
 		FLAG_OPTIONAL = 1,
 	};
 
-	BaseSystem() {}
+	virtual void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) {};
 
-	virtual void UpdateComponents(float delta, BaseComponent** components) {};
+	virtual const ComponentTypeID* const GetComponentsTypes() const = 0;
 
-	virtual void UpdateEntities(float delta, IEntity& entity) {};
+	virtual const Bitset& GetSignature() const = 0;
 
-	const SystemComponent* GetSystemComponents() const
-	{
-		return m_Components;
-	}
-
-	uint32 GetComponentsCount() const { return m_ComponentsCount; }
-
-	bool IsValid();
-
-	void AddEntity(IEntity* entity);
-
-	void RemoveEntity(IEntity* entity);
-
-	const Vector<IEntity*>& GetEntities() const { return m_Entities; }
-
-	Vector<IEntity*>& GetEntities() { return m_Entities; }
-
-	usize GetEntitiesCount() { return m_Entities.Size(); }
-
-	void RegisterSystem();
-
-	bool DoesContainEntity(IEntity* entity);
+	virtual uint32 GetComponentsCount() const = 0;
 protected:
-	BaseSystem(SystemComponent* comps, uint32 comp_count = 0);
+	BaseSystem() {};
 
-protected:
-	Vector<IEntity*> m_Entities;
-	Bitset m_Signature;
-	SystemComponent* m_Components;
-	uint32 m_ComponentsCount;
-	
 	friend class ECS;
 };
 
@@ -61,21 +33,27 @@ template<typename... Components>
 class System : public BaseSystem
 {
 protected:
-	CONSTEXPR static uint32 COMPONENT_CPACITY = sizeof...(Components);
-	
+	CONSTEXPR static uint32 COMPONENTS_COUNT = sizeof...(Components);
+
 	System() : 
-		m_Components{ static_cast<SystemComponent>(Components::ID)... },
-		BaseSystem(m_Components, COMPONENT_CPACITY)
+		m_ComponentsTypes{ static_cast<ComponentTypeID>(Components::ID)... },
+		m_Signature(BaseComponent::GetComponentsCount())
 	{
-		uint32 size = COMPONENT_CPACITY;
+		uint32 size = COMPONENTS_COUNT;
 
 		while (size--) {
-			m_Signature.Set(m_Components[size], true);
+			m_Signature.Set(m_ComponentsTypes[size], true);
 		}
 	}
 
+	FORCEINLINE const ComponentTypeID* const GetComponentsTypes() const final { return m_ComponentsTypes;  };
+
+	FORCEINLINE const Bitset& GetSignature() const final { return m_Signature; };
+
+	FORCEINLINE uint32 GetComponentsCount() const final { return COMPONENTS_COUNT; };
 private:
-	SystemComponent m_Components[COMPONENT_CPACITY];
+	ComponentTypeID m_ComponentsTypes[COMPONENTS_COUNT];
+	Bitset m_Signature;
 };
 
 TRE_NS_END

@@ -12,9 +12,7 @@ typedef uint32 EntityID;
 class IEntity
 {
 public:
-
-	IEntity() : m_Components(), m_Signature(BaseComponent::GetComponentsCount()),
-		m_Id(0), m_InternalId(0)
+	IEntity() : m_ArchetypeId(0), m_Id(0), m_InternalId(0)
 	{}
 
 	typedef uint32 IndexInMemory;
@@ -34,25 +32,18 @@ public:
 
 	template<typename Component>
 	FORCEINLINE BaseComponent* GetComponent();
-
-	const Vector<Pair<ComponentTypeID, IndexInMemory>>& GetComponentsData() const { return m_Components; }
 protected:
-	Vector<Pair<ComponentTypeID, IndexInMemory>> m_Components;
-	Bitset m_Signature;
+	EntityID m_ArchetypeId;
 	EntityID m_Id;
-	uint32 m_InternalId;
+	EntityID m_InternalId;
 	
 	friend class ECS;
 	friend class BaseSystem;
+	friend class Archetype;
 
 private:
-	FORCEINLINE void AddComponent(ComponentTypeID type_id, IndexInMemory index_in_mem);
+	uint32 AttachToArchetype(const class Archetype& arcehtype, EntityID internal_id);
 };
-
-FORCEINLINE void IEntity::AddComponent(ComponentTypeID type_id, IndexInMemory index_in_mem)
-{
-	m_Components.EmplaceBack(type_id, index_in_mem);
-}
 
 template<typename Component>
 FORCEINLINE Component* IEntity::AddComponent(Component& comp)

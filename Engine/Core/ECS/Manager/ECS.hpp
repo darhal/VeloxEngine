@@ -7,6 +7,7 @@
 #include <Core/DataStructure/HashMap/Map.hpp>
 #include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <Core/ECS/Component/BaseComponent.hpp>
+#include <Core/ECS/Archetype/Archetype.hpp>
 #include <Core/ECS/Entity/IEntity/IEntity.hpp>
 #include <Core/ECS/System/BaseSystem.hpp>
 #include <Core/ECS/System/SystemList.hpp>
@@ -34,29 +35,21 @@ public:
 	static FORCEINLINE bool RemoveComponent(IEntity& entity);
 
 	template<typename Component>
-	static FORCEINLINE BaseComponent* GetComponent(IEntity& entity);
+	static FORCEINLINE BaseComponent* GetComponent(const IEntity& entity);
 
 	static FORCEINLINE const Vector<uint8>& GetComponentBuffer(ComponentTypeID type_id) { return m_Components[type_id];}
 
 	// Systems : 
 	static void UpdateSystems(SystemList& system_list, float delta);
-
-	static void RegisterSystem(Bitset sig, BaseSystem* sys);
-
-	static void AddEntityToMatchingSystem(IEntity* entity);
-
-	static void RemoveEntityFromSystem(IEntity* entity);
-
-	static void UpdateEntityMatchingSystem(IEntity* entity);
 private:
-	static Map<ComponentTypeID, Vector<uint8>> m_Components; // index is Component type ID.
+	static Map<ComponentTypeID, Vector<uint8>> m_Components;
 	static Vector<IEntity*> m_Entities;
-	static HashMap<Bitset, BaseSystem*> m_SignatureList;
+	static Vector<Archetype> m_Archetypes;
+	static HashMap<Bitset, uint32> m_SigToArchetypes;
 
 	static BaseComponent* AddComponentInternal(IEntity& entity, uint32 component_id, BaseComponent* component);
-	static void DeleteComponent(ComponentID id, uint32 mem_index);
 	static bool RemoveComponentInternal(IEntity& entity, uint32 component_id);
-	static BaseComponent* GetComponentInternal(IEntity& entity, Vector<uint8>& component_buffer, uint32 component_id);
+	static BaseComponent* GetComponentInternal(const Archetype& archetype, const IEntity& entity, uint32 component_id);
 	/*static void UpdateSystemWithMultipleComponents(
 		SystemList& system_list, uint32 index, float delta, const BaseSystem::SystemComponent* component_types_flags, 
 		Vector<BaseComponent*>& component_param, Vector<Vector<uint8>*>& component_arrays
@@ -69,8 +62,11 @@ FORCEINLINE Entity* ECS::CreateEntity(Args&&... args)
 {
 	static_assert(std::is_base_of<IEntity, Entity>::value, "Entity should be derived from IEntity!");
 
+	// Adding empty component we dont need any archetype for this
 	Entity* entity = new Entity(std::forward<Args>(args)...);
 	entity->m_Id = (EntityID) m_Entities.Size();
+	entity->m_ArchetypeId = -1;
+	entity->m_InternalId = -1;
 	m_Entities.EmplaceBack(entity);
 	return entity;
 }
@@ -88,9 +84,9 @@ bool ECS::RemoveComponent(IEntity& entity)
 }
 
 template<typename Component>
-FORCEINLINE BaseComponent* ECS::GetComponent(IEntity& entity)
+FORCEINLINE BaseComponent* ECS::GetComponent(const IEntity& entity)
 {
-	return (Component*) ECS::GetComponentInternal(entity, m_Components[Component::ID], Component::ID);
+	return (Component*) ECS::GetComponentInternal(m_Archetypes[m_SigToArchetypes[entity]], entity,  Component::ID);
 }
 
 TRE_NS_END

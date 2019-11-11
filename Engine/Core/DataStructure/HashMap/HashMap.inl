@@ -58,7 +58,6 @@ FORCEINLINE const V& HashMap<K, V, CHAINING, S>::Get(const K& key) const
 			return node.second;
 		}
 	}
-	this->Put();
 }
 
 template<typename K, typename V, usize S>
@@ -68,15 +67,16 @@ FORCEINLINE V& HashMap<K, V, CHAINING, S>::operator[](const K& key)
 	if (res) {
 		return *res;
 	}
-	HashNode* n = this->Put(key);
-	return n->second;
+	HashNode& n = this->Put(key, V());
+	return n.second;
 }
 
 template<typename K, typename V, usize S>
 FORCEINLINE void HashMap<K, V, CHAINING, S>::Remove(const K& key)
 {
 	usize index = this->CalculateIndex(key);
-	for (typename HashTab_t::Iterator it = m_HashTable.begin(); it != m_HashTable.end(); it++) {
+	HashTab_t& tab = m_HashTable[index];
+	for (typename HashTab_t::Iterator it = tab.begin(); it != tab.end(); it++) {
 		m_HashTable->Erease(it);
 	}
 }
@@ -207,7 +207,7 @@ FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode& HashMap<K, V, PROBING,
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE V* HashMap<K, V, PROBING, S>::Get(const K& key) const
+FORCEINLINE V* HashMap<K, V, PROBING, S>::GetKeyPtr(const K& key) const
 {
 	if (m_HashTable == NULL)
 		return NULL;
@@ -342,7 +342,7 @@ FORCEINLINE V& HashMap<K, V, PROBING, S>::operator[](const K& key)
 template<typename K, typename V, usize S>
 FORCEINLINE V& HashMap<K, V, PROBING, S>::operator[](const K& key) const
 {
-	V* ptr = this->Get(key);
+	V* ptr = this->GetKeyPtr(key);
 	ASSERTF(ptr == NULL, "Attempt to access element at an invalid key.");
 	return *ptr;
 }
@@ -381,7 +381,8 @@ FORCEINLINE void HashMap<K, V, PROBING, S>::Remove(const K& key)
 template<typename K, typename V, usize S>
 FORCEINLINE bool HashMap<K, V, PROBING, S>::ContainsKey(const K& key) const
 {
-	return !(this->Get(key));
+	V* ptr = this->GetKeyPtr(key);
+	return (bool)(ptr);
 }
 
 template<typename K, typename V, usize S>
