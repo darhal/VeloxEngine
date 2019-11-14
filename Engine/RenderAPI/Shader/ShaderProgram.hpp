@@ -16,7 +16,7 @@ class Shader;
 class ShaderProgram
 {
 public:
-	typedef HashMap<String, int32, PROBING>::HashNode Uniform;
+	typedef HashMap<String, int32, PROBING>::HashPair Uniform;
 
 public:
 	uint32 m_ID;

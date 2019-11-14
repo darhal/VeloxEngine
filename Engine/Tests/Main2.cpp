@@ -576,11 +576,33 @@ class EntityA : public IEntity
 
 int main()
 {
-	/*HashMap<Bitset, bool> map;
+	HashMap<Bitset, uint32> map;
+	Vector<Bitset> set;
 	Bitset new_sig(BaseComponent::GetComponentsCount());
+	new_sig.Set(0, true);
+	printf("Contain key ? : %d (SHOULD BE 0) (Bitset: %s)\n", map.ContainsKey(new_sig), Utils::ToString(new_sig).Buffer());
+	map.Emplace(new_sig, 1);
+	set.EmplaceBack(new_sig);
+	printf("Contain key ? : %d (SHOULD BE 1) (Bitset: %s)\n", map.ContainsKey(new_sig), Utils::ToString(new_sig).Buffer());
+	map.Remove(new_sig);
+	printf("Contain key ? : %d (SHOULD BE 0) (Bitset: %s)\n", map.ContainsKey(new_sig), Utils::ToString(new_sig).Buffer());
+	Bitset old_sig(new_sig);
 	new_sig.Set(1, true);
-	printf("Contain key ? : %d (Bitset: %s)\n", map.ContainsKey(new_sig), Utils::ToString(new_sig));*/
-	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
+	map.Emplace(new_sig, 1);
+	set.EmplaceBack(new_sig);
+	printf("Contain key ? : %d (SHOULD BE 1) (Bitset: %s)\n", map.ContainsKey(new_sig), Utils::ToString(new_sig).Buffer());
+	printf("Contain key ? : %d (SHOULD BE 0) (Bitset: %s)\n", map.ContainsKey(old_sig), Utils::ToString(old_sig).Buffer());
+	
+	printf("-----------------------------------------------------\n");
+	for (auto& p : map) {
+		printf("[Key: %s - Value: %d]\n", Utils::ToString(p.first).Buffer(), p.second);
+	}
+	
+	for (Bitset& b : set) {
+		printf("Contain key ? : %d (Bitset: %s)\n", map.ContainsKey(b), Utils::ToString(b).Buffer());
+	}
+
+	/*LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
 	SystemList mainSystems;
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
 	mainSystems.AddSystem(&test_systemA); mainSystems.AddSystem(&test_systemB); mainSystems.AddSystem(&test_systemC);
@@ -589,7 +611,7 @@ int main()
 	entity->CreateComponent<TestComponent>(5);
 	entity->CreateComponent<TestComponent2>("Hello there!");
 
-	IEntity* entity2 = (IEntity*)ECS::CreateEntity<EntityA>();
+	//IEntity* entity2 = (IEntity*)ECS::CreateEntity<EntityA>();
 	// entity2->CreateComponent<TestComponent>(5);
 
 	char c;
@@ -609,7 +631,7 @@ int main()
 			entity->CreateComponent<TestComponent2>("Yoohoo");
 			entity->CreateComponent<TestComponent>(9);
 		}
-	}while(c !=  'c');
+	}while(c !=  'c');*/
 	
 
 	getchar();

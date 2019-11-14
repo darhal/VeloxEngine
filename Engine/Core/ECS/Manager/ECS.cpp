@@ -78,6 +78,11 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 		
 		if ((arche_index = m_SigToArchetypes.GetKeyPtr(new_sig)) == NULL) {
 			printf("No archetypes found.\n");
+			printf("-------------------------\n");
+			for (auto& p : m_SigToArchetypes) {
+				printf("[KEY: %s VALUE: %d]\n", Utils::ToString(p.first).Buffer(), p.second);
+			}
+			printf("-------------------------\n");
 			if (old_archetype.GetEntitesCount() == 1) {
 				printf("old archetypes can be transformed.\n");
 				// The old achetype can be transformed to new archetype that will contain our new signature
@@ -87,6 +92,12 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 				// Update the signature to archetype
 				m_SigToArchetypes.Remove(old_sig);
 				m_SigToArchetypes.Emplace(new_sig, entity.m_ArchetypeId);
+				printf("-------------------------\n");
+				for (auto& p : m_SigToArchetypes) {
+					printf("[KEY: %s VALUE: %d]\n", Utils::ToString(p.first).Buffer(), p.second);
+				}
+				printf("-------------------------\n");
+				printf("New signature : %s | arche_id = %d\n", Utils::ToString(new_sig).Buffer(), entity.m_ArchetypeId);
 			} else { // We have to create new archetype
 				printf("Creating new archetype.\n");
 				// Creating new archetype
@@ -131,10 +142,10 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 	} else {
 		Bitset new_sig(BaseComponent::GetComponentsCount());
 		new_sig.Set(component_id, true);
-		printf("Does contain key : %d | value : %d | Bitset : %s\n", m_SigToArchetypes.ContainsKey(new_sig), m_SigToArchetypes.Get(new_sig), Utils::ToString(new_sig));
+		// printf("Does contain key : %d | value : %d | Bitset : %s\n", m_SigToArchetypes.ContainsKey(new_sig), m_SigToArchetypes.Get(new_sig), Utils::ToString(new_sig));
 		uint32* arche_index;
 
-		if ((arche_index = m_SigToArchetypes.GetKeyPtr(new_sig)) != NULL) {
+		if ((arche_index = m_SigToArchetypes.GetKeyPtr(new_sig)) == NULL) {
 			printf("The entity doesnt have archetype we will create one.\n");
 			// Creating new archetype
 			EntityID archtypeid = (EntityID)m_Archetypes.Size();;
@@ -143,6 +154,7 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 			entity.AttachToArchetype(archetype, archetype.m_EntitiesCount++); // Attach the entity to the archetype and entity_count.
 			// add the newly added component
 			archetype.AddComponentType(component_id);
+
 			return archetype.AddComponentToEntity(entity, component, component_id);
 		} else {
 			printf("There is already existing achetype that match the signature.\n");
@@ -231,12 +243,18 @@ void ECS::UpdateSystems(SystemList& system_list, float delta)
 {
 	usize systems_sz = system_list.GetSize();
 
+	printf("-------------------------\n");
+	for (auto& p : m_SigToArchetypes) {
+		printf("Archetype index : %d | System Bitset : %s | Number of components to update : %d\n", p.second,
+			Utils::ToString(p.first).Buffer(), m_Archetypes[p.second].GetEntitesCount());
+	}
+	printf("-------------------------\n");
+
 	for (uint32 i = 0; i < systems_sz; i++) {
 		BaseSystem& system = *system_list[i];
 
 		uint32* index;
 		if ((index = m_SigToArchetypes.GetKeyPtr(system.GetSignature())) != NULL) {
-			printf("Archetype index : %d | System Bitset : %s | Number of components to update : %d\n", *index, Utils::ToString(system.GetSignature()).Buffer(), m_Archetypes[*index].GetEntitesCount());
 			for (auto& components : m_Archetypes[*index].GetComponentsBuffer()) {
 				for (uint32 i = 0; i < components.second.Size(); i += BaseComponent::GetTypeSize(components.first)) {
 					system.UpdateComponents(delta, components.first, (BaseComponent*)&components.second[i]);

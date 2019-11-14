@@ -16,7 +16,7 @@ enum HashCollisionSolvingMethod
 	CHAINING // Open adressing
 };
 
-template<typename K, typename V, HashCollisionSolvingMethod COLLISION_SOLVING = PROBING, usize SIZE = 7>
+template<typename K, typename V, HashCollisionSolvingMethod COLLISION_SOLVING = PROBING, usize SIZE = 19>
 class HashMap
 {
 };
@@ -76,7 +76,18 @@ template<typename K, typename V, usize SIZE>
 class HashMap<K, V, PROBING, SIZE>
 {
 public:
-	typedef Pair<K, V> HashNode;
+	typedef Pair<K, V> HashPair;
+
+	struct HashNode {
+		enum NodeTag { FREE = 0, OCCUPIED = 1, TOMBSTONE = 2 };
+
+		HashNode(HashNode&& other) : pair(std::move(other.pair)), tag(other.tag)
+		{}
+
+		HashPair pair;
+		uint8 tag;
+	};
+
 	typedef HashNode* HashTab_t;
 	typedef HashMap<K, V, PROBING, SIZE> HT;
 
@@ -92,22 +103,22 @@ public:
 	~HashMap();
 
 	template<typename... Args>
-	FORCEINLINE HashNode& Emplace(const K& key, Args&&... args);
+	FORCEINLINE HashPair& Emplace(const K& key, Args&&... args);
 
 	template<typename... Args>
-	FORCEINLINE HashNode& Emplace(K&& key, Args&&... args);
+	FORCEINLINE HashPair& Emplace(K&& key, Args&&... args);
 
-	FORCEINLINE HashNode& Put(const K& key, const V& value);
+	FORCEINLINE HashPair& Put(const K& key, const V& value);
 
-	FORCEINLINE HashNode& Put(K&& key, V&& value);
+	FORCEINLINE HashPair& Put(K&& key, V&& value);
 
 	FORCEINLINE V* GetKeyPtr(const K& key) const;
 
 	FORCEINLINE const V& Get(const K& key);
 
-	FORCEINLINE const HashNode& GetPair(const K& key) const;
+	FORCEINLINE const HashPair& GetPair(const K& key) const;
 
-	FORCEINLINE HashNode* GetPairPtr(const K& key) const;
+	FORCEINLINE HashPair* GetPairPtr(const K& key) const;
 
 	FORCEINLINE V& operator[](const K& key);
 
@@ -155,7 +166,7 @@ private:
 
 	static const usize  DEFAULT_LIST_CAPACITY = SIZE;
 	static const double DEFAULT_LOAD_FACTOR;
-	static const int8	TOMBSTONE_MARKER	  = -1;
+	static const uint8	TOMBSTONE_MARKER	  = HashNode::TOMBSTONE;
 
 	HashTab_t m_HashTable;
 	usize m_Capacity;
@@ -171,7 +182,7 @@ public:
 		GIterator(const HashMap<K, V, PROBING, SIZE>* instance) noexcept : m_CurrentNode(m_Instance->m_HashTable), m_Instance(instance) { }
 		GIterator(const HashMap<K, V, PROBING, SIZE>* instance, DataType n) noexcept : m_CurrentNode(n), m_Instance(instance) { }
 		bool operator!=(const GIterator<DataType>& iterator) { return m_CurrentNode != iterator.m_CurrentNode; }
-		HashNode& operator*() const { return *m_CurrentNode; }
+		HashPair& operator*() const { return m_CurrentNode->pair; }
 
 		GIterator<DataType>& operator=(DataType n)
 		{
@@ -184,12 +195,11 @@ public:
 			usize i = 1;
 			DataType adr = m_CurrentNode + i;
 			DataType endAdr = m_Instance->m_HashTable + m_Instance->m_Capacity;
-			int8 elementMarker = *reinterpret_cast<int8*>(adr);
+			uint8 elementMarker = adr->tag;
 
-			while ((!elementMarker || elementMarker == TOMBSTONE_MARKER) && (adr < endAdr)) {
-				i++;
-				adr = m_CurrentNode + i;
-				elementMarker = *reinterpret_cast<int8*>(adr);
+			while (!(elementMarker == HashNode::OCCUPIED) && (adr < endAdr)) {
+				adr = m_CurrentNode + ++i;
+				elementMarker = adr->tag;
 			}
 
 			if (adr >= endAdr) {
@@ -212,12 +222,11 @@ public:
 		{
 			ssize i = -1;
 			DataType adr = m_CurrentNode + i;
-			int8 elementMarker = *reinterpret_cast<int8*>(adr);
+			uint8 elementMarker = adr->tag;
 
-			while ((!elementMarker || elementMarker == TOMBSTONE_MARKER) && (adr > m_Instance->m_HashTable)) {
-				i--;
-				adr = m_CurrentNode + i;
-				elementMarker = *reinterpret_cast<int8*>(adr);
+			while (!(elementMarker == HashNode::OCCUPIED) && (adr > m_Instance->m_HashTable)) {
+				adr = m_CurrentNode + --i;
+				elementMarker = adr->tag;
 			}
 
 			m_CurrentNode = adr;
@@ -240,6 +249,6 @@ public:
 template<typename K, typename V, usize S>
 const double HashMap<K, V, PROBING, S>::DEFAULT_LOAD_FACTOR = 0.65;
 
-#include "HashMap.inl"
-
 TRE_NS_END
+
+#include "HashMap.inl"

@@ -1,3 +1,7 @@
+#include "HashMap.hpp"
+
+TRE_NS_START
+
 template<typename K, typename V, usize S>
 HashMap<K, V, CHAINING, S>::HashMap()
 {
@@ -171,39 +175,34 @@ HashMap<K, V, PROBING, S>::~HashMap()
 	}
 }
 
-
 template<typename K, typename V, usize S>
-FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode& HashMap<K, V, PROBING, S>::Put(const K& key, const V& value)
+FORCEINLINE typename HashMap<K, V, PROBING, S>::HashPair& HashMap<K, V, PROBING, S>::Put(const K& key, const V& value)
 {
 	HashTab_t listAdr = this->CalculateAdress(key);
-	new (listAdr) HashNode(key, value);
-	return *listAdr;
+	return *(new (&listAdr->pair) HashPair(key, value));
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode& HashMap<K, V, PROBING, S>::Put(K&& key, V&& value)
+FORCEINLINE typename HashMap<K, V, PROBING, S>::HashPair& HashMap<K, V, PROBING, S>::Put(K&& key, V&& value)
 {
 	HashTab_t listAdr = this->CalculateAdress(key);
-	new (listAdr) HashNode(std::forward<K>(key), std::forward<V>(value));
-	return *listAdr;
-}
-
-template<typename K, typename V, usize S>
-template<typename... Args>
-FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode& HashMap<K, V, PROBING, S>::Emplace(const K& key, Args&&... args)
-{
-	HashTab_t listAdr = this->CalculateAdress(key);
-	new (listAdr) HashNode(key, std::forward<Args>(args)...);
-	return *listAdr;
+	return *(new (&listAdr->pair) HashPair(std::forward<K>(key), std::forward<V>(value)));
 }
 
 template<typename K, typename V, usize S>
 template<typename... Args>
-FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode& HashMap<K, V, PROBING, S>::Emplace(K&& key, Args&& ...args)
+FORCEINLINE typename HashMap<K, V, PROBING, S>::HashPair& HashMap<K, V, PROBING, S>::Emplace(const K& key, Args&&... args)
 {
 	HashTab_t listAdr = this->CalculateAdress(key);
-	new (listAdr) HashNode(std::forward<K>(key), std::forward<Args>(args)...);
-	return *listAdr;
+	return *(new (&listAdr->pair) HashPair(key, std::forward<Args>(args)...));
+}
+
+template<typename K, typename V, usize S>
+template<typename... Args>
+FORCEINLINE typename HashMap<K, V, PROBING, S>::HashPair& HashMap<K, V, PROBING, S>::Emplace(K&& key, Args&& ...args)
+{
+	HashTab_t listAdr = this->CalculateAdress(key);
+	return *(new (&listAdr->pair) HashPair(std::forward<K>(key), std::forward<Args>(args)...));
 }
 
 template<typename K, typename V, usize S>
@@ -216,38 +215,38 @@ FORCEINLINE V* HashMap<K, V, PROBING, S>::GetKeyPtr(const K& key) const
 	usize hash = Hash::GetHash(key);
 	usize initialIndex = this->CalculateIndex(hash, x);
 	HashTab_t listAdr = m_HashTable + initialIndex;
+	uint8 elementMarker = listAdr->tag;
 
-	if (!*(reinterpret_cast<int8*>(listAdr))) 
+	if (elementMarker == HashNode::FREE)
 		return NULL;
 
 	HashTab_t startAdr = listAdr;
 	HashTab_t tombstoneAdr = NULL;
-	int8 elementMarker = *reinterpret_cast<int8*>(listAdr);
-
+	
 	// Probing solution since there is a collision here
-	while (elementMarker && (elementMarker == TOMBSTONE_MARKER || !(listAdr->first == key))) {
-		listAdr = m_HashTable + this->CalculateIndex(hash, ++x);
-		elementMarker = *reinterpret_cast<int8*>(listAdr);
-
+	while (elementMarker != HashNode::FREE && (elementMarker == HashNode::TOMBSTONE || !(listAdr->pair.first == key))) {
 		// If we hit TOMBSTONE then later swap between the tombstone and the value
 		if (elementMarker == TOMBSTONE_MARKER && !tombstoneAdr) { // Hit Tombstone (previously deleted)
 			tombstoneAdr = listAdr;
 		}
 
-		if (listAdr == startAdr) {// we finished a cycle and the element doesn't exist.
+		listAdr = m_HashTable + this->CalculateIndex(hash, ++x);
+		elementMarker = listAdr->tag;
+
+		if (listAdr == startAdr) { // we finished a cycle and the element doesn't exist.
 			return NULL;
 		}
 	}
 	
-	if (elementMarker && elementMarker != TOMBSTONE_MARKER && listAdr->first == key) {
+	if (elementMarker != HashNode::FREE && elementMarker != TOMBSTONE_MARKER /*&& listAdr->pair.first == key*/) {
 
 		if (tombstoneAdr) {	// Seen tombstone already
-			CopyRangeTo(listAdr, tombstoneAdr, 1); // perform a copy
-			*reinterpret_cast<int8*>(listAdr) = TOMBSTONE_MARKER;
+			MoveRangeTo(listAdr, tombstoneAdr, 1); // perform a copy
+			listAdr->tag = TOMBSTONE_MARKER;
 			listAdr = tombstoneAdr; // listAdr is the tombstone adress that we will return
 		}
 
-		return &(listAdr->second);
+		return &(listAdr->pair.second);
 	}
 
 	return NULL;
@@ -263,11 +262,11 @@ FORCEINLINE const V& HashMap<K, V, PROBING, S>::Get(const K& key)
 		listAdr = this->GetOrEmplace(key);		// Should handle probing
 	}
 
-	return listAdr->second;
+	return listAdr->pair.second;
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE const typename HashMap<K, V, PROBING, S>::HashNode& HashMap<K, V, PROBING, S>::GetPair(const K& key) const
+FORCEINLINE const typename HashMap<K, V, PROBING, S>::HashPair& HashMap<K, V, PROBING, S>::GetPair(const K& key) const
 {
 	HashTab_t listAdr = this->GetOrEmplace(key);
 
@@ -276,11 +275,11 @@ FORCEINLINE const typename HashMap<K, V, PROBING, S>::HashNode& HashMap<K, V, PR
 		listAdr = this->GetOrEmplace(key);		// Should handle probing
 	}
 
-	return *listAdr;
+	return listAdr->pair;
 }
 
 template<typename K, typename V, usize S>
-FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode* HashMap<K, V, PROBING, S>::GetPairPtr(const K& key) const
+FORCEINLINE typename HashMap<K, V, PROBING, S>::HashPair* HashMap<K, V, PROBING, S>::GetPairPtr(const K& key) const
 {
 	if (m_HashTable == NULL)
 		return NULL;
@@ -289,38 +288,38 @@ FORCEINLINE typename HashMap<K, V, PROBING, S>::HashNode* HashMap<K, V, PROBING,
 	usize hash = Hash::GetHash(key);
 	usize initialIndex = this->CalculateIndex(hash, x);
 	HashTab_t listAdr = m_HashTable + initialIndex;
+	uint8 elementMarker = listAdr->tag;
 
-	if (!*(reinterpret_cast<int8*>(listAdr))) 
+	if (elementMarker == HashNode::FREE)
 		return NULL;
 
 	HashTab_t startAdr = listAdr;
 	HashTab_t tombstoneAdr = NULL;
-	int8 elementMarker = *reinterpret_cast<int8*>(listAdr);
-
+	
 	// Probing solution since there is a collision here
-	while (elementMarker && (elementMarker == TOMBSTONE_MARKER || !(listAdr->first == key))) {
-		listAdr = m_HashTable + this->CalculateIndex(hash, ++x);
-		elementMarker = *reinterpret_cast<int8*>(listAdr);
-
+	while (elementMarker != HashNode::FREE && (elementMarker == HashNode::TOMBSTONE || !(listAdr->pair.first == key))) {
 		// If we hit TOMBSTONE then later swap between the tombstone and the value
 		if (elementMarker == TOMBSTONE_MARKER && !tombstoneAdr) { // Hit Tombstone (previously deleted)
 			tombstoneAdr = listAdr;
 		}
+
+		listAdr = m_HashTable + this->CalculateIndex(hash, ++x);
+		elementMarker = listAdr->tag;
 
 		if (listAdr == startAdr) {// we finished a cycle and the element doesn't exist.
 			return NULL;
 		}
 	}
 	
-	if (elementMarker && elementMarker != TOMBSTONE_MARKER && listAdr->first == key) {
+	if (elementMarker == HashNode::OCCUPIED /*&& listAdr->pair.first == key*/) {
 
 		if (tombstoneAdr) {	// Seen tombstone already
-			CopyRangeTo(listAdr, tombstoneAdr, 1); // perform a copy
-			*reinterpret_cast<int8*>(listAdr) = TOMBSTONE_MARKER;
+			MoveRangeTo(listAdr, tombstoneAdr, 1); // perform a copy
+			listAdr->tag = TOMBSTONE_MARKER;
 			listAdr = tombstoneAdr; // listAdr is the tombstone adress that we will return
 		}
 
-		return listAdr;
+		return &listAdr->pair;
 	}
 
 	return NULL;
@@ -336,7 +335,7 @@ FORCEINLINE V& HashMap<K, V, PROBING, S>::operator[](const K& key)
 		listAdr = this->GetOrEmplace(key);		// Should handle probing
 	}
 
-	return listAdr->second;
+	return listAdr->pair.second;
 }
 
 template<typename K, typename V, usize S>
@@ -354,27 +353,26 @@ FORCEINLINE void HashMap<K, V, PROBING, S>::Remove(const K& key)
 	usize hash = Hash::GetHash(key);
 	usize initialIndex = this->CalculateIndex(hash, x);
 	HashTab_t listAdr = m_HashTable + initialIndex;
-
-	if (!*(reinterpret_cast<int8*>(listAdr)))
-		return;
-
+	uint8 elementMarker = listAdr->tag;
 	HashTab_t startAdr = listAdr;
-	int8 elementMarker = *reinterpret_cast<int8*>(listAdr);
+
+	if (elementMarker == HashNode::FREE) return;
 
 	// Probing solution since there is a collision here
-	while (elementMarker && (elementMarker == TOMBSTONE_MARKER || !(listAdr->first == key))) {
+	while (elementMarker != HashNode::FREE && (elementMarker == HashNode::TOMBSTONE || !(listAdr->pair.first == key))) {
 		listAdr = m_HashTable + this->CalculateIndex(hash, ++x);
-		elementMarker = *reinterpret_cast<int8*>(listAdr);
+		elementMarker = listAdr->tag;
 
 		if (listAdr == startAdr) // we finished a cycle and the element doesn't exist.
 			return; 
 	}
 
-	if (elementMarker) { // We found the element
+	if (elementMarker == HashNode::OCCUPIED) { // We found the element
+		printf("Found the elemnt to delete !\n");
 		m_UsedBuckets--;
-		Destroy(&listAdr->key); // listAdr->~HashNode();
-		Destroy(&listAdr->value);
-		*reinterpret_cast<int8*>(listAdr) = TOMBSTONE_MARKER; // Put Tombstone as its deleted
+		Destroy(&listAdr->pair.key); // listAdr->~HashNode();
+		Destroy(&listAdr->pair.value);
+		listAdr->tag = HashNode::TOMBSTONE; // Put Tombstone as its deleted
 	}
 }
 
@@ -390,14 +388,14 @@ FORCEINLINE void HashMap<K, V, PROBING, S>::Clear()
 {
 	for (usize i = 0; i < m_Capacity; i++) {
 		HashTab_t listAdr = m_HashTable + i;
-		int8 elementMarker = *reinterpret_cast<int8*>(listAdr);
+		uint8 elementMarker = listAdr->tag;
 
-		if (elementMarker && elementMarker != TOMBSTONE_MARKER) {
-			Destroy(&listAdr->key); // listAdr->~HashNode();
-			Destroy(&listAdr->value);
+		if (elementMarker == HashNode::OCCUPIED) {
+			Destroy(&listAdr->pair.key); // listAdr->~HashNode();
+			Destroy(&listAdr->pair.value);
 		}
 
-		*reinterpret_cast<int8*>(listAdr) = int8(NULL);
+		listAdr->tag = HashNode::FREE;
 	}
 	
 	m_UsedBuckets = 0;
@@ -419,7 +417,7 @@ FORCEINLINE void HashMap<K, V, PROBING, S>::Resize(usize newSize)
 	HashTab_t newAdr = Allocate<HashNode>(newSize);
 
 	for (usize i = 0; i < newSize; i++) {
-		*reinterpret_cast<int8*>(newAdr + i) = int8(NULL);
+		newAdr[i].tag = HashNode::FREE;
 	}
 
 	usize oldCapacity = m_Capacity;
@@ -427,7 +425,7 @@ FORCEINLINE void HashMap<K, V, PROBING, S>::Resize(usize newSize)
 
 	for (usize i = 0; i < oldCapacity; i++) {
 		HashTab_t srcAdr = m_HashTable + i;
-		if (*(reinterpret_cast<int8*>(srcAdr))) {
+		if (srcAdr->tag == HashNode::OCCUPIED) {
 			this->Reinsert(srcAdr, newAdr);
 		}
 	}
@@ -457,24 +455,24 @@ template<typename K, typename V, usize S>
 FORCEINLINE typename HashMap<K, V, PROBING, S>::HashTab_t HashMap<K, V, PROBING, S>::Reinsert(HashTab_t src, HashTab_t dest)
 {
 	uint32 x = 0;
-	K& key = (src->first);
+	K& key = (src->pair.first);
 	usize hash = Hash::GetHash(key);
 	usize initialIndex = this->CalculateIndex(hash, x);
 	HashTab_t listAdr = dest + initialIndex;
 	HashTab_t startAdr = listAdr;
-	int8 elementMarker = *reinterpret_cast<int8*>(listAdr);
+	uint8 elementMarker = listAdr->tag;
 
 	// Probing solution since there is a collision here
-	while (elementMarker && !(listAdr->first == key)) {
+	while (elementMarker && !(listAdr->pair.first == key)) {
 		listAdr = dest + this->CalculateIndex(hash, ++x);
-		elementMarker = *reinterpret_cast<int8*>(listAdr);
+		elementMarker = listAdr->tag;
 
 		if (listAdr == startAdr) // There is no slots (we finished a cycle) we are obliged to return NULL pointer.
 			return NULL;
 	}
 
 	m_UsedBuckets++;
-	CopyRangeTo(src, listAdr, 1);
+	MoveRangeTo(src, listAdr, 1);
 	return listAdr;
 }
 
@@ -489,52 +487,40 @@ FORCEINLINE typename HashMap<K, V, PROBING, S>::HashTab_t HashMap<K, V, PROBING,
 		m_HashTable = Allocate<HashNode>(m_Capacity);
 
 		for (usize i = 0; i < m_Capacity; i++) {
-			int8* adr = reinterpret_cast<int8*>(m_HashTable + i);
-			*adr = int8(NULL);
+			m_HashTable[i].tag = HashNode::NodeTag::FREE;
 		}
 
 		m_UsedBuckets++;
 		HashTab_t listAdr = m_HashTable + initialIndex; // Its safe since the table is empty
+		listAdr->tag = HashNode::OCCUPIED;
 		return listAdr;
 	}
 
 	HashTab_t listAdr = m_HashTable + initialIndex;
 	HashTab_t startAdr = listAdr;
-	HashTab_t tombstoneAdr = NULL;
-	int8 elementMarker = *reinterpret_cast<int8*>(listAdr);
+	uint8 elementMarker = listAdr->tag;
 
 	// Probing solution since there is a collision here
-	while (elementMarker && (elementMarker == TOMBSTONE_MARKER || !(listAdr->first == key))) {
+	while (elementMarker == HashNode::OCCUPIED && !(listAdr->pair.first == key)) {
 		listAdr = m_HashTable + this->CalculateIndex(hash, ++x);
-		elementMarker = *reinterpret_cast<int8*>(listAdr);
-
-		// If we hit TOMBSTONE then later swap between the tombstone and the value
-		if (elementMarker == TOMBSTONE_MARKER && !tombstoneAdr) { // Hit Tombstone (previously deleted)
-			tombstoneAdr = listAdr;
-		}
+		elementMarker = listAdr->tag;
 
 		if (listAdr == startAdr) // There is no slots (we finished a cycle) we are obliged to return NULL pointer.
 			return NULL; 
 	}
 
-	bool seenTombstone = (tombstoneAdr);
-
-	if (elementMarker) { // Means directly they have same key!
-		//if (listAdr->first == key) { // double check might be completely unnecessary 
-		// Call dtor since the same key is here already
-		Destroy(&listAdr->key); // listAdr->~HashNode();
-		Destroy(&listAdr->value);
-
-		if (seenTombstone) {
-			*reinterpret_cast<int8*>(listAdr) = TOMBSTONE_MARKER;
-			return tombstoneAdr;	// listAdr is the tombstone adress that we will return
-		}
-		//}
-	}else if (seenTombstone) {
-		return tombstoneAdr; // listAdr is the tombstone adress that we will return
+	if (elementMarker == HashNode::OCCUPIED) { // Means directly they have same key!
+		Destroy(&listAdr->pair.key); // listAdr->~HashNode();
+		Destroy(&listAdr->pair.value);
+		return listAdr;
+	}else if (elementMarker == HashNode::TOMBSTONE) { // listAdr is the tombstone adress that we will return
+		listAdr->tag = HashNode::OCCUPIED;
+		m_UsedBuckets++;
+		return listAdr; 
 	}
 
 	m_UsedBuckets++;
+	listAdr->tag = HashNode::OCCUPIED; // listAdr is a free slot
 	return listAdr;
 }
 
@@ -549,52 +535,54 @@ FORCEINLINE typename HashMap<K, V, PROBING, S>::HashTab_t HashMap<K, V, PROBING,
 		m_HashTable = Allocate<HashNode>(m_Capacity);
 
 		for (usize i = 0; i < m_Capacity; i++) {
-			int8* adr = reinterpret_cast<int8*>(m_HashTable + i);
-			*adr = int8(NULL);
+			m_HashTable[i].tag = HashNode::NodeTag::FREE;
 		}
 
 		m_UsedBuckets++;
 		HashTab_t listAdr = m_HashTable + initialIndex; // Its safe since the table is empty
-
-		new (listAdr) HashNode(key, V());
+		new (&listAdr->pair) HashPair(key, V());
+		listAdr->tag = HashNode::OCCUPIED;
 		return listAdr;
 	}
 
 	HashTab_t listAdr = m_HashTable + initialIndex;
 	HashTab_t startAdr = listAdr;
 	HashTab_t tombstoneAdr = NULL;
-	int8 elementMarker = *reinterpret_cast<int8*>(listAdr);
+	uint8 elementMarker = listAdr->tag;
 
 	// Probing solution since there is a collision here
-	while (elementMarker && (elementMarker == TOMBSTONE_MARKER || !(listAdr->first == key))) {
-		listAdr = m_HashTable + this->CalculateIndex(hash, ++x);
-		elementMarker = *reinterpret_cast<int8*>(listAdr);
-
+	while (elementMarker != HashNode::FREE && (elementMarker == HashNode::TOMBSTONE || !(listAdr->pair.first == key))) {
 		// If we hit TOMBSTONE then later swap between the tombstone and the value
 		if (elementMarker == TOMBSTONE_MARKER && tombstoneAdr == NULL) { // Hit Tombstone (previously deleted)
 			tombstoneAdr = listAdr;
 		}
 
+		listAdr = m_HashTable + this->CalculateIndex(hash, ++x);
+		elementMarker = listAdr->tag;
+
 		if (listAdr == startAdr) // There is no slots (we finished a cycle) we are obliged to return NULL pointer.
 			return NULL;
 	}
 
-
-	if (elementMarker && elementMarker != TOMBSTONE_MARKER && listAdr->first == key) {
+	if (elementMarker == HashNode::OCCUPIED) {
 		if (tombstoneAdr) {	// Seen tombstone already
-			CopyRangeTo(listAdr, tombstoneAdr, 1); // perform a copy
-			*reinterpret_cast<int8*>(listAdr) = TOMBSTONE_MARKER;
+			MoveRangeTo(listAdr, tombstoneAdr, 1); // perform a copy, should handle copying the tag
+			listAdr->tag = TOMBSTONE_MARKER;
 			listAdr = tombstoneAdr; // listAdr is the tombstone adress that we will return
 		}
 
 		return listAdr;
 	}else if (tombstoneAdr) {
-		new (tombstoneAdr) HashNode(key, V());
+		m_UsedBuckets++;
+		new (&tombstoneAdr->pair) HashPair(key, V());
+		tombstoneAdr->tag = HashNode::OCCUPIED;
 		return tombstoneAdr; // listAdr is the tombstone adress that we will return
 	}
 
+	// Free slot
 	m_UsedBuckets++;
-	new (listAdr) HashNode(key, V());
+	new (&listAdr->pair) HashPair(key, V());
+	listAdr->tag = HashNode::OCCUPIED;
 	return listAdr; // listAdr is the tombstone adress that we will return
 }
 
@@ -616,11 +604,11 @@ FORCEINLINE void HashMap<K, V, PROBING, S>::DestroyMap(HashMap<Ki, Vi, PROBING, 
 {
     for (usize i = 0; i < map.m_Capacity; i++) {
 		HashTab_t listAdr = map.m_HashTable + i;
-		int8 elementMarker = *reinterpret_cast<int8*>(listAdr);
+		uint8 elementMarker = listAdr->tag;
 
-		if (elementMarker && elementMarker != TOMBSTONE_MARKER) {
-			Destroy(&listAdr->key); // listAdr->~HashNode();
-			Destroy(&listAdr->value);
+		if (elementMarker == HashNode::OCCUPIED) {
+			Destroy(&listAdr->pair.key); // listAdr->~HashNode();
+			Destroy(&listAdr->pair.value);
 		}
 	}
 }
@@ -638,17 +626,16 @@ FORCEINLINE void HashMap<K, V, PROBING, S>::DestroyMap(HashMap<Ki, Vi, PROBING, 
 template<typename K, typename V, usize S>
 FORCEINLINE typename HashMap<K, V, PROBING, S>::Iterator HashMap<K, V, PROBING, S>::begin() noexcept
 {
-	if (m_UsedBuckets == 0)
+	if (m_UsedBuckets == 0 || !m_HashTable)
 		return Iterator(this, m_HashTable);
 
 	usize i = 0;
 	HashTab_t adr = m_HashTable + i;
-	int8 elementMarker = *reinterpret_cast<int8*>(adr);
+	uint8 elementMarker = adr->tag;
 
-	while ((!elementMarker || elementMarker == TOMBSTONE_MARKER) && i < m_Capacity) {
-		i++;
-		adr = m_HashTable + i;
-		elementMarker = *reinterpret_cast<int8*>(adr);
+	while (!(elementMarker == HashNode::OCCUPIED) && i < m_Capacity) {
+		adr = m_HashTable + ++i;
+		elementMarker = adr->tag;
 	}
 
 	return Iterator(this, adr);
@@ -657,18 +644,8 @@ FORCEINLINE typename HashMap<K, V, PROBING, S>::Iterator HashMap<K, V, PROBING, 
 template<typename K, typename V, usize S>
 FORCEINLINE typename HashMap<K, V, PROBING, S>::Iterator HashMap<K, V, PROBING, S>::end() noexcept
 {
-	if (m_UsedBuckets == 0)
+	if (m_UsedBuckets == 0 || !m_HashTable)
 		return Iterator(this, m_HashTable);
-
-	/*ssize i = m_Capacity - 1;
-	HashTab_t adr = m_HashTable + i;
-	int8 elementMarker = *reinterpret_cast<int8*>(adr);
-
-	while ((!elementMarker || elementMarker == TOMBSTONE_MARKER) && (i > 0)) {
-		i--;
-		adr = m_HashTable + i;
-		elementMarker = *reinterpret_cast<int8*>(adr);
-	}*/
 
 	return Iterator(this, NULL);
 }
@@ -676,17 +653,16 @@ FORCEINLINE typename HashMap<K, V, PROBING, S>::Iterator HashMap<K, V, PROBING, 
 template<typename K, typename V, usize S>
 FORCEINLINE const typename HashMap<K, V, PROBING, S>::Iterator HashMap<K, V, PROBING, S>::begin() const noexcept
 {
-	if (m_UsedBuckets == 0)
+	if (m_UsedBuckets == 0 || !m_HashTable)
 		return Iterator(this, m_HashTable);
 
 	usize i = 0;
 	HashTab_t adr = m_HashTable + i;
-	int8 elementMarker = *reinterpret_cast<int8*>(adr);
+	int8 elementMarker = adr->tag;
 
-	while ((!elementMarker || elementMarker == TOMBSTONE_MARKER) && i < m_Capacity) {
-		i++;
-		adr = m_HashTable + i;
-		elementMarker = *reinterpret_cast<int8*>(adr);
+	while (!(elementMarker == HashNode::OCCUPIED) && i < m_Capacity) {
+		adr = m_HashTable + ++i;
+		elementMarker = adr->tag;
 	}
 
 	return Iterator(this, adr);
@@ -695,18 +671,8 @@ FORCEINLINE const typename HashMap<K, V, PROBING, S>::Iterator HashMap<K, V, PRO
 template<typename K, typename V, usize S>
 FORCEINLINE const typename HashMap<K, V, PROBING, S>::Iterator HashMap<K, V, PROBING, S>::end() const noexcept
 {
-	if (m_UsedBuckets == 0)
+	if (m_UsedBuckets == 0 || !m_HashTable)
 		return Iterator(this, m_HashTable);
-
-	/*ssize i = m_Capacity - 1;
-	HashTab_t adr = m_HashTable + i;
-	int8 elementMarker = *reinterpret_cast<int8*>(adr);
-
-	while ((!elementMarker || elementMarker == TOMBSTONE_MARKER) && (i > 0)) {
-		i--;
-		adr = m_HashTable + i;
-		elementMarker = *reinterpret_cast<int8*>(adr);
-	}*/
 
 	return Iterator(this, NULL);
 }
@@ -714,17 +680,16 @@ FORCEINLINE const typename HashMap<K, V, PROBING, S>::Iterator HashMap<K, V, PRO
 template<typename K, typename V, usize S>
 FORCEINLINE typename HashMap<K, V, PROBING, S>::CIterator HashMap<K, V, PROBING, S>::cbegin() const noexcept
 {
-	if (m_UsedBuckets == 0)
+	if (m_UsedBuckets == 0 || !m_HashTable)
 		return CIterator(this, m_HashTable);
 
 	usize i = 0;
 	HashTab_t adr = m_HashTable + i;
-	int8 elementMarker = *reinterpret_cast<int8*>(adr);
+	int8 elementMarker = adr->tag;
 
-	while ((!elementMarker || elementMarker == TOMBSTONE_MARKER) && i < m_Capacity) {
-		i++;
-		adr = m_HashTable + i;
-		elementMarker = *reinterpret_cast<int8*>(adr);
+	while (!(elementMarker == HashNode::OCCUPIED) && i < m_Capacity) {
+		adr = m_HashTable + ++i;
+		elementMarker = adr->tag;
 	}
 
 	return CIterator(this, adr);
@@ -733,18 +698,10 @@ FORCEINLINE typename HashMap<K, V, PROBING, S>::CIterator HashMap<K, V, PROBING,
 template<typename K, typename V, usize S>
 FORCEINLINE typename HashMap<K, V, PROBING, S>::CIterator HashMap<K, V, PROBING, S>::cend() const noexcept
 {
-	if (m_UsedBuckets == 0)
+	if (m_UsedBuckets == 0 || !m_HashTable)
 		return CIterator(this, m_HashTable);
-
-	/*ssize i = m_Capacity - 1;
-	HashTab_t adr = m_HashTable + i;
-	int8 elementMarker = *reinterpret_cast<int8*>(adr);
-
-	while ((!elementMarker || elementMarker == TOMBSTONE_MARKER) && (i > 0)) {
-		i--;
-		adr = m_HashTable + i;
-		elementMarker = *reinterpret_cast<int8*>(adr);
-	}*/
 
 	return CIterator(this, NULL);
 }
+
+TRE_NS_END
