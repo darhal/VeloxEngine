@@ -576,7 +576,7 @@ class EntityA : public IEntity
 
 int main()
 {
-	HashMap<Bitset, uint32> map;
+	/*HashMap<Bitset, uint32> map;
 	Vector<Bitset> set;
 	Bitset new_sig(BaseComponent::GetComponentsCount());
 	new_sig.Set(0, true);
@@ -598,21 +598,24 @@ int main()
 		printf("[Key: %s - Value: %d]\n", Utils::ToString(p.first).Buffer(), p.second);
 	}
 	
+	uint32* index;
 	for (Bitset& b : set) {
-		printf("Contain key ? : %d (Bitset: %s)\n", map.ContainsKey(b), Utils::ToString(b).Buffer());
-	}
+		if ((index = map.GetKeyPtr(b)) != NULL) {
+			printf("{Contain key ? : %d, Index : %d, Bitset: %s}\n", map.ContainsKey(b), *index, Utils::ToString(b).Buffer());
+		}
+	}*/
 
-	/*LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
+	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
 	SystemList mainSystems;
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
 	mainSystems.AddSystem(&test_systemA); mainSystems.AddSystem(&test_systemB); mainSystems.AddSystem(&test_systemC);
 
 	EntityA* entity = ECS::CreateEntity<EntityA>();
-	entity->CreateComponent<TestComponent>(5);
 	entity->CreateComponent<TestComponent2>("Hello there!");
+	entity->CreateComponent<TestComponent>(5);
 
-	//IEntity* entity2 = (IEntity*)ECS::CreateEntity<EntityA>();
-	// entity2->CreateComponent<TestComponent>(5);
+	IEntity* entity2 = (IEntity*)ECS::CreateEntity<EntityA>();
+	entity2->CreateComponent<TestComponent>(8);
 
 	char c;
 	do {
@@ -631,7 +634,7 @@ int main()
 			entity->CreateComponent<TestComponent2>("Yoohoo");
 			entity->CreateComponent<TestComponent>(9);
 		}
-	}while(c !=  'c');*/
+	}while(c !=  'c');
 	
 
 	getchar();

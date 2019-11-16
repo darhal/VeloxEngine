@@ -368,7 +368,6 @@ FORCEINLINE void HashMap<K, V, PROBING, S>::Remove(const K& key)
 	}
 
 	if (elementMarker == HashNode::OCCUPIED) { // We found the element
-		printf("Found the elemnt to delete !\n");
 		m_UsedBuckets--;
 		Destroy(&listAdr->pair.key); // listAdr->~HashNode();
 		Destroy(&listAdr->pair.value);

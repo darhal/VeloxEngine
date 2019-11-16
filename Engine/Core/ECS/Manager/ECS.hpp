@@ -11,6 +11,7 @@
 #include <Core/ECS/Entity/IEntity/IEntity.hpp>
 #include <Core/ECS/System/BaseSystem.hpp>
 #include <Core/ECS/System/SystemList.hpp>
+#include <map>
 
 TRE_NS_START
 
@@ -41,7 +42,9 @@ public:
 
 	// Systems : 
 	static void UpdateSystems(SystemList& system_list, float delta);
-private:
+
+	static void ShowDic(const char* label);
+//private:
 	static Map<ComponentTypeID, Vector<uint8>> m_Components;
 	static Vector<IEntity*> m_Entities;
 	static Vector<Archetype> m_Archetypes;

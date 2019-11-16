@@ -360,7 +360,7 @@ Bitset& Bitset::operator>>=(usize n)
 	return *this;
 }
 
-bool Bitset::operator==(const Bitset& other)
+bool Bitset::operator==(const Bitset& other) const
 {
 	bool is_small = this->IsSmall();
 	bool is_other_small = other.IsSmall();
@@ -436,9 +436,8 @@ Bitset::Bitset(const Bitset& other)
 	} else {
 		usize len = other.GetNormalLength();
 		this->SetNormal(len);
-		uint32 nb_of_usize = (uint32) Math::Ceil((double)len / (double)(sizeof(usize) * BITS_PER_BYTE));
 		uint32 bytes_to_copy = (uint32)Math::Ceil((double)len / (double)(sizeof(uint8) * BITS_PER_BYTE));
-		m_Bits = new usize[nb_of_usize];
+		m_Bits = new usize[bytes_to_copy * sizeof(usize)];
 		memcpy(m_Bits, other.m_Bits, bytes_to_copy * sizeof(uint8));
 	}
 }
@@ -523,6 +522,72 @@ usize Bitset::GetHash() const
 		hash ^= bits[i];
 
 	return hash;
+}
+
+bool Bitset::operator>(const Bitset& other) const
+{
+	const uint8* bytes_arr[2] = { other.GetBytesArray(), this->GetBytesArray() } ;
+	uint32 nb_bytes[2] = { 
+		(uint32)Math::Ceil((double)other.Length() / (double)(sizeof(uint8) * BITS_PER_BYTE)),
+		(uint32)Math::Ceil((double)this->Length() / (double)(sizeof(uint8) * BITS_PER_BYTE)),
+	};
+
+	bool max_bytes_index = true;
+	if (nb_bytes[!max_bytes_index] > nb_bytes[max_bytes_index]) {
+		max_bytes_index = !max_bytes_index;
+	}
+
+	for (uint32 i = nb_bytes[max_bytes_index]; i > nb_bytes[!max_bytes_index]; i--) {
+		if (bytes_arr[max_bytes_index][i])
+			return max_bytes_index;
+	}
+
+	for (int32 i = nb_bytes[max_bytes_index]; i >= 0; i--) {
+		if (bytes_arr[max_bytes_index][i] > bytes_arr[!max_bytes_index][i])
+			return max_bytes_index;
+		else if ((bytes_arr[max_bytes_index][i] < bytes_arr[!max_bytes_index][i])) 
+			return !max_bytes_index;
+	}
+
+	return false;
+}
+
+bool Bitset::operator<=(const Bitset& other) const
+{
+	return !(*this > other);
+}
+
+bool Bitset::operator<(const Bitset& other) const
+{
+	const uint8* bytes_arr[2] = { this->GetBytesArray(), other.GetBytesArray() };
+	uint32 nb_bytes[2] = {
+		(uint32)Math::Ceil((double)this->Length() / (double)(sizeof(uint8) * BITS_PER_BYTE)),
+		(uint32)Math::Ceil((double)other.Length() / (double)(sizeof(uint8) * BITS_PER_BYTE)),
+	};
+
+	bool max_bytes_index = false;
+	if (nb_bytes[!max_bytes_index] > nb_bytes[max_bytes_index]) {
+		max_bytes_index = !max_bytes_index;
+	}
+
+	for (uint32 i = nb_bytes[max_bytes_index]; i > nb_bytes[!max_bytes_index]; i--) {
+		if (bytes_arr[max_bytes_index][i])
+			return max_bytes_index;
+	}
+
+	for (int32 i = nb_bytes[!max_bytes_index]; i >= 0; i--) {
+		if (bytes_arr[max_bytes_index][i] > bytes_arr[!max_bytes_index][i])
+			return max_bytes_index;
+		else if ((bytes_arr[max_bytes_index][i] < bytes_arr[!max_bytes_index][i]))
+			return !max_bytes_index;
+	}
+
+	return false;
+}
+
+bool Bitset::operator>=(const Bitset& other) const
+{
+	return !(*this < other);
 }
 
 TRE_NS_END

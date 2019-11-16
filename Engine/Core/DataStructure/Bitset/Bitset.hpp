@@ -90,10 +90,17 @@ public:
 
 	Bitset& operator+=(Bitset other);
 
-	bool operator==(const Bitset& other);
+	bool operator==(const Bitset& other) const;
 
-	FORCEINLINE bool operator!=(const Bitset& other);
+	FORCEINLINE bool operator!=(const Bitset& other) const;
 
+	bool operator>(const Bitset& other) const;
+
+	bool operator<=(const Bitset& other) const;
+
+	bool operator<(const Bitset& other) const;
+
+	bool operator>=(const Bitset& other) const;
 private:
 	CONSTEXPR static uint32 NB_BYTES_SMALL = sizeof(usize*) + sizeof(usize);
 	CONSTEXPR static uint32 NB_BITS_PER_ELEMENT = sizeof(usize) * BITS_PER_BYTE; // Number of bits before we move on to the next element and allocate it
@@ -120,6 +127,10 @@ private:
 	FORCEINLINE void SetLength(usize len);
 
 	FORCEINLINE void Free();
+
+	FORCEINLINE const uint8* GetBytesArray() const;
+
+	FORCEINLINE uint8* GetBytesArray();
 
 	void Reserve(usize cap);
 
@@ -156,6 +167,17 @@ FORCEINLINE bool Bitset::IsSmall() const
 	return !(m_Length & hight_bit_mask_normal); // if the bit is 0 then its small string otherwise its normal
 }
 
+FORCEINLINE const uint8* Bitset::GetBytesArray() const
+{
+	return this->IsSmall() ? m_Data : (uint8*) m_Bits;
+}
+
+FORCEINLINE uint8* Bitset::GetBytesArray()
+{
+	return this->IsSmall() ? m_Data : (uint8*)m_Bits;
+}
+
+
 FORCEINLINE void Bitset::SetLength(usize nlen)
 {
 	if (nlen > NB_BITS_SMALL) {
@@ -170,17 +192,17 @@ FORCEINLINE usize Bitset::Length() const
 	return this->IsSmall() ? (usize)this->GetSmallLength() : this->GetNormalLength();
 }
 
-FORCEINLINE Bitset::Bitset()
+FORCEINLINE Bitset::Bitset() : m_Bits(NULL), m_Length(0)
 {
 }
 
-FORCEINLINE Bitset::Bitset(usize n)
+FORCEINLINE Bitset::Bitset(usize n) : m_Bits(NULL), m_Length(0)
 {
 	this->Reserve(n);
 	this->SetLength(n);
 }
 
-FORCEINLINE Bitset::Bitset(usize n, bool init_val)
+FORCEINLINE Bitset::Bitset(usize n, bool init_val) : m_Bits(NULL), m_Length(0)
 {
 	this->Reserve(n);
 	this->SetLength(n);
@@ -203,7 +225,7 @@ FORCEINLINE void Bitset::Free()
 		delete[] m_Bits;
 }
 
-FORCEINLINE bool Bitset::operator!=(const Bitset& other)
+FORCEINLINE bool Bitset::operator!=(const Bitset& other) const
 {
 	return !(*this == other);
 }
