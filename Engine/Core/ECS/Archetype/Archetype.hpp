@@ -2,7 +2,7 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/DataStructure/Bitset/Bitset.hpp>
-#include <Core/DataStructure/HashMap/HashMap.hpp>
+#include <Core/DataStructure/HashMap/Map.hpp>
 #include <Core/DataStructure/Vector/Vector.hpp>
 #include <Core/ECS/Component/BaseComponent.hpp>
 #include <Core/ECS/Entity/IEntity/IEntity.hpp>
@@ -13,13 +13,15 @@ TRE_NS_START
 class Archetype
 {
 public:
-	Archetype(uint32 id) :
+	Archetype() :
 		m_ComponentsBuffer{},
 		m_Signature(BaseComponent::GetComponentsCount()),
-		m_EntitiesCount(0), m_Id(id)
+		m_EntitiesCount(0)
 	{}
 
 	uint32 AddEntityComponents(IEntity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents);
+
+	uint32 RemoveEntityComponents(IEntity& entity);
 
 	FORCEINLINE Vector<uint8>& AddComponentType(ComponentTypeID componentID);
 
@@ -31,13 +33,11 @@ public:
 
 	FORCEINLINE BaseComponent* AddComponentToEntity(IEntity& entity, BaseComponent* component, ComponentTypeID component_id);
 
-	FORCEINLINE uint32 RemoveEntityComponents(IEntity& entity);
-
 	FORCEINLINE BaseComponent* GetComponent(const IEntity& entity, ComponentTypeID component_id) const;
 	
 	FORCEINLINE Vector<uint8>& GetComponentBuffer(ComponentTypeID id) { return m_ComponentsBuffer[id]; }
 
-	FORCEINLINE const HashMap<ComponentTypeID, Vector<uint8>>& GetComponentsBuffer() const { return m_ComponentsBuffer; }
+	FORCEINLINE const Map<ComponentTypeID, Vector<uint8>>& GetComponentsBuffer() const { return m_ComponentsBuffer; }
 
 	FORCEINLINE const Bitset& GetSignature() const { return m_Signature; }
 
@@ -56,8 +56,12 @@ private:
 	BaseComponent* AddComponentToEntityInternal(IEntity& entity, Vector<uint8>& buffer, BaseComponent* component, ComponentTypeID component_id);
 
 	BaseComponent* UpdateComponentMemoryInternal(uint32 internal_id, IEntity& entity, BaseComponent* component, ComponentTypeID component_id);
+
+	FORCEINLINE void SetID(uint32 id) { m_Id = id; }
+
+	IEntity* GetEntity(uint32 index);
 private:
-	HashMap<ComponentTypeID, Vector<uint8>> m_ComponentsBuffer;
+	Map<ComponentTypeID, Vector<uint8>> m_ComponentsBuffer;
 	Bitset m_Signature;
 	uint32 m_EntitiesCount; 
 	uint32 m_Id;
@@ -68,7 +72,7 @@ private:
 FORCEINLINE Vector<uint8>& Archetype::AddComponentType(ComponentTypeID componentID)
 {
 	m_Signature.Set(componentID, true);
-	return m_ComponentsBuffer.Emplace(componentID, Vector<uint8>()).second;
+	return m_ComponentsBuffer.Emplace(componentID, Vector<uint8>());
 }
 
 FORCEINLINE void Archetype::RemoveComponentType(ComponentTypeID componentID)
@@ -85,11 +89,6 @@ FORCEINLINE BaseComponent* Archetype::GetComponent(const IEntity& entity, Compon
 FORCEINLINE BaseComponent* Archetype::GetComponentInternal(const IEntity& entity, const Vector<uint8>& buffer, ComponentTypeID component_id) const
 {
 	return (BaseComponent*)(&(buffer[0]) + (entity.m_InternalId * BaseComponent::GetTypeSize(component_id)));
-}
-
-FORCEINLINE uint32 Archetype::RemoveEntityComponents(IEntity& entity)
-{
-	return this->RemoveEntityComponentsInternal(entity.m_InternalId);
 }
 
 FORCEINLINE uint32 Archetype::AddEntity(IEntity& entity)

@@ -399,7 +399,8 @@ void RedBalckTree<K, T, Alloc_t>::FixDelete(RBNode* x)
 			}
 		}
 	}
-	x->color = false;
+	if (x)
+		x->color = false;
 }
 
 template<typename K, typename T, typename Alloc_t>
@@ -412,7 +413,8 @@ FORCEINLINE void RedBalckTree<K, T, Alloc_t>::RBTransplant(RBNode* u, RBNode* v)
 	}else {
 		u->parent->right = v;
 	}
-	v->parent = u->parent;
+	if (v)
+		v->parent = u->parent;
 }
 
 template<typename K, typename T, typename Alloc_t>

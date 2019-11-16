@@ -17,6 +17,25 @@ uint32 Archetype::AddEntityComponents(IEntity& entity, BaseComponent** component
 	return entity.AttachToArchetype(*this, m_EntitiesCount++);
 }
 
+IEntity* Archetype::GetEntity(uint32 index)
+{
+	for (auto& buff : m_ComponentsBuffer) {
+		uint32 size = BaseComponent::GetTypeSize(buff.first);
+		BaseComponent* srcComponent = (BaseComponent*)&buff.second[index * size];
+		return srcComponent->GetEntity();
+	}
+}
+
+uint32 Archetype::RemoveEntityComponents(IEntity& entity)
+{
+	if (m_EntitiesCount > 1) {
+		// update the internal id of the entity we are swapping with !
+		this->GetEntity(m_EntitiesCount - 1)->m_InternalId = entity.m_InternalId;
+	}
+
+	return this->RemoveEntityComponentsInternal(entity.m_InternalId);
+}
+
 uint32 Archetype::RemoveEntityComponentsInternal(uint32 index)
 {
 	for (auto& buff : m_ComponentsBuffer) {
@@ -40,9 +59,8 @@ void Archetype::RemoveComponent(Vector<uint8>& components_buffer, ComponentTypeI
 	}
 		
 	components_buffer.Resize(srcIndex);
-	BaseComponent* srcComponent = (BaseComponent*)&components_buffer[srcIndex];
+	BaseComponent* srcComponent = (BaseComponent*) &components_buffer[srcIndex];
 	std::memcpy(destComponent, srcComponent, size);
-	// TODO: maybe update the internal id of the entity we are swapping with !
 }
 
 uint32 Archetype::ReseveEntity()

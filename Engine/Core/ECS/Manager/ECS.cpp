@@ -5,16 +5,17 @@ TRE_NS_START
 
 Map<ComponentTypeID, Vector<uint8>> ECS::m_Components;
 Vector<IEntity*> ECS::m_Entities;
-Vector<Archetype> ECS::m_Archetypes;
+PackedArray<Archetype> ECS::m_Archetypes;
 HashMap<Bitset, uint32> ECS::m_SigToArchetypes;
 
 
-void ECS::ShowDic(const char* label)
+Archetype& ECS::CreateArchetype(const Bitset& signature)
 {
-	printf("------------%s-------------\n", label);
-	for (auto& p : ECS::m_SigToArchetypes) {
-		printf("[KEY: %s VALUE: %d](Key ptr : %p)\n", Utils::ToString(p.first).Buffer(), p.second, m_SigToArchetypes.Get(p.first));
-	}
+	ArchetypeContainer::Object& archetype_pair = m_Archetypes.Put();
+	Archetype& archetype = archetype_pair.second;
+	archetype.SetID(archetype_pair.first);
+	m_SigToArchetypes.Emplace(signature, archetype_pair.first);
+	return archetype;
 }
 
 ECS::~ECS()
@@ -45,10 +46,7 @@ EntityHandle ECS::CreateEntity(BaseComponent** components, const ComponentTypeID
 
 	uint32* arche_index;
 	if ((arche_index = m_SigToArchetypes.GetKeyPtr(sig)) == NULL) {
-		EntityID archtypeid = (EntityID) m_Archetypes.Size();
-		m_SigToArchetypes.Emplace(sig, archtypeid);
-
-		Archetype& archetype = m_Archetypes.EmplaceBack(archtypeid);
+		Archetype& archetype = ECS::CreateArchetype(sig);
 		archetype.AddEntityComponents(*entity, components, componentIDs, numComponents);
 	} else {
 		m_Archetypes[entity->m_ArchetypeId].AddEntityComponents(*entity, components, componentIDs, numComponents);
@@ -99,9 +97,7 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 			} else { // We have to create new archetype
 				printf("Creating new archetype.\n");
 				// Creating new archetype
-				EntityID archtypeid = (EntityID)m_Archetypes.Size();;
-				m_SigToArchetypes.Emplace(new_sig, archtypeid);
-				Archetype& archetype = m_Archetypes.EmplaceBack(archtypeid);
+				Archetype& archetype = ECS::CreateArchetype(new_sig);
 
 				// Get old components from the former achetype
 				for (auto& components : old_archetype.GetComponentsBuffer()) {
@@ -130,7 +126,8 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 
 			// Remove components from the old archetype and check wether the old archetype is empty
 			if (!old_archetype.RemoveEntityComponents(entity)) { //TODO: careful here destroctur is being called, mdofiy it to not call it
-				m_SigToArchetypes.Remove(old_sig); // TODO: Remove it from the table
+				m_Archetypes.Remove(*arche_index); // Remove it from the table
+				m_SigToArchetypes.Remove(old_sig);
 			}
 
 			entity.AttachToArchetype(archetype, inetnal_id);// attach the entity to the reserved place
@@ -146,9 +143,7 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 		if ((arche_index = m_SigToArchetypes.GetKeyPtr(new_sig)) == NULL) {
 			printf("The entity doesnt have archetype we will create one (Signature : %s).\n", Utils::ToString(new_sig).Buffer());
 			// Creating new archetype
-			EntityID archtypeid = (EntityID)m_Archetypes.Size();;
-			m_SigToArchetypes.Emplace(new_sig, archtypeid);
-			Archetype& archetype = m_Archetypes.EmplaceBack(archtypeid);
+			Archetype& archetype = ECS::CreateArchetype(new_sig);
 			entity.AttachToArchetype(archetype, archetype.m_EntitiesCount++); // Attach the entity to the archetype and entity_count.
 
 			// add the newly added component
@@ -188,10 +183,8 @@ bool ECS::RemoveComponentInternal(IEntity& entity, uint32 component_id)
 			return true;
 		} else { 
 			// Creating new archetype
-			EntityID archtypeid = (EntityID)m_Archetypes.Size();
+			Archetype& archetype = ECS::CreateArchetype(new_sig);
 			EntityID old_internal_id = entity.m_InternalId;
-			m_SigToArchetypes.Emplace(new_sig, archtypeid);
-			Archetype& archetype = m_Archetypes.EmplaceBack(archtypeid);
 
 			// Get old components from the former achetype
 			for (auto& components : old_archetype.GetComponentsBuffer()) {
@@ -223,7 +216,8 @@ bool ECS::RemoveComponentInternal(IEntity& entity, uint32 component_id)
 
 		// Remove components from the old archetype and check wether the old archetype is empty
 		if (!old_archetype.RemoveEntityComponents(entity)) { //TODO: careful here destroctur is being called, mdofiy it to not call it
-			m_SigToArchetypes.Remove(old_sig); // TODO: Remove it from the table
+			m_Archetypes.Remove(*arche_index); // Remove it from the table
+			m_SigToArchetypes.Remove(old_sig); 
 		}
 
 		entity.AttachToArchetype(archetype, inetnal_id);// attach the entity to the reserved place

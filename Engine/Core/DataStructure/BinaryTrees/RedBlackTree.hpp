@@ -101,6 +101,7 @@ public:
 	FORCEINLINE void Remove(const K& key);
 
 	FORCEINLINE void LeftRotate(RBNode* x);
+
 	FORCEINLINE void RightRotate(RBNode* x);
 
 	// find the node with the minimum key

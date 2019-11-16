@@ -28,6 +28,19 @@ typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::ID PackedArray<T, MAX
 }
 
 template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
+template<typename... Args>
+typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Object& PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Put(Args&&... args)
+{
+	Index& in = m_Indices[m_FreelistDequeue];
+	m_FreelistDequeue = in.next;
+	in.id += NEW_OBJECT_ID_ADD;
+	in.index = (INDEX_TYPE)m_NumObjects++;
+	new (&m_Objects[in.index]) Object(in.id, std::forward<Args>(args)...);
+	Object& o = m_Objects[in.index];
+	return o;
+}
+
+template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
 typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::ID PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Add(const T& obj) 
 {
 	Index& in = m_Indices[m_FreelistDequeue];
@@ -82,7 +95,7 @@ FORCEINLINE bool PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Has(ID id)
 }
 
 template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-FORCEINLINE typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Object& PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Lookup(ID id) 
+FORCEINLINE typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Object& PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Lookup(ID id) const
 {
 	return m_Objects[m_Indices[id & INDEX_MASK].index];
 }

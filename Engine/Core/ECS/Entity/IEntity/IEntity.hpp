@@ -33,8 +33,8 @@ public:
 	template<typename Component>
 	FORCEINLINE BaseComponent* GetComponent();
 protected:
-	EntityID m_ArchetypeId;
 	EntityID m_Id;
+	EntityID m_ArchetypeId;	
 	EntityID m_InternalId;
 	
 	friend class ECS;

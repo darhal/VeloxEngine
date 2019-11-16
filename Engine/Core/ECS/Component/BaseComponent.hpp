@@ -22,6 +22,8 @@ private:
 
 	EntityHandle m_Entity = NULL;
 public:	
+	FORCEINLINE IEntity* GetEntity() { return m_Entity; }
+
 	static uint32 RegisterComponentType(ComponentCreateFunction createfn, ComponentDeleteFunction freefn, uint32 size);
 
 	FORCEINLINE static usize GetComponentsCount() { return s_ComponentsTypes->Size();}

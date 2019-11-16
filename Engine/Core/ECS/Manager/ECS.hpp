@@ -4,6 +4,7 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/DataStructure/Bitset/Bitset.hpp>
 #include <Core/DataStructure/Vector/Vector.hpp>
+#include <Core/DataStructure/PackedArray/PackedArray.hpp>
 #include <Core/DataStructure/HashMap/Map.hpp>
 #include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <Core/ECS/Component/BaseComponent.hpp>
@@ -43,11 +44,13 @@ public:
 	// Systems : 
 	static void UpdateSystems(SystemList& system_list, float delta);
 
-	static void ShowDic(const char* label);
-//private:
+	static Archetype& CreateArchetype(const Bitset& signature);
+private:
+	typedef PackedArray<Archetype> ArchetypeContainer;
+
 	static Map<ComponentTypeID, Vector<uint8>> m_Components;
 	static Vector<IEntity*> m_Entities;
-	static Vector<Archetype> m_Archetypes;
+	static ArchetypeContainer m_Archetypes;
 	static HashMap<Bitset, uint32> m_SigToArchetypes;
 
 	static BaseComponent* AddComponentInternal(IEntity& entity, uint32 component_id, BaseComponent* component);
@@ -89,7 +92,7 @@ bool ECS::RemoveComponent(IEntity& entity)
 template<typename Component>
 FORCEINLINE BaseComponent* ECS::GetComponent(const IEntity& entity)
 {
-	return (Component*) ECS::GetComponentInternal(m_Archetypes[m_SigToArchetypes[entity]], entity,  Component::ID);
+	return (Component*) ECS::GetComponentInternal(m_Archetypes[m_SigToArchetypes[entity.m_InternalId]], entity,  Component::ID);
 }
 
 TRE_NS_END

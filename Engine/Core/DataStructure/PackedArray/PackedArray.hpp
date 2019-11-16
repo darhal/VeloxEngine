@@ -42,7 +42,7 @@ public:
 
 	FORCEINLINE bool Has(ID id);
 	
-	FORCEINLINE Object& Lookup(ID id);
+	FORCEINLINE Object& Lookup(ID id) const;
 	
 	ID Add(const T& obj);
 
@@ -50,8 +50,13 @@ public:
 
 	template<typename... Args>
 	ID Emplace(Args&&... args);
+
+	template<typename... Args>
+	Object& Put(Args&&... args);
 	
 	void Remove(ID id);
+
+	FORCEINLINE T& operator[](ID id) const  { return this->Lookup(id).second; }
 
 	FORCEINLINE Iterator begin() noexcept;
 	FORCEINLINE Iterator end() noexcept;
