@@ -19,7 +19,9 @@ public:
 
 	virtual ~IEntity() = default;
 
-	FORCEINLINE const EntityID GetEntityID() const { return this->m_Id; }
+	FORCEINLINE EntityID GetEntityID() const { return this->m_Id; }
+
+	FORCEINLINE EntityID GetArchetypeID() const { return this->m_ArchetypeId; }
 
 	template<typename Component>
 	FORCEINLINE Component* AddComponent(Component& comp);

@@ -8,7 +8,6 @@ Vector<IEntity*> ECS::m_Entities;
 PackedArray<Archetype> ECS::m_Archetypes;
 HashMap<Bitset, uint32> ECS::m_SigToArchetypes;
 
-
 Archetype& ECS::CreateArchetype(const Bitset& signature)
 {
 	ArchetypeContainer::Object& archetype_pair = m_Archetypes.Put();
@@ -81,19 +80,19 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 		Bitset new_sig{ old_sig };
 		new_sig.Set(component_id, true);
 		uint32* arche_index;
-		// printf("[ADD COMPONENT] New signature : %s - Old Singature : %s\n", Utils::ToString(new_sig).Buffer(), Utils::ToString(old_sig).Buffer());
+		//printf("[ADD COMPONENT] New signature : %s - Old Singature : %s\n", Utils::ToString(new_sig).Buffer(), Utils::ToString(old_sig).Buffer());
 		
 		if ((arche_index = m_SigToArchetypes.GetKeyPtr(new_sig)) == NULL) {
 			if (old_archetype.GetEntitesCount() == 1) {
 				// The old achetype can be transformed to new archetype that will contain our new signature
-				// printf("[ADD COMPONENT] old archetypes can be transformed.\n");
+				//printf("[ADD COMPONENT] old archetypes can be transformed.\n");
 				m_SigToArchetypes.Remove(old_sig);
 				m_SigToArchetypes.Emplace(new_sig, entity.m_ArchetypeId);
 				// Update the signature to archetype
 				old_archetype.AddComponentType(component_id);
 				return old_archetype.AddComponentToEntity(entity, component, component_id);
 			} else { // We have to create new archetype
-				// printf("[ADD COMPONENT] Creating new archetype.\n");
+				//printf("[ADD COMPONENT] Creating new archetype.\n");
 				// Creating new archetype
 				Archetype& archetype = ECS::CreateArchetype(new_sig);
 
@@ -116,7 +115,7 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 				return archetype.AddComponentToEntity(entity, component, component_id);
 			}
 		} else { // There is already existing achetype that match the signature
-			// printf("[ADD COMPONENT] There is already existing achetype that match the signature.\n");
+			//printf("[ADD COMPONENT] There is already existing achetype that match the signature.\n");
 			Archetype& archetype = m_Archetypes[*arche_index];
 			EntityID inetnal_id = archetype.ReseveEntity(); // Reserve place for the new entity
 
@@ -139,11 +138,10 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 	} else {
 		Bitset new_sig(BaseComponent::GetComponentsCount());
 		new_sig.Set(component_id, true);
-		// printf("Does contain key : %d | value : %d | Bitset : %s\n", m_SigToArchetypes.ContainsKey(new_sig), m_SigToArchetypes.Get(new_sig), Utils::ToString(new_sig));
 		uint32* arche_index;
 
 		if ((arche_index = m_SigToArchetypes.GetKeyPtr(new_sig)) == NULL) {
-			// printf("[ADD COMPONENT] The entity doesnt have archetype we will create one (Signature : %s).\n", Utils::ToString(new_sig).Buffer());
+			//printf("[ADD COMPONENT] The entity doesnt have archetype we will create one (Signature : %s).\n", Utils::ToString(new_sig).Buffer());
 			// Creating new archetype
 			Archetype& archetype = ECS::CreateArchetype(new_sig);
 			entity.AttachToArchetype(archetype, archetype.m_EntitiesCount++); // Attach the entity to the archetype and entity_count.
@@ -152,7 +150,7 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 			archetype.AddComponentType(component_id);
 			return archetype.AddComponentToEntity(entity, component, component_id);
 		} else {
-			// printf("[ADD COMPONENT] Entity doesnt have previous archetype, There is already existing achetype that match the signature.\n");
+			//printf("[ADD COMPONENT] Entity doesnt have previous archetype, There is already existing achetype that match the signature.\n");
 			Archetype& archetype = m_Archetypes[*arche_index];
 			archetype.AddEntity(entity);
 			// add the newly added component
@@ -184,13 +182,13 @@ bool ECS::RemoveComponentInternal(IEntity& entity, uint32 component_id)
 
 		entity.m_ArchetypeId = -1;
 		entity.m_InternalId = -1;
-		// printf("[REMOVE COMPONENT] Signature become null .\n");
+		//printf("[REMOVE COMPONENT] Signature become null .\n");
 		return true;
 	}
 	// printf("[REMOVE COMPONENT] New signature : %s - Old Singature : %s\n", Utils::ToString(new_sig).Buffer(), Utils::ToString(old_sig).Buffer());
 	if ((arche_index = m_SigToArchetypes.GetKeyPtr(new_sig)) == NULL) {
 		if (old_archetype.GetEntitesCount() == 1) {
-			// printf("[REMOVE COMPONENT] The old archetype have only one entity and can be transformed.\n");
+			//printf("[REMOVE COMPONENT] The old archetype have only one entity and can be transformed.\n");
 			// Update the signature to archetype
 			m_SigToArchetypes.Remove(old_sig);
 			m_SigToArchetypes.Emplace(new_sig, entity.m_ArchetypeId);
@@ -201,7 +199,7 @@ bool ECS::RemoveComponentInternal(IEntity& entity, uint32 component_id)
 			return true;
 		} else { 
 			// Creating new archetype
-			// printf("[REMOVE COMPONENT] Creating new archetype.\n");
+			//printf("[REMOVE COMPONENT] Creating new archetype.\n");
 			Archetype& archetype = ECS::CreateArchetype(new_sig);
 			EntityID old_internal_id = entity.m_InternalId;
 
@@ -228,11 +226,11 @@ bool ECS::RemoveComponentInternal(IEntity& entity, uint32 component_id)
 			entity.AttachToArchetype(archetype, archetype.m_EntitiesCount++); // Attach the entity to the archetype and increment its entity_count.
 		}
 	} else {
-		// printf("[REMOVE COMPONENT] There is already existing achetype that match the signature.\n");
 		// There is already existing achetype that match the signature
 		Archetype& archetype = m_Archetypes[*arche_index];
-		// printf("Archetype index : %d | ARCHETYPE SINGATURE : %s\n", *arche_index, Utils::ToString(archetype.GetSignature()).Buffer());
 		EntityID inetnal_id = archetype.ReseveEntity(); // Reserve place for the new entity
+		//printf("[REMOVE COMPONENT] There is already existing achetype that match the signature %s and its index is %d.\n", 
+		//	Utils::ToString(new_sig).Buffer(), archetype.GetID());
 
 		// Get old components from the former achetype
 		for (auto& components : old_archetype.GetComponentsBuffer()) {

@@ -616,7 +616,6 @@ int main()
 
 	IEntity* entity2 = (IEntity*)ECS::CreateEntity<EntityA>();
 	entity2->CreateComponent<TestComponent>(8);
-
 	// 2, 4, 2, 1 will crash it
 	char c;
 	do {

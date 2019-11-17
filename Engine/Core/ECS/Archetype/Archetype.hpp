@@ -16,14 +16,14 @@ public:
 	Archetype() :
 		m_ComponentsBuffer{},
 		m_Signature(BaseComponent::GetComponentsCount()),
-		m_EntitiesCount(0)
+		m_EntitiesCount(0), m_Id(-1)
 	{
 	}
 
 	Archetype(Archetype&& other) :
 		m_ComponentsBuffer(std::move(other.m_ComponentsBuffer)),
 		m_Signature(std::move(other.m_Signature)),
-		m_EntitiesCount(other.m_EntitiesCount)
+		m_EntitiesCount(other.m_EntitiesCount), m_Id(other.m_Id)
 	{
 	}
 
