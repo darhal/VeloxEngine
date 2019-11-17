@@ -13,10 +13,15 @@ public:
 	typedef typename RBT<K, V, Alloc_t>::Iterator Iterator;
 	typedef typename RBT<K, V, Alloc_t>::CIterator CIterator;
 
-	Map();
+	FORCEINLINE Map();
 
-	Map(Map&& other);
-	Map(const Map& other);
+	FORCEINLINE Map(Map&& other);
+
+	FORCEINLINE Map(const Map& other);
+
+	FORCEINLINE Map& operator=(Map&& other);
+
+	FORCEINLINE Map& operator=(const Map& other);
 
 	FORCEINLINE V& Put(const K& key, const V& value);
 

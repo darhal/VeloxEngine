@@ -511,7 +511,7 @@ public:
 
 	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
 	{
-		printf("System A [ComponentType : %d]\n", comp_type);
+		//printf("System A [ComponentType : %d]\n", comp_type);
 		if (comp_type == TestComponent::ID) {
 			TestComponent& test = *(TestComponent*)components;
 			LOG::Write("Updating the componenet : %d", test.smthg);
@@ -531,7 +531,7 @@ public:
 
 	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
 	{
-		printf("System B [ComponentType : %d]\n", comp_type);
+		//printf("System B [ComponentType : %d]\n", comp_type);
 		if (comp_type == TestComponent::ID) {
 			TestComponent& test = *(TestComponent*)components;
 			LOG::Write("Updating the componenet : %d", test.smthg);
@@ -548,7 +548,7 @@ public:
 
 	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
 	{
-		printf("System C [ComponentType : %d]\n", comp_type);
+		//printf("System C [ComponentType : %d]\n", comp_type);
 		if (comp_type == TestComponent2::ID) {
 			TestComponent2& test2 = *(TestComponent2*)components;
 			LOG::Write("Updating the componenet : %s", test2.test.Buffer());
@@ -617,6 +617,7 @@ int main()
 	IEntity* entity2 = (IEntity*)ECS::CreateEntity<EntityA>();
 	entity2->CreateComponent<TestComponent>(8);
 
+	// 2, 4, 2, 1 will crash it
 	char c;
 	do {
 		ECS::UpdateSystems(mainSystems, 0.0);

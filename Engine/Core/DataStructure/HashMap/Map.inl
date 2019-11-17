@@ -11,6 +11,22 @@ FORCEINLINE Map<K, V, Alloc_t>::Map(Map<K, V, Alloc_t>&& other) : m_RBT(std::mov
 }
 
 template<typename K, typename V, typename Alloc_t>
+FORCEINLINE Map<K, V, Alloc_t>& Map<K, V, Alloc_t>::operator=(Map&& other)
+{
+	m_RBT.RedBalckTree<K, V, Alloc_t>::~RedBalckTree();
+	m_RBT = std::move(other.m_RBT);
+	return *this;
+}
+
+template<typename K, typename V, typename Alloc_t>
+FORCEINLINE Map<K, V, Alloc_t>& Map<K, V, Alloc_t>::operator=(const Map& other)
+{
+	m_RBT.RedBalckTree<K, V, Alloc_t>::~RedBalckTree();
+	m_RBT = other.m_RBT;
+	return *this;
+}
+
+template<typename K, typename V, typename Alloc_t>
 FORCEINLINE Map<K, V, Alloc_t>::Map(const Map<K, V, Alloc_t>& other) : m_RBT(other.m_RBT)
 {
 }

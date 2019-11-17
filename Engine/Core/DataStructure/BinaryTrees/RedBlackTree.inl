@@ -11,7 +11,6 @@ template<typename K, typename T, typename Alloc_t>
 FORCEINLINE RedBalckTree<K, T, Alloc_t>::RedBalckTree(RedBalckTree<K, T, Alloc_t>&& other) : 
 	m_Root(other.m_Root), m_Allocator(std::move(m_Allocator))
 {
-	m_Root = NULL;
 }
 
 template<typename K, typename T, typename Alloc_t>
@@ -21,6 +20,26 @@ FORCEINLINE RedBalckTree<K, T, Alloc_t>::RedBalckTree(const RedBalckTree<K, T, A
 	for(auto& pair : other){
 		this->Insert(pair.first, pair.second);
 	}
+}
+
+template<typename K, typename T, typename Alloc_t>
+RedBalckTree<K, T, Alloc_t>& RedBalckTree<K, T, Alloc_t>::operator=(RedBalckTree<K, T, Alloc_t>&& other)
+{
+	this->DestroyTree(m_Root);
+	m_Root = other.m_Root; 
+	m_Allocator = std::move(m_Allocator);
+	return *this;
+}
+
+template<typename K, typename T, typename Alloc_t>
+RedBalckTree<K, T, Alloc_t>& RedBalckTree<K, T, Alloc_t>::operator=(const RedBalckTree<K, T, Alloc_t>& other)
+{
+	this->DestroyTree(m_Root);
+	for (auto& pair : other) {
+		this->Insert(pair.first, pair.second);
+	}
+
+	return *this;
 }
 
 template<typename K, typename T, typename Alloc_t>

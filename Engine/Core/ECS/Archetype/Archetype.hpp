@@ -17,11 +17,23 @@ public:
 		m_ComponentsBuffer{},
 		m_Signature(BaseComponent::GetComponentsCount()),
 		m_EntitiesCount(0)
-	{}
+	{
+	}
+
+	Archetype(Archetype&& other) :
+		m_ComponentsBuffer(std::move(other.m_ComponentsBuffer)),
+		m_Signature(std::move(other.m_Signature)),
+		m_EntitiesCount(other.m_EntitiesCount)
+	{
+	}
 
 	uint32 AddEntityComponents(IEntity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents);
 
 	uint32 RemoveEntityComponents(IEntity& entity);
+
+	uint32 DestroyEntityComponents(IEntity& entity);
+
+	void DestroyComponent(IEntity& entity, ComponentTypeID id);
 
 	FORCEINLINE Vector<uint8>& AddComponentType(ComponentTypeID componentID);
 
@@ -37,7 +49,7 @@ public:
 	
 	FORCEINLINE Vector<uint8>& GetComponentBuffer(ComponentTypeID id) { return m_ComponentsBuffer[id]; }
 
-	FORCEINLINE const Map<ComponentTypeID, Vector<uint8>>& GetComponentsBuffer() const { return m_ComponentsBuffer; }
+	FORCEINLINE Map<ComponentTypeID, Vector<uint8>>& GetComponentsBuffer() { return m_ComponentsBuffer; }
 
 	FORCEINLINE const Bitset& GetSignature() const { return m_Signature; }
 
@@ -51,7 +63,13 @@ private:
 
 	uint32 RemoveEntityComponentsInternal(uint32 index);
 
-	void RemoveComponent(Vector<uint8>& components_buffer, ComponentTypeID id, uint32 mem_index);
+	void RemoveComponentInternal(Vector<uint8>& components_buffer, ComponentTypeID id, uint32 mem_index);
+
+	uint32 DestroyEntityComponentsInternal(uint32 index);
+
+	void DestroyComponentInternal(Vector<uint8>& components_buffer, ComponentTypeID id, uint32 mem_index);
+
+	void DestroyComponentHelper(Vector<uint8>& components_buffer, ComponentTypeID id, uint32 mem_index);
 
 	BaseComponent* AddComponentToEntityInternal(IEntity& entity, Vector<uint8>& buffer, BaseComponent* component, ComponentTypeID component_id);
 

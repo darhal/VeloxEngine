@@ -88,6 +88,10 @@ public:
 
 	FORCEINLINE RedBalckTree(const RedBalckTree<K, T, Alloc_t>& other);
 
+	RedBalckTree& operator=(RedBalckTree<K, T, Alloc_t>&& other);
+
+	RedBalckTree& operator=(const RedBalckTree<K, T, Alloc_t>& other);
+
 	virtual ~RedBalckTree();
 
 	template<typename... Args>

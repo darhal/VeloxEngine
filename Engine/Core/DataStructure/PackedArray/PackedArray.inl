@@ -72,9 +72,9 @@ template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
 void PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Remove(ID id) 
 {
 	Index& in = m_Indices[id & INDEX_MASK];
-		
-	m_Objects[in.index].~Object(); // call dtor;
-	new (&m_Objects[in.index]) Object(m_Objects[--m_NumObjects].first, std::move(m_Objects[--m_NumObjects].second));
+	Object& object_to_delete = m_Objects[in.index];
+	object_to_delete.~Object(); // call dtor;
+	new (&object_to_delete) Object(std::move(m_Objects[--m_NumObjects]));
 	Object& o = m_Objects[in.index];
 
 	// Object& o = m_Objects[in.index];
