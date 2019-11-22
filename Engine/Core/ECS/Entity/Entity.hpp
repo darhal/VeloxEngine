@@ -9,15 +9,15 @@ TRE_NS_START
 
 typedef uint32 EntityID;
 
-class IEntity
+class Entity
 {
 public:
-	IEntity() : m_ArchetypeId(0), m_Id(0), m_InternalId(0)
+	Entity() : m_ArchetypeId(0), m_Id(0), m_InternalId(0)
 	{}
 
 	typedef uint32 IndexInMemory;
 
-	virtual ~IEntity() = default;
+	virtual ~Entity() = default;
 
 	FORCEINLINE EntityID GetEntityID() const { return this->m_Id; }
 
@@ -48,26 +48,26 @@ private:
 };
 
 template<typename Component>
-FORCEINLINE Component* IEntity::AddComponent(Component& comp)
+FORCEINLINE Component* Entity::AddComponent(Component& comp)
 {
 	return ECS::AddComponent(*this, &comp);
 }
 
 template<typename Component, typename... Args>
-FORCEINLINE Component* IEntity::CreateComponent(Args&&... args)
+FORCEINLINE Component* Entity::CreateComponent(Args&&... args)
 {
 	Component component(std::forward<Args>(args)...);
 	return ECS::AddComponent(*this, &component);
 }
 
 template<typename Component>
-FORCEINLINE bool IEntity::RemoveComponent()
+FORCEINLINE bool Entity::RemoveComponent()
 {
 	return ECS::RemoveComponent<Component>(*this);
 }
 
 template<typename Component>
-FORCEINLINE BaseComponent* IEntity::GetComponent()
+FORCEINLINE BaseComponent* Entity::GetComponent()
 {
 	return ECS::GetComponent<Component>(*this);
 }

@@ -6,7 +6,7 @@
 
 TRE_NS_START
 
-typedef class IEntity* EntityHandle;
+typedef class Entity* EntityHandle;
 typedef uint32 ComponentID;
 typedef uint32 ComponentTypeID;
 typedef struct BaseComponent*(*ComponentCreateFunction)(Vector<uint8>&, uint32, EntityHandle, struct BaseComponent*);
@@ -22,7 +22,7 @@ private:
 
 	EntityHandle m_Entity = NULL;
 public:	
-	FORCEINLINE IEntity* GetEntity() { return m_Entity; }
+	FORCEINLINE Entity* GetEntity() { return m_Entity; }
 
 	static uint32 RegisterComponentType(ComponentCreateFunction createfn, ComponentDeleteFunction freefn, uint32 size);
 

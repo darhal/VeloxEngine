@@ -162,7 +162,7 @@
     <ClCompile Include="Core\DataStructure\StringBuffer\StringBuffer.inl" />
     <ClCompile Include="Core\ECS\Archetype\Archetype.cpp" />
     <ClCompile Include="Core\ECS\Component\BaseComponent.cpp" />
-    <ClCompile Include="Core\ECS\Entity\IEntity\IEntity.cpp" />
+    <ClCompile Include="Core\ECS\Entity\Entity.cpp" />
     <ClCompile Include="Core\ECS\Manager\ECS.cpp" />
     <ClCompile Include="Core\ECS\System\BaseSystem.cpp" />
     <ClCompile Include="Core\ECS\System\SystemList.cpp" />
@@ -461,7 +461,7 @@
     <None Include="Core\DataStructure\PackedArray\RefPackedArray.inl" />
     <None Include="Core\DataStructure\String\String.inl" />
     <None Include="Core\DataStructure\Vector\Vector.inl" />
-    <None Include="Core\ECS\Entity\IEntity\IEntity.hpp" />
+    <None Include="Core\ECS\Entity\Entity.hpp" />
     <None Include="Core\Misc\Maths\Vec1.inl" />
     <None Include="Core\Misc\Maths\Vec2.inl" />
     <None Include="Core\Misc\Maths\Vec3.inl" />

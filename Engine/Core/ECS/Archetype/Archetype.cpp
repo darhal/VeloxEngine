@@ -2,7 +2,7 @@
 
 TRE_NS_START
 
-uint32 Archetype::AddEntityComponents(IEntity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
+uint32 Archetype::AddEntityComponents(Entity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
 {
 	for (uint32 i = 0; i < numComponents; i++) {
 		const uint32& comp_id = componentIDs[i];
@@ -17,7 +17,7 @@ uint32 Archetype::AddEntityComponents(IEntity& entity, BaseComponent** component
 	return entity.AttachToArchetype(*this, m_EntitiesCount++);
 }
 
-IEntity* Archetype::GetEntity(uint32 index)
+Entity* Archetype::GetEntity(uint32 index)
 {
 	for (auto& buff : m_ComponentsBuffer) {
 		uint32 size = BaseComponent::GetTypeSize(buff.first);
@@ -28,9 +28,9 @@ IEntity* Archetype::GetEntity(uint32 index)
 	return NULL;
 }
 
-uint32 Archetype::RemoveEntityComponents(IEntity& entity)
+uint32 Archetype::RemoveEntityComponents(Entity& entity)
 {
-	IEntity* last_entity;
+	Entity* last_entity;
 	if (m_EntitiesCount > 1 /*&& (last_entity = this->GetEntity(m_EntitiesCount - 1)) != NULL*/) {
 		// update the internal id of the entity we are swapping with !
 		last_entity = this->GetEntity(m_EntitiesCount - 1);
@@ -66,7 +66,7 @@ void Archetype::RemoveComponentInternal(Vector<uint8>& components_buffer, Compon
 	components_buffer.Resize(srcIndex);
 }
 
-uint32 Archetype::DestroyEntityComponents(IEntity& entity)
+uint32 Archetype::DestroyEntityComponents(Entity& entity)
 {
 	if (m_EntitiesCount > 1) {
 		// update the internal id of the entity we are swapping with !
@@ -104,7 +104,7 @@ void Archetype::DestroyComponentInternal(Vector<uint8>& components_buffer, Compo
 	components_buffer.Resize(srcIndex);
 }
 
-void Archetype::DestroyComponent(IEntity& entity, ComponentTypeID id)
+void Archetype::DestroyComponent(Entity& entity, ComponentTypeID id)
 {
 	return this->DestroyComponentHelper(m_ComponentsBuffer[id], id, entity.m_InternalId);
 }
@@ -129,7 +129,7 @@ uint32 Archetype::ReseveEntity()
 	return m_EntitiesCount++;
 }
 
-BaseComponent* Archetype::UpdateComponentMemoryInternal(uint32 internal_id, IEntity& entity, BaseComponent* component, ComponentTypeID component_id)
+BaseComponent* Archetype::UpdateComponentMemoryInternal(uint32 internal_id, Entity& entity, BaseComponent* component, ComponentTypeID component_id)
 {
 	Vector<uint8>& components_buffer = m_ComponentsBuffer[component_id];
 	ComponentCreateFunction createfn = BaseComponent::GetTypeCreateFunction(component_id);
@@ -137,7 +137,7 @@ BaseComponent* Archetype::UpdateComponentMemoryInternal(uint32 internal_id, IEnt
 	return createfn(components_buffer, internal_id * BaseComponent::GetTypeSize(component_id), &entity, component);
 }
 
-BaseComponent* Archetype::AddComponentToEntityInternal(IEntity& entity, Vector<uint8>& buffer, BaseComponent* component, ComponentTypeID component_id)
+BaseComponent* Archetype::AddComponentToEntityInternal(Entity& entity, Vector<uint8>& buffer, BaseComponent* component, ComponentTypeID component_id)
 {
 	ComponentCreateFunction createfn = BaseComponent::GetTypeCreateFunction(component_id);
 	uint32 index = (uint32)buffer.Size();

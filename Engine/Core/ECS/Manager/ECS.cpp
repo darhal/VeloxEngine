@@ -4,7 +4,7 @@
 TRE_NS_START
 
 Map<ComponentTypeID, Vector<uint8>> ECS::m_Components;
-Vector<IEntity*> ECS::m_Entities;
+Vector<Entity*> ECS::m_Entities;
 PackedArray<Archetype> ECS::m_Archetypes;
 HashMap<Bitset, uint32> ECS::m_SigToArchetypes;
 
@@ -35,7 +35,7 @@ ECS::~ECS()
 
 EntityHandle ECS::CreateEntity(BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
 {
-	IEntity* entity = new IEntity();
+	Entity* entity = new Entity();
 	entity->m_Id = (EntityID) m_Entities.Size();
 
 	Bitset sig(BaseComponent::GetComponentsCount());
@@ -57,7 +57,7 @@ EntityHandle ECS::CreateEntity(BaseComponent** components, const ComponentTypeID
 
 void ECS::DeleteEntity(EntityHandle handle)
 {
-	IEntity* entity = (IEntity*)(handle);
+	Entity* entity = (Entity*)(handle);
 	m_Archetypes[entity->m_ArchetypeId].DestroyEntityComponents(*entity); // Dtor called here
 
 	uint32 destIndex = entity->m_Id;
@@ -72,7 +72,7 @@ void ECS::DeleteEntity(EntityHandle handle)
 	m_Entities.PopBack();
 }
 
-BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, BaseComponent* component)
+BaseComponent* ECS::AddComponentInternal(Entity& entity, uint32 component_id, BaseComponent* component)
 {
 	if (entity.m_ArchetypeId != EntityID(-1)) {
 		Archetype& old_archetype = m_Archetypes[entity.m_ArchetypeId];
@@ -161,7 +161,7 @@ BaseComponent* ECS::AddComponentInternal(IEntity& entity, uint32 component_id, B
 	return NULL;
 }
 
-bool ECS::RemoveComponentInternal(IEntity& entity, uint32 component_id)
+bool ECS::RemoveComponentInternal(Entity& entity, uint32 component_id)
 {
 	if (entity.m_ArchetypeId == EntityID(-1)) return false;
 
@@ -257,7 +257,7 @@ bool ECS::RemoveComponentInternal(IEntity& entity, uint32 component_id)
 	return true;
 }
 
-BaseComponent* ECS::GetComponentInternal(const Archetype& archetype, const IEntity& entity, uint32 component_id)
+BaseComponent* ECS::GetComponentInternal(const Archetype& archetype, const Entity& entity, uint32 component_id)
 {
 	return archetype.GetComponent(entity, component_id);
 }

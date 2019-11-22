@@ -556,7 +556,7 @@ public:
 	}
 };
 
-class EntityA : public IEntity
+class EntityA : public Entity
 {
 
 };
@@ -614,7 +614,7 @@ int main()
 	entity->CreateComponent<TestComponent2>("Hello there!");
 	entity->CreateComponent<TestComponent>(5);
 
-	IEntity* entity2 = (IEntity*)ECS::CreateEntity<EntityA>();
+	Entity* entity2 = (Entity*)ECS::CreateEntity<EntityA>();
 	entity2->CreateComponent<TestComponent>(8);
 	// 2, 4, 2, 1 will crash it
 	char c;
