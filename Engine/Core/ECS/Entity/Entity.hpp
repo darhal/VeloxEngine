@@ -12,7 +12,7 @@ typedef uint32 EntityID;
 class Entity
 {
 public:
-	Entity() : m_ArchetypeId(0), m_Id(0), m_InternalId(0)
+	Entity(EntityID id) : m_Id(id), m_ArchetypeId(-1), m_InternalId(-1)
 	{}
 
 	typedef uint32 IndexInMemory;
@@ -42,9 +42,11 @@ protected:
 	friend class ECS;
 	friend class BaseSystem;
 	friend class Archetype;
-
+	friend class ArchetypeChunk;
 private:
 	uint32 AttachToArchetype(const class Archetype& arcehtype, EntityID internal_id);
+
+	uint32 AttachToArchetypeChunk(const class ArchetypeChunk& archetype_chunk, EntityID internal_id);
 };
 
 template<typename Component>

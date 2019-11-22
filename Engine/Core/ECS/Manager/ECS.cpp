@@ -4,7 +4,7 @@
 TRE_NS_START
 
 Map<ComponentTypeID, Vector<uint8>> ECS::m_Components;
-Vector<Entity*> ECS::m_Entities;
+Vector<Entity> ECS::m_Entities;
 PackedArray<Archetype> ECS::m_Archetypes;
 HashMap<Bitset, uint32> ECS::m_SigToArchetypes;
 
@@ -33,10 +33,9 @@ ECS::~ECS()
 }
 
 
-EntityHandle ECS::CreateEntity(BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
+Entity& ECS::CreateEntity(BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
 {
-	Entity* entity = new Entity();
-	entity->m_Id = (EntityID) m_Entities.Size();
+	Entity& entity = m_Entities.EmplaceBack((EntityID)m_Entities.Size());
 
 	Bitset sig(BaseComponent::GetComponentsCount());
 	for (uint32 i = 0; i < numComponents; i++) {
@@ -46,12 +45,11 @@ EntityHandle ECS::CreateEntity(BaseComponent** components, const ComponentTypeID
 	uint32* arche_index;
 	if ((arche_index = m_SigToArchetypes.GetKeyPtr(sig)) == NULL) {
 		Archetype& archetype = ECS::CreateArchetype(sig);
-		archetype.AddEntityComponents(*entity, components, componentIDs, numComponents);
+		archetype.AddEntityComponents(entity, components, componentIDs, numComponents);
 	} else {
-		m_Archetypes[entity->m_ArchetypeId].AddEntityComponents(*entity, components, componentIDs, numComponents);
+		m_Archetypes[*arche_index].AddEntityComponents(entity, components, componentIDs, numComponents);
 	}
 
-	m_Entities.EmplaceBack(entity);
 	return entity;
 }
 
@@ -62,11 +60,11 @@ void ECS::DeleteEntity(EntityHandle handle)
 
 	uint32 destIndex = entity->m_Id;
 	ssize srcIndex = (ssize) m_Entities.Size() - 1;
-	delete m_Entities[destIndex];
+	// delete m_Entities[destIndex];
 
 	if (srcIndex > 0) {
 		m_Entities[destIndex] = m_Entities[srcIndex];
-		m_Entities[destIndex]->m_Id = destIndex;
+		m_Entities[destIndex].m_Id = destIndex;
 	}
 	
 	m_Entities.PopBack();

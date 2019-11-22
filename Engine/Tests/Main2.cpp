@@ -610,12 +610,12 @@ int main()
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
 	mainSystems.AddSystem(&test_systemA); mainSystems.AddSystem(&test_systemB); mainSystems.AddSystem(&test_systemC);
 
-	EntityA* entity = ECS::CreateEntity<EntityA>();
-	entity->CreateComponent<TestComponent2>("Hello there!");
-	entity->CreateComponent<TestComponent>(5);
+	Entity& entity = ECS::CreateEntityWithComponents(TestComponent2("Hello there!"), TestComponent(5));
+	//entity.CreateComponent<TestComponent2>("Hello there!");
+	//entity.CreateComponent<TestComponent>(5);
 
-	Entity* entity2 = (Entity*)ECS::CreateEntity<EntityA>();
-	entity2->CreateComponent<TestComponent>(8);
+	Entity& entity2 = ECS::CreateEntityWithComponents(TestComponent(8));
+	// entity2.CreateComponent<TestComponent>(8);
 	// 2, 4, 2, 1 will crash it
 	char c;
 	do {
@@ -623,16 +623,16 @@ int main()
 
 		std::cin >> c;
 		if (c == '1') {
-			entity->RemoveComponent<TestComponent>();
+			entity.RemoveComponent<TestComponent>();
 		} else if(c == '2') {
-			entity->RemoveComponent<TestComponent2>();
+			entity.RemoveComponent<TestComponent2>();
 		} else if (c == '3') {
-			entity->CreateComponent<TestComponent>(6);
+			entity.CreateComponent<TestComponent>(6);
 		} else if (c == '4') {
-			entity->CreateComponent<TestComponent2>("I got added again!");
+			entity.CreateComponent<TestComponent2>("I got added again!");
 		} else if (c == '5') {
-			entity->CreateComponent<TestComponent2>("Yoohoo");
-			entity->CreateComponent<TestComponent>(9);
+			entity.CreateComponent<TestComponent2>("Yoohoo");
+			entity.CreateComponent<TestComponent>(9);
 		}
 	}while(c !=  'c');
 	

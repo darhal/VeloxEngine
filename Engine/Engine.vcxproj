@@ -161,6 +161,7 @@
     <ClCompile Include="Core\DataStructure\Bitset\Bitset.cpp" />
     <ClCompile Include="Core\DataStructure\StringBuffer\StringBuffer.inl" />
     <ClCompile Include="Core\ECS\Archetype\Archetype.cpp" />
+    <ClCompile Include="Core\ECS\Archetype\Chunk\ArchetypeChunk.cpp" />
     <ClCompile Include="Core\ECS\Component\BaseComponent.cpp" />
     <ClCompile Include="Core\ECS\Entity\Entity.cpp" />
     <ClCompile Include="Core\ECS\Manager\ECS.cpp" />
@@ -315,6 +316,7 @@
     <ClInclude Include="Core\DataStructure\Utils\Utils.hpp" />
     <ClInclude Include="Core\DataStructure\Vector\Vector.hpp" />
     <ClInclude Include="Core\ECS\Archetype\Archetype.hpp" />
+    <ClInclude Include="Core\ECS\Archetype\Chunk\ArchetypeChunk.hpp" />
     <ClInclude Include="Core\ECS\Component\BaseComponent.hpp" />
     <ClInclude Include="Core\ECS\Manager\ECS.hpp" />
     <ClInclude Include="Core\ECS\Listener\Listener.hpp" />

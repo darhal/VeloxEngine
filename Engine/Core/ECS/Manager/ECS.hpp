@@ -22,10 +22,12 @@ public:
 	~ECS();
 
 	// Entities :
-	template<typename Entity, typename... Args>
-	static FORCEINLINE Entity* CreateEntity(Args&&... args);
+	static FORCEINLINE Entity& CreateEntity();
 
-	static EntityHandle CreateEntity(BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents);
+	template<typename... Components>
+	static FORCEINLINE Entity& CreateEntityWithComponents(const Components&... components);
+
+	static Entity& CreateEntity(BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents);
 
 	static void DeleteEntity(EntityHandle);
 
@@ -49,32 +51,28 @@ private:
 	typedef PackedArray<Archetype> ArchetypeContainer;
 
 	static Map<ComponentTypeID, Vector<uint8>> m_Components;
-	static Vector<Entity*> m_Entities;
+	static Vector<Entity> m_Entities;
 	static ArchetypeContainer m_Archetypes;
 	static HashMap<Bitset, uint32> m_SigToArchetypes;
 
 	static BaseComponent* AddComponentInternal(Entity& entity, uint32 component_id, BaseComponent* component);
 	static bool RemoveComponentInternal(Entity& entity, uint32 component_id);
 	static BaseComponent* GetComponentInternal(const Archetype& archetype, const Entity& entity, uint32 component_id);
-	/*static void UpdateSystemWithMultipleComponents(
-		SystemList& system_list, uint32 index, float delta, const BaseSystem::SystemComponent* component_types_flags, 
-		Vector<BaseComponent*>& component_param, Vector<Vector<uint8>*>& component_arrays
-	);
-	static uint32 FindLeastCommonComponent(const BaseSystem::SystemComponent* component_types_flags, uint32 N);*/
 };
 
-template<typename Entity, typename... Args>
-FORCEINLINE Entity* ECS::CreateEntity(Args&&... args)
+FORCEINLINE Entity& ECS::CreateEntity()
 {
-	static_assert(std::is_base_of<Entity, Entity>::value, "Entity should be derived from Entity!");
-
 	// Adding empty component we dont need any archetype for this
-	Entity* entity = new Entity(std::forward<Args>(args)...);
-	entity->m_Id = (EntityID) m_Entities.Size();
-	entity->m_ArchetypeId = -1;
-	entity->m_InternalId = -1;
-	m_Entities.EmplaceBack(entity);
-	return entity;
+	return m_Entities.EmplaceBack((EntityID)m_Entities.Size());
+}
+
+template<typename... Components>
+FORCEINLINE Entity& ECS::CreateEntityWithComponents(const Components&... components)
+{
+	CONSTEXPR usize numComponents = sizeof...(components);
+	BaseComponent* components_arr[numComponents] = { (BaseComponent*)(&components)... };
+	ComponentTypeID component_ids[numComponents] = { Components::ID... };
+	return ECS::CreateEntity(components_arr, component_ids, numComponents);
 }
 
 template<typename Component>
