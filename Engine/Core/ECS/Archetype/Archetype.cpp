@@ -123,7 +123,6 @@ uint32 Archetype::ReseveEntity()
 	for (auto& ids : m_ComponentsBuffer) {
 		Vector<uint8>& components_buffer = ids.second;
 		components_buffer.Resize(components_buffer.Size() + BaseComponent::GetTypeSize(ids.first));
-		//printf("[RESERVE] Comp id : %d | Reserve : Old Size : %d | Neew Size : %d\n", ids.first, components_buffer.Size() - BaseComponent::GetTypeSize(ids.first), components_buffer.Size());
 	}
 
 	return m_EntitiesCount++;
@@ -133,7 +132,6 @@ BaseComponent* Archetype::UpdateComponentMemoryInternal(uint32 internal_id, Enti
 {
 	Vector<uint8>& components_buffer = m_ComponentsBuffer[component_id];
 	ComponentCreateFunction createfn = BaseComponent::GetTypeCreateFunction(component_id);
-	//printf("Comp id : %d | Mem index : %d | Buffer Size = %d\n", component_id, internal_id * BaseComponent::GetTypeSize(component_id), components_buffer.Size());
 	return createfn(components_buffer, internal_id * BaseComponent::GetTypeSize(component_id), &entity, component);
 }
 

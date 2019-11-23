@@ -28,28 +28,41 @@ const uint8* ArchetypeChunk::GetComponentBuffer(ComponentTypeID id) const
 
 Entity* ArchetypeChunk::GetEntity(uint32 index)
 {
-	// TODO:
-}
+	for (auto& buff : m_StartMarkers) {
+		uint32 size = BaseComponent::GetTypeSize(buff.first);
+		BaseComponent* srcComponent = (BaseComponent*) &buff.second[index * size];
+		return srcComponent->GetEntity();
+	}
 
-BaseComponent* ArchetypeChunk::AddComponentToEntityInternal(Entity& entity, uint8* buffer, BaseComponent* component, ComponentTypeID component_id)
-{
-	ComponentCreateFunction createfn = BaseComponent::GetTypeCreateFunction(component_id);
-	uint32 index = m_EntitiesCount * BaseComponent::GetTypeSize(component_id);
-	//return createfn(buffer, index, &entity, component);
+	return NULL;
 }
 
 uint32 ArchetypeChunk::RemoveEntityComponents(Entity& entity)
 {
+	// Do swapping
+	if (m_EntitiesCount > 1) {
+		// update the internal id of the entity we are swapping with !
+		Entity* last_entity = this->GetEntity(m_EntitiesCount - 1);
+		last_entity->m_InternalId = entity.m_InternalId;
+	}
 
+	for (auto& buff : m_StartMarkers) {
+		this->RemoveComponentInternal(buff.first, buff.second, entity.m_InternalId);
+	}
 }
 
 uint32 ArchetypeChunk::DestroyEntityComponents(Entity& entity)
 {
-	for (auto& buff : m_StartMarkers) {
-		this->RemoveComponentInternal(buff.first, buff.second, entity.m_InternalId);
+	// Do swapping : TODO: Check 
+	if (m_EntitiesCount > 1) {
+		// update the internal id of the entity we are swapping with !
+		Entity* last_entity = this->GetEntity(m_EntitiesCount - 1);
+		last_entity->m_InternalId = entity.m_InternalId;
 	}
 
-	// TODO:
+	for (auto& buff : m_StartMarkers) {
+		this->DestroyComponentInternal(buff.first, buff.second, entity.m_InternalId);
+	}
 }
 
 void ArchetypeChunk::DestroyComponentInternal(ComponentTypeID type_id, uint8* components_buffer, EntityID internal_id)
@@ -80,6 +93,20 @@ void ArchetypeChunk::RemoveComponentInternal(ComponentTypeID type_id, uint8* com
 
 	BaseComponent* srcComponent = (BaseComponent*)&components_buffer[srcIndex];
 	std::memcpy(destComponent, srcComponent, size);
+}
+
+BaseComponent* ArchetypeChunk::UpdateComponentMemoryInternal(uint32 internal_id, Entity& entity, BaseComponent* component, ComponentTypeID component_id)
+{
+	uint8* components_buffer = m_StartMarkers[component_id];
+	ComponentCreateFunction createfn = BaseComponent::GetTypeCreateFunction(component_id);
+	// return createfn(components_buffer, internal_id * BaseComponent::GetTypeSize(component_id), &entity, component);
+}
+
+BaseComponent* ArchetypeChunk::AddComponentToEntityInternal(Entity& entity, uint8* buffer, BaseComponent* component, ComponentTypeID component_id)
+{
+	ComponentCreateFunction createfn = BaseComponent::GetTypeCreateFunction(component_id);
+	uint32 index = m_EntitiesCount * BaseComponent::GetTypeSize(component_id);
+	//return createfn(buffer, index, &entity, component);
 }
 
 uint32 ArchetypeChunk::AddEntityComponents(Entity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)

@@ -30,6 +30,8 @@ public:
 	uint32 DestroyEntityComponents(Entity& entity);
 
 	Entity* GetEntity(uint32 index);
+
+	FORCEINLINE BaseComponent* UpdateComponentMemory(Entity& entity, BaseComponent* component, ComponentTypeID component_id);
 	
 private:
 	ArchetypeChunk* m_NextChunk;
@@ -39,6 +41,12 @@ private:
 	void DestroyComponentInternal(ComponentTypeID type_id, uint8* components_buffer, EntityID internal_id);
 	void RemoveComponentInternal(ComponentTypeID type_id, uint8* components_buffer, EntityID internal_id);
 	BaseComponent* AddComponentToEntityInternal(Entity& entity, uint8* buffer, BaseComponent* component, ComponentTypeID component_id);
+	BaseComponent* UpdateComponentMemoryInternal(uint32 internal_id, Entity& entity, BaseComponent* component, ComponentTypeID component_id);
 };
+
+FORCEINLINE BaseComponent* ArchetypeChunk::UpdateComponentMemory(Entity& entity, BaseComponent* component, ComponentTypeID component_id)
+{
+	return this->UpdateComponentMemoryInternal(entity.m_InternalId, entity, component, component_id);
+}
 
 TRE_NS_END
