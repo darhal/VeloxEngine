@@ -13,19 +13,17 @@ class ArchetypeChunk
 {
 public:
 	CONSTEXPR static uint32 CAPACITY = 10; // How much components per type can store
-	typedef Map<ComponentTypeID, uint8*, LinearAllocator> TypeBufferMap;
+
 public:
-	ArchetypeChunk(Archetype* archetype, const LinearAllocator& map_alloc);
+	ArchetypeChunk(Archetype* archetype, uint8* comp_buffer);
 
 	~ArchetypeChunk();
-
-	void AddComponentBuffer(ComponentTypeID id, uint8* start_of_buff);
 
 	ArchetypeChunk* GetNextChunk();
 
 	void SetNextChunk(ArchetypeChunk* next);
 
-	const uint8* GetComponentBuffer(ComponentTypeID id) const;
+	uint8* GetComponentBuffer(ComponentTypeID id) const;
 
 	uint32 ReserveEntity();
 
@@ -33,11 +31,15 @@ public:
 
 	Entity* GetEntity(uint32 index);
 
-	uint32 RemoveEntityComponents(Entity& entity);
+	uint32 RemoveEntityComponents(uint32 entity_internal_id);
 
-	uint32 DestroyEntityComponents(Entity& entity);
+	uint32 DestroyEntityComponents(uint32 entity_internal_id);
 
 	void AddEntityComponents(Entity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents);
+
+	BaseComponent* GetComponent(const Entity& entity, ComponentTypeID id) const;
+
+	BaseComponent* GetComponent(EntityID internal_id, uint8* buffer, ComponentTypeID component_id) const;
 
 	FORCEINLINE BaseComponent* AddComponentToEntity(Entity& entity, BaseComponent* component, ComponentTypeID component_id);
 
@@ -47,21 +49,29 @@ public:
 
 	FORCEINLINE Archetype& GetArchetype() { return *m_Archetype; }
 
-	BaseComponent* GetComponent(const Entity& entity, ComponentTypeID id) const;
+	FORCEINLINE uint8* GetComponentsBuffer() { return m_ComponentBuffer; }
 
-	FORCEINLINE const TypeBufferMap& GetBufferMap() const { return m_StartMarkers; };
+	FORCEINLINE uint32 RemoveEntityComponents(Entity& entity) { return RemoveEntityComponents(entity.m_InternalId); }
 
-	BaseComponent* GetComponent(EntityID internal_id, uint8* buffer, ComponentTypeID component_id) const;
+	FORCEINLINE uint32 DestroyEntityComponents(Entity& entity) { return RemoveEntityComponents(entity.m_InternalId); }
+
+	FORCEINLINE uint32 GetEntitiesCount() const { return m_EntitiesCount; }
+
 private:
-	TypeBufferMap m_StartMarkers;
-	ArchetypeChunk* m_NextChunk;
 	Archetype* m_Archetype;
+	ArchetypeChunk* m_NextChunk;
+	uint8* m_ComponentBuffer;
 	uint32 m_EntitiesCount;
 
 	void DestroyComponentInternal(ArchetypeChunk* last_chunk, ComponentTypeID type_id, uint8* components_buffer, EntityID internal_id);
+
 	void RemoveComponentInternal(ArchetypeChunk* last_chunk, ComponentTypeID type_id, uint8* components_buffer, EntityID internal_id);
+
 	BaseComponent* AddComponentToEntityInternal(Entity& entity, uint8* buffer, BaseComponent* component, ComponentTypeID component_id);
+
 	BaseComponent* UpdateComponentMemoryInternal(uint32 internal_id, Entity& entity, BaseComponent* component, ComponentTypeID component_id);
+
+	ArchetypeChunk* SwapEntityWithLastOne(uint32 entity_internal_id);
 };
 
 FORCEINLINE BaseComponent* ArchetypeChunk::UpdateComponentMemory(Entity& entity, BaseComponent* component, ComponentTypeID component_id)
@@ -71,7 +81,7 @@ FORCEINLINE BaseComponent* ArchetypeChunk::UpdateComponentMemory(Entity& entity,
 
 FORCEINLINE BaseComponent* ArchetypeChunk::AddComponentToEntity(Entity& entity, BaseComponent* component, ComponentTypeID component_id)
 {
-	return this->AddComponentToEntityInternal(entity, m_StartMarkers[component_id], component, component_id);
+	return this->AddComponentToEntityInternal(entity, this->GetComponentBuffer(component_id), component, component_id);
 }
 
 TRE_NS_END

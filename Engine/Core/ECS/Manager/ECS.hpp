@@ -39,19 +39,18 @@ public:
 	static FORCEINLINE bool RemoveComponent(Entity& entity);
 
 	template<typename Component>
-	static FORCEINLINE BaseComponent* GetComponent(const Entity& entity);
-
-	static FORCEINLINE const Vector<uint8>& GetComponentBuffer(ComponentTypeID type_id) { return m_Components[type_id];}
+	static FORCEINLINE Component* GetComponent(const Entity& entity);
 
 	// Systems : 
 	static void UpdateSystems(SystemList& system_list, float delta);
 
 	template<typename... Args>
 	static Archetype& CreateArchetype(const Bitset& signature, Args&&... args);
+
+	static Archetype& GetOrCreateArchetype(const Bitset& sig);
 private:
 	typedef PackedArray<Archetype> ArchetypeContainer;
 
-	static Map<ComponentTypeID, Vector<uint8>> m_Components;
 	static Vector<Entity> m_Entities;
 	static ArchetypeContainer m_Archetypes;
 	static HashMap<Bitset, uint32> m_SigToArchetypes;
@@ -99,9 +98,9 @@ bool ECS::RemoveComponent(Entity& entity)
 }
 
 template<typename Component>
-FORCEINLINE BaseComponent* ECS::GetComponent(const Entity& entity)
+FORCEINLINE Component* ECS::GetComponent(const Entity& entity)
 {
-	return (Component*) ECS::GetComponentInternal(entity,  Component::ID);
+	return (Component*) ECS::GetComponentInternal(entity, Component::ID);
 }
 
 TRE_NS_END

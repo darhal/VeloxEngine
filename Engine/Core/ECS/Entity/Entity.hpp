@@ -36,7 +36,7 @@ public:
 	FORCEINLINE bool RemoveComponent();
 
 	template<typename Component>
-	FORCEINLINE BaseComponent* GetComponent();
+	FORCEINLINE Component* GetComponent();
 protected:
 	ArchetypeChunk* m_Chunk;
 	EntityID m_Id;
@@ -70,7 +70,7 @@ FORCEINLINE bool Entity::RemoveComponent()
 }
 
 template<typename Component>
-FORCEINLINE BaseComponent* Entity::GetComponent()
+FORCEINLINE Component* Entity::GetComponent()
 {
 	return ECS::GetComponent<Component>(*this);
 }

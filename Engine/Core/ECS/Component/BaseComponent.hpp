@@ -59,6 +59,7 @@ public:
 	template<typename Component>
 	static void DeleteComponent(BaseComponent* comp)
 	{
+		printf("Pointer: %p\n", comp);
 		Component* component = (Component*) comp;
 		component->~Component();
 	}

@@ -16,15 +16,17 @@ class Archetype
 public:
 	Archetype(const Bitset& bitset, const Vector<ComponentTypeID>& ids);
 
+	Archetype(const Vector<ComponentTypeID>& ids);
+
 	Archetype(const Bitset& bitset);
 
-	Archetype(const Vector<ComponentTypeID>& ids);
+	ArchetypeChunk* AddEntity(Entity& entity);
 	
 	 ~Archetype();
 
 	void AddComponentType(ComponentTypeID id);
 
-	void AddEntityComponents(Entity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents);
+	ArchetypeChunk* AddEntityComponents(Entity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents);
 
 	ArchetypeChunk* GetAllocationChunk();
 
@@ -32,12 +34,18 @@ public:
 
 	FORCEINLINE const Bitset& GetSignature() const { return m_Signature; }
 
-	FORCEINLINE const Vector<ComponentTypeID>& GetComponentTypes() const { return m_ComponentTypes; }
+	FORCEINLINE const Map<ComponentTypeID, uint32>& GetTypesBufferMarker() { return m_TypesToBuffer; }
+
+	FORCEINLINE bool IsEmpty() { return m_OccupiedChunks == NULL; }
+
+	FORCEINLINE uint32 GetComponentsTypesCount() const { return m_TypesCount; }
+
 private:
-	Vector<ComponentTypeID> m_ComponentTypes;
+	Map<ComponentTypeID, uint32> m_TypesToBuffer;
 	Bitset m_Signature;
 	ArchetypeChunk* m_FreeChunks;
 	ArchetypeChunk* m_OccupiedChunks;
+	uint32 m_TypesCount;
 	uint32 m_ComponentsArraySize;
 	uint32 m_Id;
 

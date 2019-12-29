@@ -5,6 +5,7 @@
 #include <thread>
 #include <future>
 #include <time.h>
+#include <unordered_map>
 
 #include <Core/Context/Extensions.hpp>
 #include <Core/Window/Window.hpp>
@@ -49,7 +50,8 @@
 #include <Core/DataStructure/FixedString/FixedString.hpp>
 
 #include <Core/ECS/Manager/ECS.hpp>
-
+#include <Core/DataStructure/Bitset/Bitset.hpp>
+#include <Core/DataStructure/Utils/Utils.hpp>
 
 using namespace TRE;
 
@@ -512,12 +514,13 @@ public:
 	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
 	{
 		//printf("System A [ComponentType : %d]\n", comp_type);
+		//LOG::Write("Updating the componenet : %p", components);
 		if (comp_type == TestComponent::ID) {
 			TestComponent& test = *(TestComponent*)components;
-			LOG::Write("Updating the componenet : %d", test.smthg);
+			LOG::Write("[System A] Updating the componenet : %d", test.smthg);
 		} else {
 			TestComponent2& test2 = *(TestComponent2*)components;
-			LOG::Write("Updating the componenet : %s", test2.test.Buffer());
+			LOG::Write("[System A] Updating the componenet : %s", test2.test.Buffer());
 		}
 	}
 };
@@ -531,10 +534,10 @@ public:
 
 	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
 	{
-		//printf("System B [ComponentType : %d]\n", comp_type);
+		//LOG::Write("Updating the componenet : %p", components);
 		if (comp_type == TestComponent::ID) {
 			TestComponent& test = *(TestComponent*)components;
-			LOG::Write("Updating the componenet : %d", test.smthg);
+			LOG::Write("[System B] Updating the componenet : %d", test.smthg);
 		}
 	}
 };
@@ -548,10 +551,11 @@ public:
 
 	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
 	{
-		//printf("System C [ComponentType : %d]\n", comp_type);
+		//LOG::Write("Updating the componenet : %p", components);
+
 		if (comp_type == TestComponent2::ID) {
 			TestComponent2& test2 = *(TestComponent2*)components;
-			LOG::Write("Updating the componenet : %s", test2.test.Buffer());
+			LOG::Write("[System C] Updating the componenet : %s", test2.test.Buffer());
 		}
 	}
 };
@@ -561,9 +565,7 @@ class EntityA : public Entity
 
 };
 
-#include <Core/DataStructure/Bitset/Bitset.hpp>
-#include <unordered_map>
-#include <Core/DataStructure/Utils/Utils.hpp>
+
 
 #define INIT_BENCHMARK std::chrono::time_point<std::chrono::high_resolution_clock> start, end; std::chrono::microseconds duration;
 
@@ -605,7 +607,7 @@ int main()
 		}
 	}*/
 
-	/*LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
+	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
 	SystemList mainSystems;
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
 	mainSystems.AddSystem(&test_systemA); mainSystems.AddSystem(&test_systemB); mainSystems.AddSystem(&test_systemC);
@@ -634,10 +636,10 @@ int main()
 			entity.CreateComponent<TestComponent2>("Yoohoo");
 			entity.CreateComponent<TestComponent>(9);
 		}
-	}while(c !=  'c');*/
+	}while(c !=  'c');
 	
-	RenderThread();
-	// getchar();
+	// RenderThread();
+	getchar();
 }
 
 void PrintScreenshot()
