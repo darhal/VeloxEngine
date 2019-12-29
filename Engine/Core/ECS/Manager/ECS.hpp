@@ -46,7 +46,8 @@ public:
 	// Systems : 
 	static void UpdateSystems(SystemList& system_list, float delta);
 
-	static Archetype& CreateArchetype(const Bitset& signature);
+	template<typename... Args>
+	static Archetype& CreateArchetype(const Bitset& signature, Args&&... args);
 private:
 	typedef PackedArray<Archetype> ArchetypeContainer;
 
@@ -57,8 +58,18 @@ private:
 
 	static BaseComponent* AddComponentInternal(Entity& entity, uint32 component_id, BaseComponent* component);
 	static bool RemoveComponentInternal(Entity& entity, uint32 component_id);
-	static BaseComponent* GetComponentInternal(const Archetype& archetype, const Entity& entity, uint32 component_id);
+	static BaseComponent* GetComponentInternal(const Entity& entity, uint32 component_id);
 };
+
+template<typename... Args>
+Archetype& ECS::CreateArchetype(const Bitset& signature, Args&&... args)
+{
+	ArchetypeContainer::Object& archetype_pair = m_Archetypes.Put(signature, std::forward<Args>(args)...);
+	Archetype& archetype = archetype_pair.second;
+	archetype.SetID(archetype_pair.first);
+	m_SigToArchetypes.Emplace(signature, archetype_pair.first);
+	return archetype;
+}
 
 FORCEINLINE Entity& ECS::CreateEntity()
 {
@@ -90,7 +101,7 @@ bool ECS::RemoveComponent(Entity& entity)
 template<typename Component>
 FORCEINLINE BaseComponent* ECS::GetComponent(const Entity& entity)
 {
-	return (Component*) ECS::GetComponentInternal(m_Archetypes[m_SigToArchetypes[entity.m_InternalId]], entity,  Component::ID);
+	return (Component*) ECS::GetComponentInternal(entity,  Component::ID);
 }
 
 TRE_NS_END

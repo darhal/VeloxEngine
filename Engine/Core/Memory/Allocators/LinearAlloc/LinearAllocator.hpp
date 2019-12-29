@@ -13,6 +13,8 @@ class LinearAllocator : public BaseAllocator
 public:
 	FORCEINLINE LinearAllocator(usize total_size, bool autoInit = true);
 
+	FORCEINLINE LinearAllocator(usize total_size, uint8* start);
+
 	FORCEINLINE LinearAllocator();
 
 	FORCEINLINE ~LinearAllocator();
@@ -26,10 +28,12 @@ public:
 	FORCEINLINE void Free();
 
 	void* Allocate(usize size, usize alignement = 0);
+
 	FORCEINLINE void Deallocate(void* ptr) override;
 	
 	template<typename U, typename... Args>
 	FORCEINLINE U* Allocate(Args&&... arg);
+
 	template<typename T>
 	FORCEINLINE void Deallocate(T* obj);
 
@@ -48,6 +52,11 @@ private:
 	usize m_Offset;
 	usize m_TotalSize;
 };
+
+FORCEINLINE LinearAllocator::LinearAllocator(usize total_size, uint8* start) : m_Start((char*)start), m_Offset(0), m_TotalSize(total_size)
+{
+}
+
 
 FORCEINLINE LinearAllocator::LinearAllocator(usize total_size, bool autoInit) : m_Start(NULL), m_Offset(0), m_TotalSize(total_size)
 {
@@ -125,8 +134,8 @@ FORCEINLINE U* LinearAllocator::Allocate(Args&&... args)
 {
 	this->InternalInit();
 
-	U* curr_adr = (U*)((char*)m_Start + m_Offset);
-	const usize padding = CalculatePadding<U>(curr_adr);
+	U* curr_adr = (U*)(m_Start + m_Offset);
+	const usize padding = 0; //CalculatePadding<U>(curr_adr);
 	ASSERTF((m_Offset + padding + sizeof(U)), "Failed to allocate the requested amount of bytes, allocator is out of memory.");
 
 	if (m_Offset + padding + sizeof(U) > m_TotalSize) { // Doesnt have enough size

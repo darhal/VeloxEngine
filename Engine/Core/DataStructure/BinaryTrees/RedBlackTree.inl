@@ -3,6 +3,11 @@
 /************************************************************/
 
 template<typename K, typename T, typename Alloc_t>
+FORCEINLINE RedBalckTree<K, T, Alloc_t>::RedBalckTree(const Alloc_t& allocator) : m_Root(TNULL), m_Allocator(std::move(allocator))
+{
+}
+
+template<typename K, typename T, typename Alloc_t>
 FORCEINLINE RedBalckTree<K, T, Alloc_t>::RedBalckTree() : m_Root(TNULL), m_Allocator(sizeof(RBNode), NODE_CHUNKS)
 {
 }

@@ -605,7 +605,7 @@ int main()
 		}
 	}*/
 
-	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
+	/*LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
 	SystemList mainSystems;
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
 	mainSystems.AddSystem(&test_systemA); mainSystems.AddSystem(&test_systemB); mainSystems.AddSystem(&test_systemC);
@@ -634,10 +634,10 @@ int main()
 			entity.CreateComponent<TestComponent2>("Yoohoo");
 			entity.CreateComponent<TestComponent>(9);
 		}
-	}while(c !=  'c');
+	}while(c !=  'c');*/
 	
-
-	getchar();
+	RenderThread();
+	// getchar();
 }
 
 void PrintScreenshot()

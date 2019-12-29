@@ -1,146 +1,136 @@
 #include "Archetype.hpp"
+#include "Chunk/ArchetypeChunk.hpp"
+#include <Core/Memory/Allocators/LinearAlloc/LinearAllocator.hpp>
 
 TRE_NS_START
 
-uint32 Archetype::AddEntityComponents(Entity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
+Archetype::Archetype(const Bitset& bitset, const Vector<ComponentTypeID>& ids) :
+	m_ComponentTypes(std::move(ids)),
+	m_Signature(std::move(bitset)),
+	m_FreeChunks(NULL), m_OccupiedChunks(NULL),
+	m_ComponentsArraySize(0), m_Id(0)
 {
-	for (uint32 i = 0; i < numComponents; i++) {
-		const uint32& comp_id = componentIDs[i];
+	// Calculate size for all the components
+	for (const ComponentTypeID& id : m_ComponentTypes) {
+		m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
+	}
+}
 
-		if (!BaseComponent::IsValidTypeID(comp_id)) {
-			return -1;
+Archetype::Archetype(const Vector<ComponentTypeID>& ids) :
+	m_ComponentTypes(std::move(ids)),
+	m_Signature(BaseComponent::GetComponentsCount()),
+	m_FreeChunks(NULL), m_OccupiedChunks(NULL),
+	m_Id(0)
+{
+	// Calculate size for all the components
+	for (const ComponentTypeID& id : m_ComponentTypes) {
+		m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
+		m_Signature.Set(id, true);
+	}
+}
+
+Archetype::Archetype(const Bitset& bitset) :
+	m_ComponentTypes(),
+	m_Signature(std::move(bitset)),
+	m_FreeChunks(NULL), m_OccupiedChunks(NULL),
+	m_Id(0)
+{
+	// Calculate size for all the components
+	ComponentTypeID id = 0;
+
+	for (uint32 i= 0; i < m_Signature.Length(); i++) {
+		if (m_Signature.Get(i)) {
+			m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
+			m_ComponentTypes.EmplaceBack(id);
 		}
 
-		AddComponentToEntityInternal(entity, m_ComponentsBuffer[comp_id], components[i], comp_id);
+		id++;
+	}
+}
+
+Archetype::~Archetype()
+{
+	ArchetypeChunk* next;
+
+	while (m_FreeChunks) {
+		next = m_FreeChunks;
+		m_FreeChunks = m_FreeChunks->GetNextChunk();
+		Free((uint8*)next);
 	}
 
-	return entity.AttachToArchetype(*this, m_EntitiesCount++);
+	while (m_OccupiedChunks) {
+		next = m_OccupiedChunks;
+		m_OccupiedChunks = m_OccupiedChunks->GetNextChunk();
+		next->ArchetypeChunk::~ArchetypeChunk();
+		Free((uint8*)next);
+	}
 }
 
-Entity* Archetype::GetEntity(uint32 index)
+void Archetype::AddComponentType(ComponentTypeID id)
 {
-	for (auto& buff : m_ComponentsBuffer) {
-		uint32 size = BaseComponent::GetTypeSize(buff.first);
-		BaseComponent* srcComponent = (BaseComponent*)&buff.second[index * size];
-		return srcComponent->GetEntity();
+	m_Signature.Set(id, true);
+	m_ComponentTypes.EmplaceBack(id);
+}
+
+ArchetypeChunk* Archetype::GenerateChunk()
+{
+	usize cost_of_map_nodes = (m_ComponentTypes.Size() - 1) * sizeof(ArchetypeChunk::TypeBufferMap::MapTree::Node);
+	usize total_chunk_size = sizeof(ArchetypeChunk) + cost_of_map_nodes + m_ComponentsArraySize;
+
+	// Allocate
+	uint8* total_buffer = Allocate<uint8>(total_chunk_size);
+	ArchetypeChunk* archetypechunk;
+
+	if (m_FreeChunks) {
+		archetypechunk = new (total_buffer) ArchetypeChunk(this, LinearAllocator(cost_of_map_nodes, total_buffer + sizeof(ArchetypeChunk)));
+	}else {
+		archetypechunk = new (total_buffer) ArchetypeChunk(this, LinearAllocator(cost_of_map_nodes, total_buffer + sizeof(ArchetypeChunk)));
 	}
 
-	return NULL;
-}
-
-uint32 Archetype::RemoveEntityComponents(Entity& entity)
-{
-	Entity* last_entity;
-	if (m_EntitiesCount > 1 /*&& (last_entity = this->GetEntity(m_EntitiesCount - 1)) != NULL*/) {
-		// update the internal id of the entity we are swapping with !
-		last_entity = this->GetEntity(m_EntitiesCount - 1);
-		last_entity->m_InternalId = entity.m_InternalId;
+	// Set it up
+	uint8* offset = total_buffer + sizeof(ArchetypeChunk) + cost_of_map_nodes;
+	for (const ComponentTypeID& id : m_ComponentTypes) {
+		m_FreeChunks->AddComponentBuffer(id, offset);
+		offset += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
 	}
 
-	return this->RemoveEntityComponentsInternal(entity.m_InternalId);
+	return archetypechunk;
 }
 
-uint32 Archetype::RemoveEntityComponentsInternal(uint32 index)
+ArchetypeChunk* Archetype::GetAllocationChunk()
 {
-	for (auto& buff : m_ComponentsBuffer) {
-		this->RemoveComponentInternal(buff.second, buff.first, index);
+	if (m_OccupiedChunks && !m_OccupiedChunks->IsFull()) {
+		return m_OccupiedChunks;
+	} else {
+		if (m_FreeChunks) {
+			ArchetypeChunk* next_free = m_FreeChunks->GetNextChunk();
+			m_FreeChunks->SetNextChunk(m_OccupiedChunks);
+			m_OccupiedChunks = m_FreeChunks;
+			m_FreeChunks = next_free;
+			return m_OccupiedChunks;
+		}else{
+			m_OccupiedChunks = this->GenerateChunk();
+			return m_OccupiedChunks;
+		}
 	}
-
-	return --m_EntitiesCount;
 }
 
-void Archetype::RemoveComponentInternal(Vector<uint8>& components_buffer, ComponentTypeID id, uint32 mem_index)
+ArchetypeChunk* Archetype::GetLastOccupiedChunk()
 {
-	uint32 size = BaseComponent::GetTypeSize(id);
-	ssize srcIndex = (ssize)(components_buffer.Size() - size);
-	ssize destIndex = mem_index * size;
-	BaseComponent* destComponent = (BaseComponent*)&components_buffer[destIndex];
-	
-	if (srcIndex == destIndex) {
-		components_buffer.Resize(srcIndex);
-		return;
-	}
-		
-	BaseComponent* srcComponent = (BaseComponent*) &components_buffer[srcIndex];
-	std::memcpy(destComponent, srcComponent, size);
-	components_buffer.Resize(srcIndex);
+	return m_OccupiedChunks;
 }
 
-uint32 Archetype::DestroyEntityComponents(Entity& entity)
+void Archetype::AddEntityComponents(Entity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
 {
-	if (m_EntitiesCount > 1) {
-		// update the internal id of the entity we are swapping with !
-		this->GetEntity(m_EntitiesCount - 1)->m_InternalId = entity.m_InternalId;
-	}
-
-	return this->RemoveEntityComponentsInternal(entity.m_InternalId);
+	ArchetypeChunk* chunk = this->GetAllocationChunk();
+	chunk->AddEntityComponents(entity, components, componentIDs, numComponents);
 }
 
-uint32 Archetype::DestroyEntityComponentsInternal(uint32 index)
+void Archetype::PushFreeChunk(ArchetypeChunk* chunk)
 {
-	for (auto& buff : m_ComponentsBuffer) {
-		this->DestroyComponentInternal(buff.second, buff.first, index);
-	}
-
-	return --m_EntitiesCount;
-}
-
-void Archetype::DestroyComponentInternal(Vector<uint8>& components_buffer, ComponentTypeID id, uint32 mem_index)
-{
-	ComponentDeleteFunction freefn = BaseComponent::GetTypeDeleteFunction(id);
-	uint32 size = BaseComponent::GetTypeSize(id);
-	ssize srcIndex = (ssize)(components_buffer.Size() - size);
-	ssize destIndex = mem_index * size;
-	BaseComponent* destComponent = (BaseComponent*)&components_buffer[destIndex];
-	freefn(destComponent);
-
-	if (srcIndex == destIndex) {
-		components_buffer.Resize(srcIndex);
-		return;
-	}
-
-	BaseComponent* srcComponent = (BaseComponent*)&components_buffer[srcIndex];
-	std::memcpy(destComponent, srcComponent, size);
-	components_buffer.Resize(srcIndex);
-}
-
-void Archetype::DestroyComponent(Entity& entity, ComponentTypeID id)
-{
-	return this->DestroyComponentHelper(m_ComponentsBuffer[id], id, entity.m_InternalId);
-}
-
-void Archetype::DestroyComponentHelper(Vector<uint8>& components_buffer, ComponentTypeID id, uint32 mem_index)
-{
-	ComponentDeleteFunction freefn = BaseComponent::GetTypeDeleteFunction(id);
-	uint32 size = BaseComponent::GetTypeSize(id);
-	ssize destIndex = mem_index * size;
-	BaseComponent* destComponent = (BaseComponent*)&components_buffer[destIndex];
-	freefn(destComponent);
-}
-
-uint32 Archetype::ReseveEntity()
-{
-	for (auto& ids : m_ComponentsBuffer) {
-		Vector<uint8>& components_buffer = ids.second;
-		components_buffer.Resize(components_buffer.Size() + BaseComponent::GetTypeSize(ids.first));
-	}
-
-	return m_EntitiesCount++;
-}
-
-BaseComponent* Archetype::UpdateComponentMemoryInternal(uint32 internal_id, Entity& entity, BaseComponent* component, ComponentTypeID component_id)
-{
-	Vector<uint8>& components_buffer = m_ComponentsBuffer[component_id];
-	ComponentCreateFunction createfn = BaseComponent::GetTypeCreateFunction(component_id);
-	return createfn(components_buffer, internal_id * BaseComponent::GetTypeSize(component_id), &entity, component);
-}
-
-BaseComponent* Archetype::AddComponentToEntityInternal(Entity& entity, Vector<uint8>& buffer, BaseComponent* component, ComponentTypeID component_id)
-{
-	ComponentCreateFunction createfn = BaseComponent::GetTypeCreateFunction(component_id);
-	uint32 index = (uint32)buffer.Size();
-	buffer.Resize(index + BaseComponent::GetTypeSize(component_id));
-	return createfn(buffer, index, &entity, component);
+	m_OccupiedChunks = chunk->GetNextChunk();
+	chunk->SetNextChunk(m_FreeChunks);
+	m_FreeChunks = chunk;
 }
 
 TRE_NS_END

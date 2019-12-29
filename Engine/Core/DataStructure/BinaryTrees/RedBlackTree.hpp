@@ -23,6 +23,8 @@ template<typename K, typename T, typename Alloc_t = MultiPoolAlloc>
 class RedBalckTree
 {
 public:
+	CONSTEXPR static const usize NODE_CHUNKS = 3;
+
 	template<typename PointerType>
 	class GIterator;
 
@@ -80,7 +82,10 @@ public:
 	};
 
 	typedef RedBlackNode RBNode;
+	typedef RedBlackNode Node;
 	typedef RedBlackNode RBLeaf;
+
+	FORCEINLINE RedBalckTree(const Alloc_t& allocator);
 
 	FORCEINLINE RedBalckTree();
 
@@ -133,7 +138,6 @@ public:
 	FORCEINLINE const CIterator cend() const noexcept;
 
 private:
-	CONSTEXPR static const usize NODE_CHUNKS = 3;
 	CONSTEXPR static RBNode* TNULL = NULL;//reinterpret_cast<RBNode*>(-1);
 
 	RBNode* m_Root;

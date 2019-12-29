@@ -9,10 +9,13 @@ TRE_NS_START
 
 typedef uint32 EntityID;
 
+class Archetype;
+class ArchetypeChunk;
+
 class Entity
 {
 public:
-	Entity(EntityID id) : m_Id(id), m_ArchetypeId(-1), m_InternalId(-1)
+	Entity(EntityID id) : m_Chunk(NULL), m_Id(id), m_InternalId(-1)
 	{}
 
 	typedef uint32 IndexInMemory;
@@ -21,7 +24,7 @@ public:
 
 	FORCEINLINE EntityID GetEntityID() const { return this->m_Id; }
 
-	FORCEINLINE EntityID GetArchetypeID() const { return this->m_ArchetypeId; }
+	FORCEINLINE ArchetypeChunk* GetChunk() const { return this->m_Chunk; }
 
 	template<typename Component>
 	FORCEINLINE Component* AddComponent(Component& comp);
@@ -35,8 +38,8 @@ public:
 	template<typename Component>
 	FORCEINLINE BaseComponent* GetComponent();
 protected:
+	ArchetypeChunk* m_Chunk;
 	EntityID m_Id;
-	EntityID m_ArchetypeId;	
 	EntityID m_InternalId;
 	
 	friend class ECS;
@@ -44,9 +47,7 @@ protected:
 	friend class Archetype;
 	friend class ArchetypeChunk;
 private:
-	uint32 AttachToArchetype(const class Archetype& arcehtype, EntityID internal_id);
-
-	uint32 AttachToArchetypeChunk(const class ArchetypeChunk& archetype_chunk, EntityID internal_id);
+	uint32 AttachToArchetypeChunk(ArchetypeChunk* archetype_chunk, EntityID internal_id);
 };
 
 template<typename Component>
