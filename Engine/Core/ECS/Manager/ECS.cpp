@@ -141,15 +141,9 @@ void ECS::UpdateSystems(SystemList& system_list, float delta)
 	for (uint32 i = 0; i < systems_sz; i++) {
 		BaseSystem& system = *system_list[i];
 		const Bitset& sig = system.GetSignature();
-
-		// printf("[CHECKING] SIGNATURE : %s (Key ptr : %p)\n", Utils::ToString(sig).Buffer(), m_SigToArchetypes.GetKeyPtr(sig));
 		uint32* index;
 
 		if ((index = m_SigToArchetypes.GetKeyPtr(sig)) != NULL) {
-
-			//printf("[UPDATE] Archetype index : %d | System Bitset : %s | Number of entites to update : %d\n", *index,
-			//	Utils::ToString(sig).Buffer(), m_Archetypes[*index].GetEntitesCount());
-
 			Archetype& arche = m_Archetypes[*index];
 
 			if (!arche.IsEmpty()) {

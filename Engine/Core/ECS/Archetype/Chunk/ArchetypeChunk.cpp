@@ -65,17 +65,18 @@ ArchetypeChunk* ArchetypeChunk::SwapEntityWithLastOne(uint32 entity_internal_id)
 {
 	//  Check last chunk and replace with it
 	ArchetypeChunk* last_chunk = m_Archetype->GetLastOccupiedChunk();
-	last_chunk->m_EntitiesCount--;
 
-	if (last_chunk->m_EntitiesCount) {
+	if (!(entity_internal_id == last_chunk->m_EntitiesCount - 1 && last_chunk == this)) {
 		// Update the internal id of the entity we are swapping with !
-		Entity* last_entity = last_chunk->GetEntity(last_chunk->m_EntitiesCount);
+		Entity* last_entity = last_chunk->GetEntity(last_chunk->m_EntitiesCount - 1);
 
 		if (last_entity) {
 			last_entity->m_InternalId = entity_internal_id;
 			last_entity->m_Chunk = this;
 		}
-	} else {
+	}
+
+	if (!--last_chunk->m_EntitiesCount) {
 		m_Archetype->PushFreeChunk(last_chunk);
 	}
 

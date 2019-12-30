@@ -3,16 +3,19 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/DataStructure/Bitset/Bitset.hpp>
 #include <Core/DataStructure/HashMap/Map.hpp>
-#include <Core/DataStructure/Vector/Vector.hpp>
-#include <Core/ECS/Component/BaseComponent.hpp>
 #include <Core/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
-#include <Core/ECS/Entity/Entity.hpp>
 #include <Core/DataStructure/Utils/Utils.hpp>
 
 TRE_NS_START
 
 class Archetype
 {
+public:
+	template<typename PointerType>
+	class GenericIterator;
+
+	typedef GenericIterator<ArchetypeChunk> Iterator;
+	typedef GenericIterator<const ArchetypeChunk> CIterator;
 public:
 	Archetype(const Bitset& bitset, const Vector<ComponentTypeID>& ids);
 
@@ -40,11 +43,21 @@ public:
 
 	FORCEINLINE uint32 GetComponentsTypesCount() const { return m_TypesCount; }
 
+	Iterator begin() { return Iterator(m_OccupiedChunks); }
+	Iterator end() { return Iterator(NULL); }
+
+	const Iterator begin() const { return Iterator(m_OccupiedChunks); }
+	const Iterator end() const { return Iterator(NULL); }
+
+	const CIterator cbegin() const { return CIterator(m_OccupiedChunks); }
+	const CIterator cend() const { return CIterator(NULL); }
+
+
 private:
 	Map<ComponentTypeID, uint32> m_TypesToBuffer;
 	Bitset m_Signature;
-	ArchetypeChunk* m_FreeChunks;
 	ArchetypeChunk* m_OccupiedChunks;
+	ArchetypeChunk* m_FreeChunks;
 	uint32 m_TypesCount;
 	uint32 m_ComponentsArraySize;
 	uint32 m_Id;
@@ -56,6 +69,42 @@ private:
 	ArchetypeChunk* GetLastOccupiedChunk();
 	void PushFreeChunk(ArchetypeChunk* chunk);
 	FORCEINLINE void SetID(uint32 id) { m_Id = id; }
+
+private:
+	template<typename DataType>
+	class GenericIterator
+	{
+	public:
+		GenericIterator() noexcept : m_CurrentNode(m_OccupiedChunks) {}
+		GenericIterator(DataType* node) noexcept : m_CurrentNode(node) {}
+		bool operator!=(const Iterator& iterator) { return m_CurrentNode != iterator.m_CurrentNode; }
+
+		DataType& operator*() { return *m_CurrentNode; }
+		const DataType& operator*() const { return (*m_CurrentNode); }
+
+		DataType* operator->() { return m_CurrentNode; }
+		const DataType* operator->() const { return m_CurrentNode; }
+
+		GenericIterator& operator=(DataType* node) {
+			this->m_CurrentNode = node;
+			return *this;
+		}
+
+		GenericIterator& operator++() {
+			if (m_CurrentNode)
+				m_CurrentNode = m_CurrentNode->GetNextChunk();
+			return *this;
+		}
+
+		GenericIterator operator++(int) {
+			GenericIterator iterator = *this;
+			++*this;
+			return iterator;
+		}
+
+	private:
+		DataType* m_CurrentNode;
+	};
 };
 
 

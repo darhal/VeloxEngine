@@ -1,12 +1,13 @@
 #include "Archetype.hpp"
 #include "Chunk/ArchetypeChunk.hpp"
-#include <Core/Memory/Allocators/LinearAlloc/LinearAllocator.hpp>
+#include <Core/ECS/Entity/Entity.hpp>
+#include <Core/ECS/Component/BaseComponent.hpp>
 
 TRE_NS_START
 
 Archetype::Archetype(const Bitset& bitset, const Vector<ComponentTypeID>& ids) :
 	m_Signature(std::move(bitset)),
-	m_FreeChunks(NULL), m_OccupiedChunks(NULL),
+	m_OccupiedChunks(NULL), m_FreeChunks(NULL),
 	m_TypesCount((uint32)ids.Size()), m_ComponentsArraySize(0), m_Id(0)
 {
 	// Calculate size for all the components
@@ -18,7 +19,7 @@ Archetype::Archetype(const Bitset& bitset, const Vector<ComponentTypeID>& ids) :
 
 Archetype::Archetype(const Vector<ComponentTypeID>& ids) :
 	m_Signature(BaseComponent::GetComponentsCount()),
-	m_FreeChunks(NULL), m_OccupiedChunks(NULL), 
+	m_OccupiedChunks(NULL), m_FreeChunks(NULL),
 	m_TypesCount((uint32)ids.Size()), m_ComponentsArraySize(0), m_Id(0)
 {
 	// Calculate size for all the components
@@ -31,7 +32,7 @@ Archetype::Archetype(const Vector<ComponentTypeID>& ids) :
 
 Archetype::Archetype(const Bitset& bitset) :
 	m_Signature(std::move(bitset)),
-	m_FreeChunks(NULL), m_OccupiedChunks(NULL),
+	m_OccupiedChunks(NULL), m_FreeChunks(NULL),
 	m_TypesCount(0), m_ComponentsArraySize(0), m_Id(0)
 {
 	// Calculate size for all the components

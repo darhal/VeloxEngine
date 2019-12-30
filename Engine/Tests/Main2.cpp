@@ -517,10 +517,10 @@ public:
 		//LOG::Write("Updating the componenet : %p", components);
 		if (comp_type == TestComponent::ID) {
 			TestComponent& test = *(TestComponent*)components;
-			LOG::Write("[System A] Updating the componenet : %d", test.smthg);
+			//LOG::Write("[System A] Updating the componenet : %d", test.smthg);
 		} else {
 			TestComponent2& test2 = *(TestComponent2*)components;
-			LOG::Write("[System A] Updating the componenet : %s", test2.test.Buffer());
+			//LOG::Write("[System A] Updating the componenet : %s", test2.test.Buffer());
 		}
 	}
 };
@@ -537,7 +537,7 @@ public:
 		//LOG::Write("Updating the componenet : %p", components);
 		if (comp_type == TestComponent::ID) {
 			TestComponent& test = *(TestComponent*)components;
-			LOG::Write("[System B] Updating the componenet : %d", test.smthg);
+			//LOG::Write("[System B] Updating the componenet : %d", test.smthg);
 		}
 	}
 };
@@ -555,7 +555,7 @@ public:
 
 		if (comp_type == TestComponent2::ID) {
 			TestComponent2& test2 = *(TestComponent2*)components;
-			LOG::Write("[System C] Updating the componenet : %s", test2.test.Buffer());
+			//LOG::Write("[System C] Updating the componenet : %s", test2.test.Buffer());
 		}
 	}
 };
@@ -612,6 +612,12 @@ int main()
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
 	mainSystems.AddSystem(&test_systemA); mainSystems.AddSystem(&test_systemB); mainSystems.AddSystem(&test_systemC);
 
+	/*Entity** ent = (Entity**) Allocate<Entity*>(1'000'000);
+
+	for (int i = 0; i < 1'000'000; i++) {
+		ent[i] = &ECS::CreateEntityWithComponents(TestComponent2("Hello there!"), TestComponent(5));
+	}*/
+
 	Entity& entity = ECS::CreateEntityWithComponents(TestComponent2("Hello there!"), TestComponent(5));
 	//entity.CreateComponent<TestComponent2>("Hello there!");
 	//entity.CreateComponent<TestComponent>(5);
@@ -621,20 +627,22 @@ int main()
 	// 2, 4, 2, 1 will crash it
 	char c;
 	do {
-		ECS::UpdateSystems(mainSystems, 0.0);
+		INIT_BENCHMARK
+		BENCHMARK("Updating all components", ECS::UpdateSystems(mainSystems, 0.0););
 
 		std::cin >> c;
 		if (c == '1') {
-			entity.RemoveComponent<TestComponent>();
+			INIT_BENCHMARK
+			BENCHMARK("Remove TestComponent", entity.RemoveComponent<TestComponent>(););
 		} else if(c == '2') {
-			entity.RemoveComponent<TestComponent2>();
+			BENCHMARK("Remove TestComponent2", entity.RemoveComponent<TestComponent2>(););
 		} else if (c == '3') {
-			entity.CreateComponent<TestComponent>(6);
+			BENCHMARK("Create TestComponent", entity.CreateComponent<TestComponent>(6););
 		} else if (c == '4') {
-			entity.CreateComponent<TestComponent2>("I got added again!");
+			BENCHMARK("Create TestComponent2", entity.CreateComponent<TestComponent2>("I got added again!"););
 		} else if (c == '5') {
-			entity.CreateComponent<TestComponent2>("Yoohoo");
-			entity.CreateComponent<TestComponent>(9);
+			BENCHMARK("Create TestComponent2 & TestComponent", entity.CreateComponent<TestComponent2>("Yoohoo");
+			entity.CreateComponent<TestComponent>(9););
 		}
 	}while(c !=  'c');
 	

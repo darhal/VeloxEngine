@@ -13,6 +13,10 @@ public:
 	template<typename DataType>
 	class GIterator;
 
+	typedef GIterator<Node> Iterator;
+	typedef GIterator<const Node> CIterator;
+
+
 	struct Node{
 		template<typename... Args>
 		Node(Node* next, Args&&... args) : 
@@ -21,9 +25,6 @@ public:
 		T m_Obj;
 		Node* m_Next;
 	};
-
-	typedef GIterator<Node> Iterator;
-	typedef GIterator<const Node> CIterator;
 
 public:
 	SingleList();
