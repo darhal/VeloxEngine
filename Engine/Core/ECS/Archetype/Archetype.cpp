@@ -39,7 +39,8 @@ Archetype::Archetype(const Bitset& bitset) :
 	String str = Utils::ToString(m_Signature);
 	for (uint32 id = 0; id < m_Signature.Length(); id++) {
 		if (m_Signature.Get(id)) {
-			m_TypesToBuffer.Emplace(id, m_ComponentsArraySize);;
+			m_TypesToBuffer.Emplace(id, m_ComponentsArraySize);
+			// printf("[SIG:%s] ID=%d - Start Index = %d\n", Utils::ToString(m_Signature), id, m_ComponentsArraySize);
 			m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
 			m_TypesCount++;
 		}
@@ -74,7 +75,6 @@ ArchetypeChunk* Archetype::GenerateChunk()
 	usize total_chunk_size = sizeof(ArchetypeChunk) + m_ComponentsArraySize;
 
 	// Allocate
-	
 	uint8* total_buffer = Allocate<uint8>(total_chunk_size);
 	uint8* comp_buffer_off = total_buffer + sizeof(ArchetypeChunk);
 	ArchetypeChunk* temp_free_chunk = m_FreeChunks;
@@ -92,10 +92,11 @@ ArchetypeChunk* Archetype::GetAllocationChunk()
 			this->GenerateChunk();
 		}
 
-		ArchetypeChunk* next_free = m_FreeChunks->GetNextChunk();
-		m_FreeChunks->SetNextChunk(m_OccupiedChunks);
-		m_OccupiedChunks = m_FreeChunks;
-		m_FreeChunks = next_free;
+		ArchetypeChunk* new_chunk = m_FreeChunks;
+		m_FreeChunks = m_FreeChunks->GetNextChunk();
+		new_chunk->SetNextChunk(m_OccupiedChunks);
+		m_OccupiedChunks = new_chunk;
+		// printf("[SIG:%s] - Chunk : %p - Memory : %p\n", Utils::ToString(m_Signature), m_OccupiedChunks, m_OccupiedChunks->GetComponentsBuffer());
 		return m_OccupiedChunks;
 	}
 }

@@ -37,10 +37,10 @@ Archetype& ECS::GetOrCreateArchetype(const Bitset& sig)
 Entity& ECS::CreateEntity(BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
 {
 	Entity& entity = m_Entities.EmplaceBack((EntityID)m_Entities.Size());
-
 	Bitset sig(BaseComponent::GetComponentsCount());
+
 	for (uint32 i = 0; i < numComponents; i++) {
-		sig.Set(i, true);
+		sig.Set(componentIDs[i], true);
 	}
 
 	GetOrCreateArchetype(sig).AddEntityComponents(entity, components, componentIDs, numComponents);
@@ -70,6 +70,10 @@ BaseComponent* ECS::AddComponentInternal(Entity& entity, uint32 component_id, Ba
 
 	if (chunk) { // the entity already had some components
 		Archetype& old_arche = chunk->GetArchetype();
+
+		if (old_arche.GetSignature().Get(component_id))
+			return ECS::GetComponentInternal(entity, component_id);
+
 		Bitset sig = old_arche.GetSignature();
 		sig.Set(component_id, true);
 		uint32 old_internal_id = entity.m_InternalId;
@@ -99,6 +103,9 @@ bool ECS::RemoveComponentInternal(Entity& entity, uint32 component_id)
 
 	if (chunk) { // the entity already had some components
 		Archetype& old_arche = chunk->GetArchetype();
+
+		if (!old_arche.GetSignature().Get(component_id))
+			return false;
 
 		if (old_arche.GetComponentsTypesCount() == 1) {
 			chunk->RemoveEntityComponents(entity);
@@ -131,7 +138,9 @@ bool ECS::RemoveComponentInternal(Entity& entity, uint32 component_id)
 
 BaseComponent* ECS::GetComponentInternal(const Entity& entity, uint32 component_id)
 {
-	return entity.GetChunk()->GetComponent(entity, component_id);
+	ArchetypeChunk* chunk = entity.GetChunk();
+	ASSERTF(!(chunk && chunk->GetArchetype().GetSignature().Get(component_id)), "Invalid usage of GetComponentInternal entity doesn't have any components or doesn't have the specified component.");
+	return chunk->GetComponent(entity, component_id);
 }
 
 void ECS::UpdateSystems(SystemList& system_list, float delta)
@@ -151,7 +160,6 @@ void ECS::UpdateSystems(SystemList& system_list, float delta)
 					ArchetypeChunk* chunk = arche.GetLastOccupiedChunk();
 					uint8* comp_buffer = chunk->GetComponentsBuffer() + c.second; // Get the coomponent buffer
 					uint32 size = (uint32) BaseComponent::GetTypeSize(c.first);
-					// printf("[ECS] SIG = %s - ComponentID = %d - Comp buffer : %p\n", Utils::ToString(sig), c.first, comp_buffer);
 
 					do {
 						for (uint32 i = 0; i < chunk->GetEntitiesCount(); i++) {

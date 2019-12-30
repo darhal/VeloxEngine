@@ -12,7 +12,7 @@ TRE_NS_START
 class ArchetypeChunk
 {
 public:
-	CONSTEXPR static uint32 CAPACITY = 32; // How much components per type can store
+	CONSTEXPR static uint32 CAPACITY = 5; // How much components per type can store
 
 public:
 	ArchetypeChunk(Archetype* archetype, uint8* comp_buffer);
@@ -45,7 +45,7 @@ public:
 
 	FORCEINLINE BaseComponent* UpdateComponentMemory(Entity& entity, BaseComponent* component, ComponentTypeID component_id);
 
-	FORCEINLINE bool IsFull() const { return m_EntitiesCount == CAPACITY; };
+	FORCEINLINE bool IsFull() const { return m_EntitiesCount >= CAPACITY; };
 
 	FORCEINLINE Archetype& GetArchetype() { return *m_Archetype; }
 

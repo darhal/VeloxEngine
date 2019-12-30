@@ -494,12 +494,15 @@ void DoJobs2(TaskExecutor* ts)
 
 struct TestComponent : public Component<TestComponent>
 {
-	TestComponent(uint32 id) : smthg(id) {}
-	uint32 smthg;
+	TestComponent(vec3 id) : smthg(id) {}
+	vec3 smthg;
 };
 
 struct TestComponent2 : public Component<TestComponent2>
 {
+	//TestComponent2(const Mat4f& str) : test(str) {}
+	//Mat4f test;
+
 	TestComponent2(const String& str) : test(str) {}
 	String test;
 };
@@ -520,7 +523,7 @@ public:
 			//LOG::Write("[System A] Updating the componenet : %d", test.smthg);
 		} else {
 			TestComponent2& test2 = *(TestComponent2*)components;
-			//LOG::Write("[System A] Updating the componenet : %s", test2.test.Buffer());
+			LOG::Write("[System A] Updating the componenet : %s", test2.test.Buffer());
 		}
 	}
 };
@@ -612,39 +615,49 @@ int main()
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
 	mainSystems.AddSystem(&test_systemA); mainSystems.AddSystem(&test_systemB); mainSystems.AddSystem(&test_systemC);
 
-	/*Entity** ent = (Entity**) Allocate<Entity*>(1'000'000);
+	EntityID* ent = (EntityID*) Allocate<EntityID>(100);
+	for (int i = 0; i < 100; i++) {
+		// ent[i] = ECS::CreateEntityWithComponents(TestComponent2(Mat4f()), TestComponent(vec3())).GetEntityID();
+		if (i % 3 == 1) {
+			ent[i] = ECS::CreateEntityWithComponents(TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
+		} else if (i % 3 == 2) {
+			ent[i] = ECS::CreateEntityWithComponents(TestComponent(vec3())).GetEntityID();
+		} else if (i % 3 == 0) {
+			ent[i] = ECS::CreateEntityWithComponents(TestComponent2("xD")).GetEntityID();
+		}
+	}
 
-	for (int i = 0; i < 1'000'000; i++) {
-		ent[i] = &ECS::CreateEntityWithComponents(TestComponent2("Hello there!"), TestComponent(5));
-	}*/
-
-	Entity& entity = ECS::CreateEntityWithComponents(TestComponent2("Hello there!"), TestComponent(5));
+	/*Entity& entity = ECS::CreateEntityWithComponents(TestComponent2("Hello there!"), TestComponent(5));
 	//entity.CreateComponent<TestComponent2>("Hello there!");
 	//entity.CreateComponent<TestComponent>(5);
 
 	Entity& entity2 = ECS::CreateEntityWithComponents(TestComponent(8));
 	// entity2.CreateComponent<TestComponent>(8);
-	// 2, 4, 2, 1 will crash it
-	char c;
+	// 2, 4, 2, 1 will crash it*/
+	int c;
 	do {
 		INIT_BENCHMARK
 		BENCHMARK("Updating all components", ECS::UpdateSystems(mainSystems, 0.0););
 
-		std::cin >> c;
-		if (c == '1') {
+		uint32 id;
+		std::cout << "Choose option (1, 2, 3, 4, 5): "; std::cin >> c;
+		std::cout << "Choose option (0-1'000'000): "; std::cin >> id;
+		if (c == 1) {
 			INIT_BENCHMARK
-			BENCHMARK("Remove TestComponent", entity.RemoveComponent<TestComponent>(););
-		} else if(c == '2') {
-			BENCHMARK("Remove TestComponent2", entity.RemoveComponent<TestComponent2>(););
-		} else if (c == '3') {
-			BENCHMARK("Create TestComponent", entity.CreateComponent<TestComponent>(6););
-		} else if (c == '4') {
-			BENCHMARK("Create TestComponent2", entity.CreateComponent<TestComponent2>("I got added again!"););
-		} else if (c == '5') {
-			BENCHMARK("Create TestComponent2 & TestComponent", entity.CreateComponent<TestComponent2>("Yoohoo");
-			entity.CreateComponent<TestComponent>(9););
+			BENCHMARK("Remove TestComponent", ECS::GetEntityByID(id).RemoveComponent<TestComponent>(););
+		} else if(c == 2) {
+			BENCHMARK("Remove TestComponent2", ECS::GetEntityByID(id).RemoveComponent<TestComponent2>(););
+		} else if (c == 3) {
+			BENCHMARK("Create TestComponent", ECS::GetEntityByID(id).CreateComponent<TestComponent>(vec3()););
+		} else if (c == 4) {
+			BENCHMARK("Create TestComponent2", ECS::GetEntityByID(id).CreateComponent<TestComponent2>(":P"););
+		} else if (c == 5) {
+			BENCHMARK("Create TestComponent2 & TestComponent", 
+				ECS::GetEntityByID(id).CreateComponent<TestComponent2>(":)");
+			ECS::GetEntityByID(id).CreateComponent<TestComponent>(vec3());
+			);
 		}
-	}while(c !=  'c');
+	}while(c !=  0);
 	
 	// RenderThread();
 	getchar();

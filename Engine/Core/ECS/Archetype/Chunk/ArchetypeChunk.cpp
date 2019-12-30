@@ -17,7 +17,7 @@ ArchetypeChunk::~ArchetypeChunk()
 
 		for (uint32 i = 0; i < m_EntitiesCount; i++) {
 			uint32 index = i * size; // get index in buffer
-			freefn((BaseComponent*)comp_buffer[index]);
+			freefn((BaseComponent*) &comp_buffer[index]);
 		}
 	}
 }
@@ -55,7 +55,7 @@ Entity* ArchetypeChunk::GetEntity(uint32 index)
 
 	for (auto& c : m_Archetype->GetTypesBufferMarker()) {
 		uint8* comp_buffer = m_ComponentBuffer + c.second; // Get the coomponent buffer
-		return ((BaseComponent*)comp_buffer[index * BaseComponent::GetTypeSize(c.first)])->GetEntity();
+		return ((BaseComponent*) &comp_buffer[index * BaseComponent::GetTypeSize(c.first)])->GetEntity();
 	}
 
 	return NULL;
@@ -146,7 +146,7 @@ BaseComponent* ArchetypeChunk::AddComponentToEntityInternal(Entity& entity, uint
 {
 	ComponentCreateFunction createfn = BaseComponent::GetTypeCreateFunction(component_id);
 	uint32 index = entity.m_InternalId * BaseComponent::GetTypeSize(component_id);
-	return createfn(buffer + index, &entity, component);
+	return createfn((uint8*) &buffer[index], &entity, component);
 }
 
 void ArchetypeChunk::AddEntityComponents(Entity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents)
@@ -155,7 +155,6 @@ void ArchetypeChunk::AddEntityComponents(Entity& entity, BaseComponent** compone
 
 	for (uint32 i = 0; i < numComponents; i++) {
 		const uint32& comp_id = componentIDs[i];
-		// printf("[ArchetypeChunk]  COMP ID = %d - Component buffer : %p\n", comp_id, this->GetComponentBuffer(comp_id));
 		AddComponentToEntityInternal(entity, this->GetComponentBuffer(comp_id), components[i], comp_id);
 	}
 }

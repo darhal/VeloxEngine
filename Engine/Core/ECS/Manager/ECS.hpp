@@ -29,6 +29,8 @@ public:
 
 	static Entity& CreateEntity(BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents);
 
+	static FORCEINLINE Entity& GetEntityByID(uint32 id);
+
 	static void DeleteEntity(EntityHandle);
 
 	// Compnents :
@@ -101,6 +103,12 @@ template<typename Component>
 FORCEINLINE Component* ECS::GetComponent(const Entity& entity)
 {
 	return (Component*) ECS::GetComponentInternal(entity, Component::ID);
+}
+
+FORCEINLINE Entity& ECS::GetEntityByID(uint32 id)
+{
+	ASSERTF(id >= m_Entities.Size(), "Invalid usage of 'GetEntityByID', invalid ID is supplied.");
+	return m_Entities[id];
 }
 
 TRE_NS_END
