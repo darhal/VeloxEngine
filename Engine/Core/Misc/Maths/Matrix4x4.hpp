@@ -42,6 +42,10 @@ public:
 		};
 	};
 
+	FORCEINLINE Matrix(const class_type& other);
+
+	FORCEINLINE Matrix(class_type&& other);
+
 	FORCEINLINE Matrix();
 
 	template<typename TYPE>
@@ -70,6 +74,7 @@ public:
 	FORCEINLINE float determinant();
 
 	FORCEINLINE class_type& operator=(const class_type&);
+	FORCEINLINE class_type& operator=(class_type&&);
 
 	template<typename T, proc_type Q>
 	FORCEINLINE class_type& scale(const Vec<3, T, Q>&);
@@ -173,11 +178,34 @@ FORCEINLINE Matrix<float, SIMD, 4, 4>::Matrix(bool)
 {
 }
 
+FORCEINLINE Matrix<float, SIMD, 4, 4>::Matrix(const class_type& other) 
+{
+	for (int i = 0; i < 4; i++) {
+		rows[i] = other.rows[i];
+	}
+}
+
+FORCEINLINE Matrix<float, SIMD, 4, 4>::Matrix(class_type&& other)
+{
+	for (int i = 0; i < 4; i++) {
+		rows[i] = other.rows[i];
+	}
+}
+
 FORCEINLINE Matrix<float, SIMD, 4, 4>& Matrix<float, SIMD, 4, 4>::operator=(const Matrix<float, SIMD, 4, 4>& v)
 {
 	for (int i = 0; i < 4; i++) {
 		rows[i] = v.rows[i];
 	}
+	return *this;
+}
+
+FORCEINLINE Matrix<float, SIMD, 4, 4>& Matrix<float, SIMD, 4, 4>::operator=(Matrix<float, SIMD, 4, 4>&& v)
+{
+	for (int i = 0; i < 4; i++) {
+		rows[i] = v.rows[i];
+	}
+
 	return *this;
 }
 

@@ -12,7 +12,7 @@ TRE_NS_START
 class ArchetypeChunk
 {
 public:
-	CONSTEXPR static uint32 CAPACITY = 5; // How much components per type can store
+	CONSTEXPR static uint32 CAPACITY = 64; // How much components per type can store
 
 public:
 	ArchetypeChunk(Archetype* archetype, uint8* comp_buffer);

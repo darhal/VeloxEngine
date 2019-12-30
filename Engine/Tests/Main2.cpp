@@ -494,17 +494,17 @@ void DoJobs2(TaskExecutor* ts)
 
 struct TestComponent : public Component<TestComponent>
 {
-	TestComponent(vec3 id) : smthg(id) {}
+	TestComponent(const vec3& id) : smthg(id) {}
 	vec3 smthg;
 };
 
 struct TestComponent2 : public Component<TestComponent2>
 {
-	//TestComponent2(const Mat4f& str) : test(str) {}
-	//Mat4f test;
+	TestComponent2(const Mat4f& str) : test(str) {}
+	Mat4f test;
 
-	TestComponent2(const String& str) : test(str) {}
-	String test;
+	//TestComponent2(const String& str) : test(str) {}
+	//String test;
 };
 
 class TestSystemA : public System<TestComponent, TestComponent2>
@@ -523,7 +523,7 @@ public:
 			//LOG::Write("[System A] Updating the componenet : %d", test.smthg);
 		} else {
 			TestComponent2& test2 = *(TestComponent2*)components;
-			LOG::Write("[System A] Updating the componenet : %s", test2.test.Buffer());
+			//LOG::Write("[System A] Updating the componenet : %s", test2.test.Buffer());
 		}
 	}
 };
@@ -615,15 +615,15 @@ int main()
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
 	mainSystems.AddSystem(&test_systemA); mainSystems.AddSystem(&test_systemB); mainSystems.AddSystem(&test_systemC);
 
-	EntityID* ent = (EntityID*) Allocate<EntityID>(100);
-	for (int i = 0; i < 100; i++) {
-		// ent[i] = ECS::CreateEntityWithComponents(TestComponent2(Mat4f()), TestComponent(vec3())).GetEntityID();
+	EntityID* ent = (EntityID*) Allocate<EntityID>(1'000'000);
+	for (int i = 0; i < 1'000'000; i++) {
+		// ent[i] = ECS::CreateEntityWithComponents(TestComponent2("Hello")).GetEntityID();
 		if (i % 3 == 1) {
-			ent[i] = ECS::CreateEntityWithComponents(TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
+			ent[i] = ECS::CreateEntityWithComponents(TestComponent2(Mat4f()), TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 2) {
 			ent[i] = ECS::CreateEntityWithComponents(TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 0) {
-			ent[i] = ECS::CreateEntityWithComponents(TestComponent2("xD")).GetEntityID();
+			ent[i] = ECS::CreateEntityWithComponents(TestComponent2(Mat4f())).GetEntityID();
 		}
 	}
 
@@ -650,10 +650,10 @@ int main()
 		} else if (c == 3) {
 			BENCHMARK("Create TestComponent", ECS::GetEntityByID(id).CreateComponent<TestComponent>(vec3()););
 		} else if (c == 4) {
-			BENCHMARK("Create TestComponent2", ECS::GetEntityByID(id).CreateComponent<TestComponent2>(":P"););
+			BENCHMARK("Create TestComponent2", ECS::GetEntityByID(id).CreateComponent<TestComponent2>(Mat4f()););
 		} else if (c == 5) {
 			BENCHMARK("Create TestComponent2 & TestComponent", 
-				ECS::GetEntityByID(id).CreateComponent<TestComponent2>(":)");
+				ECS::GetEntityByID(id).CreateComponent<TestComponent2>(Mat4f());
 			ECS::GetEntityByID(id).CreateComponent<TestComponent>(vec3());
 			);
 		}

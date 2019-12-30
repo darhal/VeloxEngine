@@ -158,10 +158,11 @@ void ECS::UpdateSystems(SystemList& system_list, float delta)
 			if (!arche.IsEmpty()) {
 				for (auto& c : arche.GetTypesBufferMarker()) {
 					ArchetypeChunk* chunk = arche.GetLastOccupiedChunk();
-					uint8* comp_buffer = chunk->GetComponentsBuffer() + c.second; // Get the coomponent buffer
 					uint32 size = (uint32) BaseComponent::GetTypeSize(c.first);
-
+				
 					do {
+						uint8* comp_buffer = chunk->GetComponentsBuffer() + c.second;
+
 						for (uint32 i = 0; i < chunk->GetEntitiesCount(); i++) {
 							system.UpdateComponents(delta, c.first, (BaseComponent*) &comp_buffer[i * size]);
 						}
