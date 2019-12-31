@@ -18,9 +18,6 @@ bool SystemList::RemoveSystem(BaseSystem& system)
 
 bool SystemList::AddSystem(BaseSystem* system)
 {
-	//if (!system->IsValid())
-	//	return false;
-
 	m_Systems.EmplaceBack(system);
 	return true;
 }

@@ -163,8 +163,9 @@
     <ClCompile Include="Core\ECS\Archetype\Archetype.cpp" />
     <ClCompile Include="Core\ECS\Archetype\Chunk\ArchetypeChunk.cpp" />
     <ClCompile Include="Core\ECS\Component\BaseComponent.cpp" />
+    <ClCompile Include="Core\ECS\ECS\ECS.cpp" />
     <ClCompile Include="Core\ECS\Entity\Entity.cpp" />
-    <ClCompile Include="Core\ECS\Manager\ECS.cpp" />
+    <ClCompile Include="Core\ECS\World\World.cpp" />
     <ClCompile Include="Core\ECS\System\BaseSystem.cpp" />
     <ClCompile Include="Core\ECS\System\SystemList.cpp" />
     <ClCompile Include="Core\FileSystem\AsyncFile\AsyncFileManager.cpp" />
@@ -257,6 +258,7 @@
     <ClCompile Include="Core\Window\Window.cpp" />
     <ClCompile Include="Core\Window\Window_Win32.cpp" />
     <ClCompile Include="Core\Window\Window_X11.cpp" />
+    <ClCompile Include="Core\ECS\EntityManager\EntityManager.cpp" />
     <ClCompile Include="RenderAPI\FrameBuffer\FBO.cpp" />
     <ClCompile Include="RenderAPI\GlobalState\GLState.cpp" />
     <ClCompile Include="RenderAPI\RenderBuffer\RBO.cpp" />
@@ -317,8 +319,10 @@
     <ClInclude Include="Core\DataStructure\Vector\Vector.hpp" />
     <ClInclude Include="Core\ECS\Archetype\Archetype.hpp" />
     <ClInclude Include="Core\ECS\Archetype\Chunk\ArchetypeChunk.hpp" />
+    <ClInclude Include="Core\ECS\Common.hpp" />
     <ClInclude Include="Core\ECS\Component\BaseComponent.hpp" />
-    <ClInclude Include="Core\ECS\Manager\ECS.hpp" />
+    <ClInclude Include="Core\ECS\ECS\ECS.hpp" />
+    <ClInclude Include="Core\ECS\World\World.hpp" />
     <ClInclude Include="Core\ECS\Listener\Listener.hpp" />
     <ClInclude Include="Core\ECS\System\BaseSystem.hpp" />
     <ClInclude Include="Core\ECS\System\SystemList.hpp" />
@@ -393,6 +397,7 @@
     <ClInclude Include="Core\TaskSystem\Task\Task.hpp" />
     <ClInclude Include="Core\TaskSystem\WorkStealingQueue\WorkStealingQueue.hpp" />
     <ClInclude Include="Core\Window\Window.hpp" />
+    <ClInclude Include="Core\ECS\EntityManager\EntityManager.hpp" />
     <ClInclude Include="RenderAPI\Common.hpp" />
     <ClInclude Include="RenderAPI\FrameBuffer\FBO.hpp" />
     <ClInclude Include="RenderAPI\General\GLContext.hpp" />

@@ -5,9 +5,9 @@
 
 TRE_NS_START
 
-Archetype::Archetype(const Bitset& bitset, const Vector<ComponentTypeID>& ids) :
-	m_Signature(std::move(bitset)),
-	m_OccupiedChunks(NULL), m_FreeChunks(NULL),
+Archetype::Archetype(EntityManager* manager, const Bitset& bitset, const Vector<ComponentTypeID>& ids) :
+	m_TypesToBuffer(), m_Signature(std::move(bitset)),
+	m_Manager(manager), m_OccupiedChunks(NULL), m_FreeChunks(NULL),
 	m_TypesCount((uint32)ids.Size()), m_ComponentsArraySize(0), m_Id(0)
 {
 	// Calculate size for all the components
@@ -17,9 +17,9 @@ Archetype::Archetype(const Bitset& bitset, const Vector<ComponentTypeID>& ids) :
 	}
 }
 
-Archetype::Archetype(const Vector<ComponentTypeID>& ids) :
-	m_Signature(BaseComponent::GetComponentsCount()),
-	m_OccupiedChunks(NULL), m_FreeChunks(NULL),
+Archetype::Archetype(EntityManager* manager, const Vector<ComponentTypeID>& ids) :
+	m_TypesToBuffer(), m_Signature(BaseComponent::GetComponentsCount()),
+	m_Manager(manager), m_OccupiedChunks(NULL), m_FreeChunks(NULL),
 	m_TypesCount((uint32)ids.Size()), m_ComponentsArraySize(0), m_Id(0)
 {
 	// Calculate size for all the components
@@ -30,9 +30,9 @@ Archetype::Archetype(const Vector<ComponentTypeID>& ids) :
 	}
 }
 
-Archetype::Archetype(const Bitset& bitset) :
-	m_Signature(std::move(bitset)),
-	m_OccupiedChunks(NULL), m_FreeChunks(NULL),
+Archetype::Archetype(EntityManager* manager, const Bitset& bitset) :
+	m_TypesToBuffer(), m_Signature(std::move(bitset)),
+	m_Manager(manager), m_OccupiedChunks(NULL), m_FreeChunks(NULL),
 	m_TypesCount(0), m_ComponentsArraySize(0), m_Id(0)
 {
 	// Calculate size for all the components
@@ -64,6 +64,11 @@ Archetype::~Archetype()
 	}
 }
 
+EntityManager& Archetype::GetEntityManager() const 
+{ 
+	return *m_Manager; 
+}
+
 void Archetype::AddComponentType(ComponentTypeID id)
 {
 	m_Signature.Set(id, true);
@@ -71,7 +76,7 @@ void Archetype::AddComponentType(ComponentTypeID id)
 
 ArchetypeChunk* Archetype::GenerateChunk()
 {
-	usize total_chunk_size = sizeof(ArchetypeChunk) + m_ComponentsArraySize;
+	usize total_chunk_size = sizeof(ArchetypeChunk) + sizeof(EntityID) * ArchetypeChunk::CAPACITY + m_ComponentsArraySize;
 
 	// Allocate
 	uint8* total_buffer = Allocate<uint8>(total_chunk_size);

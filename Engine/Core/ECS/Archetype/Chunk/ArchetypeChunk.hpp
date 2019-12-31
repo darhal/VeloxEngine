@@ -3,9 +3,7 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/DataStructure/Vector/Vector.hpp>
 #include <Core/Memory/Allocators/LinearAlloc/LinearAllocator.hpp>
-#include <Core/DataStructure/HashMap/Map.hpp>
-#include <Core/ECS/Component/BaseComponent.hpp>
-#include <Core/ECS/Entity/Entity.hpp>
+#include <Core/ECS/Common.hpp>
 
 TRE_NS_START
 
@@ -25,8 +23,6 @@ public:
 
 	uint8* GetComponentBuffer(ComponentTypeID id) const;
 
-	uint32 ReserveEntity();
-
 	void AddEntity(Entity& entity);
 
 	Entity* GetEntity(uint32 index);
@@ -41,21 +37,23 @@ public:
 
 	BaseComponent* GetComponent(EntityID internal_id, uint8* buffer, ComponentTypeID component_id) const;
 
-	FORCEINLINE BaseComponent* AddComponentToEntity(Entity& entity, BaseComponent* component, ComponentTypeID component_id);
+	BaseComponent* AddComponentToEntity(Entity& entity, BaseComponent* component, ComponentTypeID component_id);
 
-	FORCEINLINE BaseComponent* UpdateComponentMemory(Entity& entity, BaseComponent* component, ComponentTypeID component_id);
+	BaseComponent* UpdateComponentMemory(Entity& entity, BaseComponent* component, ComponentTypeID component_id);
+
+	uint32 RemoveEntityComponents(Entity& entity);
+
+	uint32 DestroyEntityComponents(Entity& entity);
+
+	uint8* GetComponentsBuffer() const;
+
+	Archetype& GetArchetype();
 
 	FORCEINLINE bool IsFull() const { return m_EntitiesCount >= CAPACITY; };
 
-	FORCEINLINE Archetype& GetArchetype() { return *m_Archetype; }
-
-	FORCEINLINE uint8* GetComponentsBuffer() { return m_ComponentBuffer; }
-
-	FORCEINLINE uint32 RemoveEntityComponents(Entity& entity) { return RemoveEntityComponents(entity.m_InternalId); }
-
-	FORCEINLINE uint32 DestroyEntityComponents(Entity& entity) { return RemoveEntityComponents(entity.m_InternalId); }
-
 	FORCEINLINE uint32 GetEntitiesCount() const { return m_EntitiesCount; }
+
+	EntityID& GetEntityID(uint32 internal_id);
 
 private:
 	Archetype* m_Archetype;
@@ -72,16 +70,9 @@ private:
 	BaseComponent* UpdateComponentMemoryInternal(uint32 internal_id, Entity& entity, BaseComponent* component, ComponentTypeID component_id);
 
 	ArchetypeChunk* SwapEntityWithLastOne(uint32 entity_internal_id);
+
+	uint32 ReserveEntity(const Entity& entity);
 };
 
-FORCEINLINE BaseComponent* ArchetypeChunk::UpdateComponentMemory(Entity& entity, BaseComponent* component, ComponentTypeID component_id)
-{
-	return this->UpdateComponentMemoryInternal(entity.m_InternalId, entity, component, component_id);
-}
-
-FORCEINLINE BaseComponent* ArchetypeChunk::AddComponentToEntity(Entity& entity, BaseComponent* component, ComponentTypeID component_id)
-{
-	return this->AddComponentToEntityInternal(entity, this->GetComponentBuffer(component_id), component, component_id);
-}
 
 TRE_NS_END

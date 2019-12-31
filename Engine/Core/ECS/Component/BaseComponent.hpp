@@ -3,27 +3,17 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/DataStructure/Vector/Vector.hpp>
 #include <Core/DataStructure/Tuple/Tuple.hpp>
+#include <Core/ECS/Common.hpp>
 
 TRE_NS_START
 
-typedef class Entity* EntityHandle;
-typedef uint32 ComponentID;
-typedef uint32 ComponentTypeID;
-typedef struct BaseComponent*(*ComponentCreateFunction)(uint8*, EntityHandle, struct BaseComponent*);
-typedef void(*ComponentDeleteFunction)(struct BaseComponent*);
-
 struct BaseComponent
 {
-	
 private:
 	friend class ECS;
 
 	static Vector<Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32>>* s_ComponentsTypes;
-
-	EntityHandle m_Entity = NULL;
 public:	
-	FORCEINLINE Entity* GetEntity() { return m_Entity; }
-
 	static uint32 RegisterComponentType(ComponentCreateFunction createfn, ComponentDeleteFunction freefn, uint32 size);
 
 	FORCEINLINE static usize GetComponentsCount() { return s_ComponentsTypes->Size();}
@@ -49,10 +39,9 @@ public:
 	}
 
 	template<typename Component>
-	static BaseComponent* CreateComponent(uint8* memory, EntityHandle entity, BaseComponent* comp)
+	static BaseComponent* CreateComponent(uint8* memory, BaseComponent* comp)
 	{
 		Component* component = new (memory) Component(*(Component*)comp);
-		component->m_Entity = entity;
 		return (BaseComponent*) component;
 	}
 

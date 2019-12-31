@@ -49,7 +49,7 @@
 #include <Core/DataStructure/StringBuffer/StringBuffer.hpp>
 #include <Core/DataStructure/FixedString/FixedString.hpp>
 
-#include <Core/ECS/Manager/ECS.hpp>
+#include <Core/ECS/ECS/ECS.hpp>
 #include <Core/DataStructure/Bitset/Bitset.hpp>
 #include <Core/DataStructure/Utils/Utils.hpp>
 
@@ -611,19 +611,19 @@ int main()
 	}*/
 
 	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
-	SystemList mainSystems;
+	World& world = ECS::CreateWorld();
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
-	mainSystems.AddSystem(&test_systemA); mainSystems.AddSystem(&test_systemB); mainSystems.AddSystem(&test_systemC);
+	world.GetSystsemList().AddSystems(&test_systemA, &test_systemB, &test_systemC);
 
 	EntityID* ent = (EntityID*) Allocate<EntityID>(1'000'000);
 	for (int i = 0; i < 1'000'000; i++) {
 		// ent[i] = ECS::CreateEntityWithComponents(TestComponent2("Hello")).GetEntityID();
 		if (i % 3 == 1) {
-			ent[i] = ECS::CreateEntityWithComponents(TestComponent2(Mat4f()), TestComponent(vec3())).GetEntityID();
+			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2(Mat4f()), TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 2) {
-			ent[i] = ECS::CreateEntityWithComponents(TestComponent(vec3())).GetEntityID();
+			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 0) {
-			ent[i] = ECS::CreateEntityWithComponents(TestComponent2(Mat4f())).GetEntityID();
+			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2(Mat4f())).GetEntityID();
 		}
 	}
 
@@ -637,24 +637,24 @@ int main()
 	int c;
 	do {
 		INIT_BENCHMARK
-		BENCHMARK("Updating all components", ECS::UpdateSystems(mainSystems, 0.0););
+		BENCHMARK("Updating all components", world.UpdateSystems(0.0););
 
 		uint32 id;
 		std::cout << "Choose option (1, 2, 3, 4, 5): "; std::cin >> c;
 		std::cout << "Choose option (0-1'000'000): "; std::cin >> id;
 		if (c == 1) {
 			INIT_BENCHMARK
-			BENCHMARK("Remove TestComponent", ECS::GetEntityByID(id).RemoveComponent<TestComponent>(););
+			BENCHMARK("Remove TestComponent", world.GetEntityManager().GetEntityByID(id).RemoveComponent<TestComponent>(););
 		} else if(c == 2) {
-			BENCHMARK("Remove TestComponent2", ECS::GetEntityByID(id).RemoveComponent<TestComponent2>(););
+			BENCHMARK("Remove TestComponent2", world.GetEntityManager().GetEntityByID(id).RemoveComponent<TestComponent2>(););
 		} else if (c == 3) {
-			BENCHMARK("Create TestComponent", ECS::GetEntityByID(id).CreateComponent<TestComponent>(vec3()););
+			BENCHMARK("Create TestComponent", world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent>(vec3()););
 		} else if (c == 4) {
-			BENCHMARK("Create TestComponent2", ECS::GetEntityByID(id).CreateComponent<TestComponent2>(Mat4f()););
+			BENCHMARK("Create TestComponent2", world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent2>(Mat4f()););
 		} else if (c == 5) {
 			BENCHMARK("Create TestComponent2 & TestComponent", 
-				ECS::GetEntityByID(id).CreateComponent<TestComponent2>(Mat4f());
-			ECS::GetEntityByID(id).CreateComponent<TestComponent>(vec3());
+				world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent2>(Mat4f());
+			world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent>(vec3());
 			);
 		}
 	}while(c !=  0);

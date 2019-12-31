@@ -5,8 +5,11 @@
 #include <Core/DataStructure/HashMap/Map.hpp>
 #include <Core/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
 #include <Core/DataStructure/Utils/Utils.hpp>
+#include <Core/ECS/Component/BaseComponent.hpp>
 
 TRE_NS_START
+
+class EntityManager;
 
 class Archetype
 {
@@ -17,11 +20,11 @@ public:
 	typedef GenericIterator<ArchetypeChunk> Iterator;
 	typedef GenericIterator<const ArchetypeChunk> CIterator;
 public:
-	Archetype(const Bitset& bitset, const Vector<ComponentTypeID>& ids);
+	Archetype(EntityManager* manager, const Bitset& bitset, const Vector<ComponentTypeID>& ids);
 
-	Archetype(const Vector<ComponentTypeID>& ids);
+	Archetype(EntityManager* manager, const Vector<ComponentTypeID>& ids);
 
-	Archetype(const Bitset& bitset);
+	Archetype(EntityManager* manager, const Bitset& bitset);
 
 	ArchetypeChunk* AddEntity(Entity& entity);
 	
@@ -32,6 +35,10 @@ public:
 	ArchetypeChunk* AddEntityComponents(Entity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents);
 
 	ArchetypeChunk* GetAllocationChunk();
+
+	ArchetypeChunk* GetLastOccupiedChunk();
+
+	EntityManager& GetEntityManager() const;
 
 	FORCEINLINE uint32 GetID() { return m_Id; }
 
@@ -51,23 +58,23 @@ public:
 
 	const CIterator cbegin() const { return CIterator(m_OccupiedChunks); }
 	const CIterator cend() const { return CIterator(NULL); }
-
-
 private:
 	Map<ComponentTypeID, uint32> m_TypesToBuffer;
 	Bitset m_Signature;
+	EntityManager* m_Manager;
 	ArchetypeChunk* m_OccupiedChunks;
 	ArchetypeChunk* m_FreeChunks;
 	uint32 m_TypesCount;
 	uint32 m_ComponentsArraySize;
 	uint32 m_Id;
 
-	friend class ECS;
+	friend class EntityManager;
 	friend class ArchetypeChunk;
 
 	ArchetypeChunk* GenerateChunk();
-	ArchetypeChunk* GetLastOccupiedChunk();
+
 	void PushFreeChunk(ArchetypeChunk* chunk);
+
 	FORCEINLINE void SetID(uint32 id) { m_Id = id; }
 
 private:
