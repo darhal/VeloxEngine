@@ -154,4 +154,57 @@ BaseComponent* EntityManager::GetComponentInternal(const Entity& entity, uint32 
 	return chunk->GetComponent(entity, component_id);
 }
 
+Vector<BaseComponent*> EntityManager::GetAllComponents(ComponentTypeID id)
+{
+	Vector<BaseComponent*> res;
+	Bitset sig(BaseComponent::GetComponentsCount());
+	sig.Set(id, true);
+	uint32 size = (uint32)BaseComponent::GetTypeSize(id);
+
+	for (const ArchetypeContainer::Object& arche_pair : m_Archetypes) {
+		const Archetype& arche = arche_pair.second;
+		
+		if ((arche.GetSignature() & sig) == sig) {
+
+			for (const ArchetypeChunk& chunk : arche) {
+
+				uint8* comp_buffer = chunk.GetComponentBuffer(id);
+
+				for (uint32 i = 0; i < chunk.GetEntitiesCount(); i++) {
+					res.EmplaceBack((BaseComponent*) &comp_buffer[i * size]);
+				}
+			}
+		}
+	}
+
+	return res;
+}
+
+Map<ComponentTypeID, Vector<BaseComponent*>> EntityManager::GetAllComponentsMatchSignture(const Bitset& signature)
+{
+	Map<ComponentTypeID, Vector<BaseComponent*>> res;
+	
+	for (const ArchetypeContainer::Object& arche_pair : m_Archetypes) {
+		const Archetype& arche = arche_pair.second;
+
+		if ((arche.GetSignature() & signature)) {
+			for (auto& c : arche.GetTypesBufferMarker()) {
+				if (signature.Get(c.first)) {
+					uint32 size = (uint32)BaseComponent::GetTypeSize(c.first);
+
+					for (const ArchetypeChunk& chunk : arche) {
+						uint8* comp_buffer = chunk.GetComponentBuffer(c.first);
+
+						for (uint32 i = 0; i < chunk.GetEntitiesCount(); i++) {
+							res[c.first].EmplaceBack((BaseComponent*) &comp_buffer[i * size]);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return res;
+}
+
 TRE_NS_END

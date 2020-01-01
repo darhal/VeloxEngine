@@ -21,8 +21,6 @@ public:
 
 	void SetNextChunk(ArchetypeChunk* next);
 
-	uint8* GetComponentBuffer(ComponentTypeID id) const;
-
 	void AddEntity(Entity& entity);
 
 	Entity* GetEntity(uint32 index);
@@ -44,6 +42,8 @@ public:
 	uint32 RemoveEntityComponents(Entity& entity);
 
 	uint32 DestroyEntityComponents(Entity& entity);
+
+	uint8* GetComponentBuffer(ComponentTypeID id) const;
 
 	uint8* GetComponentsBuffer() const;
 

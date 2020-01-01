@@ -500,7 +500,7 @@ Bitset& Bitset::operator+=(Bitset other)
 	while (other != Bitset(this->Length(), false)) {
 		carry = *this & other;
 		*this ^= other;
-		other = carry >> 1;
+		other = carry >> (usize)1;
 	}
 
 	return *this;
@@ -588,6 +588,41 @@ bool Bitset::operator<(const Bitset& other) const
 bool Bitset::operator>=(const Bitset& other) const
 {
 	return !(*this < other);
+}
+
+Bitset::operator bool()
+{
+	bool is_small = this->IsSmall();
+
+	if (is_small) {
+		usize len = this->GetSmallLength();
+
+		if (len == 0)
+			return false;
+
+		uint32 nb_bytes = (uint32)Math::Ceil((double)len / (double)(sizeof(uint8) * BITS_PER_BYTE));
+
+		for (uint32 i = 0; i < nb_bytes; i++) {
+			if (m_Data[i])
+				return true;
+		}
+
+		return false;
+	} 
+
+	usize len = this->GetNormalLength();
+
+	if (len == 0)
+		return false;
+
+	uint32 nb_bytes = (uint32)Math::Ceil((double)len / (double)(sizeof(uint8) * BITS_PER_BYTE));
+
+	for (uint32 i = 0; i < nb_bytes; i++) {
+		if (*((uint8*)m_Bits + i))
+			return true;
+	}
+
+	return false;
 }
 
 TRE_NS_END

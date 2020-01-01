@@ -6,15 +6,13 @@
 TRE_NS_START
 
 World::World() : 
-	m_WorldId(ECS::DefaultWorld), m_EntityManager(this)
+	m_EntityManager(this), m_SystemList(this), m_WorldId(ECS::DefaultWorld)
 {
-
 }
 
 World::~World()
 {
 }
-
 
 void World::UpdateSystems(float delta)
 {
@@ -23,25 +21,22 @@ void World::UpdateSystems(float delta)
 	for (uint32 i = 0; i < systems_sz; i++) {
 		BaseSystem& system = *m_SystemList[i];
 		const Bitset& sig = system.GetSignature();
-		Archetype* arche;
-
-		if ((arche = m_EntityManager.GetArchetype(sig)) != NULL) {
+		Archetype* arche = system.GetArchetype();
 		
-			if (!arche->IsEmpty()) {
-				for (auto& c : arche->GetTypesBufferMarker()) {
-					ArchetypeChunk* chunk = arche->GetLastOccupiedChunk();
-					uint32 size = (uint32) BaseComponent::GetTypeSize(c.first);
+		if (!arche->IsEmpty()) {
+			for (auto& c : arche->GetTypesBufferMarker()) {
+				ArchetypeChunk* chunk = arche->GetLastOccupiedChunk();
+				uint32 size = (uint32) BaseComponent::GetTypeSize(c.first);
 				
-					do {
-						uint8* comp_buffer = chunk->GetComponentsBuffer() + c.second;
+				do {
+					uint8* comp_buffer = chunk->GetComponentsBuffer() + c.second;
 
-						for (uint32 i = 0; i < chunk->GetEntitiesCount(); i++) {
-							system.UpdateComponents(delta, c.first, (BaseComponent*) &comp_buffer[i * size]);
-						}
+					for (uint32 i = 0; i < chunk->GetEntitiesCount(); i++) {
+						system.UpdateComponents(delta, c.first, (BaseComponent*) &comp_buffer[i * size]);
+					}
 
-						chunk = chunk->GetNextChunk();
-					} while (chunk);
-				}
+					chunk = chunk->GetNextChunk();
+				} while (chunk);
 			}
 		}
 	}

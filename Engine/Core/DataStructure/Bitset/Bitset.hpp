@@ -101,6 +101,8 @@ public:
 	bool operator<(const Bitset& other) const;
 
 	bool operator>=(const Bitset& other) const;
+
+	operator bool();
 private:
 	CONSTEXPR static uint32 NB_BYTES_SMALL = sizeof(usize*) + sizeof(usize);
 	CONSTEXPR static uint32 NB_BITS_PER_ELEMENT = sizeof(usize) * BITS_PER_BYTE; // Number of bits before we move on to the next element and allocate it

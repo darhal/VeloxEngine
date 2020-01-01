@@ -9,6 +9,8 @@
 
 TRE_NS_START
 
+class Archetype;
+
 class BaseSystem
 {
 public:
@@ -23,9 +25,15 @@ public:
 	virtual const Bitset& GetSignature() const = 0;
 
 	virtual uint32 GetComponentsCount() const = 0;
-protected:
-	BaseSystem() {};
 
+	Archetype* GetArchetype() { return m_Archetype; }
+
+	void SetArchetype(Archetype* archetype) { m_Archetype = archetype; }
+protected:
+	BaseSystem() : m_Archetype(NULL)
+	{};
+
+	Archetype* m_Archetype;
 	friend class ECS;
 };
 

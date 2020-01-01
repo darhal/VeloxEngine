@@ -15,6 +15,8 @@ class Entity;
 class EntityManager
 {
 public:
+	typedef PackedArray<Archetype> ArchetypeContainer;
+public:
 	EntityManager(class World* world);
 
 	// Entities :
@@ -39,6 +41,13 @@ public:
 	template<typename Component>
 	FORCEINLINE Component* GetComponent(const Entity& entity);
 
+	template<typename Component>
+	Vector<Component*> GetAllComponents(ComponentTypeID id);
+
+	Vector<BaseComponent*> GetAllComponents(ComponentTypeID id);
+
+	Map<ComponentTypeID, Vector<BaseComponent*>> GetAllComponentsMatchSignture(const Bitset& signature);
+
 	// Archetypes :
 	Archetype& CreateArchetype(const Bitset& signature);
 
@@ -55,8 +64,6 @@ private:
 	BaseComponent* GetComponentInternal(const Entity& entity, uint32 component_id);
 
 private:
-	typedef PackedArray<Archetype> ArchetypeContainer;
-
 	Vector<Entity> m_Entities;
 	ArchetypeContainer m_Archetypes;
 	HashMap<Bitset, uint32> m_SigToArchetypes;
@@ -100,6 +107,13 @@ template<typename Component>
 FORCEINLINE Component* EntityManager::GetComponent(const Entity& entity)
 {
 	return (Component*)GetComponentInternal(entity, Component::ID);
+}
+
+
+template<typename Component>
+Vector<Component*> EntityManager::GetAllComponents(ComponentTypeID id)
+{
+	return this->GetAllComponents(Component::ID);
 }
 
 TRE_NS_END

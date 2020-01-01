@@ -5,9 +5,13 @@
 
 TRE_NS_START
 
+class World;
+
 class SystemList
 {
 public:
+	SystemList(World* world);
+
 	bool RemoveSystem(BaseSystem& system);
 
 	bool AddSystem(BaseSystem* system);
@@ -20,6 +24,7 @@ public:
 	FORCEINLINE BaseSystem* operator[](uint32 index) { return m_Systems[index]; }
 private:
 	Vector<BaseSystem*> m_Systems;
+	World* m_World;
 };
 
 template<typename... Systems>
@@ -29,7 +34,7 @@ void SystemList::AddSystems(Systems*... sys)
 	BaseSystem* sys_arr[num_sys] = { (BaseSystem*)(sys)... };
 
 	for (uint32 i = 0; i < num_sys; i++)
-		m_Systems.EmplaceBack(sys_arr[i]);
+		this->AddSystem(sys_arr[i]);
 }
 
 TRE_NS_END

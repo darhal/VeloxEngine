@@ -44,7 +44,7 @@ public:
 
 	FORCEINLINE const Bitset& GetSignature() const { return m_Signature; }
 
-	FORCEINLINE const Map<ComponentTypeID, uint32>& GetTypesBufferMarker() { return m_TypesToBuffer; }
+	FORCEINLINE const Map<ComponentTypeID, uint32>& GetTypesBufferMarker() const { return m_TypesToBuffer; }
 
 	FORCEINLINE bool IsEmpty() { return m_OccupiedChunks == NULL; }
 
