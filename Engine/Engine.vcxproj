@@ -319,6 +319,7 @@
     <ClInclude Include="Core\DataStructure\Vector\Vector.hpp" />
     <ClInclude Include="Core\ECS\Archetype\Archetype.hpp" />
     <ClInclude Include="Core\ECS\Archetype\Chunk\ArchetypeChunk.hpp" />
+    <ClInclude Include="Core\ECS\Archetype\Chunk\ArchetypeChunkIterator.hpp" />
     <ClInclude Include="Core\ECS\Common.hpp" />
     <ClInclude Include="Core\ECS\Component\BaseComponent.hpp" />
     <ClInclude Include="Core\ECS\ECS\ECS.hpp" />

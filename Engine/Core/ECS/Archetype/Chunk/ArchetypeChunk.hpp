@@ -4,6 +4,8 @@
 #include <Core/DataStructure/Vector/Vector.hpp>
 #include <Core/Memory/Allocators/LinearAlloc/LinearAllocator.hpp>
 #include <Core/ECS/Common.hpp>
+#include <Core/ECS/Archetype/Chunk/ArchetypeChunkIterator.hpp>
+#include <Core/ECS/Archetype/Archetype.hpp>
 
 TRE_NS_START
 
@@ -55,6 +57,9 @@ public:
 
 	EntityID& GetEntityID(uint32 internal_id);
 
+	template<typename Component>
+	ArchetypeChunkIterator<Component> Iterator();
+
 private:
 	Archetype* m_Archetype;
 	ArchetypeChunk* m_NextChunk;
@@ -74,5 +79,13 @@ private:
 	uint32 ReserveEntity(const Entity& entity);
 };
 
+template<typename Component>
+ArchetypeChunkIterator<Component> ArchetypeChunk::Iterator()
+{
+	if (m_Archetype->Has(Component::ID))
+		return ArchetypeChunkIterator<Component>{ (Component*) this->GetComponentBuffer(Component::ID), m_EntitiesCount };
+
+	return ArchetypeChunkIterator<Component>{ NULL, 0 };
+}
 
 TRE_NS_END

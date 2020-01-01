@@ -6,6 +6,7 @@
 #include <Core/DataStructure/Tuple/Pair.hpp>
 #include <Core/ECS/Common.hpp>
 #include <Core/ECS/EntityManager/EntityManager.hpp>
+#include <Core/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
 
 TRE_NS_START
 
@@ -22,6 +23,8 @@ public:
 	FORCEINLINE EntityID GetEntityID() const { return this->m_Id; }
 
 	FORCEINLINE ArchetypeChunk* GetChunk() const { return this->m_Chunk; }
+
+	FORCEINLINE Archetype* GetArchetype() const;
 
 	template<typename Component>
 	FORCEINLINE Component* AddComponent(Component* comp);
@@ -71,6 +74,14 @@ template<typename Component>
 FORCEINLINE Component* Entity::GetComponent()
 {
 	return m_Manager->GetComponent<Component>(*this);
+}
+
+FORCEINLINE Archetype* Entity::GetArchetype() const
+{ 
+	if (m_Chunk)
+		return &m_Chunk->GetArchetype();
+
+	return NULL;
 }
 
 TRE_NS_END

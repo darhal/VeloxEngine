@@ -48,6 +48,8 @@ public:
 
 	Map<ComponentTypeID, Vector<BaseComponent*>> GetAllComponentsMatchSignture(const Bitset& signature);
 
+	Vector<Archetype*> GetAllArchetypesThatInclude(const Bitset& signature);
+
 	// Archetypes :
 	Archetype& CreateArchetype(const Bitset& signature);
 

@@ -500,11 +500,11 @@ struct TestComponent : public Component<TestComponent>
 
 struct TestComponent2 : public Component<TestComponent2>
 {
-	TestComponent2(const Mat4f& str) : test(str) {}
-	Mat4f test;
+	//TestComponent2(const Mat4f& str) : test(str) {}
+	//Mat4f test;
 
-	//TestComponent2(const String& str) : test(str) {}
-	//String test;
+	TestComponent2(const String& str) : test(str) {}
+	String test;
 };
 
 class TestSystemA : public System<TestComponent, TestComponent2>
@@ -619,13 +619,45 @@ int main()
 	for (int i = 0; i < 1'000'000; i++) {
 		// ent[i] = ECS::CreateEntityWithComponents(TestComponent2("Hello")).GetEntityID();
 		if (i % 3 == 1) {
-			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2(Mat4f()), TestComponent(vec3())).GetEntityID();
+			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 2) {
 			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 0) {
-			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2(Mat4f())).GetEntityID();
+			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2("Hey")).GetEntityID();
 		}
 	}
+
+	ArchetypeChunkIterator<TestComponent2> itr = world.GetEntityManager().GetEntityByID(ent[1]).GetChunk()->Iterator<TestComponent2>();
+	for (TestComponent2& c : itr) {
+		printf("All components of the chunk : %s\n", c.test);
+	}
+
+	Bitset sig(BaseComponent::GetComponentsCount());
+	sig.Set(TestComponent::ID, true);
+	sig.Set(TestComponent2::ID, true);
+	uint32 count = 0;
+
+	for (Archetype* arche : world.GetEntityManager().GetAllArchetypesThatInclude(sig))
+	{
+		
+		for (ArchetypeChunk& chunk : *arche) {
+			if (arche->Has<TestComponent2>()) {
+				ArchetypeChunkIterator<TestComponent2> itr = chunk.Iterator<TestComponent2>();
+				for (TestComponent2& c : itr) {
+					count++;
+				}
+			}
+
+			if (arche->Has<TestComponent>()) {
+				ArchetypeChunkIterator<TestComponent> itr2 = chunk.Iterator<TestComponent>();
+				for (TestComponent& c : itr2) {
+					count++;
+				}
+			}
+		}
+	}
+
+	printf("Count: %d\n", count);
 
 	/*Entity& entity = ECS::CreateEntityWithComponents(TestComponent2("Hello there!"), TestComponent(5));
 	//entity.CreateComponent<TestComponent2>("Hello there!");
@@ -650,10 +682,10 @@ int main()
 		} else if (c == 3) {
 			BENCHMARK("Create TestComponent", world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent>(vec3()););
 		} else if (c == 4) {
-			BENCHMARK("Create TestComponent2", world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent2>(Mat4f()););
+			BENCHMARK("Create TestComponent2", world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent2>("Mat4f()"););
 		} else if (c == 5) {
 			BENCHMARK("Create TestComponent2 & TestComponent", 
-				world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent2>(Mat4f());
+				world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent2>("Mat4f()");
 			world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent>(vec3());
 			);
 		}

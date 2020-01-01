@@ -2,6 +2,7 @@
 #include <Core/DataStructure/Utils/Utils.hpp>
 #include <Core/ECS/ECS/ECS.hpp>
 #include <Core/ECS/System/BaseSystem.hpp>
+#include <Core/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
 
 TRE_NS_START
 

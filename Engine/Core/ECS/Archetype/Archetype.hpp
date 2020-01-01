@@ -3,7 +3,6 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/DataStructure/Bitset/Bitset.hpp>
 #include <Core/DataStructure/HashMap/Map.hpp>
-#include <Core/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
 #include <Core/DataStructure/Utils/Utils.hpp>
 #include <Core/ECS/Component/BaseComponent.hpp>
 
@@ -49,6 +48,11 @@ public:
 	FORCEINLINE bool IsEmpty() { return m_OccupiedChunks == NULL; }
 
 	FORCEINLINE uint32 GetComponentsTypesCount() const { return m_TypesCount; }
+
+	bool Has(ComponentTypeID id);
+
+	template<typename Component>
+	bool Has() { return Has(Component::ID); }
 
 	Iterator begin() { return Iterator(m_OccupiedChunks); }
 	Iterator end() { return Iterator(NULL); }

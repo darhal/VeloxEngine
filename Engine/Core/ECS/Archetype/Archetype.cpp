@@ -2,6 +2,7 @@
 #include "Chunk/ArchetypeChunk.hpp"
 #include <Core/ECS/Entity/Entity.hpp>
 #include <Core/ECS/Component/BaseComponent.hpp>
+#include <Core/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
 
 TRE_NS_START
 
@@ -128,6 +129,11 @@ void Archetype::PushFreeChunk(ArchetypeChunk* chunk)
 	m_OccupiedChunks = chunk->GetNextChunk();
 	chunk->SetNextChunk(m_FreeChunks);
 	m_FreeChunks = chunk;
+}
+
+bool Archetype::Has(ComponentTypeID id)
+{
+	return m_Signature.Get(id);
 }
 
 TRE_NS_END

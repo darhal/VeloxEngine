@@ -1,12 +1,12 @@
 #include "EntityManager.hpp"
 #include <Core/ECS/World/World.hpp>
 #include <Core/ECS/Component/BaseComponent.hpp>
+#include <Core/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
 
 TRE_NS_START
 
 EntityManager::EntityManager(World* world) : m_World(world)
 {
-
 }
 
 World& EntityManager::GetWorld()
@@ -201,6 +201,21 @@ Map<ComponentTypeID, Vector<BaseComponent*>> EntityManager::GetAllComponentsMatc
 					}
 				}
 			}
+		}
+	}
+
+	return res;
+}
+
+Vector<Archetype*> EntityManager::GetAllArchetypesThatInclude(const Bitset& signature)
+{
+	Vector<Archetype*> res;
+
+	for (ArchetypeContainer::Object& arche_pair : m_Archetypes) {
+		Archetype& arche = arche_pair.second;
+
+		if ((arche.GetSignature() & signature)) {
+			res.EmplaceBack(&arche);
 		}
 	}
 
