@@ -619,9 +619,6 @@ int main()
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
 	world.GetSystsemList().AddSystems(&test_systemA, &test_systemB, &test_systemC);
 
-	// Signature sig1;
-	printf("Last ID : %d\n", COMPONENTS_COUNT);
-
 	EntityID* ent = (EntityID*) Allocate<EntityID>(1'000'000);
 	for (int i = 0; i < 1'000'000; i++) {
 		// ent[i] = ECS::CreateEntityWithComponents(TestComponent2("Hello")).GetEntityID();

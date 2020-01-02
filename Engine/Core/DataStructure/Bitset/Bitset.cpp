@@ -607,6 +607,11 @@ Bitset::operator bool()
 				return true;
 		}
 
+		for (uint32 i = nb_bytes * sizeof(uint8); i < len; i++) {
+			if (this->Get(i))
+				return true;
+		}
+
 		return false;
 	} 
 
@@ -618,6 +623,11 @@ Bitset::operator bool()
 	uint32 nb_bytes = (uint32)Math::Ceil((double)len / (double)(sizeof(uint8) * BITS_PER_BYTE));
 
 	for (uint32 i = 0; i < nb_bytes; i++) {
+		if (*((uint8*)m_Bits + i))
+			return true;
+	}
+
+	for (uint32 i = nb_bytes * sizeof(uint8); i < len; i++) {
 		if (*((uint8*)m_Bits + i))
 			return true;
 	}

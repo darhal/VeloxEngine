@@ -59,35 +59,46 @@ void StaticBitset<N>::Toggle(uint32 index)
 template<uint32 N>
 StaticBitset<N>& StaticBitset<N>::operator|=(const StaticBitset<N>& other)
 {
+	uint32 nb_bytes = Math::DivCeil(N, sizeof(uint8) * BITS_PER_BYTE);
 
+	for (uint32 i = 0; i < nb_bytes; i++) {
+		m_Bits[i] |= other.m_Bits[i];
+	}
 	return *this;
 }
 
 template<uint32 N>
 StaticBitset<N>& StaticBitset<N>::operator&=(const StaticBitset<N>& other)
 {
+	uint32 nb_bytes = Math::DivCeil(N, sizeof(uint8) * BITS_PER_BYTE);
 
+	for (uint32 i = 0; i < nb_bytes; i++) {
+		m_Bits[i] &= other.m_Bits[i];
+	}
 	return *this;
 }
 
 template<uint32 N>
 StaticBitset<N>& StaticBitset<N>::operator^=(const StaticBitset<N>& other)
 {
+	uint32 nb_bytes = Math::DivCeil(N, sizeof(uint8) * BITS_PER_BYTE);
 
+	for (uint32 i = 0; i < nb_bytes; i++) {
+		m_Bits[i] ^= other.m_Bits[i];
+	}
 	return *this;
 }
 
 template<uint32 N>
 StaticBitset<N>& StaticBitset<N>::operator~()
 {
-	usize len = N;
-	uint32 nb_bytes = Math::DivFloor(len, sizeof(uint8) * BITS_PER_BYTE);
+	uint32 nb_bytes = Math::DivFloor(N, sizeof(uint8) * BITS_PER_BYTE);
 
 	for (uint32 i = 0; i < nb_bytes; i++) {
 		m_Bits[i] = ~m_Bits[i];
 	}
 
-	for (uint32 i = nb_bytes * sizeof(uint8); i < len; i++) {
+	for (uint32 i = nb_bytes * sizeof(uint8); i < N; i++) {
 		int32 rest_of_bits = (i - nb_bytes * sizeof(uint8) * BITS_PER_BYTE);
 		m_Bits[nb_bytes] ^= uint8(1) << rest_of_bits;
 	}
@@ -131,6 +142,18 @@ StaticBitset<N>& StaticBitset<N>::operator>>=(usize n)
 template<uint32 N>
 bool StaticBitset<N>::operator==(const StaticBitset<N>& other) const
 {
+	uint32 nb_bytes = Math::DivFloor(N, sizeof(uint8) * BITS_PER_BYTE);
+
+	for (uint32 i = 0; i < nb_bytes; i++) {
+		if (m_Bits[i] != other.m_Bits[i])
+			return false;
+	}
+
+	for (uint32 i = nb_bytes * sizeof(uint8); i < N; i++) {
+		if (this->Get(i) != other.Get(i))
+			return false;
+	}
+
 	return true;
 }
 
@@ -179,8 +202,7 @@ usize StaticBitset<N>::GetHash() const
 {
 	size_t hash = 0;
 	const usize* bits = (usize*)m_Bits;
-	usize len = N;
-	uint32 nb_usize_bytes = Math::DivCeil(len, sizeof(usize) * BITS_PER_BYTE);
+	uint32 nb_usize_bytes = Math::DivCeil(N, sizeof(usize) * BITS_PER_BYTE);
 
 	for (usize i = 0; i < nb_usize_bytes; i++)
 		hash ^= bits[i];
@@ -191,6 +213,17 @@ usize StaticBitset<N>::GetHash() const
 template<uint32 N>
 bool StaticBitset<N>::operator>(const StaticBitset<N>& other) const
 {
+	uint32 nb_bytes = Math::DivFloor(N, sizeof(uint8) * BITS_PER_BYTE);
+
+	for (uint32 i = nb_bytes * sizeof(uint8); i < N; i++) {
+		if (this->Get(i) && !other.Get(i))
+			return true;
+	}
+
+	for (uint32 i = 0; i < nb_bytes; i++) {
+		if (m_Bits[i] > other.m_Bits[i])
+			return true;
+	}
 
 	return false;
 }
@@ -204,8 +237,7 @@ bool StaticBitset<N>::operator<=(const StaticBitset<N>& other) const
 template<uint32 N>
 bool StaticBitset<N>::operator<(const StaticBitset<N>& other) const
 {
-
-	return false;
+	return other > *this;
 }
 
 template<uint32 N>
@@ -222,10 +254,15 @@ StaticBitset<N>::operator bool()
 	if (len == 0)
 		return false;
 
-	uint32 nb_bytes = Math::DivCeil(len, sizeof(uint8) * BITS_PER_BYTE);
+	uint32 nb_bytes = Math::DivFloor(len, sizeof(uint8) * BITS_PER_BYTE);
 
 	for (uint32 i = 0; i < nb_bytes; i++) {
 		if (m_Bits[i])
+			return true;
+	}
+
+	for (uint32 i = nb_bytes * sizeof(uint8); i < N; i++) {
+		if (this->Get(i))
 			return true;
 	}
 
