@@ -7,6 +7,7 @@
 #include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <Core/ECS/Archetype/Archetype.hpp>
 #include <Core/ECS/Entity/Entity.hpp>
+#include <Core/ECS/ArchetypeQuerry/ArchetypeQuerry.hpp>
 
 TRE_NS_START
 
@@ -42,13 +43,11 @@ public:
 	FORCEINLINE Component* GetComponent(const Entity& entity);
 
 	template<typename Component>
-	Vector<Component*> GetAllComponents(ComponentTypeID id);
+	Vector<Component*> GetAllComponents(ComponentTypeID id) const;
 
-	Vector<BaseComponent*> GetAllComponents(ComponentTypeID id);
+	Vector<BaseComponent*> GetAllComponents(ComponentTypeID id) const;
 
-	Map<ComponentTypeID, Vector<BaseComponent*>> GetAllComponentsMatchSignture(const Bitset& signature);
-
-	Vector<Archetype*> GetAllArchetypesThatInclude(const Bitset& signature);
+	Map<ComponentTypeID, Vector<BaseComponent*>> GetAllComponentsMatchSignture(const Bitset& signature) const;
 
 	// Archetypes :
 	Archetype& CreateArchetype(const Bitset& signature);
@@ -56,6 +55,10 @@ public:
 	Archetype& GetOrCreateArchetype(const Bitset& sig);
 
 	Archetype* GetArchetype(const Bitset& sig);
+
+	Vector<Archetype*> GetAllArchetypesThatInclude(const Bitset& signature) const;
+
+	Vector<Archetype*> GettAllArchetypeThatMatch(const ArchetypeQuerry& querry) const;
 
 	// World :
 	World& GetWorld();
@@ -113,7 +116,7 @@ FORCEINLINE Component* EntityManager::GetComponent(const Entity& entity)
 
 
 template<typename Component>
-Vector<Component*> EntityManager::GetAllComponents(ComponentTypeID id)
+Vector<Component*> EntityManager::GetAllComponents(ComponentTypeID id) const
 {
 	return this->GetAllComponents(Component::ID);
 }

@@ -155,7 +155,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Core\DataStructure\StaticBitset\StaticBitset.cpp" />
-    <ClCompile Include="Core\ECS\ComponentGroup\ComponentGroup.cpp" />
     <ClCompile Include="Core\Context\Context.cpp" />
     <ClCompile Include="Core\Context\Context_Win32.cpp" />
     <ClCompile Include="Core\Context\Context_X11.cpp" />
@@ -293,7 +292,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\DataStructure\StaticBitset\StaticBitset.hpp" />
-    <ClInclude Include="Core\ECS\ComponentGroup\ComponentGroup.hpp" />
+    <ClInclude Include="Core\ECS\ArchetypeQuerry\ArchetypeQuerry.hpp" />
     <ClInclude Include="Core\Context\Context.hpp" />
     <ClInclude Include="Core\Context\Extensions.hpp" />
     <ClInclude Include="Core\Context\GLDefines.hpp" />

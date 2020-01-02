@@ -154,7 +154,7 @@ BaseComponent* EntityManager::GetComponentInternal(const Entity& entity, uint32 
 	return chunk->GetComponent(entity, component_id);
 }
 
-Vector<BaseComponent*> EntityManager::GetAllComponents(ComponentTypeID id)
+Vector<BaseComponent*> EntityManager::GetAllComponents(ComponentTypeID id) const
 {
 	Vector<BaseComponent*> res;
 	Bitset sig(BaseComponent::GetComponentsCount());
@@ -180,7 +180,7 @@ Vector<BaseComponent*> EntityManager::GetAllComponents(ComponentTypeID id)
 	return res;
 }
 
-Map<ComponentTypeID, Vector<BaseComponent*>> EntityManager::GetAllComponentsMatchSignture(const Bitset& signature)
+Map<ComponentTypeID, Vector<BaseComponent*>> EntityManager::GetAllComponentsMatchSignture(const Bitset& signature) const
 {
 	Map<ComponentTypeID, Vector<BaseComponent*>> res;
 	
@@ -207,7 +207,7 @@ Map<ComponentTypeID, Vector<BaseComponent*>> EntityManager::GetAllComponentsMatc
 	return res;
 }
 
-Vector<Archetype*> EntityManager::GetAllArchetypesThatInclude(const Bitset& signature)
+Vector<Archetype*> EntityManager::GetAllArchetypesThatInclude(const Bitset& signature) const
 {
 	Vector<Archetype*> res;
 
@@ -215,6 +215,22 @@ Vector<Archetype*> EntityManager::GetAllArchetypesThatInclude(const Bitset& sign
 		Archetype& arche = arche_pair.second;
 
 		if ((arche.GetSignature() & signature)) {
+			res.EmplaceBack(&arche);
+		}
+	}
+
+	return res;
+}
+
+Vector<Archetype*> EntityManager::GettAllArchetypeThatMatch(const ArchetypeQuerry& querry) const
+{
+	Vector<Archetype*> res;
+
+	for (ArchetypeContainer::Object& arche_pair : m_Archetypes) {
+		Archetype& arche = arche_pair.second;
+		const Bitset& sig = arche.GetSignature();
+
+		if ((((sig & querry.All) == querry.All) || (sig & querry.Any)) && !(sig & querry.None)) {
 			res.EmplaceBack(&arche);
 		}
 	}
