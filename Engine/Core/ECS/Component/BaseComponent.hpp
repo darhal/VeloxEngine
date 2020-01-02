@@ -4,6 +4,8 @@
 #include <Core/DataStructure/Vector/Vector.hpp>
 #include <Core/DataStructure/Tuple/Tuple.hpp>
 #include <Core/ECS/Common.hpp>
+#include <Core/DataStructure/Utils/Utils.hpp>
+#include <Core/DataStructure/StaticBitset/StaticBitset.hpp>
 
 TRE_NS_START
 
@@ -60,6 +62,8 @@ struct Component : public BaseComponent
 	static const ComponentDeleteFunction FREE_FUNCTION;
 	static const usize SIZE;
 	static const ComponentTypeID ID;
+
+	static CONSTEXPR ComponentTypeID _ID = Utils::NextID();
 
 	FORCEINLINE usize GetTypeID() { return ID; }
 };

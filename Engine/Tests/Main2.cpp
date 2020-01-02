@@ -507,6 +507,12 @@ struct TestComponent2 : public Component<TestComponent2>
 	String test;
 };
 
+struct TestComponent3 : public Component<TestComponent3>
+{
+	TestComponent3(const Mat4f& str) : test(str) {}
+	Mat4f test;
+};
+
 class TestSystemA : public System<TestComponent, TestComponent2>
 {
 public:
@@ -568,8 +574,6 @@ class EntityA : public Entity
 
 };
 
-
-
 #define INIT_BENCHMARK std::chrono::time_point<std::chrono::high_resolution_clock> start, end; std::chrono::microseconds duration;
 
 #define BENCHMARK(name, bloc_of_code) \
@@ -614,6 +618,9 @@ int main()
 	World& world = ECS::CreateWorld();
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
 	world.GetSystsemList().AddSystems(&test_systemA, &test_systemB, &test_systemC);
+
+	// Signature sig1;
+	printf("Last ID : %d\n", COMPONENTS_COUNT);
 
 	EntityID* ent = (EntityID*) Allocate<EntityID>(1'000'000);
 	for (int i = 0; i < 1'000'000; i++) {

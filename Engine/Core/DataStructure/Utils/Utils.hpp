@@ -10,35 +10,36 @@ TRE_NS_START
 namespace Detail
 {
 #if defined(COMPILER_MSVC)
-	template<uint32 N>
+	template<int N>
 	struct flag
 	{
-		friend constexpr uint32 adl_flag(flag<N>);
+		friend CONSTEXPR int adl_flag(flag<N>);
 	};
-	template<uint32 N>
+	template<int N>
 	struct writer
 	{
-		friend constexpr uint32 adl_flag(flag<N>)
+		friend CONSTEXPR int adl_flag(flag<N>)
 		{
 			return N;
 		}
 
-		static constexpr uint32 value = N;
+		static CONSTEXPR int value = N;
 	};
-	template<uint32 N, class = char[noexcept(adl_flag(flag<N>())) ? +1 : -1]>
-	uint32 constexpr reader(uint32, flag<N>)
+	template<int N, class = char[noexcept(adl_flag(flag<N>())) ? +1 : -1]>
+	int CONSTEXPR reader(int, flag<N>)
 	{
 		return N;
 	}
-	template<uint32 N>
-	uint32 constexpr reader(float, flag<N>, uint32 R = reader(0, flag<N - 1>()))
+	template<int N>
+	int CONSTEXPR reader(float, flag<N>, int R = reader(0, flag<N - 1>()))
 	{
 		return R;
 	}
-	uint32 constexpr reader(float, flag<0>)
+	int CONSTEXPR reader(float, flag<0>)
 	{
 		return 0;
 	}
+
 #else
 	template<uint32 N>
 	struct flag
@@ -91,10 +92,16 @@ struct Utils
 
 
 #if defined(COMPILER_MSVC)
-	template<uint32 N = 0, uint32 C = Detail::reader(uint32(0), Detail::flag<32>())>
-	static uint32 constexpr NextID(uint32 R = Detail::writer<C + N>::value)
+	template<int N = 1, int C = Detail::reader(0, Detail::flag<32>())>
+	uint32 CONSTEXPR static NextID(int R = Detail::writer<C + N>::value)
 	{
-		return R;
+		return (uint32)(R - 1);
+	}
+
+	template<int C = Detail::reader(0, Detail::flag<32>())>
+	uint32 CONSTEXPR static GetLastID(int R = Detail::writer<C>::value)
+	{
+		return (uint32)(R - 1);
 	}
 #else
 	template<uint32 N = 0>

@@ -61,6 +61,12 @@ struct Math
 	FORCEINLINE static const T Ceil(T x) { return ceil(x); }
 
 	template<typename T>
+	FORCEINLINE static const T DivCeil(T x, T y) { return 1 + ((x - 1) / y); }
+
+	template<typename T>
+	FORCEINLINE static const T DivFloor(T x, T y) { return x / y; }
+
+	template<typename T>
 	FORCEINLINE static const T Log(T x) { return log(x); }
 
 	template<typename T>
