@@ -163,6 +163,24 @@ struct Math
 		converter.f_rep = x;
 		return (usize) converter.d_rep;
 	}
+
+	template<typename T>
+	FORCEINLINE static uint32 BinarySearch(const T* arr, uint32 start, uint32 end, const T& search)
+	{
+		while (start <= end) {
+			uint32 m = start + (end - start) / 2;
+
+			if (arr[m] == search) // Check if x is present at mid 
+				return m;
+			if (arr[m] < search) // If x greater, ignore left half 
+				start = m + 1;
+			else // If x is smaller, ignore right half 
+				start = m - 1;
+		}
+
+		// element was not present 
+		return -1;
+	}
 };
 
 TRE_NS_END

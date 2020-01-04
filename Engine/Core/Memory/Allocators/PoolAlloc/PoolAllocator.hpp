@@ -10,7 +10,7 @@ TRE_NS_START
 class PoolAllocator : BaseAllocator
 {
 public:
-	FORCEINLINE PoolAllocator(usize chunk_size, usize chunk_num, bool autoInit = true);
+	FORCEINLINE PoolAllocator(uint32 chunk_size, uint32 chunk_num, bool autoInit = true);
 
 	FORCEINLINE ~PoolAllocator();
 
@@ -20,7 +20,7 @@ public:
 
 	FORCEINLINE void Free();
 
-	FORCEINLINE void* Allocate(usize size, usize alignement = 0);
+	FORCEINLINE void* Allocate(uint32 size, uint32 alignement = 0);
 
 	FORCEINLINE void Deallocate(void* ptr);
 
@@ -33,8 +33,8 @@ private:
 	FORCEINLINE void InternalInit();
 
 	char* m_Start;
-	usize m_ChunkSize;
-	usize m_ChunkNum;
+	uint32 m_ChunkSize;
+	uint32 m_ChunkNum;
 
 	struct Link {};
 	using Node = StackLinkedList<Link>::Node;

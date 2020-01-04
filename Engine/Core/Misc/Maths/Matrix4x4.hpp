@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include "Vec.hpp"
+#include "Vec4f_simd.hpp"
 #include <Core/Misc/Defines/PlatformSIMDInclude.hpp>
 
 #undef near

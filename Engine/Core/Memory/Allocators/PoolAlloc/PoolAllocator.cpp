@@ -2,7 +2,7 @@
 
 TRE_NS_START
 
-FORCEINLINE PoolAllocator::PoolAllocator(usize chunk_size, usize chunk_num, bool autoInit) :
+FORCEINLINE PoolAllocator::PoolAllocator(uint32 chunk_size, uint32 chunk_num, bool autoInit) :
 	m_Start(NULL), m_ChunkSize(chunk_size), m_ChunkNum(chunk_num)
 {
 	if (autoInit) {
@@ -34,14 +34,14 @@ FORCEINLINE void PoolAllocator::InternalInit()
 FORCEINLINE PoolAllocator& PoolAllocator::Reset()
 {
 	// Create a linked-list with all free positions
-	for (usize i = 0; i < m_ChunkNum; i++) {
+	for (uint32 i = 0; i < m_ChunkNum; i++) {
 		ssize address = (ssize)m_Start + i * m_ChunkSize;
 		m_FreeList.Push((Node*) address);
 	}
 	return *this;
 }
 
-FORCEINLINE void* PoolAllocator::Allocate(usize size, usize alignement)
+FORCEINLINE void* PoolAllocator::Allocate(uint32 size, uint32 alignement)
 {
 	ASSERTF((size > m_ChunkSize), "Failed to allocate the requested amount of bytes, requested size is bigger than block size.");
 	if (size > m_ChunkSize) return NULL;

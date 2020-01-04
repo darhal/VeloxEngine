@@ -154,6 +154,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Renderer\Backend\CommandBucket\CommandPacket\CommandPacket.cpp" />
     <ClCompile Include="Core\DataStructure\StaticBitset\StaticBitset.cpp" />
     <ClCompile Include="Core\Context\Context.cpp" />
     <ClCompile Include="Core\Context\Context_Win32.cpp" />
@@ -174,9 +175,6 @@
     <ClCompile Include="Core\FileSystem\File\File.cpp" />
     <ClCompile Include="Core\Memory\Allocators\LinearAlloc\LinearAllocator.cpp" />
     <ClCompile Include="Core\Memory\Allocators\PoolAlloc\PoolAllocator.cpp" />
-    <ClCompile Include="Core\Memory\Allocators\StackAlloc\AlignedStackAllocator.cpp" />
-    <ClCompile Include="Core\Memory\Allocators\StackAlloc\DoubleStackAllocator.cpp" />
-    <ClCompile Include="Core\Memory\Allocators\StackAlloc\StackAllocator.cpp" />
     <ClCompile Include="Core\Misc\Maths\Quaternion.cpp" />
     <ClCompile Include="Core\Misc\Utils\Common.cpp" />
     <ClCompile Include="Core\Misc\Utils\Image.cpp" />
@@ -267,30 +265,18 @@
     <ClCompile Include="RenderAPI\Shader\ShaderProgram.cpp" />
     <ClCompile Include="RenderAPI\Texture\Texture.cpp" />
     <ClCompile Include="RenderAPI\VertexArray\VAO.cpp" />
-    <ClCompile Include="RenderEngine\Loader\MaterialLoader.cpp" />
-    <ClCompile Include="RenderEngine\Loader\MeshLoader.cpp" />
-    <ClCompile Include="RenderEngine\Managers\RenderManager\RenderManager.cpp" />
-    <ClCompile Include="RenderEngine\Managers\ResourcesManager\ResourcesManager.cpp" />
-    <ClCompile Include="RenderEngine\Materials\AbstractMaterial\AbstractMaterial.cpp" />
-    <ClCompile Include="RenderEngine\Materials\Material.cpp" />
-    <ClCompile Include="RenderEngine\Materials\Techniques\Technique.cpp" />
-    <ClCompile Include="RenderEngine\Mesh\ModelLoader\ModelLoader.cpp" />
-    <ClCompile Include="RenderEngine\Mesh\StaticMesh\RiggedStaticMesh.cpp" />
-    <ClCompile Include="RenderEngine\Mesh\StaticMesh\StaticMesh.cpp" />
-    <ClCompile Include="RenderEngine\Renderer\Backend\Dispatcher\DrawCallsDispatcher.cpp" />
-    <ClCompile Include="RenderEngine\Renderer\Backend\UBO\UBO.cpp" />
-    <ClCompile Include="RenderEngine\Renderer\Common\Common.cpp" />
-    <ClCompile Include="RenderEngine\Renderer\Frontend\Lights\DirectionalLight\DirectionalLight.cpp" />
-    <ClCompile Include="RenderEngine\Renderer\Frontend\Lights\PointLight\PointLight.cpp" />
-    <ClCompile Include="RenderEngine\Renderer\Frontend\Lights\SpotLight\SpotLight.cpp" />
-    <ClCompile Include="RenderEngine\Renderer\Frontend\Renderer\Renderer.cpp" />
-    <ClCompile Include="RenderEngine\Scenegraph\SceneNode\SceneNode.cpp" />
-    <ClCompile Include="RenderEngine\Scenegraph\Scene\Scene.cpp" />
+    <ClCompile Include="Renderer\Backend\CommandBucket\CommandBucket.cpp" />
+    <ClCompile Include="Renderer\Backend\Commands\Command.cpp" />
+    <ClCompile Include="Renderer\Backend\Dispatcher\DrawCallsDispatcher.cpp" />
+    <ClCompile Include="Renderer\Backend\RenderState\RenderState.cpp" />
+    <ClCompile Include="Renderer\Backend\UBO\UBO.cpp" />
+    <ClCompile Include="Renderer\Common\Common.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
     <ClCompile Include="Tests\Main2.cpp" />
     <ClCompile Include="Tests\TestingString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Renderer\Backend\CommandBucket\CommandPacket\CommandPacket.hpp" />
     <ClInclude Include="Core\DataStructure\StaticBitset\StaticBitset.hpp" />
     <ClInclude Include="Core\ECS\ArchetypeQuerry\ArchetypeQuerry.hpp" />
     <ClInclude Include="Core\Context\Context.hpp" />
@@ -339,9 +325,6 @@
     <ClInclude Include="Core\Memory\Allocators\PoolAlloc\MultiPoolAllocator.hpp" />
     <ClInclude Include="Core\Memory\Allocators\PoolAlloc\PoolAllocator.hpp" />
     <ClInclude Include="Core\Memory\Allocators\PoolAlloc\StackLinkedList.hpp" />
-    <ClInclude Include="Core\Memory\Allocators\StackAlloc\AlignedStackAllocator.hpp" />
-    <ClInclude Include="Core\Memory\Allocators\StackAlloc\DoubleStackAllocator.hpp" />
-    <ClInclude Include="Core\Memory\Allocators\StackAlloc\StackAllocator.hpp" />
     <ClInclude Include="Core\Memory\Common.hpp" />
     <ClInclude Include="Core\Memory\RefCounter\RefCounter.hpp" />
     <ClInclude Include="Core\Memory\SmartPtr\SharedPointer.hpp" />
@@ -413,49 +396,16 @@
     <ClInclude Include="RenderAPI\VertexArray\VAO.hpp" />
     <ClInclude Include="RenderAPI\VertexArray\VAODef.hpp" />
     <ClInclude Include="RenderAPI\VertexBuffer\VBO.hpp" />
-    <ClInclude Include="RenderEngine\Loader\MaterialLoader.hpp" />
-    <ClInclude Include="RenderEngine\Loader\MeshLoader.hpp" />
-    <ClInclude Include="RenderEngine\Managers\GraphicsResourcesManager\GRM.hpp" />
-    <ClInclude Include="RenderEngine\Managers\RenderManager\RenderManager.hpp" />
-    <ClInclude Include="RenderEngine\Managers\ResourcesManager\ResourcesManager.hpp" />
-    <ClInclude Include="RenderEngine\Materials\AbstractMaterial\AbstractMaterial.hpp" />
-    <ClInclude Include="RenderEngine\Materials\Material.hpp" />
-    <ClInclude Include="RenderEngine\Materials\MaterialParametres\MaterialParametres.hpp" />
-    <ClInclude Include="RenderEngine\Materials\MaterialParametres\MaterialParamHelper.hpp" />
-    <ClInclude Include="RenderEngine\Materials\Techniques\Technique.hpp" />
-    <ClInclude Include="RenderEngine\Mesh\IPrimitiveMesh\IPrimitiveMesh.hpp" />
-    <ClInclude Include="RenderEngine\Mesh\ModelLoader\ModelLoader.hpp" />
-    <ClInclude Include="RenderEngine\Mesh\ModelLoader\ModelSettings.hpp" />
-    <ClInclude Include="RenderEngine\Mesh\PrimitiveGeometry\PrimitiveGeometry.hpp" />
-    <ClInclude Include="RenderEngine\Mesh\RawSubMesh\RawSubMesh.hpp" />
-    <ClInclude Include="RenderEngine\Mesh\RawSubMesh\RiggedRawSubMesh.hpp" />
-    <ClInclude Include="RenderEngine\Mesh\StaticMesh\RiggedStaticMesh.hpp" />
-    <ClInclude Include="RenderEngine\Mesh\StaticMesh\StaticMesh.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Backend\CommandBuffer\FrameBufferCommandBucket\FramebufferCommandBucket.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Backend\CommandBuffer\ICommandBuffer\ICommandBuffer.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Backend\CommandBuffer\RenderCommandBucket\RenderCommandBucket.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Backend\CommandBuffer\ResourcesCommandBucket\ResourcesCommandBucket.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Backend\CommandPacket\CommandPacket.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Backend\Commands\Commands.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Backend\Dispatcher\DrawCallsDispatcher.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Backend\RenderTarget\RenderTarget.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Backend\StateGroups\StateGroup.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Backend\UBO\UBO.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Common\Common.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Frontend\Camera\Camera.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Frontend\IRenderer\IRenderer.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Frontend\Lights\DirectionalLight\DirectionalLight.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Frontend\Lights\ILight\ILight.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Frontend\Lights\PointLight\PointLight.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Frontend\Lights\SpotLight\SpotLight.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Frontend\RenderResourceContext\RenderResourceContext.hpp" />
-    <ClInclude Include="RenderEngine\Renderer\Frontend\Renderer\Renderer.hpp" />
-    <ClInclude Include="RenderEngine\Scenegraph\SceneNode\SceneNode.hpp" />
-    <ClInclude Include="RenderEngine\Scenegraph\Scene\Scene.hpp" />
-    <ClInclude Include="RenderEngine\Variables\VariableDesc\VariableDesc.hpp" />
-    <ClInclude Include="RenderEngine\Variables\VariablesSet\VariablesSet.hpp" />
-    <ClInclude Include="RenderEngine\Variables\Variables\IVariable.hpp" />
-    <ClInclude Include="RenderEngine\Variables\Variables\Variable.hpp" />
+    <ClInclude Include="Renderer\Backend\ICommandBuffer\ICommandBuffer.hpp" />
+    <ClInclude Include="Renderer\Backend\Commands\Command.hpp" />
+    <ClInclude Include="Renderer\Backend\CommandBucket\CommandBucket.hpp" />
+    <ClInclude Include="Renderer\Backend\Commands\Commands.hpp" />
+    <ClInclude Include="Renderer\Backend\Commands\Key\Key.hpp" />
+    <ClInclude Include="Renderer\Backend\Dispatcher\DrawCallsDispatcher.hpp" />
+    <ClInclude Include="Renderer\Backend\RenderTarget\RenderTarget.hpp" />
+    <ClInclude Include="Renderer\Backend\RenderState\RenderState.hpp" />
+    <ClInclude Include="Renderer\Backend\UBO\UBO.hpp" />
+    <ClInclude Include="Renderer\Common\Common.hpp" />
     <ClInclude Include="Tests\ShaderValidator.hpp" />
     <ClInclude Include="Tests\ThreadBarrier.hpp" />
   </ItemGroup>
@@ -480,10 +430,7 @@
     <None Include="Core\Misc\Maths\Vec4f_simd.inl" />
     <None Include="Core\Misc\Maths\Vec4i_simd.inl" />
     <None Include="RenderAPI\VertexBuffer\VBO.inl" />
-    <None Include="RenderEngine\Managers\GraphicsResourcesManager\GRM.inl" />
-    <None Include="RenderEngine\Renderer\Backend\CommandBuffer\FrameBufferCommandBucket\FramebufferCommandBucket.inl" />
-    <None Include="RenderEngine\Renderer\Backend\CommandBuffer\ICommandBuffer\ICommandBuffer.inl" />
-    <None Include="RenderEngine\Renderer\Backend\CommandBuffer\RenderCommandBucket\RenderCommandBucket.inl" />
+    <None Include="Renderer\Backend\ICommandBuffer\ICommandBuffer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

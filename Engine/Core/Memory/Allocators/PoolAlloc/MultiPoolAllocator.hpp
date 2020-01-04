@@ -33,30 +33,30 @@ private:
 public:
 
 	template<typename T>
-	static PoolArena* CreatePoolArena(usize chunk_num)
+	static PoolArena* CreatePoolArena(uint32 chunk_num)
 	{
 		return new PoolArena(sizeof(T), chunk_num);
 	}
 
 	template<typename T>
-	explicit PoolArena(usize chunk_num) : m_Next(NULL)
+	explicit PoolArena(uint32 chunk_num) : m_Next(NULL)
 	{
-		usize chunk_size = sizeof(T);
-		ASSERTF((chunk_size < sizeof(PoolItem)), "Given size (%" SZu " bytes) is smaller than the Pool Chunk(Item) size(%" SZu ").", chunk_size, sizeof(PoolItem));
+		uint32 chunk_size = sizeof(T);
+		ASSERTF((chunk_size < sizeof(PoolItem)), "Given size (%u bytes) is smaller than the Pool Chunk(Item) size(%" SZu ").", chunk_size, sizeof(PoolItem));
 		m_Items = (PoolItem*) operator new (chunk_size * chunk_num);
 		this->Reset(chunk_size, chunk_num);
 	}
 
-	PoolArena(usize chunk_size, usize chunk_num) : m_Next(NULL)
+	PoolArena(uint32 chunk_size, uint32 chunk_num) : m_Next(NULL)
 	{
-		ASSERTF((chunk_size < sizeof(PoolItem)), "Given size (%" SZu " bytes) is smaller than the Pool Chunk(Item) size(%" SZu ").", chunk_size, sizeof(PoolItem));
+		ASSERTF((chunk_size < sizeof(PoolItem)), "Given size (%u bytes) is smaller than the Pool Chunk(Item) size(%" SZu ").", chunk_size, sizeof(PoolItem));
 		m_Items = (PoolItem*) operator new (chunk_size * chunk_num);
 		this->Reset(chunk_size, chunk_num);
 	}
 
-	void Reset(usize chunk_size, usize chunk_num)
+	void Reset(uint32 chunk_size, uint32 chunk_num)
 	{
-		for (usize i = 1; i < chunk_num; i++) {
+		for (uint32 i = 1; i < chunk_num; i++) {
 			ssize address = (ssize) m_Items + i * chunk_size;
 			((PoolItem*)(address - chunk_size))->SetNext((PoolItem*)address);
 		}
@@ -80,7 +80,7 @@ class MultiPoolAllocator : BaseAllocator
 {
 public:
 
-	MultiPoolAllocator(usize chunk_size, usize chunk_num, bool autoInit = false) : 
+	MultiPoolAllocator(uint32 chunk_size, uint32 chunk_num, bool autoInit = false) : 
 		m_ItemSize(chunk_size), m_ItemsNumber(chunk_num),
 		//m_Arena(new PoolArena(chunk_size, chunk_num)), 
 		m_Freelist(NULL)
@@ -93,7 +93,7 @@ public:
 	}
 
 	template<typename T>
-	MultiPoolAllocator(usize chunk_num) : 
+	MultiPoolAllocator(uint32 chunk_num) : 
 		m_Arena(PoolArena::CreatePoolArena<T>(chunk_num)),
 		// m_Arena(new PoolArena<T>(chunk_num)),
 		m_Freelist(m_Arena->GetStorage()),
@@ -110,7 +110,17 @@ public:
 		m_Arena(other.m_Arena), m_Freelist(other.m_Freelist)
 	{}
 
-	void* Allocate(usize sz = 0, usize alignement = 0)
+	MultiPoolAllocator& operator=(MultiPoolAllocator&& other)
+	{
+		m_ItemSize = std::move(other.m_ItemSize);
+		m_ItemsNumber = std::move(other.m_ItemsNumber);
+		m_Arena = std::move(other.m_Arena);
+		m_Freelist = std::move(other.m_Freelist);
+
+		return *this;
+	}
+
+	void* Allocate(uint32 sz = 0, uint32 alignement = 0)
 	{
 		if (m_Freelist == NULL) {
 			UniquePointer<PoolArena> newArena(new PoolArena(m_ItemSize, m_ItemsNumber));
@@ -168,7 +178,7 @@ public:
 	}
 
 private:
-	usize m_ItemSize, m_ItemsNumber;
+	uint32 m_ItemSize, m_ItemsNumber;
 	UniquePointer<PoolArena> m_Arena;
 	typename PoolArena::PoolItem* m_Freelist;
 };

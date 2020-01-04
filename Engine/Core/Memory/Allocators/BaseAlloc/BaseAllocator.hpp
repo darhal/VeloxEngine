@@ -11,7 +11,7 @@ class BaseAllocator
 public:
 	virtual ~BaseAllocator() {};
 
-	virtual void* Allocate(usize sz = 0, usize alignement = 0) = 0;
+	virtual void* Allocate(uint32 sz = 0, uint32 alignement = 0) = 0;
 	virtual void Deallocate(void* ptr) = 0;
 };
 

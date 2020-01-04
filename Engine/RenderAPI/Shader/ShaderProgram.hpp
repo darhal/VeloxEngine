@@ -7,7 +7,7 @@
 #include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <initializer_list>
 #include <RenderAPI/Common.hpp>
-#include <RenderEngine/Renderer/Backend/UBO/UBO.hpp> // Probably should be moved to RenderAPI
+#include <Renderer/Backend/UBO/UBO.hpp> // Probably should be moved to RenderAPI
 
 TRE_NS_START
 

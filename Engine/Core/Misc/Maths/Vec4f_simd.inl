@@ -268,7 +268,7 @@ static FORCEINLINE Vec<4, float, SIMD>& operator^=(Vec<4, float, SIMD>& a, const
 	return a;
 }
 
-static FORCEINLINE bool operator== (const Vec<4, float, SIMD>& a, const Vec<4, float, SIMD>& b) {
+static FORCEINLINE bool operator==(const Vec<4, float, SIMD>& a, const Vec<4, float, SIMD>& b) {
 	_m128 bres = _mm_cmpeq_ps(a, b);
 	return unsigned(bres.m128_i32[0]) == 0xffffffff && unsigned(bres.m128_i32[1]) == 0xffffffff && unsigned(bres.m128_i32[2]) == 0xffffffff && unsigned(bres.m128_i32[3]) == 0xffffffff;
 }

@@ -6,6 +6,7 @@
 #include <Core/Context/Extensions.hpp>
 #include <Core/Misc/Maths/Vec4f_simd.hpp>
 #include <RenderAPI/Common.hpp>
+#include <Core/Misc/Maths/Maths.hpp>
 
 TRE_NS_START
 
@@ -28,9 +29,9 @@ namespace Primitive
 {
 	enum primitive_t
 	{
-		TRIANGLES = GL_TRIANGLES,
-		LINES = GL_LINES,
 		POINTS = GL_POINTS,
+		LINES = GL_LINES,
+		TRIANGLES = GL_TRIANGLES,
 	};
 }
 
@@ -63,32 +64,30 @@ namespace TestFunction
 	// out put 3 bit code
 	FORCEINLINE uint8 Encode(test_function_t test_func)
 	{
-		return test_func & 0x0007;
+		return test_func & 0x7;
 	}
 
-	FORCEINLINE test_function_t Decode(uint8 code, test_function_t& func)
+	FORCEINLINE test_function_t Decode(uint8 code)
 	{
-		return (test_function_t) ((code & 0x07) | test_function_t::NEVER);
+		return (test_function_t) ((code & 0x07) | NEVER);
 	}
 
-	FORCEINLINE uint8 GetEncodingBits(){ return 3; }
+	CONSTEXPR uint8 ENCODING_BITS = 3;
 }
 
 namespace Stencil
 {
 	enum stencil_action_t
 	{
-		KEEP = GL_KEEP,
 		ZERO = GL_ZERO,
+		KEEP = GL_KEEP,
 		REPLACE = GL_REPLACE,
 		INCREASE = GL_INCR,
-		INCREASE_WRAP = GL_INCR_WRAP,
 		DECREASE = GL_DECR,
+		INCREASE_WRAP = GL_INCR_WRAP,
 		DECREASE_WRAP = GL_DECR_WRAP,
 		INVERT = GL_INVERT
 	};
-
-
 }
 
 namespace CullMode
@@ -106,7 +105,7 @@ namespace CullMode
 		CCW = GL_CCW,
 	};
 	// 1				1
-	// ^frontfaec		^cullmode
+	// ^frontface		^cullmode
 
 	// out put 2 bit code
 	FORCEINLINE uint8 Encode(front_face_t frontface, cull_mode_t cullmode)
@@ -118,12 +117,12 @@ namespace CullMode
 
 	FORCEINLINE void Decode(uint8 code, front_face_t& frontface, cull_mode_t& cullmode)
 	{
-		uint8 real_code = code & 0x02;
+		uint8 real_code = code & 0x2;
 		frontface = (real_code >> 1) ? front_face_t::CCW : front_face_t::CW;
-		cullmode = (real_code & 0x01) ? cull_mode_t::FRONT : cull_mode_t::BACK;
+		cullmode = (real_code & 0x1) ? cull_mode_t::FRONT : cull_mode_t::BACK;
 	}
 
-	FORCEINLINE uint8 GetEncodingBits(){ return 2; }
+	CONSTEXPR uint8 ENCODING_BITS = 2;
 }
 
 namespace Blending
@@ -139,25 +138,84 @@ namespace Blending
 	enum blend_func_t {
 		ZERO = GL_ZERO,
 		ONE = GL_ONE,
+
 		SRC_COLOR = GL_SRC_COLOR,
 		ONE_MINUS_SRC_COLOR = GL_ONE_MINUS_SRC_COLOR,
-		DST_COLOR = GL_DST_COLOR,
-		ONE_MINUS_DST_COLOR = GL_ONE_MINUS_DST_COLOR,
 		SRC_ALPHA = GL_SRC_ALPHA,
 		ONE_MINUS_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA,
 		DST_ALPHA = GL_DST_ALPHA,
 		ONE_MINUS_DST_ALPHA = GL_ONE_MINUS_DST_ALPHA,
+		DST_COLOR = GL_DST_COLOR,
+		ONE_MINUS_DST_COLOR = GL_ONE_MINUS_DST_COLOR,
+		SRC_ALPHA_SATURATE = GL_SRC_ALPHA_SATURATE,
+
 		CONSTANT_COLOR = GL_CONSTANT_COLOR,
 		ONE_MINUS_CONSTANT_COLOR = GL_ONE_MINUS_CONSTANT_COLOR,
 		CONSTANT_ALPHA = GL_CONSTANT_ALPHA,
 		ONE_MINUS_CONSTANT_ALPHA = GL_ONE_MINUS_CONSTANT_ALPHA,
-		SRC_ALPHA_SATURATE = GL_SRC_ALPHA_SATURATE,
+
+		SRC1_ALPHA = GL_SRC1_ALPHA,
+
 		SRC1_COLOR = GL_SRC1_COLOR,
 		ONE_MINUS_SRC1_COLOR = GL_ONE_MINUS_SRC1_COLOR,
-		SRC1_ALPHA = GL_SRC1_ALPHA,
 		ONE_MINUS_SRC1_ALPHA = GL_ONE_MINUS_SRC1_ALPHA,
 	};
 
+	CONSTEXPR blend_func_t ID_TO_FUNC[19] =
+	{
+		ZERO,
+		ONE,
+
+		SRC_COLOR,
+		ONE_MINUS_SRC_COLOR,
+		SRC_ALPHA ,
+		ONE_MINUS_SRC_ALPHA,
+		DST_ALPHA,
+		ONE_MINUS_DST_ALPHA,
+		DST_COLOR,
+		ONE_MINUS_DST_COLOR,
+		SRC_ALPHA_SATURATE,
+
+		CONSTANT_COLOR,
+		ONE_MINUS_CONSTANT_COLOR,
+		CONSTANT_ALPHA,
+		ONE_MINUS_CONSTANT_ALPHA,
+
+		SRC1_ALPHA,
+
+		SRC1_COLOR,
+		ONE_MINUS_SRC1_COLOR,
+		ONE_MINUS_SRC1_ALPHA
+	};
+
+	FORCEINLINE uint8 Encode(blend_equation_t blend_equation)
+	{
+		return (blend_equation - ADD) & 0x05;
+	}
+
+	FORCEINLINE blend_equation_t Decode(uint8 code)
+	{
+		return (blend_equation_t) ((code & 0x05) + ADD);
+	}
+
+	FORCEINLINE uint8 Encode(blend_func_t blend_func)
+	{
+		uint32 index = Math::BinarySearch(ID_TO_FUNC, 0, 19 - 1, blend_func);
+
+		if (index != -1) 
+			return (uint32)(index & 0x13);
+
+		return 0;
+	}
+
+	FORCEINLINE blend_func_t DecodeFunc(uint8 code)
+	{
+		return ID_TO_FUNC[code & 0x13]; // 0x13 == 19
+	}
+
+	CONSTEXPR uint8 ENCODING_BITS_EQ = 3;
+
+	CONSTEXPR uint8 ENCODING_BITS_FUNC = 5;
 }
 
 namespace PolygonMode
@@ -172,15 +230,15 @@ namespace PolygonMode
 	// out put 2 bit code
 	FORCEINLINE uint8 Encode(polygon_mode_t mode)
 	{
-		return mode & 0x0003;
+		return mode & 0x03;
 	}
 
-	FORCEINLINE uint8 Decode(uint8 code)
+	FORCEINLINE polygon_mode_t Decode(uint8 code)
 	{
-		return code | 0x1B00;
+		return (polygon_mode_t) (code | POINT);
 	}
 
-	FORCEINLINE uint8 GetEncodingBits(){ return 2; }
+	CONSTEXPR uint8 ENCODING_BITS = 2;
 }
 
 FORCEINLINE static void Enable(Capability::capability_t capability)

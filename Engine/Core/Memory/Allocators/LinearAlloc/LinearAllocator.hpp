@@ -11,15 +11,15 @@ TRE_NS_START
 class LinearAllocator : public BaseAllocator
 {
 public:
-	FORCEINLINE LinearAllocator(usize total_size, bool autoInit = true);
+	FORCEINLINE LinearAllocator(uint32 total_size, bool autoInit = true);
 
-	FORCEINLINE LinearAllocator(usize total_size, uint8* start);
+	FORCEINLINE LinearAllocator(uint32 total_size, uint8* start);
 
 	FORCEINLINE LinearAllocator();
 
 	FORCEINLINE ~LinearAllocator();
 
-	FORCEINLINE void SetSize(usize total_size);
+	FORCEINLINE void SetSize(uint32 total_size);
 
 	FORCEINLINE LinearAllocator& Init();
 
@@ -27,7 +27,7 @@ public:
 
 	FORCEINLINE void Free();
 
-	void* Allocate(usize size, usize alignement = 0);
+	void* Allocate(uint32 size, uint32 alignement = 0);
 
 	FORCEINLINE void Deallocate(void* ptr) override;
 	
@@ -37,28 +37,30 @@ public:
 	template<typename T>
 	FORCEINLINE void Deallocate(T* obj);
 
-	FORCEINLINE void SetOffset(usize amount);
+	FORCEINLINE void SetOffset(uint32 amount);
 
 	FORCEINLINE const void* GetTop() const;
 	FORCEINLINE const void* GetBottom() const;
 
-	FORCEINLINE usize GetSize() const { return m_TotalSize; }
+	FORCEINLINE uint32 GetSize() const { return m_TotalSize; }
+
+	FORCEINLINE uint32 GetOffset() const { return m_Offset; }
 
 	const void Dump() const;
 private:
 	FORCEINLINE void InternalInit();
 
 	char* m_Start;
-	usize m_Offset;
-	usize m_TotalSize;
+	uint32 m_Offset;
+	uint32 m_TotalSize;
 };
 
-FORCEINLINE LinearAllocator::LinearAllocator(usize total_size, uint8* start) : m_Start((char*)start), m_Offset(0), m_TotalSize(total_size)
+FORCEINLINE LinearAllocator::LinearAllocator(uint32 total_size, uint8* start) : m_Start((char*)start), m_Offset(0), m_TotalSize(total_size)
 {
 }
 
 
-FORCEINLINE LinearAllocator::LinearAllocator(usize total_size, bool autoInit) : m_Start(NULL), m_Offset(0), m_TotalSize(total_size)
+FORCEINLINE LinearAllocator::LinearAllocator(uint32 total_size, bool autoInit) : m_Start(NULL), m_Offset(0), m_TotalSize(total_size)
 {
 	if (autoInit) {
 		this->InternalInit();
@@ -69,7 +71,7 @@ FORCEINLINE LinearAllocator::LinearAllocator() : m_Start(NULL), m_Offset(0), m_T
 {
 }
 
-FORCEINLINE void LinearAllocator::SetSize(usize total_size)
+FORCEINLINE void LinearAllocator::SetSize(uint32 total_size)
 {
 	m_TotalSize = total_size;
 }
@@ -98,7 +100,7 @@ FORCEINLINE const void* LinearAllocator::GetTop() const
 
 FORCEINLINE const void* LinearAllocator::GetBottom() const
 {
-	return (void*)(usize(m_Start) + m_Offset);
+	return (void*)(m_Start + m_Offset);
 }
 
 FORCEINLINE void LinearAllocator::InternalInit()
@@ -118,7 +120,7 @@ FORCEINLINE LinearAllocator& LinearAllocator::Init()
 	return *this;
 }
 
-void LinearAllocator::SetOffset(usize amount)
+void LinearAllocator::SetOffset(uint32 amount)
 {
 	m_Offset = amount;
 }
@@ -135,7 +137,7 @@ FORCEINLINE U* LinearAllocator::Allocate(Args&&... args)
 	this->InternalInit();
 
 	U* curr_adr = (U*)(m_Start + m_Offset);
-	const usize padding = 0; //CalculatePadding<U>(curr_adr);
+	const uint32 padding = 0; //CalculatePadding<U>(curr_adr);
 	ASSERTF((m_Offset + padding + sizeof(U)), "Failed to allocate the requested amount of bytes, allocator is out of memory.");
 
 	if (m_Offset + padding + sizeof(U) > m_TotalSize) { // Doesnt have enough size

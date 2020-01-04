@@ -1,4 +1,4 @@
-//#ifdef BLABLA
+#ifdef BLABLA
 
 #include <iostream>
 #include <chrono>
@@ -13,7 +13,6 @@
 #include <Core/Misc/Utils/Image.hpp>
 #include <Core/Context/Context.hpp>
 #include <Core/FileSystem/Directory/Directory.hpp>
-#include <Core/Memory/Allocators/StackAlloc/DoubleStackAllocator.hpp>
 #include <Core/DataStructure/PackedArray/RefPackedArray.hpp>
 #include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <Core/TaskSystem/TaskManager/TaskManager.hpp>
@@ -29,21 +28,7 @@
 #include <RenderAPI/FrameBuffer/FBO.hpp>
 #include <RenderAPI/GlobalState/GLState.hpp>
 
-#include <RenderEngine/Loader/MeshLoader.hpp>
-#include <RenderEngine/Mesh/ModelLoader/ModelLoader.hpp>
-#include <RenderEngine/Renderer/Frontend/Camera/Camera.hpp>
-#include <RenderEngine/Mesh/StaticMesh/StaticMesh.hpp>
-#include <RenderEngine/Managers/ResourcesManager/ResourcesManager.hpp>
-#include <RenderEngine/Scenegraph/Scene/Scene.hpp>
-#include <RenderEngine/Renderer/Backend/CommandBuffer/ICommandBuffer/ICommandBuffer.hpp>
-#include <RenderEngine/Renderer/Backend/CommandBuffer/RenderCommandBucket/RenderCommandBucket.hpp>
-#include <RenderEngine/Managers/RenderManager/RenderManager.hpp>
 
-#include <RenderEngine/Renderer/Backend/UBO/UBO.hpp>
-#include <RenderEngine/Renderer/Frontend/Lights/ILight/ILight.hpp>
-#include <RenderEngine/Renderer/Frontend/Lights/PointLight/PointLight.hpp>
-#include <RenderEngine/Renderer/Frontend/Lights/SpotLight/SpotLight.hpp>
-#include <RenderEngine/Renderer/Frontend/Lights/DirectionalLight/DirectionalLight.hpp>
 #include <Core/DataStructure/Tuple/Tuple.hpp>
 #include "ShaderValidator.hpp"
 #include <Core/DataStructure/StringBuffer/StringBuffer.hpp>
@@ -973,3 +958,5 @@ void HandleEvent(Scene* scene, const Event& e)
 
 
 *********/
+
+#endif
