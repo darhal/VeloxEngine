@@ -3,7 +3,7 @@
 
 TRE_NS_START
 
-CommandPacket::CommandPacket(const Key& key) : 
+CommandPacket::CommandPacket(const BucketKey& key) : 
 	m_CmdsAllocator(TOTAL_SIZE * MULTIPLIER, true),
 	m_Key(key), m_CmdsCount(0), m_BufferMarker(0)
 {
@@ -25,7 +25,7 @@ void CommandPacket::Flush()
 	}
 }
 
-void CommandPacket::SetKey(const Key& key)
+void CommandPacket::SetKey(const BucketKey& key)
 {
 	m_Key = key;
 }
@@ -43,9 +43,9 @@ void CommandPacket::SortCommands()
 	const uint32 start = m_BufferMarker * DEFAULT_MAX_ELEMENTS;
 	const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;
 
-	std::qsort(m_Commands + start, end, sizeof(Pair<Key, Cmd>), [](const void* a, const void* b) {
-		const Pair<Key, Cmd>& arg1 = *static_cast<const Pair<Key, Cmd>*>(a);
-		const Pair<Key, Cmd>& arg2 = *static_cast<const Pair<Key, Cmd>*>(b);
+	std::qsort(m_Commands + start, end, sizeof(Pair<BucketKey, Cmd>), [](const void* a, const void* b) {
+		const Pair<BucketKey, Cmd>& arg1 = *static_cast<const Pair<BucketKey, Cmd>*>(a);
+		const Pair<BucketKey, Cmd>& arg2 = *static_cast<const Pair<BucketKey, Cmd>*>(b);
 
 		if (arg1.first < arg2.first) return -1;
 		if (arg1.first > arg2.first) return 1;

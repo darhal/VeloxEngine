@@ -4,6 +4,7 @@
 #include <future>
 #include <time.h>
 #include <unordered_map>
+#include <bitset>
 
 #include <Core/Context/Extensions.hpp>
 #include <Core/Window/Window.hpp>
@@ -38,12 +39,13 @@
 
 #include <Renderer/Backend/ICommandBuffer/ICommandBuffer.hpp>
 #include <Renderer/Backend/Commands/Commands.hpp>
+#include <Renderer/Backend/RenderState/RenderState.hpp>
 
 using namespace TRE;
 
 int main()
 {
-	ICommandBuffer cmd_buffer = ICommandBuffer();
+	/*ICommandBuffer cmd_buffer = ICommandBuffer();
 	CommandBucket& bucket = cmd_buffer.CreateBucket();
 	Commands::DrawCmd* cmds[10];
 
@@ -57,8 +59,16 @@ int main()
 	}
 
 	bucket.End();
-	cmd_buffer.DispatchCommands();
-	
+	cmd_buffer.DispatchCommands();*/
+	/* 0000000000000000000000000000000001001000000000000000000000101011 */
+	RenderState r;
+	r.Print();
+	BucketKey k = r.ToKey(17);
+	printf("KEY : %lld\n", k); std::cout << "Sig : " << std::bitset<64>(k) << std::endl;
+	printf("----------------- build from key -----------------\n");
+	RenderState r2 = RenderState::FromKey(k);
+	r2.Print();
+
 	getchar();
 	return 0;
 }

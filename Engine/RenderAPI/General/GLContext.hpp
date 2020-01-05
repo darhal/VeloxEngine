@@ -10,6 +10,72 @@
 
 TRE_NS_START
 
+CONSTEXPR uint32 g_GL_STATE_PARAMS[] =
+{
+	// PolygonMode : (Offset: 0)
+	GL_POINT,
+	GL_LINE,
+	GL_FILL,
+
+	// Cull Mode : (Offset: 3)
+	GL_FRONT,
+	GL_BACK,
+	GL_FRONT_AND_BACK,
+
+	// Front Face : (Offset: 6)
+	GL_CW,
+	GL_CCW,
+
+	// Testing function : (Offset: 8)
+	GL_NEVER,
+	GL_LESS,
+	GL_EQUAL,
+	GL_LEQUAL,
+	GL_GREATER,
+	GL_NOTEQUAL,
+	GL_GEQUAL,
+	GL_ALWAYS,
+
+	// Stencil Action :  (Offset: 16)
+	GL_ZERO,
+	GL_KEEP,
+	GL_REPLACE,
+	GL_INCR,
+	GL_DECR,
+	GL_INCR_WRAP,
+	GL_DECR_WRAP,
+	GL_INVERT,
+
+	// Blending Equation : (Offset: 24)
+	GL_FUNC_ADD,
+	GL_MIN,
+	GL_MAX,
+	GL_FUNC_SUBTRACT,
+	GL_FUNC_REVERSE_SUBTRACT,
+
+	//  Blending function : (Offset: 29)
+	GL_ZERO,
+	GL_ONE,
+	GL_SRC_COLOR,
+	GL_ONE_MINUS_SRC_COLOR,
+	GL_SRC_ALPHA,
+	GL_ONE_MINUS_SRC_ALPHA,
+	GL_DST_ALPHA,
+	GL_ONE_MINUS_DST_ALPHA,
+	GL_DST_COLOR,
+	GL_ONE_MINUS_DST_COLOR,
+	GL_SRC_ALPHA_SATURATE,
+	GL_CONSTANT_COLOR,
+	GL_ONE_MINUS_CONSTANT_COLOR,
+	GL_CONSTANT_ALPHA,
+	GL_ONE_MINUS_CONSTANT_ALPHA,
+	GL_SRC1_ALPHA,
+	GL_SRC1_COLOR,
+	GL_ONE_MINUS_SRC1_COLOR,
+	GL_ONE_MINUS_SRC1_ALPHA,
+};
+
+
 namespace Buffer
 {
 	enum buffer_t
@@ -49,60 +115,105 @@ namespace Capability
 
 namespace TestFunction
 {
+	CONSTEXPR uint8 ENCODING_BITS = 3;
+	CONSTEXPR uint8 OFFSET = 8;
+
 	enum test_function_t
 	{
-		NEVER = GL_NEVER,
-		LESS = GL_LESS,
-		EQUAL = GL_EQUAL,
-		LESS_EQUAL = GL_LEQUAL,
-		GREATER = GL_GREATER,
-		NOT_EQUAL = GL_NOTEQUAL,
-		GREATER_EQUAL = GL_GEQUAL,
-		ALWAYS = GL_ALWAYS
+		NEVER = 0,
+		LESS = 1,
+		EQUAL = 2,
+		LESS_EQUAL = 3,
+		GREATER = 4,
+		NOT_EQUAL = 5,
+		GREATER_EQUAL = 6,
+		ALWAYS = 7
 	};
 
 	// out put 3 bit code
-	FORCEINLINE uint8 Encode(test_function_t test_func)
+	FORCEINLINE CONSTEXPR uint32 DecodeToGL(test_function_t test_func)
 	{
-		return test_func & 0x7;
+		return g_GL_STATE_PARAMS[test_func + OFFSET];
 	}
 
 	FORCEINLINE test_function_t Decode(uint8 code)
 	{
-		return (test_function_t) ((code & 0x07) | NEVER);
+		return (test_function_t) (code & 0x7);
 	}
-
-	CONSTEXPR uint8 ENCODING_BITS = 3;
 }
 
 namespace Stencil
 {
+	CONSTEXPR uint8 ENCODING_BITS = 3;
+	CONSTEXPR uint8 OFFSET = 16;
+
 	enum stencil_action_t
 	{
-		ZERO = GL_ZERO,
-		KEEP = GL_KEEP,
-		REPLACE = GL_REPLACE,
-		INCREASE = GL_INCR,
-		DECREASE = GL_DECR,
-		INCREASE_WRAP = GL_INCR_WRAP,
-		DECREASE_WRAP = GL_DECR_WRAP,
-		INVERT = GL_INVERT
+		ZERO = 0,
+		KEEP = 1,
+		REPLACE = 2,
+		INCREASE = 3,
+		DECREASE = 4,
+		INCREASE_WRAP = 5,
+		DECREASE_WRAP = 6,
+		INVERT = 7
 	};
+
+	FORCEINLINE CONSTEXPR uint32 DecodeToGL(stencil_action_t blend_func)
+	{
+		return g_GL_STATE_PARAMS[blend_func + OFFSET];
+	}
+
+	FORCEINLINE stencil_action_t Decode(uint8 code)
+	{
+		return (stencil_action_t)(code & 0x7);
+	}
+
+	namespace StencilMask
+	{
+		CONSTEXPR uint32 STENCIL_MASKS[] = { 0x00, 0x0f, 0xF0, 0xFF /*, custom masks*/ };
+		enum stencil_mask_t
+		{
+			MASK1 = 0,
+			MASK2 = 1,
+			MASK3 = 2,
+			MASK4 = 3,
+			MASK5 = 4,
+			MASK6 = 5,
+			MASK7 = 6,
+			MASK8 = 7,
+		};
+
+		FORCEINLINE CONSTEXPR uint32 DecodeToGL(stencil_mask_t blend_func)
+		{
+			return STENCIL_MASKS[blend_func];
+		}
+
+		FORCEINLINE stencil_mask_t Decode(uint8 code)
+		{
+			return (stencil_mask_t)(code & 0x7);
+		}
+
+		CONSTEXPR uint8 ENCODING_BITS = 3;
+	}
 }
 
 namespace CullMode
 {
+	CONSTEXPR uint8 ENCODING_BITS = 2;
+	CONSTEXPR uint8 OFFSET_BITS = 3;
+
 	enum cull_mode_t
 	{
-		FRONT = GL_FRONT,
-		BACK = GL_BACK,
-		FRONT_AND_BACK = GL_FRONT_AND_BACK,
+		FRONT = 0,
+		BACK = 1,
+		FRONT_AND_BACK = 2,
 	};
 
 	enum front_face_t
 	{
-		CW = GL_CW,
-		CCW = GL_CCW,
+		CW = 3,
+		CCW = 4,
 	};
 	// 1				1
 	// ^frontface		^cullmode
@@ -117,128 +228,96 @@ namespace CullMode
 
 	FORCEINLINE void Decode(uint8 code, front_face_t& frontface, cull_mode_t& cullmode)
 	{
-		uint8 real_code = code & 0x2;
+		uint8 real_code = code & 0x3;
 		frontface = (real_code >> 1) ? front_face_t::CCW : front_face_t::CW;
 		cullmode = (real_code & 0x1) ? cull_mode_t::FRONT : cull_mode_t::BACK;
 	}
-
-	CONSTEXPR uint8 ENCODING_BITS = 2;
 }
 
 namespace Blending
 {
+	CONSTEXPR uint8 ENCODING_BITS_EQ = 3;
+	CONSTEXPR uint8 ENCODING_BITS_FUNC = 5;
+	CONSTEXPR uint8 OFFSET_EQ = 24;
+	CONSTEXPR uint8 OFFSET_FUNC = 29;
+
 	enum blend_equation_t {
-		ADD = GL_FUNC_ADD,
-		MIN = GL_MIN,
-		MAX = GL_MAX,
-		SUBTRACT  = GL_FUNC_SUBTRACT,
-		REVERSE_SUBTRACT = GL_FUNC_REVERSE_SUBTRACT,
+		ADD = 0,
+		MIN = 1,
+		MAX = 2,
+		SUBTRACT  = 3,
+		REVERSE_SUBTRACT = 4,
 	};
 
 	enum blend_func_t {
-		ZERO = GL_ZERO,
-		ONE = GL_ONE,
+		ZERO = 0,
+		ONE = 1,
 
-		SRC_COLOR = GL_SRC_COLOR,
-		ONE_MINUS_SRC_COLOR = GL_ONE_MINUS_SRC_COLOR,
-		SRC_ALPHA = GL_SRC_ALPHA,
-		ONE_MINUS_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA,
-		DST_ALPHA = GL_DST_ALPHA,
-		ONE_MINUS_DST_ALPHA = GL_ONE_MINUS_DST_ALPHA,
-		DST_COLOR = GL_DST_COLOR,
-		ONE_MINUS_DST_COLOR = GL_ONE_MINUS_DST_COLOR,
-		SRC_ALPHA_SATURATE = GL_SRC_ALPHA_SATURATE,
+		SRC_COLOR = 2,
+		ONE_MINUS_SRC_COLOR = 3,
+		SRC_ALPHA = 4,
+		ONE_MINUS_SRC_ALPHA = 5,
+		DST_ALPHA = 6,
+		ONE_MINUS_DST_ALPHA = 7,
+		DST_COLOR = 8,
+		ONE_MINUS_DST_COLOR = 9,
+		SRC_ALPHA_SATURATE = 10,
 
-		CONSTANT_COLOR = GL_CONSTANT_COLOR,
-		ONE_MINUS_CONSTANT_COLOR = GL_ONE_MINUS_CONSTANT_COLOR,
-		CONSTANT_ALPHA = GL_CONSTANT_ALPHA,
-		ONE_MINUS_CONSTANT_ALPHA = GL_ONE_MINUS_CONSTANT_ALPHA,
+		CONSTANT_COLOR = 11,
+		ONE_MINUS_CONSTANT_COLOR = 12,
+		CONSTANT_ALPHA = 13,
+		ONE_MINUS_CONSTANT_ALPHA = 14,
 
-		SRC1_ALPHA = GL_SRC1_ALPHA,
+		SRC1_ALPHA = 15,
 
-		SRC1_COLOR = GL_SRC1_COLOR,
-		ONE_MINUS_SRC1_COLOR = GL_ONE_MINUS_SRC1_COLOR,
-		ONE_MINUS_SRC1_ALPHA = GL_ONE_MINUS_SRC1_ALPHA,
+		SRC1_COLOR = 16,
+		ONE_MINUS_SRC1_COLOR = 17,
+		ONE_MINUS_SRC1_ALPHA = 18,
 	};
 
-	CONSTEXPR blend_func_t ID_TO_FUNC[19] =
+	FORCEINLINE CONSTEXPR uint32 DecodeToGL(blend_equation_t blend_equation)
 	{
-		ZERO,
-		ONE,
+		return g_GL_STATE_PARAMS[blend_equation + OFFSET_EQ];
+	}
 
-		SRC_COLOR,
-		ONE_MINUS_SRC_COLOR,
-		SRC_ALPHA ,
-		ONE_MINUS_SRC_ALPHA,
-		DST_ALPHA,
-		ONE_MINUS_DST_ALPHA,
-		DST_COLOR,
-		ONE_MINUS_DST_COLOR,
-		SRC_ALPHA_SATURATE,
-
-		CONSTANT_COLOR,
-		ONE_MINUS_CONSTANT_COLOR,
-		CONSTANT_ALPHA,
-		ONE_MINUS_CONSTANT_ALPHA,
-
-		SRC1_ALPHA,
-
-		SRC1_COLOR,
-		ONE_MINUS_SRC1_COLOR,
-		ONE_MINUS_SRC1_ALPHA
-	};
-
-	FORCEINLINE uint8 Encode(blend_equation_t blend_equation)
+	FORCEINLINE CONSTEXPR uint32 DecodeToGL(blend_func_t blend_func)
 	{
-		return (blend_equation - ADD) & 0x05;
+		return g_GL_STATE_PARAMS[blend_func + OFFSET_FUNC];
 	}
 
 	FORCEINLINE blend_equation_t Decode(uint8 code)
 	{
-		return (blend_equation_t) ((code & 0x05) + ADD);
-	}
-
-	FORCEINLINE uint8 Encode(blend_func_t blend_func)
-	{
-		uint32 index = Math::BinarySearch(ID_TO_FUNC, 0, 19 - 1, blend_func);
-
-		if (index != -1) 
-			return (uint32)(index & 0x13);
-
-		return 0;
+		return (blend_equation_t) (code & 0x7);
 	}
 
 	FORCEINLINE blend_func_t DecodeFunc(uint8 code)
 	{
-		return ID_TO_FUNC[code & 0x13]; // 0x13 == 19
+		return (blend_func_t)(code & 0x1F);
 	}
-
-	CONSTEXPR uint8 ENCODING_BITS_EQ = 3;
-
-	CONSTEXPR uint8 ENCODING_BITS_FUNC = 5;
 }
 
 namespace PolygonMode
 {
+	CONSTEXPR uint8 ENCODING_BITS = 2;
+	CONSTEXPR uint8 OFFSET = 0;
+
 	enum polygon_mode_t
 	{
-		POINT = GL_POINT,
-		LINE = GL_LINE,
-		FILL = GL_FILL,
+		POINT = 0,
+		LINE = 1,
+		FILL = 2,
 	};
 
 	// out put 2 bit code
-	FORCEINLINE uint8 Encode(polygon_mode_t mode)
+	FORCEINLINE CONSTEXPR uint8 DecodeToGL(polygon_mode_t mode)
 	{
-		return mode & 0x03;
+		return g_GL_STATE_PARAMS[mode + OFFSET];
 	}
 
 	FORCEINLINE polygon_mode_t Decode(uint8 code)
 	{
-		return (polygon_mode_t) (code | POINT);
+		return (polygon_mode_t) (code & 0x4);
 	}
-
-	CONSTEXPR uint8 ENCODING_BITS = 2;
 }
 
 FORCEINLINE static void Enable(Capability::capability_t capability)
@@ -287,19 +366,19 @@ FORCEINLINE static void StencilMask(bool writeEnabled)
 	Call_GL(glStencilMask(writeEnabled ? ~0 : 0));
 }
 
-FORCEINLINE static void StencilMask(uint32 mask)
+FORCEINLINE static void StencilMask(Stencil::StencilMask::stencil_mask_t mask)
 {
-	Call_GL(glStencilMask(mask));
+	Call_GL(glStencilMask(Stencil::StencilMask::DecodeToGL(mask)));
 }
 
 FORCEINLINE static void StencilFunc(TestFunction::test_function_t function, int32 reference, uint32 mask = ~0)
 {
-	Call_GL(glStencilFunc(function, reference, mask));
+	Call_GL(glStencilFunc(TestFunction::DecodeToGL(function), reference, mask));
 }
 
 FORCEINLINE static void StencilOp(Stencil::stencil_action_t fail, Stencil::stencil_action_t zfail, Stencil::stencil_action_t pass)
 {
-	Call_GL(glStencilOp(fail, zfail, pass));
+	Call_GL(glStencilOp(Stencil::DecodeToGL(fail), Stencil::DecodeToGL(zfail), Stencil::DecodeToGL(pass)));
 }
 
 FORCEINLINE static void DrawArrays(Primitive::primitive_t mode, int32 start, int32 end)

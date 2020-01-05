@@ -11,7 +11,7 @@ TRE_NS_START
 class CommandPacket
 {
 public:	
-	CommandPacket(const Key& key);
+	CommandPacket(const BucketKey& key);
 
 	template<typename U>
 	U* SubmitCommand(const uint64& internal_key);
@@ -20,14 +20,14 @@ public:
 
 	void SwapBuffer();
 
-	const Key& GetKey() const { return m_Key; };
+	const BucketKey& GetKey() const { return m_Key; };
 
-	void SetKey(const Key& key);
+	void SetKey(const BucketKey& key);
 
 	void SortCommands();
 private:
 	LinearAllocator m_CmdsAllocator;
-	Key m_Key;
+	BucketKey m_Key;
 	Pair<uint64, Cmd>* m_Commands;
 	uint32 m_CmdsCount;
 	uint8 m_BufferMarker;

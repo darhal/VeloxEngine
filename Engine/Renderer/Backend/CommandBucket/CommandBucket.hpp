@@ -25,13 +25,13 @@ public:
 	CommandBucket& operator=(CommandBucket&& bucket);
 
 	template<typename U>
-	U* SubmitCommand(const Key& key, const uint64& internal_key = 0);
+	U* SubmitCommand(const BucketKey& key, const uint64& internal_key = 0);
 
-	CommandPacket* GetCommandPacket(const Key& key) const;
+	CommandPacket* GetCommandPacket(const BucketKey& key) const;
 
-	CommandPacket& CreateCommandPacket(const Key& key);
+	CommandPacket& CreateCommandPacket(const BucketKey& key);
 
-	CommandPacket& GetOrCreateCommandPacket(const Key& key);
+	CommandPacket& GetOrCreateCommandPacket(const BucketKey& key);
 
 	void Flush() const;
 
@@ -39,12 +39,12 @@ public:
 private:
 	RenderTarget m_RenderTarget;
 	Mat4f m_ProjViewMat;
-	Map<Key, CommandPacket*> m_Packets;
+	Map<BucketKey, CommandPacket*> m_Packets;
 	MultiPoolAllocator m_PacketAllocator;
 };
 
 template<typename U>
-U* CommandBucket::SubmitCommand(const Key& key, const uint64& internal_key)
+U* CommandBucket::SubmitCommand(const BucketKey& key, const uint64& internal_key)
 {
 	CommandPacket& packet = GetOrCreateCommandPacket(key);
 	return packet.SubmitCommand<U>(internal_key);

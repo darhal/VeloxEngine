@@ -172,10 +172,10 @@ struct Math
 
 			if (arr[m] == search) // Check if x is present at mid 
 				return m;
-			if (arr[m] < search) // If x greater, ignore left half 
+			else if (arr[m] < search) // If x greater, ignore left half 
 				start = m + 1;
 			else // If x is smaller, ignore right half 
-				start = m - 1;
+				end = m - 1;
 		}
 
 		// element was not present 

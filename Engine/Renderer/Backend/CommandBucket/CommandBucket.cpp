@@ -23,7 +23,7 @@ CommandBucket& CommandBucket::operator=(CommandBucket&& bucket)
 	return *this;
 }
 
-CommandPacket* CommandBucket::GetCommandPacket(const Key& key) const
+CommandPacket* CommandBucket::GetCommandPacket(const BucketKey& key) const
 {
 	CommandPacket** res = NULL;
 
@@ -33,7 +33,7 @@ CommandPacket* CommandBucket::GetCommandPacket(const Key& key) const
 	return NULL;
 }
 
-CommandPacket& CommandBucket::CreateCommandPacket(const Key& key)
+CommandPacket& CommandBucket::CreateCommandPacket(const BucketKey& key)
 {
 	CommandPacket* buff = m_PacketAllocator.Allocate<CommandPacket>();
 	new (buff) CommandPacket(key);
@@ -42,7 +42,7 @@ CommandPacket& CommandBucket::CreateCommandPacket(const Key& key)
 	return *buff;
 }
 
-CommandPacket& CommandBucket::GetOrCreateCommandPacket(const Key& key)
+CommandPacket& CommandBucket::GetOrCreateCommandPacket(const BucketKey& key)
 {
 	CommandPacket* res = GetCommandPacket(key);
 
