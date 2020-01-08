@@ -20,34 +20,37 @@ struct RenderState
 
 	bool blend_enabled = false;
 	bool stencil_enabled = false;
-	union {
-		struct BlendingOptions
-		{
-			Blending::blend_equation_t blend_equation = Blending::blend_equation_t::ADD;
-			Blending::blend_func_t blend_srcRGB = Blending::blend_func_t::SRC_ALPHA;
-			Blending::blend_func_t blend_srcAlpha = Blending::blend_func_t::ONE;
-			Blending::blend_func_t blend_dstRGB = Blending::blend_func_t::ONE_MINUS_SRC_ALPHA;
-			Blending::blend_func_t blend_dstAlpha = Blending::blend_func_t::ZERO;
+	struct BlendingOptions
+	{
+		Blending::blend_equation_t blend_equation = Blending::blend_equation_t::ADD;
+		Blending::blend_func_t blend_srcRGB = Blending::blend_func_t::SRC_ALPHA;
+		Blending::blend_func_t blend_srcAlpha = Blending::blend_func_t::ONE;
+		Blending::blend_func_t blend_dstRGB = Blending::blend_func_t::ONE_MINUS_SRC_ALPHA;
+		Blending::blend_func_t blend_dstAlpha = Blending::blend_func_t::ZERO;
 
-			BlendingOptions() = default;
-		} blending = BlendingOptions();
+		BlendingOptions() = default;
+	};
 
-		struct StencilOptions
-		{
-			Stencil::stencil_action_t stencil_sfail = Stencil::stencil_action_t::KEEP;
-			Stencil::stencil_action_t stencil_dpfail = Stencil::stencil_action_t::KEEP;
-			Stencil::stencil_action_t stencil_dppass = Stencil::stencil_action_t::REPLACE;
-			TestFunction::test_function_t stencil_func = TestFunction::test_function_t::ALWAYS;
-			uint8 stencil_func_ref = 1;
-			Stencil::StencilMask::stencil_mask_t stencil_mask;
+	struct StencilOptions
+	{
+		Stencil::stencil_action_t stencil_sfail = Stencil::stencil_action_t::KEEP;
+		Stencil::stencil_action_t stencil_dpfail = Stencil::stencil_action_t::KEEP;
+		Stencil::stencil_action_t stencil_dppass = Stencil::stencil_action_t::REPLACE;
+		TestFunction::test_function_t stencil_func = TestFunction::test_function_t::ALWAYS;
+		uint8 stencil_func_ref = 1;
+		Stencil::StencilMask::stencil_mask_t stencil_mask = Stencil::StencilMask::MASK1;
 
-			StencilOptions() = default;
-		} stencil;
+		StencilOptions() = default;
+	};
+	union
+	{
+		BlendingOptions blending = BlendingOptions();
+		StencilOptions stencil /*= StencilOptions()*/;
 	};
 
     PolygonMode::polygon_mode_t poly_mode = PolygonMode::FILL;
 
-	static RenderState FromKey(const BucketKey& key);
+	static RenderState FromKey(const BucketKey& key, uint32* shader_id = NULL);
 
 	BucketKey ToKey(uint32 shader_id = 0) const;
 
@@ -100,8 +103,8 @@ void RenderState::Print()
 			"\t stencil_sfail = %d\n"
 			"\t stencil_dpfail = %d\n"
 			"\t stencil_dppass = %d\n"
-			"\t stencil_func = %d\n",
-			"\t stencil_func_ref = %d\n",
+			"\t stencil_func = %d\n"
+			"\t stencil_func_ref = %d\n"
 			"\t stencil_mask = %d\n",
 			stencil.stencil_sfail,
 			stencil.stencil_dpfail, stencil.stencil_dppass,

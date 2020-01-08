@@ -1,17 +1,21 @@
 #include "RenderState.hpp"
+#include <bitset>
+#include <iostream>
 
 TRE_NS_START
 
-RenderState RenderState::FromKey(const BucketKey& key)
+RenderState RenderState::FromKey(const BucketKey& key, uint32* shader_id)
 {
-	CONSTEXPR uint32 bits_for_key = 128;
+	CONSTEXPR uint32 bits_for_key = 64;
 	RenderState state;
 	uint8 shift_bits = 0;
 
 	// Enable/Disable
 	state.blend_enabled = (bool)(key >> (bits_for_key - 1));
-	uint32 shader = (key << (shift_bits += 1)) >> (bits_for_key - SHADER_BITS);
-	printf("ShadeID : %d\n", shader);
+
+	if (shader_id)
+		*shader_id = (key << (shift_bits += 1)) >> (bits_for_key - SHADER_BITS);
+
 	state.depth_enabled = (key << (shift_bits += SHADER_BITS)) >> (bits_for_key - 1);
 	state.stencil_enabled = (key << (shift_bits += 1)) >> (bits_for_key - 1);
 	state.cull_enabled = (key << (shift_bits += 1)) >> (bits_for_key - 1);
@@ -38,48 +42,45 @@ RenderState RenderState::FromKey(const BucketKey& key)
 
 	state.poly_mode = PolygonMode::Decode((key << shift_bits) >> (bits_for_key - PolygonMode::ENCODING_BITS));
 	CullMode::Decode((key << (shift_bits += PolygonMode::ENCODING_BITS)) >> (bits_for_key - CullMode::ENCODING_BITS), state.frontface, state.cullmode);
-	
-	printf("Decode Key : Shif_Bits = %d\n", shift_bits);
 	return state;
 }
 
 BucketKey RenderState::ToKey(uint32 shader_id) const
 {
 	BucketKey key = 0;
-	uint8 shift_bits = 0;
+	uint32 shift_bits = 0;
 
 	// Options
 	key |= CullMode::Encode(frontface, cullmode);
-	key |= poly_mode << (shift_bits += CullMode::ENCODING_BITS);
+	key |= (BucketKey)poly_mode << (shift_bits += CullMode::ENCODING_BITS);
 
 	if (blend_enabled) {
-		key |= blending.blend_equation << (shift_bits += PolygonMode::ENCODING_BITS);
-		key |= blending.blend_srcRGB << (shift_bits += Blending::ENCODING_BITS_EQ);
-		key |= blending.blend_srcAlpha << (shift_bits += Blending::ENCODING_BITS_FUNC);
-		key |= blending.blend_dstRGB << (shift_bits += Blending::ENCODING_BITS_FUNC);
-		key |= blending.blend_dstAlpha << (shift_bits += Blending::ENCODING_BITS_FUNC);
+		key |= (BucketKey)blending.blend_equation << (shift_bits += PolygonMode::ENCODING_BITS);
+		key |= (BucketKey)blending.blend_srcRGB << (shift_bits += Blending::ENCODING_BITS_EQ);
+		key |= (BucketKey)blending.blend_srcAlpha << (shift_bits += Blending::ENCODING_BITS_FUNC);
+		key |= (BucketKey)blending.blend_dstRGB << (shift_bits += Blending::ENCODING_BITS_FUNC);
+		key |= (BucketKey)blending.blend_dstAlpha << (shift_bits += Blending::ENCODING_BITS_FUNC);
 		shift_bits += Blending::ENCODING_BITS_FUNC;
 	} else if (stencil_enabled) {
-		key |= stencil.stencil_sfail << (shift_bits += PolygonMode::ENCODING_BITS);
-		key |= stencil.stencil_dpfail << (shift_bits += Stencil::ENCODING_BITS);
-		key |= stencil.stencil_dppass << (shift_bits += Stencil::ENCODING_BITS);
-		key |= stencil.stencil_func << (shift_bits += Stencil::ENCODING_BITS);
-		key |= stencil.stencil_func_ref << (shift_bits += TestFunction::ENCODING_BITS);
-		key |= stencil.stencil_mask << (shift_bits += BITS_PER_BYTE);
+		key |= (BucketKey)stencil.stencil_sfail << (shift_bits += PolygonMode::ENCODING_BITS);
+		key |= (BucketKey)stencil.stencil_dpfail << (shift_bits += Stencil::ENCODING_BITS);
+		key |= (BucketKey)stencil.stencil_dppass << (shift_bits += Stencil::ENCODING_BITS);
+		key |= (BucketKey)stencil.stencil_func << (shift_bits += Stencil::ENCODING_BITS);
+		key |= (BucketKey)stencil.stencil_func_ref << (shift_bits += TestFunction::ENCODING_BITS);
+		key |= (BucketKey)stencil.stencil_mask << (shift_bits += BITS_PER_BYTE);
 		shift_bits += Stencil::StencilMask::ENCODING_BITS;
 	} else {
 		shift_bits += PolygonMode::ENCODING_BITS + Blending::ENCODING_BITS_EQ + 4 * Blending::ENCODING_BITS_FUNC;
 	}
 
-	key |= depth_func << shift_bits;
+	key |= (BucketKey)depth_func << shift_bits;
 	// Enable/Disable
-	key |= cull_enabled << (shift_bits += TestFunction::ENCODING_BITS);
-	key |= stencil_enabled << (shift_bits += 1);
-	key |= depth_enabled << (shift_bits += 1);
-	key |= shader_id << (shift_bits += 1);
-	key |= blend_enabled << (shift_bits += SHADER_BITS);
+	key |= (BucketKey)cull_enabled << (shift_bits += TestFunction::ENCODING_BITS);
+	key |= (BucketKey)stencil_enabled << (shift_bits += 1);
+	key |= (BucketKey)depth_enabled << (shift_bits += 1);
+	key |= (BucketKey)shader_id << (shift_bits += 1);
+	key |= (BucketKey)blend_enabled << (shift_bits += SHADER_BITS);
 
-	printf("Decode Key : Shif_Bits = %d\n", shift_bits);
 	return key;
 }
 

@@ -8,6 +8,7 @@
 #include <Renderer/Backend/Commands/Key/Key.hpp>
 #include <Renderer/Backend/RenderTarget/RenderTarget.hpp>
 #include <Renderer/Backend/CommandBucket/CommandPacket/CommandPacket.hpp>
+#include <Renderer/Backend/RenderState/RenderState.hpp>
 
 TRE_NS_START
 
@@ -26,6 +27,9 @@ public:
 
 	template<typename U>
 	U* SubmitCommand(const BucketKey& key, const uint64& internal_key = 0);
+
+	template<typename U>
+	U* SubmitCommand(const RenderState& render_state = RenderState(), uint32 shader_id = 0, const uint64& internal_key = 0);
 
 	CommandPacket* GetCommandPacket(const BucketKey& key) const;
 
@@ -47,6 +51,13 @@ template<typename U>
 U* CommandBucket::SubmitCommand(const BucketKey& key, const uint64& internal_key)
 {
 	CommandPacket& packet = GetOrCreateCommandPacket(key);
+	return packet.SubmitCommand<U>(internal_key);
+}
+
+template<typename U>
+U* CommandBucket::SubmitCommand(const RenderState& render_state, uint32 shader_id, const uint64& internal_key)
+{
+	CommandPacket& packet = GetOrCreateCommandPacket(render_state.ToKey(shader_id));
 	return packet.SubmitCommand<U>(internal_key);
 }
 

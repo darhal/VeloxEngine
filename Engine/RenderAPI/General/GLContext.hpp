@@ -172,6 +172,7 @@ namespace Stencil
 	namespace StencilMask
 	{
 		CONSTEXPR uint32 STENCIL_MASKS[] = { 0x00, 0x0f, 0xF0, 0xFF /*, custom masks*/ };
+		
 		enum stencil_mask_t
 		{
 			MASK1 = 0,
@@ -316,7 +317,7 @@ namespace PolygonMode
 
 	FORCEINLINE polygon_mode_t Decode(uint8 code)
 	{
-		return (polygon_mode_t) (code & 0x4);
+		return (polygon_mode_t) (code & 0x3);
 	}
 }
 

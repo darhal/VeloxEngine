@@ -60,8 +60,11 @@ int main()
 
 	bucket.End();
 	cmd_buffer.DispatchCommands();*/
-	/* 0000000000000000000000000000000001001000000000000000000000101011 */
+	/* 
+	*/
 	RenderState r;
+	r.stencil_enabled = true;
+	r.stencil = RenderState::StencilOptions();
 	r.Print();
 	BucketKey k = r.ToKey(17);
 	printf("KEY : %lld\n", k); std::cout << "Sig : " << std::bitset<64>(k) << std::endl;
