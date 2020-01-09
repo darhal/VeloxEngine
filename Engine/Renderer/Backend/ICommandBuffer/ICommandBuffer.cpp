@@ -2,8 +2,9 @@
 
 TRE_NS_START
 
-/*ICommandBuffer::ICommandBuffer() : m_Buckets()
-{}*/
+ICommandBuffer::ICommandBuffer()
+{
+}
 
 void ICommandBuffer::DispatchCommands() const
 {
@@ -24,7 +25,7 @@ CommandBucket& ICommandBuffer::GetCommandBucker(uint32 i)
 
 uint32 ICommandBuffer::GetBucketsCount() const
 {
-	return m_Buckets.Size();
+	return (uint32)m_Buckets.Size();
 }
 
 TRE_NS_END

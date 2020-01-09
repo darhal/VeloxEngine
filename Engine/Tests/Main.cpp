@@ -46,7 +46,7 @@ using namespace TRE;
 
 int main()
 {
-
+	
 	ICommandBuffer cmd_buffer = ICommandBuffer();
 	CommandBucket& bucket = cmd_buffer.CreateBucket();
 	Commands::DrawCmd* cmds[10];

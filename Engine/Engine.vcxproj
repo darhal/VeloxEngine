@@ -268,9 +268,17 @@
     <ClCompile Include="Renderer\Backend\CommandBucket\CommandBucket.cpp" />
     <ClCompile Include="Renderer\Backend\Commands\Command.cpp" />
     <ClCompile Include="Renderer\Backend\Dispatcher\DrawCallsDispatcher.cpp" />
+    <ClCompile Include="Renderer\Backend\ICommandBuffer\ICommandBuffer.cpp" />
     <ClCompile Include="Renderer\Backend\RenderState\RenderState.cpp" />
     <ClCompile Include="Renderer\Backend\UBO\UBO.cpp" />
     <ClCompile Include="Renderer\Common\Common.cpp" />
+    <ClCompile Include="Renderer\Backend\ResourcesManager\ResourcesManager.cpp" />
+    <ClCompile Include="Renderer\Materials\AbstractMaterial\AbstractMaterial.cpp" />
+    <ClCompile Include="Renderer\Materials\Material.cpp" />
+    <ClCompile Include="Renderer\Materials\Techniques\Technique.cpp" />
+    <ClCompile Include="Renderer\MeshLoader\MaterialLoader.cpp" />
+    <ClCompile Include="Renderer\MeshLoader\MeshLoader.cpp" />
+    <ClCompile Include="Renderer\Mesh\StaticMesh\StaticMesh.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
     <ClCompile Include="Tests\Main2.cpp" />
     <ClCompile Include="Tests\TestingString.cpp" />
@@ -407,6 +415,18 @@
     <ClInclude Include="Renderer\Backend\UBO\UBO.hpp" />
     <ClInclude Include="Renderer\Common\Common.hpp" />
     <ClInclude Include="Core\Misc\Singleton\Singleton.hpp" />
+    <ClInclude Include="Renderer\Backend\ResourcesManager\ResourcesManager.hpp" />
+    <ClInclude Include="Renderer\Materials\AbstractMaterial\AbstractMaterial.hpp" />
+    <ClInclude Include="Renderer\Materials\Material.hpp" />
+    <ClInclude Include="Renderer\Materials\MaterialParametres\MaterialParametres.hpp" />
+    <ClInclude Include="Renderer\Materials\MaterialParametres\MaterialParamHelper.hpp" />
+    <ClInclude Include="Renderer\Materials\Techniques\Technique.hpp" />
+    <ClInclude Include="Renderer\MeshLoader\MaterialLoader.hpp" />
+    <ClInclude Include="Renderer\MeshLoader\MeshLoader.hpp" />
+    <ClInclude Include="Renderer\Mesh\IPrimitiveMesh\IPrimitiveMesh.hpp" />
+    <ClInclude Include="Renderer\Mesh\PrimitiveGeometry\PrimitiveGeometry.hpp" />
+    <ClInclude Include="Renderer\Mesh\StaticMesh\StaticMesh.hpp" />
+    <ClInclude Include="Renderer\Mesh\SubMesh\SubMesh.hpp" />
     <ClInclude Include="Tests\ShaderValidator.hpp" />
     <ClInclude Include="Tests\ThreadBarrier.hpp" />
   </ItemGroup>
@@ -431,7 +451,6 @@
     <None Include="Core\Misc\Maths\Vec4f_simd.inl" />
     <None Include="Core\Misc\Maths\Vec4i_simd.inl" />
     <None Include="RenderAPI\VertexBuffer\VBO.inl" />
-    <None Include="Renderer\Backend\ICommandBuffer\ICommandBuffer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

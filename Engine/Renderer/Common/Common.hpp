@@ -5,6 +5,20 @@
 
 TRE_NS_START
 
+enum class ResourcesTypes
+{
+	VBO = 0,
+	VAO = 1,
+	RBO = 2,
+	FBO = 3,
+	TEXTURE = 4,
+	MATERIAL = 5,
+	SHADER = 6,
+	RENDER_TARGET = 7
+};
+
+CONSTEXPR uint32 RESOURCES_COUNT = 8;
+
 typedef void(*BackendDispatchFunction)(const void*);
 
 class Texture;
