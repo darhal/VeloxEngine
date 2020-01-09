@@ -406,6 +406,7 @@
     <ClInclude Include="Renderer\Backend\RenderState\RenderState.hpp" />
     <ClInclude Include="Renderer\Backend\UBO\UBO.hpp" />
     <ClInclude Include="Renderer\Common\Common.hpp" />
+    <ClInclude Include="Core\Misc\Singleton\Singleton.hpp" />
     <ClInclude Include="Tests\ShaderValidator.hpp" />
     <ClInclude Include="Tests\ThreadBarrier.hpp" />
   </ItemGroup>

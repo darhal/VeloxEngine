@@ -40,11 +40,13 @@
 #include <Renderer/Backend/ICommandBuffer/ICommandBuffer.hpp>
 #include <Renderer/Backend/Commands/Commands.hpp>
 #include <Renderer/Backend/RenderState/RenderState.hpp>
+#include <Core/Misc/Singleton/Singleton.hpp>
 
 using namespace TRE;
 
 int main()
 {
+
 	ICommandBuffer cmd_buffer = ICommandBuffer();
 	CommandBucket& bucket = cmd_buffer.CreateBucket();
 	Commands::DrawCmd* cmds[10];
