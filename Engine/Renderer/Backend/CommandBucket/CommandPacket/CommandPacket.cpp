@@ -20,8 +20,8 @@ void CommandPacket::Flush()
 		Cmd cmd = m_Commands[i].second;
 		const BackendDispatchFunction CommandFunction = Command::LoadBackendDispatchFunction(cmd);
 		const void* command = Command::LoadCommand(cmd);
-		printf("[INTERNAL_KEY:%d]:", internal_key);
-		CommandFunction(command);
+		//printf("[INTERNAL_KEY:%d]:", internal_key);
+		//CommandFunction(command);
 	}
 }
 

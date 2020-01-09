@@ -13,6 +13,7 @@ public:
 	typedef typename RBT<K, V, Alloc_t>::Iterator Iterator;
 	typedef typename RBT<K, V, Alloc_t>::CIterator CIterator;
 	typedef RBT<K, V, Alloc_t> MapTree;
+	typedef typename MapTree::RedBlackNode Element;
 
 	FORCEINLINE Map(const Alloc_t& alloc) : m_RBT(alloc) {}
 

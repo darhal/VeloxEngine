@@ -195,8 +195,8 @@ public:
 
 		GIterator& operator++()
 		{
-			DataType* parent = NULL;
-
+			/*DataType* parent = NULL;
+			
 			if (this->m_Node == NULL || this->m_Node == TNULL) {
 				return *this; // end iterator does not increment
 			}
@@ -225,7 +225,30 @@ public:
 				}else {
 					return *this; // has no children -> stop here
 				}
+			}*/
+
+			/*if (this->m_Node == NULL || this->m_Node == TNULL) {
+				return *this; // end iterator does not increment
+			}*/
+
+			if (m_Node->right != TNULL) {
+				m_Node = m_Node->right;
+
+				while (m_Node->left != TNULL)
+					m_Node = m_Node->left;
+			} else {
+				DataType* tmp = m_Node->parent;
+				
+				while (tmp && m_Node == tmp->right) {
+					m_Node = tmp;
+					tmp = tmp->parent;
+				}
+
+				if (m_Node->right != tmp)
+					m_Node = tmp;
 			}
+
+			return *this;
 		}
 
 		GIterator operator++(int)
@@ -237,7 +260,26 @@ public:
 
 		GIterator& operator--()
 		{
-			// TODO: operator -- have to be implemented
+			if (m_Node->color == true && m_Node->parent->parent == m_Node)
+				m_Node = m_Node->right;
+			else if (m_Node->left != 0) {
+				DataType* tmp = m_Node->left;
+
+				while (tmp->right != 0)
+					tmp = tmp->right;
+
+				m_Node = tmp;
+			} else {
+				DataType* tmp = m_Node->parent;
+
+				while (tmp && m_Node == tmp->left) {
+					m_Node = tmp;
+					tmp = tmp->parent;
+				}
+
+				m_Node = tmp;
+			}
+
 			return *this;
 		}
 

@@ -220,7 +220,7 @@ FORCEINLINE typename RedBalckTree<K, T, Alloc_t>::Iterator RedBalckTree<K, T, Al
 		return Iterator(this, m_Root);
 	}
 
-	RBNode* node = m_Root;
+	/*RBNode* node = m_Root;
 
 	// iterate to the node in the bottom-left
 	while (true) {
@@ -232,13 +232,42 @@ FORCEINLINE typename RedBalckTree<K, T, Alloc_t>::Iterator RedBalckTree<K, T, Al
 		}else {
 			return Iterator(this, node);
 		}
+	}*/
+	RBNode* node = m_Root;
+
+	while (true) {
+		RBNode* next = node->left;
+
+		if (next == NULL) {
+			break;
+		}
+
+		node = next;
 	}
+
+	return Iterator(this, node);
 }
 
 template<typename K, typename T, typename Alloc_t>
 FORCEINLINE typename RedBalckTree<K, T, Alloc_t>::Iterator RedBalckTree<K, T, Alloc_t>::end() noexcept
 {
-	return Iterator(this, NULL);
+	if (m_Root == NULL || m_Root == TNULL) {
+		return Iterator(this, m_Root);
+	}
+
+	RBNode* node = m_Root;
+
+	while (true) {
+		RBNode* next = node->right;
+
+		if (next == NULL) {
+			break;
+		}
+
+		node = next;
+	}
+
+	return Iterator(this, node);
 }
 
 template<typename K, typename T, typename Alloc_t>
@@ -248,7 +277,7 @@ FORCEINLINE const typename RedBalckTree<K, T, Alloc_t>::CIterator RedBalckTree<K
 		return CIterator(this, m_Root);
 	}
 
-	RBNode* node = m_Root;
+	/*RBNode* node = m_Root;
 
 	// iterate to the node in the bottom-left
 	while (true) {
@@ -260,20 +289,49 @@ FORCEINLINE const typename RedBalckTree<K, T, Alloc_t>::CIterator RedBalckTree<K
 		}else {
 			return CIterator(this, node);
 		}
+	}*/
+	RBNode* node = m_Root;
+
+	while (true) {
+		RBNode* next = node->left;
+
+		if (next == NULL) {
+			break;
+		}
+
+		node = next;
 	}
+
+	return CIterator(this, node);
 }
 
 template<typename K, typename T, typename Alloc_t>
 FORCEINLINE const typename RedBalckTree<K, T, Alloc_t>::CIterator RedBalckTree<K, T, Alloc_t>::end() const noexcept
 {
-	return CIterator(this, NULL);
+	if (m_Root == NULL || m_Root == TNULL) {
+		return CIterator(this, m_Root);
+	}
+
+	RBNode* node = m_Root;
+
+	while (true) {
+		RBNode* next = node->right;
+
+		if (next == NULL) {
+			break;
+		}
+
+		node = next;
+	}
+
+	return CIterator(this, node);
 }
 
 
 template<typename K, typename T, typename Alloc_t>
 FORCEINLINE const typename RedBalckTree<K, T, Alloc_t>::CIterator RedBalckTree<K, T, Alloc_t>::cbegin() const noexcept
 {
-	if (m_Root == NULL || m_Root == TNULL) {
+	/*if (m_Root == NULL || m_Root == TNULL) {
 		return CIterator(this, m_Root);
 	}
 
@@ -289,13 +347,46 @@ FORCEINLINE const typename RedBalckTree<K, T, Alloc_t>::CIterator RedBalckTree<K
 		}else {
 			return CIterator(this, node);
 		}
+	}*/
+	if (m_Root == NULL || m_Root == TNULL) {
+		return CIterator(this, m_Root);
 	}
+
+	RBNode* node = m_Root;
+
+	while (true) {
+		RBNode* next = node->left;
+
+		if (next == NULL) {
+			break;
+		}
+
+		node = next;
+	}
+
+	return CIterator(this, node);
 }
 
 template<typename K, typename T, typename Alloc_t>
 FORCEINLINE const typename RedBalckTree<K, T, Alloc_t>::CIterator RedBalckTree<K, T, Alloc_t>::cend() const noexcept
 {
-	return CIterator(this, NULL);
+	if (m_Root == NULL || m_Root == TNULL) {
+		return CIterator(this, m_Root);
+	}
+
+	RBNode* node = m_Root;
+
+	while (true) {
+		RBNode* next = node->right;
+
+		if (next == NULL) {
+			break;
+		}
+
+		node = next;
+	}
+
+	return CIterator(this, node);
 }
 
 

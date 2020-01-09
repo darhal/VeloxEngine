@@ -38,7 +38,6 @@ CommandPacket& CommandBucket::CreateCommandPacket(const BucketKey& key)
 	CommandPacket* buff = m_PacketAllocator.Allocate<CommandPacket>();
 	new (buff) CommandPacket(key);
 	m_Packets.Emplace(key, buff);
-	printf("Created packet with key : %d\n", key);
 	return *buff;
 }
 
@@ -59,17 +58,24 @@ void CommandBucket::Flush() const
 
 	for (const auto& key_packet_pair : m_Packets) {
 		// Decode and apply key
-		printf("Decode and apply key : %d\n", key_packet_pair.key);
-		key_packet_pair.value->Flush();
+		uint32 shader_id;
+		RenderState state = RenderState::FromKey(key_packet_pair.first, &shader_id);
+		state.ApplyStates();
+		key_packet_pair.second->Flush();
 	}
 }
 
 void CommandBucket::End()
 {
-	for (const auto& key_packet_pair : m_Packets) {
-		if (key_packet_pair.key > 5) { // Check if blending is enabled
-			key_packet_pair.value->SortCommands();
+	Map<BucketKey, CommandPacket*>::CIterator itr = m_Packets.cend();
+	Map<BucketKey, CommandPacket*>::CIterator end = m_Packets.cbegin();
+	for (itr; itr != end; itr--) {
+		if (itr->key < 9) { // Check if blending is enabled
+			break;
 		}
+
+		printf("SORT KEY : %d\n", itr->key);
+		itr->value->SortCommands();
 	}
 }
 

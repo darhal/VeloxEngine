@@ -45,11 +45,11 @@ using namespace TRE;
 
 int main()
 {
-	/*ICommandBuffer cmd_buffer = ICommandBuffer();
+	ICommandBuffer cmd_buffer = ICommandBuffer();
 	CommandBucket& bucket = cmd_buffer.CreateBucket();
 	Commands::DrawCmd* cmds[10];
 
-	for (uint32 i = 0; i < 10; i++) {
+	for (uint32 i = 0; i < 12; i++) {
 		for (uint32 j = 0; j < 10; j++) {
 			cmds[i] = bucket.SubmitCommand<Commands::DrawCmd>(i, std::rand() % 30);
 			cmds[i]->start = i;
@@ -59,9 +59,9 @@ int main()
 	}
 
 	bucket.End();
-	cmd_buffer.DispatchCommands();*/
+	cmd_buffer.DispatchCommands();
+
 	/* 
-	*/
 	RenderState r;
 	r.stencil_enabled = true;
 	r.stencil = RenderState::StencilOptions();
@@ -70,7 +70,7 @@ int main()
 	printf("KEY : %lld\n", k); std::cout << "Sig : " << std::bitset<64>(k) << std::endl;
 	printf("----------------- build from key -----------------\n");
 	RenderState r2 = RenderState::FromKey(k);
-	r2.Print();
+	r2.Print();*/
 
 	getchar();
 	return 0;
