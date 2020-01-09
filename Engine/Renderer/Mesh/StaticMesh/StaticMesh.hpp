@@ -5,7 +5,7 @@
 
 #include <Renderer/Mesh/IPrimitiveMesh/IPrimitiveMesh.hpp>
 #include <Renderer/Mesh/SubMesh/SubMesh.hpp>
-#include <Renderer/Backend/ICommandBuffer/ICommandBuffer.hpp>
+#include <Renderer/Backend/CommandBucket/CommandBucket.hpp>
 
 TRE_NS_START
 
@@ -21,9 +21,9 @@ public:
 
 	FORCEINLINE Mat4f& GetTransformationMatrix();
 
-	void Submit(ICommandBuffer& CmdBucket, const Vec3f& CameraPosition);
+	void Submit(CommandBucket& CmdBucket, const Vec3f& CameraPosition);
 
-	FORCEINLINE const Vector<RawSubMesh>& GetSubMeshes() const;
+	FORCEINLINE const Vector<SubMesh>& GetSubMeshes() const;
 
 	FORCEINLINE VaoID GetVaoID() { return m_VaoID; }
 
@@ -31,7 +31,7 @@ private:
 	FORCEINLINE void SetVaoID(VaoID vao);
 
 private:
-	Vector<RawSubMesh> m_Meshs;
+	Vector<SubMesh> m_Meshs;
 	VaoID m_VaoID;
 	Mat4f m_ModelTransformation;
 
@@ -59,7 +59,7 @@ FORCEINLINE void StaticMesh::SetVaoID(VaoID vao)
 	m_VaoID = vao;
 }
 
-FORCEINLINE const Vector<RawSubMesh>& StaticMesh::GetSubMeshes() const
+FORCEINLINE const Vector<SubMesh>& StaticMesh::GetSubMeshes() const
 {
 	return m_Meshs;
 }

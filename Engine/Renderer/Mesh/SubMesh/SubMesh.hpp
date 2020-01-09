@@ -8,9 +8,9 @@
 
 TRE_NS_START
 
-struct RawSubMesh
+struct SubMesh
 {
-	RawSubMesh(PrimitiveGeometry& geo, MaterialID matID) :
+	SubMesh(PrimitiveGeometry& geo, MaterialID matID) :
 		m_Geometry(geo), m_MaterialID(matID)
 	{};
 
