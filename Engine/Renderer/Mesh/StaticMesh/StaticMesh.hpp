@@ -21,7 +21,7 @@ public:
 
 	FORCEINLINE Mat4f& GetTransformationMatrix();
 
-	void Submit(CommandBucket& CmdBucket, const Vec3f& CameraPosition);
+	void Submit(CommandBucket& CmdBucket);
 
 	FORCEINLINE const Vector<SubMesh>& GetSubMeshes() const;
 

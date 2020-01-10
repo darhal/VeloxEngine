@@ -269,6 +269,9 @@
     <ClCompile Include="Renderer\Backend\Commands\Command.cpp" />
     <ClCompile Include="Renderer\Backend\Dispatcher\DrawCallsDispatcher.cpp" />
     <ClCompile Include="Renderer\Backend\ICommandBuffer\ICommandBuffer.cpp" />
+    <ClCompile Include="Renderer\Backend\Lights\DirectionalLight\DirectionalLight.cpp" />
+    <ClCompile Include="Renderer\Backend\Lights\PointLight\PointLight.cpp" />
+    <ClCompile Include="Renderer\Backend\Lights\SpotLight\SpotLight.cpp" />
     <ClCompile Include="Renderer\Backend\RenderState\RenderState.cpp" />
     <ClCompile Include="Renderer\Backend\UBO\UBO.cpp" />
     <ClCompile Include="Renderer\Common\Common.cpp" />
@@ -284,6 +287,7 @@
     <ClCompile Include="Tests\TestingString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Renderer\Backend\Camera\Camera.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\CommandPacket\CommandPacket.hpp" />
     <ClInclude Include="Core\DataStructure\StaticBitset\StaticBitset.hpp" />
     <ClInclude Include="Core\ECS\ArchetypeQuerry\ArchetypeQuerry.hpp" />
@@ -408,8 +412,13 @@
     <ClInclude Include="Renderer\Backend\Commands\Command.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\CommandBucket.hpp" />
     <ClInclude Include="Renderer\Backend\Commands\Commands.hpp" />
-    <ClInclude Include="Renderer\Backend\Commands\Key\Key.hpp" />
+    <ClInclude Include="Renderer\Backend\Keys\BucketKey.hpp" />
     <ClInclude Include="Renderer\Backend\Dispatcher\DrawCallsDispatcher.hpp" />
+    <ClInclude Include="Renderer\Backend\Keys\ModelKey.hpp" />
+    <ClInclude Include="Renderer\Backend\Lights\DirectionalLight\DirectionalLight.hpp" />
+    <ClInclude Include="Renderer\Backend\Lights\ILight\ILight.hpp" />
+    <ClInclude Include="Renderer\Backend\Lights\PointLight\PointLight.hpp" />
+    <ClInclude Include="Renderer\Backend\Lights\SpotLight\SpotLight.hpp" />
     <ClInclude Include="Renderer\Backend\RenderTarget\RenderTarget.hpp" />
     <ClInclude Include="Renderer\Backend\RenderState\RenderState.hpp" />
     <ClInclude Include="Renderer\Backend\UBO\UBO.hpp" />

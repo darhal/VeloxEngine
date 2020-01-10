@@ -1,5 +1,8 @@
-#include "CommandPacket.hpp"
 #include <algorithm>
+#include "CommandPacket.hpp"
+#include <Renderer/Backend/Keys/ModelKey.hpp>
+#include <RenderAPI/VertexArray/VAO.hpp>
+#include <Renderer/Materials/Material.hpp>
 
 TRE_NS_START
 
@@ -10,7 +13,7 @@ CommandPacket::CommandPacket(const BucketKey& key) :
 	m_Commands = (Pair<uint64, Cmd>*) m_CmdsAllocator.Allocate(DEFAULT_MAX_ELEMENTS * COMMAND_PTR * MULTIPLIER);
 }
 
-void CommandPacket::Flush()
+void CommandPacket::Flush(ResourcesManager& manager, const ShaderProgram& shader)
 {
 	const uint32 start = m_BufferMarker * DEFAULT_MAX_ELEMENTS;
 	const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;
@@ -18,10 +21,20 @@ void CommandPacket::Flush()
 	for (uint32 i = start; i < end; i++) {
 		const uint64& internal_key = m_Commands[i].first;
 		Cmd cmd = m_Commands[i].second;
+		ModelRenderParams render_params = ModelRenderParams::FromKey(internal_key);
+
+		// Bind VAO, Set Uniforms, etc...
+		VAO& vao = manager.Get<VAO>(ResourcesTypes::VAO, render_params.vao_id);
+		Material& material = manager.Get<Material>(ResourcesTypes::MATERIAL, render_params.material_id);
+		vao.Bind();
+		/*shader.SetMat4("MVP", );
+		shader.SetMat4("model", );*/
+		material.GetTechnique().UploadUnfiroms(shader);
+
+		// Issue the draw call
 		const BackendDispatchFunction CommandFunction = Command::LoadBackendDispatchFunction(cmd);
 		const void* command = Command::LoadCommand(cmd);
-		//printf("[INTERNAL_KEY:%d]:", internal_key);
-		//CommandFunction(command);
+		CommandFunction(command);
 	}
 }
 
@@ -38,7 +51,7 @@ void CommandPacket::SwapBuffer()
 
 void CommandPacket::SortCommands()
 {
-	printf("Sortying packt with key : %d\n", m_Key);
+	printf("Sorting packt with key : %d\n", m_Key);
 
 	const uint32 start = m_BufferMarker * DEFAULT_MAX_ELEMENTS;
 	const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;

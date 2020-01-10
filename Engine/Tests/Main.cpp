@@ -44,35 +44,67 @@
 
 using namespace TRE;
 
+
+#define INIT_BENCHMARK std::chrono::time_point<std::chrono::high_resolution_clock> start, end; std::chrono::microseconds duration;
+
+#define BENCHMARK(name, bloc_of_code) \
+	start = std::chrono::high_resolution_clock::now(); \
+	bloc_of_code; \
+	end = std::chrono::high_resolution_clock::now();\
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start); \
+	std::cout << "\nExecution of '" << name << "' took : " << duration.count() << " microsecond(s)" << std::endl; \
+
 int main()
 {
-	
+	// TODO: SMALL BUGS ON THE MAPS (last iterator is not went throught)
+	// settings
+	const unsigned int SCR_WIDTH = 1900 / 2;
+	const unsigned int SCR_HEIGHT = 1000 / 2;
+
+	/*TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 3.3)", WindowStyle::Resize);
+	window.initContext(3, 3);
+
+	printf("- GPU Vendor    	: %s\n", glGetString(GL_VENDOR));
+	printf("- Graphics      	: %s\n", glGetString(GL_RENDERER));
+	printf("- Version       	: %s\n", glGetString(GL_VERSION));
+	printf("- GLSL Version  	: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+	printf("- Hardware Threads 	: %d\n", std::thread::hardware_concurrency());*/
+
+	const uint32 bucket_count = 10;
+	const uint32 cmds_count = 5'000;
 	ICommandBuffer cmd_buffer = ICommandBuffer();
 	CommandBucket& bucket = cmd_buffer.CreateBucket();
-	Commands::DrawCmd* cmds[10];
-
-	for (uint32 i = 0; i < 12; i++) {
-		for (uint32 j = 0; j < 10; j++) {
-			cmds[i] = bucket.SubmitCommand<Commands::DrawCmd>(i, std::rand() % 30);
-			cmds[i]->start = i;
-			cmds[i]->end = i + 1;
-			cmds[i]->mode = Primitive::TRIANGLES;
+	INIT_BENCHMARK;
+	
+	for (uint32 i = 0; i < bucket_count; i++) {
+		for (uint32 j = 0; j < cmds_count; j++) {
+			Commands::DrawCmd* cmd = bucket.SubmitCommand<Commands::DrawCmd>(i, std::rand() % 30);
+			cmd->start = i;
+			cmd->end = i + 1;
+			cmd->mode = Primitive::TRIANGLES;
 		}
 	}
 
 	bucket.End();
-	cmd_buffer.DispatchCommands();
 
-	/* 
-	RenderState r;
-	r.stencil_enabled = true;
-	r.stencil = RenderState::StencilOptions();
-	r.Print();
-	BucketKey k = r.ToKey(17);
-	printf("KEY : %lld\n", k); std::cout << "Sig : " << std::bitset<64>(k) << std::endl;
-	printf("----------------- build from key -----------------\n");
-	RenderState r2 = RenderState::FromKey(k);
-	r2.Print();*/
+	// INIT_BENCHMARK;
+	//while (true) {
+		BENCHMARK("Dispatching All Commands", cmd_buffer.DispatchCommands());
+	//}
+	
+
+	/*Event ev;
+	while (true) {
+		if (window.getEvent(ev)) {
+		}
+
+		glClearColor(0.59, 0.59, 0.59, 1.0);
+		Clear(Buffer::COLOR);
+		
+
+		window.Present();
+	}*/
+
 
 	getchar();
 	return 0;

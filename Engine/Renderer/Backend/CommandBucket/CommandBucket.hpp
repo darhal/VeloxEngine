@@ -5,10 +5,11 @@
 #include <Core/DataStructure/HashMap/Map.hpp>
 #include <Core/Memory/Allocators/PoolAlloc/MultiPoolAllocator.hpp>
 
-#include <Renderer/Backend/Commands/Key/Key.hpp>
+#include <Renderer/Backend/Keys/BucketKey.hpp>
 #include <Renderer/Backend/RenderTarget/RenderTarget.hpp>
 #include <Renderer/Backend/CommandBucket/CommandPacket/CommandPacket.hpp>
 #include <Renderer/Backend/RenderState/RenderState.hpp>
+#include <Renderer/Backend/Camera/Camera.hpp>
 
 TRE_NS_START
 
@@ -37,14 +38,21 @@ public:
 
 	CommandPacket& GetOrCreateCommandPacket(const BucketKey& key);
 
+	const Camera& GetCamera() const { return m_Camera; }
+
+	Camera& GetCamera() { return m_Camera; }
+
 	void Flush() const;
 
 	void End();
 private:
 	RenderTarget m_RenderTarget;
-	Mat4f m_ProjViewMat;
+	Mat4f m_Projection;
+	Camera m_Camera;
 	Map<BucketKey, CommandPacket*> m_Packets;
 	MultiPoolAllocator m_PacketAllocator;
+
+	CONSTEXPR static BucketKey BLEND_ENABLED = (BucketKey(1) << 63);
 };
 
 template<typename U>

@@ -1,14 +1,17 @@
 #include "CommandBucket.hpp"
+#include <Renderer/Backend/ResourcesManager/ResourcesManager.hpp>
+#include <RenderAPI/Shader/ShaderProgram.hpp>
 
 TRE_NS_START
 
-CommandBucket::CommandBucket() : m_RenderTarget(), m_ProjViewMat(), m_Packets(), m_PacketAllocator(sizeof(CommandPacket), 1)
+CommandBucket::CommandBucket() : m_RenderTarget(), m_Projection(), m_Camera(), m_Packets(), m_PacketAllocator(sizeof(CommandPacket), 1)
 {
 }
 
 CommandBucket::CommandBucket(CommandBucket&& bucket) : 
 	m_RenderTarget(std::move(bucket.m_RenderTarget)), 
-	m_ProjViewMat(bucket.m_ProjViewMat),
+	m_Projection(bucket.m_Projection),
+	m_Camera(bucket.m_Camera),
 	m_Packets(std::move(bucket.m_Packets)), 
 	m_PacketAllocator(std::move(bucket.m_PacketAllocator))
 {
@@ -17,7 +20,8 @@ CommandBucket::CommandBucket(CommandBucket&& bucket) :
 CommandBucket& CommandBucket::operator=(CommandBucket&& bucket)
 {
 	m_RenderTarget = std::move(bucket.m_RenderTarget);
-	m_ProjViewMat = bucket.m_ProjViewMat;
+	m_Projection = bucket.m_Projection;
+	m_Camera = bucket.m_Camera;
 	m_Packets = std::move(bucket.m_Packets);
 	m_PacketAllocator = std::move(bucket.m_PacketAllocator);
 	return *this;
@@ -53,15 +57,21 @@ CommandPacket& CommandBucket::GetOrCreateCommandPacket(const BucketKey& key)
 
 void CommandBucket::Flush() const
 {
+	// printf("Flush bucket\n");
+	ResourcesManager& manager = ResourcesManager::Instance();
 	// Apply framer buffer and set view proj mat
-	printf("Flush bucket\n");
 
 	for (const auto& key_packet_pair : m_Packets) {
 		// Decode and apply key
 		uint32 shader_id;
 		RenderState state = RenderState::FromKey(key_packet_pair.first, &shader_id);
 		state.ApplyStates();
-		key_packet_pair.second->Flush();
+
+		// Set Shader
+		ShaderProgram& shader = manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
+		shader.Bind();
+
+		key_packet_pair.second->Flush(manager, shader);
 	}
 }
 
@@ -69,12 +79,12 @@ void CommandBucket::End()
 {
 	Map<BucketKey, CommandPacket*>::CIterator itr = m_Packets.cend();
 	Map<BucketKey, CommandPacket*>::CIterator end = m_Packets.cbegin();
+
 	for (itr; itr != end; itr--) {
-		if (itr->key < 9) { // Check if blending is enabled
+		if (itr->key < BLEND_ENABLED) { // Check if blending is enabled
 			break;
 		}
 
-		printf("SORT KEY : %d\n", itr->key);
 		itr->value->SortCommands();
 	}
 }
