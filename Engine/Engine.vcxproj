@@ -281,6 +281,7 @@
     <ClCompile Include="Renderer\Materials\Techniques\Technique.cpp" />
     <ClCompile Include="Renderer\MeshLoader\MaterialLoader.cpp" />
     <ClCompile Include="Renderer\MeshLoader\MeshLoader.cpp" />
+    <ClCompile Include="Renderer\MeshLoader\Model\Model.cpp" />
     <ClCompile Include="Renderer\Mesh\StaticMesh\StaticMesh.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
     <ClCompile Include="Tests\Main2.cpp" />
@@ -432,6 +433,10 @@
     <ClInclude Include="Renderer\Materials\Techniques\Technique.hpp" />
     <ClInclude Include="Renderer\MeshLoader\MaterialLoader.hpp" />
     <ClInclude Include="Renderer\MeshLoader\MeshLoader.hpp" />
+    <ClInclude Include="Renderer\MeshLoader\ModelData\ModelMaterialData.hpp" />
+    <ClInclude Include="Renderer\MeshLoader\ModelData\ModelData.hpp" />
+    <ClInclude Include="Renderer\MeshLoader\Model\Model.hpp" />
+    <ClInclude Include="Renderer\MeshLoader\VertexData\VertexData.hpp" />
     <ClInclude Include="Renderer\Mesh\IPrimitiveMesh\IPrimitiveMesh.hpp" />
     <ClInclude Include="Renderer\Mesh\PrimitiveGeometry\PrimitiveGeometry.hpp" />
     <ClInclude Include="Renderer\Mesh\StaticMesh\StaticMesh.hpp" />
@@ -460,6 +465,8 @@
     <None Include="Core\Misc\Maths\Vec4f_simd.inl" />
     <None Include="Core\Misc\Maths\Vec4i_simd.inl" />
     <None Include="RenderAPI\VertexBuffer\VBO.inl" />
+    <None Include="res\Shader\SimpleShader.fs" />
+    <None Include="res\Shader\SimpleShader.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

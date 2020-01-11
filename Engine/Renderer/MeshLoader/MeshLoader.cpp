@@ -16,7 +16,7 @@
 
 TRE_NS_START
 
-/*MeshLoader::MeshLoader(const char* path)
+MeshLoader::MeshLoader(const char* path)
 {
 	m_ObjectCount = 0;
 	LoadFile(path);
@@ -178,29 +178,29 @@ void MeshLoader::LoadFile(const char* path)
 		m_Materials[m_ObjectCount].EmplaceBack(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].Size() - lastVertexCount));
 		lastVertexCount = m_DataIndex[m_ObjectCount].Size();
 	}
+
 	m_ObjectCount++;
 	fclose(file);
-
 	printf("Loading OBJ is done successfully.\n");
 }
 
-void MeshLoader::ProcessData(Vector<ModelLoader>& arrayOfObjects)
+void MeshLoader::ProcessData(Vector<Model>& arrayOfObjects)
 {
 	arrayOfObjects.Reserve(m_ObjectCount);
 	int32 objectIndex = (m_ObjectCount > 1 ? 1 : 0);
 
 	do{
-		arrayOfObjects.EmplaceBack(m_VerteciesData[objectIndex], m_DataIndex[objectIndex], m_Materials[objectIndex]);
+		arrayOfObjects.EmplaceBack(m_VerteciesData[objectIndex], m_Materials[objectIndex], &m_DataIndex[objectIndex]);
 		objectIndex++;
 	}while (objectIndex < m_ObjectCount);
 }
 
-ModelLoader MeshLoader::LoadAsOneObject()
+Model MeshLoader::LoadAsOneObject()
 {
 	int32 objectIndex = (m_ObjectCount > 1 ? 1 : 0);
 	Vector<VertexData> vert_data_global = std::move(m_VerteciesData[objectIndex]);
 	Vector<uint32> indices_data_global = std::move(m_DataIndex[objectIndex]);
-	Vector<MatrialForRawModel> material_data_global = std::move(m_Materials[objectIndex]);
+	Vector<ModelMaterialData> material_data_global = std::move(m_Materials[objectIndex]);
 	usize index_offset = vert_data_global.Length();
 	objectIndex++;
 
@@ -216,17 +216,17 @@ ModelLoader MeshLoader::LoadAsOneObject()
 		objectIndex++;
 	}while (objectIndex < m_ObjectCount);
 
-	ModelLoader object(vert_data_global, indices_data_global, material_data_global);
+	Model object(vert_data_global, material_data_global, &indices_data_global);
 	return object;
 }
 
-ModelLoader MeshLoader::LoadObject(const String& name)
+Model MeshLoader::LoadObject(const String& name)
 {
 	uint8* obj_index = m_Objects.Get(name);
 	ASSERTF(obj_index == NULL, "Attempt to load an object which isn't present.");
 	uint8 id = *obj_index + 1;
-	ModelLoader object(m_VerteciesData[id], m_DataIndex[id], m_Materials[id]);
+	Model object(m_VerteciesData[id], m_Materials[id], &m_DataIndex[id]);
 	return object;
-}*/
+}
 
 TRE_NS_END

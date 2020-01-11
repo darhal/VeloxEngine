@@ -42,6 +42,10 @@ public:
 
 	Camera& GetCamera() { return m_Camera; }
 
+	Mat4f& GetProjectionMatrix() { return m_Projection; }
+
+	const Mat4f& GetProjectionMatrix() const { return m_Projection; }
+
 	void Flush() const;
 
 	void End();

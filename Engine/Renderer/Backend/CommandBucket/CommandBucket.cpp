@@ -40,7 +40,7 @@ CommandPacket* CommandBucket::GetCommandPacket(const BucketKey& key) const
 CommandPacket& CommandBucket::CreateCommandPacket(const BucketKey& key)
 {
 	CommandPacket* buff = m_PacketAllocator.Allocate<CommandPacket>();
-	new (buff) CommandPacket(key);
+	new (buff) CommandPacket(this, key);
 	m_Packets.Emplace(key, buff);
 	return *buff;
 }
@@ -60,8 +60,12 @@ void CommandBucket::Flush() const
 	// printf("Flush bucket\n");
 	ResourcesManager& manager = ResourcesManager::Instance();
 	// Apply framer buffer and set view proj mat
+	const Mat4f projView = m_Projection * m_Camera.GetViewMatrix();
 
 	for (const auto& key_packet_pair : m_Packets) {
+		if (key_packet_pair.first == -1)
+			continue;
+
 		// Decode and apply key
 		uint32 shader_id;
 		RenderState state = RenderState::FromKey(key_packet_pair.first, &shader_id);
@@ -70,8 +74,9 @@ void CommandBucket::Flush() const
 		// Set Shader
 		ShaderProgram& shader = manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
 		shader.Bind();
+		shader.SetMat4("ProjView", projView);
 
-		key_packet_pair.second->Flush(manager, shader);
+		key_packet_pair.second->Flush(manager, shader, projView);
 	}
 }
 

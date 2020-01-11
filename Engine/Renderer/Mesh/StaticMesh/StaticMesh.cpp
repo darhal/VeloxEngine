@@ -8,6 +8,8 @@ TRE_NS_START
 
 void StaticMesh::Submit(CommandBucket& CmdBucket)
 {
+	ModelRenderParams params = { 0, m_VaoID, (uint16)0 };
+
 	for (SubMesh& obj : m_Meshs) {
 		const Material& material = ResourcesManager::Instance().Get<Material>(ResourcesTypes::MATERIAL, obj.m_MaterialID);
 		const RenderState& state = material.GetRenderStates();
@@ -29,13 +31,23 @@ void StaticMesh::Submit(CommandBucket& CmdBucket)
 			std::cout << "BLEND_DIST KEY = : " << std::bitset<32>(blend_dist) << std::endl; */
 		}
 
-		ModelRenderParams params = { obj.m_MaterialID, m_VaoID, (uint16)blend_dist };
-		Commands::DrawIndexedCmd* draw_cmd =  CmdBucket.SubmitCommand<Commands::DrawIndexedCmd>(state, material.GetTechnique().GetShaderID(), params.ToKey());
-		draw_cmd->mode = obj.m_Geometry.m_Primitive;
-		draw_cmd->type = obj.m_Geometry.m_DataType;
-		draw_cmd->count = obj.m_Geometry.m_Count;
-		draw_cmd->offset = obj.m_Geometry.m_Offset;
-		draw_cmd->model = &m_ModelTransformation;
+		params.material_id = obj.m_MaterialID;
+		params.blend_dist = (uint16)blend_dist;
+
+		if (obj.m_Geometry.m_Indexed) {
+			Commands::DrawIndexedCmd* draw_cmd = CmdBucket.SubmitCommand<Commands::DrawIndexedCmd>(state, material.GetTechnique().GetShaderID(), params.ToKey());
+			draw_cmd->mode = obj.m_Geometry.m_Primitive;
+			draw_cmd->type = obj.m_Geometry.m_DataType;
+			draw_cmd->count = obj.m_Geometry.m_Count;
+			draw_cmd->offset = obj.m_Geometry.m_Offset;
+			draw_cmd->model = m_ModelTransformation;
+		} else {
+			Commands::DrawCmd* draw_cmd = CmdBucket.SubmitCommand<Commands::DrawCmd>(state, material.GetTechnique().GetShaderID(), params.ToKey());
+			draw_cmd->mode = obj.m_Geometry.m_Primitive;
+			draw_cmd->start = obj.m_Geometry.m_Start;
+			draw_cmd->end = obj.m_Geometry.m_End;
+			draw_cmd->model = m_ModelTransformation;
+		}
 	}
 }
 

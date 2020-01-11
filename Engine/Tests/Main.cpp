@@ -41,41 +41,18 @@
 #include <Renderer/Backend/Commands/Commands.hpp>
 #include <Renderer/Backend/RenderState/RenderState.hpp>
 #include <Core/Misc/Singleton/Singleton.hpp>
+#include <Renderer/MeshLoader/Model/Model.hpp>
+#include <Renderer/MeshLoader/MeshLoader.hpp>
+#include "ShaderValidator.hpp"
 
 using namespace TRE;
-
-
-#define INIT_BENCHMARK std::chrono::time_point<std::chrono::high_resolution_clock> start, end; std::chrono::microseconds duration;
-
-#define BENCHMARK(name, bloc_of_code) \
-	start = std::chrono::high_resolution_clock::now(); \
-	bloc_of_code; \
-	end = std::chrono::high_resolution_clock::now();\
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start); \
-	std::cout << "\nExecution of '" << name << "' took : " << duration.count() << " microsecond(s)" << std::endl; \
-
-int main()
-{
-	// TODO: SMALL BUGS ON THE MAPS (last iterator is not went throught)
-	// settings
-	const unsigned int SCR_WIDTH = 1900 / 2;
-	const unsigned int SCR_HEIGHT = 1000 / 2;
-
-	/*TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 3.3)", WindowStyle::Resize);
-	window.initContext(3, 3);
-
-	printf("- GPU Vendor    	: %s\n", glGetString(GL_VENDOR));
-	printf("- Graphics      	: %s\n", glGetString(GL_RENDERER));
-	printf("- Version       	: %s\n", glGetString(GL_VERSION));
-	printf("- GLSL Version  	: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-	printf("- Hardware Threads 	: %d\n", std::thread::hardware_concurrency());*/
-
+/*
 	const uint32 bucket_count = 10;
 	const uint32 cmds_count = 5'000;
 	ICommandBuffer cmd_buffer = ICommandBuffer();
 	CommandBucket& bucket = cmd_buffer.CreateBucket();
 	INIT_BENCHMARK;
-	
+
 	for (uint32 i = 0; i < bucket_count; i++) {
 		for (uint32 j = 0; j < cmds_count; j++) {
 			Commands::DrawCmd* cmd = bucket.SubmitCommand<Commands::DrawCmd>(i, std::rand() % 30);
@@ -87,25 +64,216 @@ int main()
 
 	bucket.End();
 
-	// INIT_BENCHMARK;
-	//while (true) {
-		BENCHMARK("Dispatching All Commands", cmd_buffer.DispatchCommands());
-	//}
-	
+	cmd_buffer.DispatchCommands();
+*/
 
-	/*Event ev;
+#define INIT_BENCHMARK std::chrono::time_point<std::chrono::high_resolution_clock> start, end; std::chrono::microseconds duration;
+
+#define BENCHMARK(name, bloc_of_code) \
+	start = std::chrono::high_resolution_clock::now(); \
+	bloc_of_code; \
+	end = std::chrono::high_resolution_clock::now();\
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start); \
+	std::cout << "\nExecution of '" << name << "' took : " << duration.count() << " microsecond(s)" << std::endl; \
+
+void HandleEvent(float dt, Mat4f& projecton, Camera& camera, const Event& e);
+
+float vertices[] = {
+	-0.5f, -0.5f, -0.5f, 
+	 0.5f, -0.5f, -0.5f,  
+	 0.5f,  0.5f, -0.5f,  
+	 0.5f,  0.5f, -0.5f, 
+	-0.5f,  0.5f, -0.5f,  
+	-0.5f, -0.5f, -0.5f,  
+
+	-0.5f, -0.5f,  0.5f,  
+	 0.5f, -0.5f,  0.5f,  
+	 0.5f,  0.5f,  0.5f, 
+	 0.5f,  0.5f,  0.5f,  
+	-0.5f,  0.5f,  0.5f,  
+	-0.5f, -0.5f,  0.5f, 
+
+	-0.5f,  0.5f,  0.5f,  
+	-0.5f,  0.5f, -0.5f,  
+	-0.5f, -0.5f, -0.5f,  
+	-0.5f, -0.5f, -0.5f,  
+	-0.5f, -0.5f,  0.5f,  
+	-0.5f,  0.5f,  0.5f,  
+
+	 0.5f,  0.5f,  0.5f,  
+	 0.5f,  0.5f, -0.5f,  
+	 0.5f, -0.5f, -0.5f,  
+	 0.5f, -0.5f, -0.5f,  
+	 0.5f, -0.5f,  0.5f,  
+	 0.5f,  0.5f,  0.5f,  
+
+	-0.5f, -0.5f, -0.5f,  
+	 0.5f, -0.5f, -0.5f,  
+	 0.5f, -0.5f,  0.5f,  
+	 0.5f, -0.5f,  0.5f,  
+	-0.5f, -0.5f,  0.5f,  
+	-0.5f, -0.5f, -0.5f,  
+
+	-0.5f,  0.5f, -0.5f,  
+	 0.5f,  0.5f, -0.5f,  
+	 0.5f,  0.5f,  0.5f,  
+	 0.5f,  0.5f,  0.5f,  
+	-0.5f,  0.5f,  0.5f,  
+	-0.5f,  0.5f, -0.5f,  
+};
+
+double deltaTime = 0.5f;
+double  frameRate = 30;
+bool start = false;
+int32 speed = 1;
+const unsigned int SCR_WIDTH = 1900 / 2;
+const unsigned int SCR_HEIGHT = 1000 / 2;
+
+float lastX = (float)SCR_WIDTH / 2.0;
+float lastY = (float)SCR_HEIGHT / 2.0;
+bool firstMouse = true;
+
+int main()
+{
+	// TODO: SMALL BUGS ON THE MAPS (last iterator is not went throught)
+	// settings
+
+	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 3.3)", WindowStyle::Resize);
+	window.initContext(3, 3);
+
+	printf("- GPU Vendor    	: %s\n", glGetString(GL_VENDOR));
+	printf("- Graphics      	: %s\n", glGetString(GL_RENDERER));
+	printf("- Version       	: %s\n", glGetString(GL_VERSION));
+	printf("- GLSL Version  	: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+	printf("- Hardware Threads 	: %d\n", std::thread::hardware_concurrency());
+
+	ShaderValidator("res/Shader/SimpleShader.vs", "res/Shader/SimpleShader.fs");
+	ShaderID shader_id = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER, 
+		Shader("res/Shader/SimpleShader.vs", ShaderType::VERTEX), 
+		Shader("res/Shader/SimpleShader.fs", ShaderType::FRAGMENT)
+	);
+	ShaderValidator("res/Shader/cam.vs", "res/Shader/cam.fs");
+	ShaderID shader_id2 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+		Shader("res/Shader/cam.vs", ShaderType::VERTEX),
+		Shader("res/Shader/cam.fs", ShaderType::FRAGMENT)
+		);
+	{
+		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
+		shader.LinkProgram();
+		shader.Use();
+		shader.AddUniform("MVP");
+		shader.AddUniform("ProjView");
+		shader.AddUniform("model");
+	}
+	{
+		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id2);
+		shader.LinkProgram();
+		shader.Use();
+
+		shader.AddUniform("material.ambient");
+		shader.AddUniform("material.diffuse");
+		shader.AddUniform("material.specular");
+		shader.AddUniform("material.alpha");
+		shader.AddUniform("material.shininess");
+
+		shader.AddSamplerSlot("material.specular_tex");
+		shader.AddSamplerSlot("material.diffuse_tex");
+
+		shader.SetFloat("material.alpha", 1.f);
+		shader.SetFloat("material.shininess", 1.0f);
+	}
+
+
+	ICommandBuffer cmd_buffer = ICommandBuffer();
+	CommandBucket& bucket = cmd_buffer.CreateBucket();
+	bucket.GetCamera().Position = vec3(0.0f, 0.0f, 3.0f);
+	bucket.GetProjectionMatrix() = mat4::perspective(bucket.GetCamera().Zoom, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1, 300.f);;
+
+	ModelData data;
+	data.vertices = vertices;
+	data.vertexSize = ARRAY_SIZE(vertices);
+	Model model(data);
+	StaticMesh mesh = model.LoadMesh(shader_id);
+	
+	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
+	Model carrot  = loader.LoadAsOneObject();
+	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
+
+	bucket.SubmitCommand<Commands::DrawIndexedCmd>(-1); // TODO: DUE TO BUG IN MAP REMOVE THIS AFTER THE BUG IS FIXED!
+	mesh.Submit(bucket);
+	carrot_mesh.Submit(bucket);
+	bucket.End();
+
+	Event ev;
 	while (true) {
 		if (window.getEvent(ev)) {
+			HandleEvent(deltaTime, bucket.GetProjectionMatrix(), bucket.GetCamera(), ev);
 		}
 
 		glClearColor(0.59, 0.59, 0.59, 1.0);
 		Clear(Buffer::COLOR);
 		
+		cmd_buffer.DispatchCommands();
 
 		window.Present();
-	}*/
-
+	}
 
 	getchar();
 	return 0;
+}
+
+
+void HandleEvent(float dt, Mat4f& projecton, Camera& camera, const Event& e)
+{
+	if (e.Type == Event::TE_RESIZE) {
+		glViewport(0, 0, e.Window.Width, e.Window.Height);
+		projecton = mat4::perspective(camera.Zoom, (float)e.Window.Width / (float)e.Window.Height, 0.1, 300.f);
+		printf("DETECTING RESIZE EVENT(%d, %d)\n", e.Window.Width, e.Window.Height);
+	} else if (e.Type == Event::TE_KEY_DOWN) {
+		switch (e.Key.Code) {
+		case Key::Up:
+			speed += 1;
+			printf("Changing camera speed to %d\n", speed);
+			break;
+		case Key::Down:
+			speed -= 1;
+			printf("Changing camera speed to %d\n", speed);
+			break;
+		case Key::Space:
+			start = !start;
+			deltaTime = 0;
+			break;
+		case Key::Z:
+			camera.ProcessKeyboard(FORWARD, speed * dt);
+			break;
+		case Key::S:
+			camera.ProcessKeyboard(BACKWARD, speed * dt);
+			break;
+		case Key::Q:
+			camera.ProcessKeyboard(LEFT, speed * dt);
+			break;
+		case Key::D:
+			camera.ProcessKeyboard(RIGHT, speed * dt);
+			break;
+		default:
+			break;
+		}
+	} else if (e.Type == Event::TE_MOUSE_MOVE) {
+		float xpos = (float)e.Mouse.X;
+		float ypos = (float)e.Mouse.Y;
+
+		if (firstMouse) {
+			lastX = xpos;
+			lastY = ypos;
+			firstMouse = false;
+		}
+
+		float xoffset = xpos - lastX;
+		float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+		lastX = xpos;
+		lastY = ypos;
+
+		camera.ProcessMouseMovement(xoffset, yoffset);
+	}
 }

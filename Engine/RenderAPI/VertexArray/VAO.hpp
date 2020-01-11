@@ -26,6 +26,9 @@ struct VertexSettings
 			data = (void*) data_container.StealPtr();
 		}
 
+		VertexBufferData() : vbo(0), data(NULL), elements_count(0), size(0)
+		{}
+
 		VBO* vbo;
 		void* data;
 		uint32 elements_count;

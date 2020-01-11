@@ -2,22 +2,26 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/DataStructure/Vector/Vector.hpp>
+#include <Core/Misc/Maths/Matrix4x4.hpp>
+#include <Core/Memory/Allocators/LinearAlloc/LinearAllocator.hpp>
 #include <Renderer/Backend/Commands/Command.hpp>
 #include <Renderer/Backend/Keys/BucketKey.hpp>
-#include <Core/Memory/Allocators/LinearAlloc/LinearAllocator.hpp>
 #include <Renderer/Backend/ResourcesManager/ResourcesManager.hpp>
 
+
 TRE_NS_START
+
+class CommandBucket;
 
 class CommandPacket
 {
 public:	
-	CommandPacket(const BucketKey& key);
+	CommandPacket(CommandBucket* bucket, const BucketKey& key);
 
 	template<typename U>
 	U* SubmitCommand(const uint64& internal_key);
 
-	void Flush(ResourcesManager& manager, const ShaderProgram& shader);
+	void Flush(ResourcesManager& manager, const ShaderProgram& shader, const Mat4f& proj_view);
 
 	void SwapBuffer();
 
@@ -28,6 +32,7 @@ public:
 	void SortCommands();
 private:
 	LinearAllocator m_CmdsAllocator;
+	CommandBucket* m_Bucket;
 	BucketKey m_Key;
 	Pair<uint64, Cmd>* m_Commands;
 	uint32 m_CmdsCount;

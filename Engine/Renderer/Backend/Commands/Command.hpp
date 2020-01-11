@@ -11,7 +11,6 @@ typedef void* Cmd;
 namespace Command
 {
 	/*CallBackFunc | Command */
-
 	template<typename T>
 	Cmd CreateCommand(BaseAllocator& alloc);
 

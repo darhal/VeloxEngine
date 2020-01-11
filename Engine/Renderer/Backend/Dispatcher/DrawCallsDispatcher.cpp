@@ -9,8 +9,7 @@ TRE_NS_START
 void BackendDispatch::Draw(const void* data)
 {
     const Commands::DrawCmd* real_data = reinterpret_cast<const Commands::DrawCmd*>(data);
-	printf("DATA: {stat = %d | end = %d | mode = %d}\n", real_data->start, real_data->end, real_data->mode);
-    //DrawArrays(real_data->mode, real_data->start, real_data->end);
+    DrawArrays(real_data->mode, real_data->start, real_data->end);
 }
 
 void BackendDispatch::DrawIndexed(const void* data)
@@ -19,7 +18,7 @@ void BackendDispatch::DrawIndexed(const void* data)
     DrawElements(real_data->mode, real_data->type, real_data->count, real_data->offset);
 }
 
-void BackendDispatch::CreateVAO(const void * data)
+void BackendDispatch::CreateVAO(const void* data)
 {
 	const Commands::CreateVAO* real_data = reinterpret_cast<const Commands::CreateVAO*>(data);
 	VAO* modelVAO = real_data->vao;
@@ -36,7 +35,7 @@ void BackendDispatch::CreateVAO(const void * data)
 		vbo.Generate(BufferTarget::ARRAY_BUFFER);
 		vbo.Use();
 		vbo.FillData(data.data, data.elements_count * data.size);
-		::operator delete(data.data);
+		// ::operator delete(data.data);
 	}
 
 	uint32 index = 0;

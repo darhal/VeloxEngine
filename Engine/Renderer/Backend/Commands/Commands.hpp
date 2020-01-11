@@ -19,7 +19,7 @@ namespace Commands
     struct BasicDrawCommand
     {
         // CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION;
-        Mat4f* model;
+        Mat4f model;
     };
 
     struct DrawCmd : public BasicDrawCommand
