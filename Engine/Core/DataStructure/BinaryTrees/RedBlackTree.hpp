@@ -129,13 +129,21 @@ public:
 
 	FORCEINLINE Iterator end() noexcept;
 
-	FORCEINLINE const CIterator begin() const noexcept;
+	FORCEINLINE CIterator begin() const noexcept;
 
-	FORCEINLINE const CIterator end() const noexcept;
+	FORCEINLINE CIterator end() const noexcept;
 
-	FORCEINLINE const CIterator cbegin() const noexcept;
+	FORCEINLINE CIterator cbegin() const noexcept;
 
-	FORCEINLINE const CIterator cend() const noexcept;
+	FORCEINLINE CIterator cend() const noexcept;
+
+	FORCEINLINE Iterator rbegin() noexcept;
+
+	FORCEINLINE Iterator rend() noexcept;
+
+	FORCEINLINE CIterator crbegin() const noexcept;
+
+	FORCEINLINE CIterator crend() const noexcept;
 
 private:
 	CONSTEXPR static RBNode* TNULL = NULL;//reinterpret_cast<RBNode*>(-1);
@@ -195,46 +203,10 @@ public:
 
 		GIterator& operator++()
 		{
-			/*DataType* parent = NULL;
-			
-			if (this->m_Node == NULL || this->m_Node == TNULL) {
-				return *this; // end iterator does not increment
-			}
-
-			parent = this->m_Node->parent;
-
-			// reaches root -> next is end()
-			if (parent == NULL || parent == TNULL) {
-				this->m_Node = NULL;
-				return *this;
-			}
-
-			// left child -> go to right child
-			if ((this->m_Node == parent->left) && (parent->right != NULL || parent->right != TNULL)) {
-				this->m_Node = parent->right;
-			}else{
-				this->m_Node = this->m_Node->parent;
-				return *this;
-			}
-
-			while (true) {
-				if (this->m_Node->left != NULL || this->m_Node->left != TNULL) {
-					this->m_Node = this->m_Node->left; // has left child node
-				}else if (this->m_Node->right != NULL || this->m_Node->right != TNULL) {
-					this->m_Node = this->m_Node->right; // only right child node
-				}else {
-					return *this; // has no children -> stop here
-				}
-			}*/
-
-			/*if (this->m_Node == NULL || this->m_Node == TNULL) {
-				return *this; // end iterator does not increment
-			}*/
-
-			if (m_Node->right != TNULL) {
+			if (m_Node->right != NULL) {
 				m_Node = m_Node->right;
 
-				while (m_Node->left != TNULL)
+				while (m_Node->left != NULL)
 					m_Node = m_Node->left;
 			} else {
 				DataType* tmp = m_Node->parent;
@@ -246,6 +218,8 @@ public:
 
 				if (m_Node->right != tmp)
 					m_Node = tmp;
+				else 
+					m_Node = NULL;
 			}
 
 			return *this;

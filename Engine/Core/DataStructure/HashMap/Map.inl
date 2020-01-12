@@ -116,25 +116,49 @@ FORCEINLINE typename Map<K, V, Alloc_t>::Iterator Map<K, V, Alloc_t>::end() noex
 }
 
 template<typename K, typename V, typename Alloc_t>
-FORCEINLINE const typename Map<K, V, Alloc_t>::CIterator Map<K, V, Alloc_t>::begin() const noexcept
+FORCEINLINE typename Map<K, V, Alloc_t>::CIterator Map<K, V, Alloc_t>::begin() const noexcept
 {
 	return m_RBT.begin();
 }
 
 template<typename K, typename V, typename Alloc_t>
-FORCEINLINE const typename Map<K, V, Alloc_t>::CIterator Map<K, V, Alloc_t>::end() const noexcept
+FORCEINLINE typename Map<K, V, Alloc_t>::CIterator Map<K, V, Alloc_t>::end() const noexcept
 {
 	return m_RBT.end();
 }
 
 template<typename K, typename V, typename Alloc_t>
-FORCEINLINE const typename Map<K, V, Alloc_t>::CIterator Map<K, V, Alloc_t>::cbegin() const noexcept
+FORCEINLINE typename Map<K, V, Alloc_t>::CIterator Map<K, V, Alloc_t>::cbegin() const noexcept
 {
 	return m_RBT.cbegin();
 }
 
 template<typename K, typename V, typename Alloc_t>
-FORCEINLINE const typename Map<K, V, Alloc_t>::CIterator Map<K, V, Alloc_t>::cend() const noexcept
+FORCEINLINE typename Map<K, V, Alloc_t>::CIterator Map<K, V, Alloc_t>::cend() const noexcept
 {
 	return m_RBT.cend();
+}
+
+template<typename K, typename V, typename Alloc_t>
+FORCEINLINE typename Map<K, V, Alloc_t>::Iterator Map<K, V, Alloc_t>::rbegin() noexcept
+{
+	return m_RBT.rbegin();
+}
+
+template<typename K, typename V, typename Alloc_t>
+FORCEINLINE typename Map<K, V, Alloc_t>::Iterator Map<K, V, Alloc_t>::rend() noexcept
+{
+	return m_RBT.rend();
+}
+
+template<typename K, typename V, typename Alloc_t>
+FORCEINLINE typename Map<K, V, Alloc_t>::CIterator Map<K, V, Alloc_t>::crbegin() const noexcept
+{
+	return m_RBT.crbegin();
+}
+
+template<typename K, typename V, typename Alloc_t>
+FORCEINLINE typename Map<K, V, Alloc_t>::CIterator Map<K, V, Alloc_t>::crend() const noexcept
+{
+	return m_RBT.crend();
 }

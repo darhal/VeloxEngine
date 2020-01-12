@@ -62,7 +62,7 @@ void BackendDispatch::CreateIndexBuffer(const void* data)
 	modelVAO.Unuse();
 	indexVBO.Use();
 
-	::operator delete(indices_data.data);
+	// ::operator delete(indices_data.data);
 }
 
 void BackendDispatch::CreateTexture(const void* data)

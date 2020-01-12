@@ -122,7 +122,7 @@ float vertices[] = {
 	-0.5f,  0.5f, -0.5f,  
 };
 
-double deltaTime = 0.5f;
+float deltaTime = 0.5f;
 double  frameRate = 30;
 bool start = false;
 int32 speed = 1;
@@ -135,9 +135,7 @@ bool firstMouse = true;
 
 int main()
 {
-	// TODO: SMALL BUGS ON THE MAPS (last iterator is not went throught)
 	// settings
-
 	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 3.3)", WindowStyle::Resize);
 	window.initContext(3, 3);
 
@@ -170,6 +168,9 @@ int main()
 		shader.LinkProgram();
 		shader.Use();
 
+		shader.AddUniform("MVP");
+		shader.AddUniform("ProjView");
+		shader.AddUniform("model");
 		shader.AddUniform("material.ambient");
 		shader.AddUniform("material.diffuse");
 		shader.AddUniform("material.specular");
@@ -187,7 +188,8 @@ int main()
 	ICommandBuffer cmd_buffer = ICommandBuffer();
 	CommandBucket& bucket = cmd_buffer.CreateBucket();
 	bucket.GetCamera().Position = vec3(0.0f, 0.0f, 3.0f);
-	bucket.GetProjectionMatrix() = mat4::perspective(bucket.GetCamera().Zoom, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1, 300.f);;
+	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 300.f);
+	// bucket.SubmitCommand<Commands::DrawIndexedCmd>(-1); // TODO: DUE TO BUG IN MAP REMOVE THIS AFTER THE BUG IS FIXED!
 
 	ModelData data;
 	data.vertices = vertices;
@@ -199,22 +201,31 @@ int main()
 	Model carrot  = loader.LoadAsOneObject();
 	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
 
-	bucket.SubmitCommand<Commands::DrawIndexedCmd>(-1); // TODO: DUE TO BUG IN MAP REMOVE THIS AFTER THE BUG IS FIXED!
-	mesh.Submit(bucket);
-	carrot_mesh.Submit(bucket);
+	for (uint32 i = 0; i < 10; i++) {
+		carrot_mesh.GetTransformationMatrix() = mat4();
+		vec3 pos;
+		pos.x = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 5.f));
+		pos.y = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 5.f));
+		pos.z = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 5.f));
+		carrot_mesh.GetTransformationMatrix().translate(pos);
+		carrot_mesh.Submit(bucket);
+	}
+	
+	// mesh.Submit(bucket);
 	bucket.End();
 
 	Event ev;
+	Enable(Capability::DEPTH_TEST);
+
 	while (true) {
 		if (window.getEvent(ev)) {
 			HandleEvent(deltaTime, bucket.GetProjectionMatrix(), bucket.GetCamera(), ev);
 		}
 
-		glClearColor(0.59, 0.59, 0.59, 1.0);
-		Clear(Buffer::COLOR);
+		ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		Clear(Buffer::COLOR | Buffer::DEPTH);
 		
 		cmd_buffer.DispatchCommands();
-
 		window.Present();
 	}
 
@@ -227,7 +238,7 @@ void HandleEvent(float dt, Mat4f& projecton, Camera& camera, const Event& e)
 {
 	if (e.Type == Event::TE_RESIZE) {
 		glViewport(0, 0, e.Window.Width, e.Window.Height);
-		projecton = mat4::perspective(camera.Zoom, (float)e.Window.Width / (float)e.Window.Height, 0.1, 300.f);
+		projecton = mat4::perspective((float)camera.Zoom, (float)e.Window.Width / (float)e.Window.Height, 0.1f, 300.f);
 		printf("DETECTING RESIZE EVENT(%d, %d)\n", e.Window.Width, e.Window.Height);
 	} else if (e.Type == Event::TE_KEY_DOWN) {
 		switch (e.Key.Code) {

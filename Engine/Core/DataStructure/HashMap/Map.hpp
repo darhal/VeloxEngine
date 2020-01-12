@@ -52,13 +52,21 @@ public:
 
 	FORCEINLINE Iterator end() noexcept;
 
-	FORCEINLINE const CIterator begin() const noexcept;
+	FORCEINLINE CIterator begin() const noexcept;
 
-	FORCEINLINE const CIterator end() const noexcept;
+	FORCEINLINE CIterator end() const noexcept;
 
-	FORCEINLINE const CIterator cbegin() const noexcept;
+	FORCEINLINE CIterator cbegin() const noexcept;
 
-	FORCEINLINE const CIterator cend() const noexcept;
+	FORCEINLINE CIterator cend() const noexcept;
+
+	FORCEINLINE Iterator rbegin() noexcept;
+
+	FORCEINLINE Iterator rend() noexcept;
+
+	FORCEINLINE CIterator crbegin() const noexcept;
+
+	FORCEINLINE CIterator crend() const noexcept;
 private:
 	RBT<K, V, Alloc_t> m_RBT;
 };

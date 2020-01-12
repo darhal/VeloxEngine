@@ -16,6 +16,6 @@ uniform Material material;
 
 void main()
 {
-	FragColor = vec4(material.ambient, material.alpha);
+	FragColor = vec4(material.diffuse, material.alpha);
 } 
 

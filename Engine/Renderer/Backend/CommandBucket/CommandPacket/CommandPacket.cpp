@@ -20,6 +20,7 @@ void CommandPacket::Flush(ResourcesManager& manager, const ShaderProgram& shader
 {
 	const uint32 start = m_BufferMarker * DEFAULT_MAX_ELEMENTS;
 	const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;
+	VaoID last_vao_id = -1; MaterialID last_material_id = -1;
 
 	for (uint32 i = start; i < end; i++) {
 		const uint64& internal_key = m_Commands[i].first;
@@ -28,12 +29,19 @@ void CommandPacket::Flush(ResourcesManager& manager, const ShaderProgram& shader
 		const Commands::BasicDrawCommand* command = reinterpret_cast<Commands::BasicDrawCommand*>(const_cast<void*>(Command::LoadCommand(cmd)));
 
 		// Bind VAO, Set Uniforms, etc...
-		VAO& vao = manager.Get<VAO>(ResourcesTypes::VAO, render_params.vao_id);
-		Material& material = manager.Get<Material>(ResourcesTypes::MATERIAL, render_params.material_id);
-		vao.Bind();
-		shader.SetMat4("MVP", proj_view * command->model);
-		shader.SetMat4("model", command->model);
-		material.GetTechnique().UploadUnfiroms(shader);
+		if (last_vao_id != render_params.vao_id) {
+			last_vao_id = render_params.vao_id;
+			VAO& vao = manager.Get<VAO>(ResourcesTypes::VAO, render_params.vao_id);
+			vao.Bind();
+		}
+
+		if (last_material_id != render_params.material_id) {
+			last_material_id = render_params.material_id;
+			Material& material = manager.Get<Material>(ResourcesTypes::MATERIAL, render_params.material_id);
+			shader.SetMat4("MVP", proj_view * command->model);
+			shader.SetMat4("model", command->model);
+			material.GetTechnique().UploadUnfiroms(shader);
+		}
 
 		// Issue the draw call
 		const BackendDispatchFunction CommandFunction = Command::LoadBackendDispatchFunction(cmd);

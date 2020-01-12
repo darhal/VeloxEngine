@@ -19,20 +19,22 @@ Model::Model(const ModelData& data)
 		// m_VboIDs.EmplaceBack(indexVboID);
 		create_index_cmd.vao = m_CreateVaoCmd.vao;
 		create_index_cmd.settings = VertexSettings::VertexBufferData(data.indices, data.indexSize, &manager.Get<VBO>(ResourcesTypes::VBO, indexVboID));
+
+		this->RunCommand();
+		this->CreateIndexBuffer(create_index_cmd);
 	} else {
 		m_VertexCount = data.vertexSize / 3LLU; // Get the vertex Count!
 		m_HaveIndexBuffer = false;
+
+		this->RunCommand();
 	}
 
 	m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
-
-	this->RunCommand();
 }
 
 Model::Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_vec, Vector<uint32>* indices)
 {
 	ASSERTF(ver_data.Size() == 0, "Attempt to create a ModelLoader with empty vertecies!");
-
 	LoadFromVertexData(ver_data);
 	ResourcesManager& manager = ResourcesManager::Instance();
 
@@ -45,18 +47,20 @@ Model::Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_
 		// m_VboIDs.EmplaceBack(indexVboID);
 		create_index_cmd.vao = m_CreateVaoCmd.vao;
 		create_index_cmd.settings = VertexSettings::VertexBufferData(*indices, &manager.Get<VBO>(ResourcesTypes::VBO, indexVboID));
+		
+		this->RunCommand();
+		this->CreateIndexBuffer(create_index_cmd);
 
 		m_Materials = mat_vec;
 	} else {
 		m_VertexCount = (uint32)ver_data.Size() / 8LLU; // Get the vertex Count!
 		m_HaveIndexBuffer = false;
+		this->RunCommand();
 	}
 
 	if (m_Materials.IsEmpty()) {
 		m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
 	}
-
-	this->RunCommand();
 }
 
 void Model::LoadFromSettings(const ModelData& data)
@@ -122,6 +126,11 @@ void Model::RunCommand()
 {
 	// Run command:
 	Commands::CreateVAO::DISPATCH_FUNCTION(&m_CreateVaoCmd);
+}
+
+void Model::CreateIndexBuffer(Commands::CreateIndexBuffer& index_cmd)
+{
+	Commands::CreateIndexBuffer::DISPATCH_FUNCTION(&index_cmd);
 }
 
 StaticMesh Model::LoadMesh(ShaderID shader_id)

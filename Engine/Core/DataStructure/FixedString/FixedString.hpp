@@ -20,7 +20,6 @@ public:
 
 	T operator[](uint32 i) const { return m_Data[i]; }
 
-	
 private:
 	T m_Data[N];
 	usize m_Hash;
@@ -29,7 +28,7 @@ private:
 namespace FString
 {
 	template<typename T, usize N>
-	FixedString<T, N> FString(const T(&str)[N])
+	FORCEINLINE FixedString<T, N> MakeFString(const T(&str)[N])
 	{
 		return FixedString<T, N>((const char*)str);
 	}

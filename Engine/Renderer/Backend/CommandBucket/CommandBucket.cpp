@@ -57,15 +57,11 @@ CommandPacket& CommandBucket::GetOrCreateCommandPacket(const BucketKey& key)
 
 void CommandBucket::Flush() const
 {
-	// printf("Flush bucket\n");
 	ResourcesManager& manager = ResourcesManager::Instance();
 	// Apply framer buffer and set view proj mat
 	const Mat4f projView = m_Projection * m_Camera.GetViewMatrix();
 
 	for (const auto& key_packet_pair : m_Packets) {
-		if (key_packet_pair.first == -1)
-			continue;
-
 		// Decode and apply key
 		uint32 shader_id;
 		RenderState state = RenderState::FromKey(key_packet_pair.first, &shader_id);
@@ -82,8 +78,8 @@ void CommandBucket::Flush() const
 
 void CommandBucket::End()
 {
-	Map<BucketKey, CommandPacket*>::CIterator itr = m_Packets.cend();
-	Map<BucketKey, CommandPacket*>::CIterator end = m_Packets.cbegin();
+	Map<BucketKey, CommandPacket*>::CIterator itr = m_Packets.crbegin();
+	Map<BucketKey, CommandPacket*>::CIterator end = m_Packets.crend();
 
 	for (itr; itr != end; itr--) {
 		if (itr->key < BLEND_ENABLED) { // Check if blending is enabled

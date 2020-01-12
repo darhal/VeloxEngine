@@ -31,6 +31,7 @@ private:
 	void LoadFromSettings(const ModelData& data);
 	void LoadFromVertexData(Vector<VertexData>& ver_data);
 	void RunCommand();
+	void CreateIndexBuffer(Commands::CreateIndexBuffer& index_cmd);
 
 	Commands::CreateVAO m_CreateVaoCmd;
 	Vector<ModelMaterialData> m_Materials;
