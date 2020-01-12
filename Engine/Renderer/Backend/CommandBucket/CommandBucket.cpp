@@ -58,7 +58,7 @@ CommandPacket& CommandBucket::GetOrCreateCommandPacket(const BucketKey& key)
 void CommandBucket::Flush() const
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
-	// Apply framer buffer and set view proj mat
+	// Apply framer buffer
 	const Mat4f projView = m_Projection * m_Camera.GetViewMatrix();
 
 	for (const auto& key_packet_pair : m_Packets) {
@@ -73,6 +73,7 @@ void CommandBucket::Flush() const
 		shader.SetMat4("ProjView", projView);
 
 		key_packet_pair.second->Flush(manager, shader, projView);
+		key_packet_pair.second->SwapBuffer();
 	}
 }
 

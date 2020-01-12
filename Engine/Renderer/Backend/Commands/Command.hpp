@@ -17,6 +17,9 @@ namespace Command
 	template<typename T>
 	T* GetCommand(Cmd cmd);
 
+	template<typename T>
+	uint32 GetCommandSize();
+
 	const void* LoadCommand(Cmd cmd);
 
 	BackendDispatchFunction* GetBackendDispatchFunction(Cmd cmd);
@@ -34,6 +37,13 @@ FORCEINLINE Cmd Command::CreateCommand(BaseAllocator& alloc)
 	const uint32 total_size = OFFSET_COMMAND + sizeof(T);
 	Cmd cmd = alloc.Allocate(total_size);
 	return cmd;
+}
+
+template<typename T>
+FORCEINLINE uint32 Command::GetCommandSize()
+{
+	const uint32 total_size = OFFSET_COMMAND + sizeof(T);
+	return total_size;
 }
 
 template <typename T>

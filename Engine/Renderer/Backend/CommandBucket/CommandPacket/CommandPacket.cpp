@@ -57,8 +57,9 @@ void CommandPacket::SetKey(const BucketKey& key)
 
 void CommandPacket::SwapBuffer()
 {
+	m_CmdsCount = 0;
+	m_BufferMarker = !m_BufferMarker;
 	m_CmdsAllocator.SetOffset(DEFAULT_MAX_ELEMENTS * COMMAND_PTR * MULTIPLIER + DEFAULT_MAX_ELEMENTS * COMMAND_SIZE * m_BufferMarker);
-	m_BufferMarker = !m_BufferMarker;	
 }
 
 void CommandPacket::SortCommands()

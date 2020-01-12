@@ -139,11 +139,11 @@ int main()
 	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 3.3)", WindowStyle::Resize);
 	window.initContext(3, 3);
 
-	printf("- GPU Vendor    	: %s\n", glGetString(GL_VENDOR));
-	printf("- Graphics      	: %s\n", glGetString(GL_RENDERER));
-	printf("- Version       	: %s\n", glGetString(GL_VERSION));
-	printf("- GLSL Version  	: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-	printf("- Hardware Threads 	: %d\n", std::thread::hardware_concurrency());
+	printf("- GPU Vendor........: %s\n", glGetString(GL_VENDOR));
+	printf("- Graphics..........: %s\n", glGetString(GL_RENDERER));
+	printf("- Version...........: %s\n", glGetString(GL_VERSION));
+	printf("- GLSL Version......: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+	printf("- Hardware Threads..: %d\n", std::thread::hardware_concurrency());
 
 	ShaderValidator("res/Shader/SimpleShader.vs", "res/Shader/SimpleShader.fs");
 	ShaderID shader_id = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER, 
@@ -189,7 +189,6 @@ int main()
 	CommandBucket& bucket = cmd_buffer.CreateBucket();
 	bucket.GetCamera().Position = vec3(0.0f, 0.0f, 3.0f);
 	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 300.f);
-	// bucket.SubmitCommand<Commands::DrawIndexedCmd>(-1); // TODO: DUE TO BUG IN MAP REMOVE THIS AFTER THE BUG IS FIXED!
 
 	ModelData data;
 	data.vertices = vertices;
@@ -201,19 +200,15 @@ int main()
 	Model carrot  = loader.LoadAsOneObject();
 	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
 
-	for (uint32 i = 0; i < 10; i++) {
+	/*for (uint32 i = 0; i < 10; i++) {
 		carrot_mesh.GetTransformationMatrix() = mat4();
 		vec3 pos;
-		pos.x = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 5.f));
-		pos.y = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 5.f));
-		pos.z = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 5.f));
+		pos.x = static_cast <float>(rand()) / (static_cast <float> (RAND_MAX / 5.f));
+		pos.y = static_cast <float>(rand()) / (static_cast <float> (RAND_MAX / 5.f));
+		pos.z = static_cast <float>(rand()) / (static_cast <float> (RAND_MAX / 5.f));
 		carrot_mesh.GetTransformationMatrix().translate(pos);
 		carrot_mesh.Submit(bucket);
-	}
-	
-	// mesh.Submit(bucket);
-	bucket.End();
-
+	}*/
 	Event ev;
 	Enable(Capability::DEPTH_TEST);
 
@@ -224,7 +219,11 @@ int main()
 
 		ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		Clear(Buffer::COLOR | Buffer::DEPTH);
-		
+
+		carrot_mesh.Submit(bucket);
+		mesh.Submit(bucket);
+		bucket.End();
+
 		cmd_buffer.DispatchCommands();
 		window.Present();
 	}
