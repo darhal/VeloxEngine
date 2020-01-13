@@ -37,7 +37,7 @@
 #include <Core/DataStructure/Bitset/Bitset.hpp>
 #include <Core/DataStructure/Utils/Utils.hpp>
 
-#include <Renderer/Backend/ICommandBuffer/ICommandBuffer.hpp>
+#include <Renderer/Backend/CommandBuffer/CommandBuffer.hpp>
 #include <Renderer/Backend/Commands/Commands.hpp>
 #include <Renderer/Backend/RenderState/RenderState.hpp>
 #include <Core/Misc/Singleton/Singleton.hpp>
@@ -49,7 +49,7 @@ using namespace TRE;
 /*
 	const uint32 bucket_count = 10;
 	const uint32 cmds_count = 5'000;
-	ICommandBuffer cmd_buffer = ICommandBuffer();
+	CommandBuffer cmd_buffer = CommandBuffer();
 	CommandBucket& bucket = cmd_buffer.CreateBucket();
 	INIT_BENCHMARK;
 
@@ -154,7 +154,7 @@ int main()
 	ShaderID shader_id2 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
 		Shader("res/Shader/cam.vs", ShaderType::VERTEX),
 		Shader("res/Shader/cam.fs", ShaderType::FRAGMENT)
-		);
+	);
 	{
 		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
 		shader.LinkProgram();
@@ -184,8 +184,8 @@ int main()
 		shader.SetFloat("material.shininess", 1.0f);
 	}
 
-
-	ICommandBuffer cmd_buffer = ICommandBuffer();
+	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
+	CommandBuffer cmd_buffer = CommandBuffer();
 	CommandBucket& bucket = cmd_buffer.CreateBucket();
 	bucket.GetCamera().Position = vec3(0.0f, 0.0f, 3.0f);
 	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 300.f);
@@ -195,23 +195,16 @@ int main()
 	data.vertexSize = ARRAY_SIZE(vertices);
 	Model model(data);
 	StaticMesh mesh = model.LoadMesh(shader_id);
-	
+	op_queue.Flush();
+
 	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
 	Model carrot  = loader.LoadAsOneObject();
 	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
+	op_queue.Flush(); // TODO: Bug witht he operation queue.
 
-	/*for (uint32 i = 0; i < 10; i++) {
-		carrot_mesh.GetTransformationMatrix() = mat4();
-		vec3 pos;
-		pos.x = static_cast <float>(rand()) / (static_cast <float> (RAND_MAX / 5.f));
-		pos.y = static_cast <float>(rand()) / (static_cast <float> (RAND_MAX / 5.f));
-		pos.z = static_cast <float>(rand()) / (static_cast <float> (RAND_MAX / 5.f));
-		carrot_mesh.GetTransformationMatrix().translate(pos);
-		carrot_mesh.Submit(bucket);
-	}*/
 	Event ev;
 	Enable(Capability::DEPTH_TEST);
-
+	
 	while (true) {
 		if (window.getEvent(ev)) {
 			HandleEvent(deltaTime, bucket.GetProjectionMatrix(), bucket.GetCamera(), ev);

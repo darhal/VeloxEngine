@@ -25,7 +25,7 @@ void BackendDispatch::CreateVAO(const void* data)
 	const VertexSettings& settings = real_data->settings;
 
 	modelVAO->Generate();
-	modelVAO->Use();
+	modelVAO->Bind();
 
 	const auto& vert_data = settings.vertices_data;
 	const uint32 vert_len = (uint32) vert_data.Length();
@@ -33,7 +33,7 @@ void BackendDispatch::CreateVAO(const void* data)
 	for (const VertexSettings::VertexBufferData& data : vert_data) {
 		VBO& vbo = *data.vbo;
 		vbo.Generate(BufferTarget::ARRAY_BUFFER);
-		vbo.Use();
+		vbo.Bind();
 		vbo.FillData(data.data, data.elements_count * data.size);
 		// ::operator delete(data.data);
 	}
@@ -41,7 +41,7 @@ void BackendDispatch::CreateVAO(const void* data)
 	uint32 index = 0;
 	for (const VertexSettings::VertexAttribute& attribute : settings.attributes) {
 		VBO& vbo = *vert_data[index % vert_len].vbo;
-		vbo.Use();
+		vbo.Bind();
 		modelVAO->BindAttribute<float>(attribute.attrib_index, vbo, attribute.data_type, attribute.size, attribute.stride, attribute.offset);
 		index++;
 	}

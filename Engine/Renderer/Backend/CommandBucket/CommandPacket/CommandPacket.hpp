@@ -8,7 +8,6 @@
 #include <Renderer/Backend/Keys/BucketKey.hpp>
 #include <Renderer/Backend/ResourcesManager/ResourcesManager.hpp>
 
-
 TRE_NS_START
 
 class CommandBucket;

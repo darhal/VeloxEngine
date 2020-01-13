@@ -34,7 +34,7 @@ namespace Command
 template<typename T>
 FORCEINLINE Cmd Command::CreateCommand(BaseAllocator& alloc)
 {
-	const uint32 total_size = OFFSET_COMMAND + sizeof(T);
+	const uint32 total_size = Command::GetCommandSize<T>();
 	Cmd cmd = alloc.Allocate(total_size);
 	return cmd;
 }

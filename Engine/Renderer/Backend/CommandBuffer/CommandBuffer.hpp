@@ -6,10 +6,10 @@
 
 TRE_NS_START
 
-class ICommandBuffer
+class CommandBuffer
 {
 public:
-	ICommandBuffer();
+	CommandBuffer();
 
 	void DispatchCommands() const;
 

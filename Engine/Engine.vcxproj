@@ -275,8 +275,9 @@
     <ClCompile Include="RenderAPI\VertexArray\VAO.cpp" />
     <ClCompile Include="Renderer\Backend\CommandBucket\CommandBucket.cpp" />
     <ClCompile Include="Renderer\Backend\Commands\Command.cpp" />
+    <ClCompile Include="Renderer\Backend\ContextOperationQueue\ContextOperationQueue.cpp" />
     <ClCompile Include="Renderer\Backend\Dispatcher\DrawCallsDispatcher.cpp" />
-    <ClCompile Include="Renderer\Backend\ICommandBuffer\ICommandBuffer.cpp" />
+    <ClCompile Include="Renderer\Backend\CommandBuffer\CommandBuffer.cpp" />
     <ClCompile Include="Renderer\Backend\Lights\DirectionalLight\DirectionalLight.cpp" />
     <ClCompile Include="Renderer\Backend\Lights\PointLight\PointLight.cpp" />
     <ClCompile Include="Renderer\Backend\Lights\SpotLight\SpotLight.cpp" />
@@ -296,6 +297,7 @@
     <ClCompile Include="Tests\TestingString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Renderer\Backend\ContextOperationQueue\ContextOperationQueue.hpp" />
     <ClInclude Include="Renderer\Backend\Camera\Camera.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\CommandPacket\CommandPacket.hpp" />
     <ClInclude Include="Core\DataStructure\StaticBitset\StaticBitset.hpp" />
@@ -417,7 +419,7 @@
     <ClInclude Include="RenderAPI\VertexArray\VAO.hpp" />
     <ClInclude Include="RenderAPI\VertexArray\VAODef.hpp" />
     <ClInclude Include="RenderAPI\VertexBuffer\VBO.hpp" />
-    <ClInclude Include="Renderer\Backend\ICommandBuffer\ICommandBuffer.hpp" />
+    <ClInclude Include="Renderer\Backend\CommandBuffer\CommandBuffer.hpp" />
     <ClInclude Include="Renderer\Backend\Commands\Command.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\CommandBucket.hpp" />
     <ClInclude Include="Renderer\Backend\Commands\Commands.hpp" />

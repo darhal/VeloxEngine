@@ -28,12 +28,9 @@ public:
 
 	StaticMesh LoadMesh(ShaderID shader_id = 0);
 private:
-	void LoadFromSettings(const ModelData& data);
-	void LoadFromVertexData(Vector<VertexData>& ver_data);
-	void RunCommand();
-	void CreateIndexBuffer(Commands::CreateIndexBuffer& index_cmd);
+	Commands::CreateVAO* LoadFromSettings(const ModelData& data);
+	Commands::CreateVAO* LoadFromVertexData(Vector<VertexData>& ver_data);
 
-	Commands::CreateVAO m_CreateVaoCmd;
 	Vector<ModelMaterialData> m_Materials;
 	uint32 m_VertexCount;
 	VaoID m_VaoID;
