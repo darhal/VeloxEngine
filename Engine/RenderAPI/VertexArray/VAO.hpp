@@ -141,13 +141,12 @@ FORCEINLINE void VAO::SetVertextAttribDivisor(uint32 attrib, uint32 div)
 	);
 }
 
-FORCEINLINE VAO::~VAO()
+/*FORCEINLINE VAO::~VAO()
 {
 	if (m_ID) {
 		this->Clean();
-		m_ID = 0;
 	}
-}
+}*/
 
 FORCEINLINE void VAO::Clean()
 {

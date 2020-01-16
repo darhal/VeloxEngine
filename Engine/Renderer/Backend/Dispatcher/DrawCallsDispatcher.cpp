@@ -57,10 +57,10 @@ void BackendDispatch::CreateIndexBuffer(const void* data)
 
 	// Set up indices
 	indexVBO.Generate(BufferTarget::ELEMENT_ARRAY_BUFFER);
-	indexVBO.Use();
+	indexVBO.Bind();
 	indexVBO.FillData(indices_data.data, indices_data.elements_count * indices_data.size);
-	modelVAO.Unuse();
-	indexVBO.Use();
+	modelVAO.Unbind();
+	indexVBO.Unbind();
 
 	// ::operator delete(indices_data.data);
 }

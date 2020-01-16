@@ -98,11 +98,11 @@ Commands::CreateVAO* Model::LoadFromVertexData(Vector<VertexData>& ver_data)
 	ASSERTF((ver_data.Size() == 0), "Attempt to create a ModelLoader with empty vertecies!");
 	ResourcesManager& manager = ResourcesManager::Instance();
 	Commands::CreateVAO* createVaoCmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVAO>();
+	m_VaoID = manager.CreateResource<VAO>(ResourcesTypes::VAO);
 
 	VboID vboID = manager.CreateResource<VBO>(ResourcesTypes::VBO);
 	VBO* vbo = &manager.Get<VBO>(ResourcesTypes::VBO, vboID);
 
-	m_VaoID = manager.CreateResource<VAO>(ResourcesTypes::VAO);
 	createVaoCmd->vao = &manager.Get<VAO>(ResourcesTypes::VAO, m_VaoID);
 	createVaoCmd->settings = VertexSettings();
 	createVaoCmd->settings.vertices_data.EmplaceBack(ver_data, vbo);

@@ -11,6 +11,12 @@ TRE_NS_START
 class ResourcesManager : public Singleton<ResourcesManager>
 {
 public:
+
+	ResourcesManager() {
+		for (uint32 i = 0; i < RESOURCES_COUNT; i++)
+			m_MemoryPool[i].Reserve(1024);
+	}
+
 	template<typename T, typename... Args>
 	uint32 CreateResource(ResourcesTypes type, Args&&... args);
 
@@ -30,10 +36,8 @@ uint32 ResourcesManager::CreateResource(ResourcesTypes type, Args&&... args)
 {
 	uint32 type_index = (uint32)type;
 	uint32 id = (uint32) m_MemoryPool[type_index].Size();
-
 	m_MemoryPool[type_index].Resize(id + sizeof(T));
 	new (&m_MemoryPool[type_index][id]) T(std::forward<Args>(args)...);
-
 	return id / sizeof(T);
 }
 

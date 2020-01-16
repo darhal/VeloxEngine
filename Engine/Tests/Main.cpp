@@ -195,12 +195,10 @@ int main()
 	data.vertexSize = ARRAY_SIZE(vertices);
 	Model model(data);
 	StaticMesh mesh = model.LoadMesh(shader_id);
-	op_queue.Flush();
 
 	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
-	Model carrot  = loader.LoadAsOneObject();
+	Model carrot = loader.LoadAsOneObject();
 	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
-	op_queue.Flush(); // TODO: Bug witht he operation queue.
 
 	Event ev;
 	Enable(Capability::DEPTH_TEST);
@@ -213,8 +211,10 @@ int main()
 		ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		Clear(Buffer::COLOR | Buffer::DEPTH);
 
-		carrot_mesh.Submit(bucket);
+		op_queue.Flush();
+
 		mesh.Submit(bucket);
+		carrot_mesh.Submit(bucket);
 		bucket.End();
 
 		cmd_buffer.DispatchCommands();

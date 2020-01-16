@@ -39,7 +39,7 @@ private:
 };
 
 FORCEINLINE StaticMesh::StaticMesh(StaticMesh&& other) :
-	m_Meshs(std::move(other.m_Meshs)), m_VaoID(std::move(other.m_VaoID)),
+	m_Meshs(std::move(other.m_Meshs)), m_VaoID(other.m_VaoID),
 	m_ModelTransformation(other.m_ModelTransformation)
 {
 }
