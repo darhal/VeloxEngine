@@ -392,6 +392,16 @@ FORCEINLINE static void DrawElements(Primitive::primitive_t mode, DataType::data
 	Call_GL(glDrawElements(mode, count, type, (const void*)offset));
 }
 
+FORCEINLINE static void DrawArraysInstanced(Primitive::primitive_t mode, int32 start, int32 end, uint32 inst_count)
+{
+	Call_GL(glDrawArraysInstanced(mode, start, end, inst_count));
+}
+
+FORCEINLINE static void DrawElementsInstanced(Primitive::primitive_t mode, DataType::data_type_t type, int32 count, intptr offset, uint32 inst_count) // only unsigned int, unsinged char and unsigned short allowed here
+{
+	Call_GL(glDrawElementsInstanced(mode, count, type, (const void*)offset, inst_count));
+}
+
 FORCEINLINE static void ActivateTexture(uint8 i)
 {
 	glActiveTexture(GL_TEXTURE0 + i);

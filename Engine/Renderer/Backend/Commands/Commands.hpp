@@ -59,6 +59,46 @@ namespace Commands
         CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::DrawIndexed;
     };
 
+	/*************************************** INSTANCED DRAW COMMANDS ***************************************/
+	struct PreInstancedDrawCallCmd : public LinkCmd
+	{
+		VaoID vao_id;
+		const ShaderProgram* shader;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::InstancedPreDrawCall;
+	};
+
+	struct InstancedDrawCmd : public LinkCmd
+	{
+		// Extra data
+		PreInstancedDrawCallCmd* prepare_cmd;
+		const Material* material;
+
+		// Draw data
+		Primitive::primitive_t mode;
+		int32 start;
+		int32 end;
+		uint32 instance_count;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::InstancedDraw;
+	};
+
+	struct InstancedDrawIndexedCmd : public LinkCmd
+	{
+		// Extra data
+		PreInstancedDrawCallCmd* prepare_cmd;
+		const Material* material;
+
+		// Draw data
+		Primitive::primitive_t mode;
+		DataType::data_type_t type;
+		int32 count;
+		intptr offset;
+		uint32 instance_count;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::InstancedDrawIndexed;
+	};
+
     /*************************************** RESOURCES COMMANDS ***************************************/
     struct CreateIndexBuffer
     {
@@ -114,6 +154,18 @@ namespace Commands
 		union { Renderbuffer* rbo; Renderbuffer* resource; };
 
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateRenderBuffer;
+	};
+
+	/*************************************** MISC COMMANDS ***************************************/
+
+	struct EditSubBuffer
+	{
+		VBO* vbo;
+		const void* data;
+		GLintptr offset;
+		uint32 size;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::EditSubBuffer;
 	};
 };
 

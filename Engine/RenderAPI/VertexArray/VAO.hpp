@@ -36,14 +36,16 @@ struct VertexSettings
 	};
 
 	struct VertexAttribute {
-		VertexAttribute(uint32 attrib, uint32 sz, uint32 stride, usize offset, DataType::data_type_t type = DataType::FLOAT) :
-			offset(offset), size(sz), stride(stride), data_type(type), attrib_index(attrib)
+		VertexAttribute(uint32 vbo_index, uint32 attrib, uint32 sz, uint32 stride, usize offset, DataType::data_type_t type = DataType::FLOAT, uint32 divisor = 0) :
+			offset(offset), vbo_index(vbo_index), size(sz), stride(stride), data_type(type), attrib_index(attrib), divisor(divisor)
 		{}
 
 		usize offset;
+		uint32 vbo_index;
 		uint32 size;
 		uint32 stride;
 		DataType::data_type_t data_type;
+		uint32 divisor;
 		uint8 attrib_index;
 	};
 
@@ -68,7 +70,7 @@ public:
 	DECLARE_BIND_FUNCS
 
 	template<typename T>
-	void BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, uint32 stride, intptr offset);
+	void BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 size, uint32 stride, intptr offset);
 
 	void BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, int32 stride, const void* offset);
 
@@ -141,12 +143,12 @@ FORCEINLINE void VAO::SetVertextAttribDivisor(uint32 attrib, uint32 div)
 	);
 }
 
-/*FORCEINLINE VAO::~VAO()
+FORCEINLINE VAO::~VAO()
 {
 	if (m_ID) {
 		this->Clean();
 	}
-}*/
+}
 
 FORCEINLINE void VAO::Clean()
 {
@@ -158,14 +160,14 @@ FORCEINLINE void VAO::Clean()
 }
 
 template<typename T>
-void VAO::BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 count, uint32 stride, intptr offset)
+void VAO::BindAttribute(const uint32 attribute, const VBO& buffer, DataType::data_type_t type, uint32 size, uint32 stride, intptr offset)
 {
 	this->Use();
 	Call_GL(
 		glEnableVertexAttribArray(attribute)
 	);
 	Call_GL(
-		glVertexAttribPointer(attribute, count, type, GL_FALSE, stride * sizeof(T), (const void*)(offset * sizeof(T)))
+		glVertexAttribPointer(attribute, size, type, GL_FALSE, stride * sizeof(T), (const void*)(offset * sizeof(T)))
 	);
 }
 

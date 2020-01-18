@@ -291,6 +291,7 @@
     <ClCompile Include="Renderer\MeshLoader\MaterialLoader.cpp" />
     <ClCompile Include="Renderer\MeshLoader\MeshLoader.cpp" />
     <ClCompile Include="Renderer\MeshLoader\Model\Model.cpp" />
+    <ClCompile Include="Renderer\Mesh\MeshInstance\MeshInstance.cpp" />
     <ClCompile Include="Renderer\Mesh\StaticMesh\StaticMesh.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
     <ClCompile Include="Tests\Main2.cpp" />
@@ -448,6 +449,7 @@
     <ClInclude Include="Renderer\MeshLoader\Model\Model.hpp" />
     <ClInclude Include="Renderer\MeshLoader\VertexData\VertexData.hpp" />
     <ClInclude Include="Renderer\Mesh\IPrimitiveMesh\IPrimitiveMesh.hpp" />
+    <ClInclude Include="Renderer\Mesh\MeshInstance\MeshInstance.hpp" />
     <ClInclude Include="Renderer\Mesh\PrimitiveGeometry\PrimitiveGeometry.hpp" />
     <ClInclude Include="Renderer\Mesh\StaticMesh\StaticMesh.hpp" />
     <ClInclude Include="Renderer\Mesh\SubMesh\SubMesh.hpp" />

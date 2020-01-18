@@ -17,7 +17,8 @@ void StaticMesh::Submit(CommandBucket& CmdBucket)
 	for (SubMesh& obj : m_Meshs) {
 		const Material& material = ResourcesManager::Instance().Get<Material>(ResourcesTypes::MATERIAL, obj.m_MaterialID);
 		const RenderState& state = material.GetRenderStates();
-		uint32 blend_dist = 0;
+		BucketKey key = state.ToKey(material.GetTechnique().GetShaderID());
+		params.material_id = obj.m_MaterialID;
 
 		if (state.blend_enabled) {
 			uint8 bits_to_shift = sizeof(float) * BITS_PER_BYTE - RenderSettings::BLEND_DISTANCE_BITS;
@@ -25,8 +26,7 @@ void StaticMesh::Submit(CommandBucket& CmdBucket)
 
 			UConverter<float, uint32> compressed_float;
 			compressed_float.first_rep = Math::CompressFloat(distance_from_cam, bits_to_shift);
-
-			blend_dist = (static_cast<uint32>(compressed_float.second_rep) >> bits_to_shift);
+			params.blend_dist = (uint16)(static_cast<uint32>(compressed_float.second_rep) >> bits_to_shift);
 
 			/*UConverter<float, uint32> converter1;
 			converter1.first_rep = distance_from_cam;
@@ -34,10 +34,6 @@ void StaticMesh::Submit(CommandBucket& CmdBucket)
 			std::cout << "Real distance : " << std::bitset<32>(converter1.second_rep) << " | Compressed distance : " << std::bitset<32>(compressed_float.second_rep) << std::endl;
 			std::cout << "BLEND_DIST KEY = : " << std::bitset<32>(blend_dist) << std::endl; */
 		}
-
-		params.material_id = obj.m_MaterialID;
-		params.blend_dist = (uint16)blend_dist;
-		BucketKey key = state.ToKey(material.GetTechnique().GetShaderID());
 
 		if (key != last_key) {
 			packet = CmdBucket.SubmitCommand<Commands::PreDrawCallCmd>(&prepare_cmd, key, params.ToKey());

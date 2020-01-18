@@ -9,6 +9,8 @@
 
 TRE_NS_START
 
+/************************************ Single Draw Commands ************************************/
+
 void BackendDispatch::PreDrawCall(const void* data)
 {
 	const Commands::PreDrawCallCmd* real_data = reinterpret_cast<const Commands::PreDrawCallCmd*>(data);
@@ -44,6 +46,44 @@ void BackendDispatch::DrawIndexed(const void* data)
     DrawElements(real_data->mode, real_data->type, real_data->count, real_data->offset);
 }
 
+/************************************ Instanced Draw Commands ************************************/
+
+void BackendDispatch::InstancedPreDrawCall(const void* data)
+{
+	const Commands::PreInstancedDrawCallCmd* real_data = reinterpret_cast<const Commands::PreInstancedDrawCallCmd*>(data);
+
+	VAO& vao = ResourcesManager::Instance().Get<VAO>(ResourcesTypes::VAO, real_data->vao_id);
+	vao.Bind();
+
+	Cmd next_cmd = real_data->next_cmd;
+
+	while (next_cmd) {
+		const BackendDispatchFunction CommandFunction = Command::LoadBackendDispatchFunction(next_cmd);
+		const void* command = Command::LoadCommand(next_cmd);
+		CommandFunction(command);
+
+		next_cmd = ((Commands::LinkCmd*)command)->next_cmd;
+	}
+}
+
+void BackendDispatch::InstancedDraw(const void* data)
+{
+	const Commands::InstancedDrawCmd* real_data = reinterpret_cast<const Commands::InstancedDrawCmd*>(data);
+
+	real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
+	DrawArraysInstanced(real_data->mode, real_data->start, real_data->end, real_data->instance_count);
+}
+
+void BackendDispatch::InstancedDrawIndexed(const void* data)
+{
+	const Commands::InstancedDrawIndexedCmd* real_data = reinterpret_cast<const Commands::InstancedDrawIndexedCmd*>(data);
+
+	real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
+	DrawElementsInstanced(real_data->mode, real_data->type, real_data->count, real_data->offset, real_data->instance_count);
+}
+
+/************************************ RESOURCES CREATION COMMANDS ************************************/
+
 void BackendDispatch::CreateVAO(const void* data)
 {
 	const Commands::CreateVAO* real_data = reinterpret_cast<const Commands::CreateVAO*>(data);
@@ -66,9 +106,10 @@ void BackendDispatch::CreateVAO(const void* data)
 
 	uint32 index = 0;
 	for (const VertexSettings::VertexAttribute& attribute : settings.attributes) {
-		VBO& vbo = *vert_data[index % vert_len].vbo;
+		VBO& vbo = *vert_data[attribute.vbo_index].vbo;
 		vbo.Bind();
 		modelVAO->BindAttribute<float>(attribute.attrib_index, vbo, attribute.data_type, attribute.size, attribute.stride, attribute.offset);
+		modelVAO->SetVertextAttribDivisor(attribute.attrib_index, attribute.divisor);
 		index++;
 	}
 }
@@ -120,6 +161,15 @@ void BackendDispatch::CreateRenderBuffer(const void * data)
 	const RenderbufferSettings& settings = real_data->settings;
 
 	rbo->Generate(settings);
+}
+
+/************************************ Instanced Draw Commands ************************************/
+void BackendDispatch::EditSubBuffer(const void* data)
+{
+	const Commands::EditSubBuffer* real_data = reinterpret_cast<const Commands::EditSubBuffer*>(data);
+
+	real_data->vbo->Bind();
+	Call_GL(glBufferSubData(real_data->vbo->GetBindingTarget(), real_data->offset, real_data->size, real_data->data));
 }
 
 TRE_NS_END

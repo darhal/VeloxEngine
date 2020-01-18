@@ -7,7 +7,7 @@ TRE_NS_START
 
 Model::Model(const ModelData& data)
 {
-	Commands::CreateVAO* createVaoCmd = LoadFromSettings(data);
+	m_CreateVaoCmd = LoadFromSettings(data);
 	ResourcesManager& manager = ResourcesManager::Instance();
 
 	if (data.indices && data.indexSize) {
@@ -17,7 +17,7 @@ Model::Model(const ModelData& data)
 		VboID indexVboID = manager.CreateResource<VBO>(ResourcesTypes::VBO);
 		Commands::CreateIndexBuffer* create_index_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateIndexBuffer>();
 		// m_VboIDs.EmplaceBack(indexVboID);
-		create_index_cmd->vao = createVaoCmd->vao;
+		create_index_cmd->vao = m_CreateVaoCmd->vao;
 		create_index_cmd->settings = VertexSettings::VertexBufferData(data.indices, data.indexSize, &manager.Get<VBO>(ResourcesTypes::VBO, indexVboID));
 
 	} else {
@@ -31,7 +31,7 @@ Model::Model(const ModelData& data)
 Model::Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_vec, Vector<uint32>* indices)
 {
 	ASSERTF(ver_data.Size() == 0, "Attempt to create a ModelLoader with empty vertecies!");
-	Commands::CreateVAO* createVaoCmd = LoadFromVertexData(ver_data);
+	m_CreateVaoCmd = LoadFromVertexData(ver_data);
 	ResourcesManager& manager = ResourcesManager::Instance();
 
 	if (indices) {
@@ -41,7 +41,7 @@ Model::Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_
 		VboID indexVboID = manager.CreateResource<VBO>(ResourcesTypes::VBO);
 		Commands::CreateIndexBuffer* create_index_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateIndexBuffer>();
 		// m_VboIDs.EmplaceBack(indexVboID);
-		create_index_cmd->vao = createVaoCmd->vao;
+		create_index_cmd->vao = m_CreateVaoCmd->vao;
 		create_index_cmd->settings = VertexSettings::VertexBufferData(*indices, &manager.Get<VBO>(ResourcesTypes::VBO, indexVboID));
 		
 		m_Materials = mat_vec;
@@ -70,7 +70,7 @@ Commands::CreateVAO* Model::LoadFromSettings(const ModelData& data)
 	VboID vboID = manager.CreateResource<VBO>(ResourcesTypes::VBO);
 	// m_VboIDs.EmplaceBack(vboID);
 	createVaoCmd->settings.vertices_data.EmplaceBack(data.vertices, data.vertexSize, &manager.Get<VBO>(ResourcesTypes::VBO, vboID));
-	createVaoCmd->settings.attributes.EmplaceBack(layout, 3, 0, 0);
+	createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, layout, 3, 0, 0);
 
 	if (data.normalSize != 0 && data.normals != NULL) { // Fill normals if availble
 		vboID = manager.CreateResource<VBO>(ResourcesTypes::VBO);
@@ -78,7 +78,7 @@ Commands::CreateVAO* Model::LoadFromSettings(const ModelData& data)
 
 		// Fill normals:
 		createVaoCmd->settings.vertices_data.EmplaceBack(data.normals, data.normalSize, &manager.Get<VBO>(ResourcesTypes::VBO, vboID));
-		createVaoCmd->settings.attributes.EmplaceBack(++layout, 3, 0, 0);
+		createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, ++layout, 3, 0, 0);
 	}
 
 	if (data.textureSize != 0 && data.textures != NULL) { // Fill Texture if availble
@@ -87,7 +87,7 @@ Commands::CreateVAO* Model::LoadFromSettings(const ModelData& data)
 
 		// Fill textures:
 		createVaoCmd->settings.vertices_data.EmplaceBack(data.textures, data.textureSize, &manager.Get<VBO>(ResourcesTypes::VBO, vboID));
-		createVaoCmd->settings.attributes.EmplaceBack(++layout, 2, 0, 0);
+		createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, ++layout, 2, 0, 0);
 	}
 
 	return createVaoCmd;
@@ -112,7 +112,7 @@ Commands::CreateVAO* Model::LoadFromVertexData(Vector<VertexData>& ver_data)
 	uint8 attrib_index = 0;
 
 	for (const uint32 size : attrib_data_sizes) {
-		createVaoCmd->settings.attributes.EmplaceBack(attrib_index, size, 8, offset);
+		createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, attrib_index, size, 8, offset);
 		attrib_index++;
 		offset += size;
 	}
@@ -126,6 +126,43 @@ StaticMesh Model::LoadMesh(ShaderID shader_id)
 	int32 lastVertexCount = 0;
 	ResourcesManager& manager = ResourcesManager::Instance();
 
+	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
+		for (const ModelMaterialData& mat : m_Materials) {
+			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
+			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, mat.material, shader_id);
+			mesh.AddSubMesh(model_geo, matID);
+			lastVertexCount += mat.vcount;
+		}
+	} else {
+		for (const ModelMaterialData& mat : m_Materials) {
+			PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
+			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, mat.material, shader_id);
+			mesh.AddSubMesh(model_geo, matID);
+			lastVertexCount += mat.vcount;
+		}
+	}
+
+	return mesh;
+}
+
+MeshInstance Model::LoadInstancedMesh(uint32 instance_count, ShaderID shader_id)
+{
+	ResourcesManager& manager = ResourcesManager::Instance();
+	VboID vboID = manager.CreateResource<VBO>(ResourcesTypes::VBO);
+
+	uint32 vbo_index = m_CreateVaoCmd->settings.vertices_data.Size();
+	uint32 layout_id = m_CreateVaoCmd->settings.attributes.Size();
+	Mat4f* transforms = new Mat4f[instance_count];
+	m_CreateVaoCmd->settings.vertices_data.EmplaceBack(transforms, instance_count, &manager.Get<VBO>(ResourcesTypes::VBO, vboID));
+	// Size: 4 floats (for the layout) | Stide : 16 -> 16 floats (Mat4f) | Offset: 4 means (4 floats) | Divisor: 1 per instance
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id    , 4, 16,     0, DataType::FLOAT, 1);
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 1, 4, 16,     4, DataType::FLOAT, 1);
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 2, 4, 16, 2 * 4, DataType::FLOAT, 1);
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 3, 4, 16, 3 * 4, DataType::FLOAT, 1);
+
+	MeshInstance mesh(instance_count, m_VaoID, vboID, transforms);
+	int32 lastVertexCount = 0;
+	
 	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));

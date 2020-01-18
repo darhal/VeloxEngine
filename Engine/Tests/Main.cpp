@@ -155,6 +155,11 @@ int main()
 		Shader("res/Shader/cam.vs", ShaderType::VERTEX),
 		Shader("res/Shader/cam.fs", ShaderType::FRAGMENT)
 	);
+	ShaderValidator("res/Shader/cam_instanced.vs", "res/Shader/cam_instanced.fs");
+	ShaderID shader_id3 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+		Shader("res/Shader/cam_instanced.vs", ShaderType::VERTEX),
+		Shader("res/Shader/cam_instanced.fs", ShaderType::FRAGMENT)
+	);
 	{
 		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
 		shader.LinkProgram();
@@ -163,25 +168,28 @@ int main()
 		shader.AddUniform("ProjView");
 		shader.AddUniform("Model");
 	}
+
 	{
-		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id2);
-		shader.LinkProgram();
-		shader.Use();
+		for (uint32 i = shader_id; i < 3; i++) {
+			ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, i);
+			shader.LinkProgram();
+			shader.Use();
 
-		// shader.AddUniform("MVP");
-		shader.AddUniform("ProjView");
-		shader.AddUniform("Model");
-		shader.AddUniform("material.ambient");
-		shader.AddUniform("material.diffuse");
-		shader.AddUniform("material.specular");
-		shader.AddUniform("material.alpha");
-		shader.AddUniform("material.shininess");
+			// shader.AddUniform("MVP");
+			shader.AddUniform("ProjView");
+			shader.AddUniform("Model");
+			shader.AddUniform("material.ambient");
+			shader.AddUniform("material.diffuse");
+			shader.AddUniform("material.specular");
+			shader.AddUniform("material.alpha");
+			shader.AddUniform("material.shininess");
 
-		shader.AddSamplerSlot("material.specular_tex");
-		shader.AddSamplerSlot("material.diffuse_tex");
+			shader.AddSamplerSlot("material.specular_tex");
+			shader.AddSamplerSlot("material.diffuse_tex");
 
-		shader.SetFloat("material.alpha", 1.f);
-		shader.SetFloat("material.shininess", 1.0f);
+			shader.SetFloat("material.alpha", 1.f);
+			shader.SetFloat("material.shininess", 1.0f);
+		}
 	}
 
 	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
@@ -195,27 +203,21 @@ int main()
 	data.vertexSize = ARRAY_SIZE(vertices);
 	Model model(data);
 	StaticMesh mesh = model.LoadMesh(shader_id);
+	//MeshInstance mesh = model.LoadInstancedMesh(1'000, shader_id3);
 
 	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
 	Model carrot = loader.LoadAsOneObject();
-	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
+	MeshInstance carrot_mesh = carrot.LoadInstancedMesh(2'000, shader_id3);
+	// StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
 
-	op_queue.Flush();
+	for (int i = 0; i < 2'000; i++) {
+		carrot_mesh.GetTransformationMatrix(i).translate(vec3(1.f * i, 0.f, 1.f * i));
+		carrot_mesh.UpdateTransforms(i);
+	}
 
 	Event ev;
 	Enable(Capability::DEPTH_TEST);
 	INIT_BENCHMARK;
-
-
-	//for (int i = 0; i < 1'000; i++) {
-		//carrot_mesh.GetTransformationMatrix().translate(vec3(1.f * i, 0.f, 1.f * i));
-		//carrot_mesh.Submit(bucket);
-		//carrot_mesh.GetTransformationMatrix() = Mat4f();
-	//}
-
-	//mesh.Submit(bucket);
-	//mesh.GetTransformationMatrix().translate(vec3(-1.f, -1.f, 2.f));
-	//mesh.Submit(bucket);
 
 	while (true) {
 		//BENCHMARK("Render Thread",
@@ -227,6 +229,7 @@ int main()
 		ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		Clear(Buffer::COLOR | Buffer::DEPTH);
 
+		op_queue.Flush();
 		carrot_mesh.Submit(bucket);
 		mesh.Submit(bucket);
 		bucket.End();

@@ -8,6 +8,7 @@
 #include <Renderer/Materials/AbstractMaterial/AbstractMaterial.hpp>
 #include <Renderer/MeshLoader/VertexData/VertexData.hpp>
 #include <Renderer/Mesh/StaticMesh/StaticMesh.hpp>
+#include <Renderer/Mesh/MeshInstance/MeshInstance.hpp>
 #include <Renderer/MeshLoader/ModelData/ModelMaterialData.hpp>
 
 TRE_NS_START
@@ -27,10 +28,13 @@ public:
 	Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_vec, Vector<uint32>* indices = NULL);
 
 	StaticMesh LoadMesh(ShaderID shader_id = 0);
+
+	MeshInstance LoadInstancedMesh(uint32 instance_count, ShaderID shader_id = 0);
 private:
 	Commands::CreateVAO* LoadFromSettings(const ModelData& data);
 	Commands::CreateVAO* LoadFromVertexData(Vector<VertexData>& ver_data);
 
+	Commands::CreateVAO* m_CreateVaoCmd;
 	Vector<ModelMaterialData> m_Materials;
 	uint32 m_VertexCount;
 	VaoID m_VaoID;
