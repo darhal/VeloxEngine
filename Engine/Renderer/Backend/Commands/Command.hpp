@@ -28,6 +28,9 @@ namespace Command
 
 	BackendDispatchFunction LoadBackendDispatchFunction(Cmd cmd);
 
+	template<typename U>
+	Cmd GetRawCommand(U* cmd);
+
 	CONSTEXPR static usize OFFSET_COMMAND = sizeof(BackendDispatchFunction);
 };
 
@@ -50,6 +53,12 @@ template <typename T>
 T* Command::GetCommand(Cmd cmd)
 {
 	return (T*)(reinterpret_cast<uint8*>(cmd) + OFFSET_COMMAND);
+}
+
+template<typename U>
+Cmd Command::GetRawCommand(U* cmd)
+{
+	return (Cmd)(reinterpret_cast<uint8*>(cmd) - OFFSET_COMMAND);
 }
 
 TRE_NS_END

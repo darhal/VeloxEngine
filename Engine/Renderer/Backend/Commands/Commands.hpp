@@ -15,16 +15,28 @@ TRE_NS_START
 
 namespace Commands
 {
+	struct LinkCmd
+	{
+		void* next_cmd;
+	};
+
     /*************************************** DRAW COMMANDS ***************************************/
-    struct BasicDrawCommand
+    struct PreDrawCallCmd : public LinkCmd
     {
-        // CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION;
         Mat4f model;
+		VaoID vao_id;
+		const ShaderProgram* shader;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::PreDrawCall;
     };
 
-    struct DrawCmd : public BasicDrawCommand
+    struct DrawCmd : public LinkCmd
     {
-        // some data ...
+		// Extra data
+		PreDrawCallCmd* prepare_cmd;
+		const Material* material;
+
+		// Draw data
         Primitive::primitive_t mode;
         int32 start; 
         int32 end;
@@ -32,9 +44,13 @@ namespace Commands
         CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::Draw;
     };
 
-    struct DrawIndexedCmd : public BasicDrawCommand
+    struct DrawIndexedCmd : public LinkCmd
     {
-        // some data ...
+		// Extra data
+		PreDrawCallCmd* prepare_cmd;
+		const Material* material;
+
+		// Draw data
         Primitive::primitive_t mode;
         DataType::data_type_t type; 
         int32 count; 

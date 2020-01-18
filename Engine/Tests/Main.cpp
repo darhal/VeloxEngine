@@ -159,18 +159,18 @@ int main()
 		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
 		shader.LinkProgram();
 		shader.Use();
-		shader.AddUniform("MVP");
+		//shader.AddUniform("MVP");
 		shader.AddUniform("ProjView");
-		shader.AddUniform("model");
+		shader.AddUniform("Model");
 	}
 	{
 		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id2);
 		shader.LinkProgram();
 		shader.Use();
 
-		shader.AddUniform("MVP");
+		// shader.AddUniform("MVP");
 		shader.AddUniform("ProjView");
-		shader.AddUniform("model");
+		shader.AddUniform("Model");
 		shader.AddUniform("material.ambient");
 		shader.AddUniform("material.diffuse");
 		shader.AddUniform("material.specular");
@@ -200,10 +200,26 @@ int main()
 	Model carrot = loader.LoadAsOneObject();
 	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
 
+	op_queue.Flush();
+
 	Event ev;
 	Enable(Capability::DEPTH_TEST);
-	
+	INIT_BENCHMARK;
+
+
+	//for (int i = 0; i < 1'000; i++) {
+		//carrot_mesh.GetTransformationMatrix().translate(vec3(1.f * i, 0.f, 1.f * i));
+		//carrot_mesh.Submit(bucket);
+		//carrot_mesh.GetTransformationMatrix() = Mat4f();
+	//}
+
+	//mesh.Submit(bucket);
+	//mesh.GetTransformationMatrix().translate(vec3(-1.f, -1.f, 2.f));
+	//mesh.Submit(bucket);
+
 	while (true) {
+		//BENCHMARK("Render Thread",
+
 		if (window.getEvent(ev)) {
 			HandleEvent(deltaTime, bucket.GetProjectionMatrix(), bucket.GetCamera(), ev);
 		}
@@ -211,14 +227,14 @@ int main()
 		ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		Clear(Buffer::COLOR | Buffer::DEPTH);
 
-		op_queue.Flush();
-
-		mesh.Submit(bucket);
 		carrot_mesh.Submit(bucket);
+		mesh.Submit(bucket);
 		bucket.End();
-
 		cmd_buffer.DispatchCommands();
+
 		window.Present();
+
+		//);
 	}
 
 	getchar();

@@ -27,6 +27,9 @@ public:
 	CommandBucket& operator=(CommandBucket&& bucket);
 
 	template<typename U>
+	CommandPacket* SubmitCommand(U** cmd_out, const BucketKey& key, const uint64& internal_key = 0);
+
+	template<typename U>
 	U* SubmitCommand(const BucketKey& key, const uint64& internal_key = 0);
 
 	template<typename U>
@@ -58,6 +61,14 @@ private:
 
 	CONSTEXPR static BucketKey BLEND_ENABLED = (BucketKey(1) << 63);
 };
+
+template<typename U>
+CommandPacket* CommandBucket::SubmitCommand(U** cmd_out, const BucketKey& key, const uint64& internal_key)
+{
+	CommandPacket& packet = GetOrCreateCommandPacket(key);
+	*cmd_out = packet.SubmitCommand<U>(internal_key);
+	return &packet;
+}
 
 template<typename U>
 U* CommandBucket::SubmitCommand(const BucketKey& key, const uint64& internal_key)

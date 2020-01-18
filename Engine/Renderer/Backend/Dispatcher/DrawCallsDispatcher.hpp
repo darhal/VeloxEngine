@@ -6,6 +6,8 @@ TRE_NS_START
 
 struct BackendDispatch
 {
+	static void PreDrawCall(const void* data);
+
     static void Draw(const void* data);
 
     static void DrawIndexed(const void* data);

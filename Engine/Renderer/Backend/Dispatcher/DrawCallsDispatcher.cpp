@@ -2,19 +2,45 @@
 #include "RenderAPI/VertexArray/VAO.hpp"
 #include "RenderAPI/VertexBuffer/VBO.hpp"
 #include "RenderAPI/General/GLContext.hpp"
+#include <RenderAPI/Shader/ShaderProgram.hpp>
 #include "Renderer/Backend/Commands/Commands.hpp"
+#include <Renderer/Backend/ResourcesManager/ResourcesManager.hpp>
+#include <Renderer/Materials/Material.hpp>
 
 TRE_NS_START
+
+void BackendDispatch::PreDrawCall(const void* data)
+{
+	const Commands::PreDrawCallCmd* real_data = reinterpret_cast<const Commands::PreDrawCallCmd*>(data);
+
+	VAO& vao = ResourcesManager::Instance().Get<VAO>(ResourcesTypes::VAO, real_data->vao_id);
+	vao.Bind();
+	real_data->shader->SetMat4("Model", real_data->model);
+
+	Cmd next_cmd = real_data->next_cmd;
+
+	while (next_cmd) {
+		const BackendDispatchFunction CommandFunction = Command::LoadBackendDispatchFunction(next_cmd);
+		const void* command = Command::LoadCommand(next_cmd);
+		CommandFunction(command);
+
+		next_cmd = ((Commands::LinkCmd*)command)->next_cmd;
+	}
+}
 
 void BackendDispatch::Draw(const void* data)
 {
     const Commands::DrawCmd* real_data = reinterpret_cast<const Commands::DrawCmd*>(data);
+
+	real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
     DrawArrays(real_data->mode, real_data->start, real_data->end);
 }
 
 void BackendDispatch::DrawIndexed(const void* data)
 {
     const Commands::DrawIndexedCmd* real_data = reinterpret_cast<const Commands::DrawIndexedCmd*>(data);
+
+	real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
     DrawElements(real_data->mode, real_data->type, real_data->count, real_data->offset);
 }
 

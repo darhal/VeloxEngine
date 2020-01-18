@@ -20,6 +20,9 @@ public:
 	template<typename U>
 	U* SubmitCommand(const uint64& internal_key);
 
+	template<typename U>
+	U* CreateCommand(const uint64& internal_key);
+
 	void Flush(ResourcesManager& manager, const ShaderProgram& shader, const Mat4f& proj_view);
 
 	void SwapBuffer();
@@ -50,6 +53,14 @@ U* CommandPacket::SubmitCommand(const uint64& internal_key)
 	Cmd cmd = Command::CreateCommand<U>(m_CmdsAllocator);
 	Command::StoreBackendDispatchFunction(cmd, U::DISPATCH_FUNCTION);
 	new (&m_Commands[m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount++]) Pair<uint64, Cmd>(internal_key, cmd);
+	return Command::GetCommand<U>(cmd);
+}
+
+template<typename U>
+U* CommandPacket::CreateCommand(const uint64& internal_key)
+{
+	Cmd cmd = Command::CreateCommand<U>(m_CmdsAllocator);
+	Command::StoreBackendDispatchFunction(cmd, U::DISPATCH_FUNCTION);
 	return Command::GetCommand<U>(cmd);
 }
 
