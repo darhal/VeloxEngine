@@ -151,16 +151,16 @@ int main()
 		Shader("res/Shader/SimpleShader.vs", ShaderType::VERTEX), 
 		Shader("res/Shader/SimpleShader.fs", ShaderType::FRAGMENT)
 	);
-	ShaderValidator("res/Shader/cam.vs", "res/Shader/cam.fs");
+	ShaderValidator("res/Shader/Forward/generic.vs", "res/Shader/Forward/generic.fs");
 	ShaderID shader_id2 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
-		Shader("res/Shader/cam.vs", ShaderType::VERTEX),
-		Shader("res/Shader/cam.fs", ShaderType::FRAGMENT)
+		Shader("res/Shader/Forward/generic.vs", ShaderType::VERTEX),
+		Shader("res/Shader/Forward/generic.fs", ShaderType::FRAGMENT)
 	);
-	ShaderValidator("res/Shader/cam_instanced.vs", "res/Shader/cam_instanced.fs");
+	/*ShaderValidator("res/Shader/cam_instanced.vs", "res/Shader/cam_instanced.fs");
 	ShaderID shader_id3 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
 		Shader("res/Shader/cam_instanced.vs", ShaderType::VERTEX),
 		Shader("res/Shader/cam_instanced.fs", ShaderType::FRAGMENT)
-	);
+	);*/
 	{
 		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
 		shader.LinkProgram();
@@ -168,17 +168,22 @@ int main()
 		//shader.AddUniform("MVP");
 		shader.AddUniform("ProjView");
 		shader.AddUniform("Model");
+		shader.AddUniform("ViewPosition");
 	}
 
 	{
-		for (uint32 i = shader_id; i < 3; i++) {
+		for (uint32 i = shader_id; i < 2; i++) {
 			ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, i);
 			shader.LinkProgram();
 			shader.Use();
 
+			shader.SetUniformBlockBinding("LightUBO", 0);
+
 			// shader.AddUniform("MVP");
+			shader.AddUniform("ViewPosition");
 			shader.AddUniform("ProjView");
 			shader.AddUniform("Model");
+
 			shader.AddUniform("material.ambient");
 			shader.AddUniform("material.diffuse");
 			shader.AddUniform("material.specular");
@@ -193,7 +198,6 @@ int main()
 		}
 	}
 
-	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
 	ForwardRenderer renderer;
 	renderer.Initialize(SCR_WIDTH, SCR_HEIGHT);
 	CommandBucket& bucket = renderer.GetCommandQueue().GetCommandBucker(ForwardRenderer::MAIN_PASS);
@@ -207,17 +211,19 @@ int main()
 
 	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
 	Model carrot = loader.LoadAsOneObject();
-	MeshInstance carrot_mesh = carrot.LoadInstancedMesh(2'000, shader_id3);
-	// StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
+	// MeshInstance carrot_mesh = carrot.LoadInstancedMesh(2'000, shader_id3);
+	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
 
-	for (int i = 0; i < 2'000; i++) {
+	/*for (int i = 0; i < 2'000; i++) {
 		carrot_mesh.GetTransformationMatrix(i).translate(vec3(1.f * i, 0.f, 1.f * i));
 		carrot_mesh.UpdateTransforms(i);
-	}
+	}*/
 
 	Event ev;
 	Enable(Capability::DEPTH_TEST);
+	Enable(GL_MULTISAMPLE);
 	ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
 	INIT_BENCHMARK;
 
 	while (true) {
@@ -232,7 +238,7 @@ int main()
 		op_queue.Flush();
 
 		renderer.Draw(carrot_mesh);
-		renderer.Draw(mesh);
+		// renderer.Draw(mesh);
 
 		renderer.Render();
 		window.Present();

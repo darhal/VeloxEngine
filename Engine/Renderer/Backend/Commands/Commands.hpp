@@ -24,9 +24,9 @@ namespace Commands
     /*************************************** DRAW COMMANDS ***************************************/
     struct PreDrawCallCmd : public LinkCmd
     {
-        Mat4f model;
-		VaoID vao_id;
 		const ShaderProgram* shader;
+		Mat4f model;
+		VaoID vao_id;
 
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::PreDrawCall;
     };
@@ -195,6 +195,16 @@ namespace Commands
 		UniformsParams<int32> m_Params;
 
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::UploadUniforms;
+	};
+
+	struct BindBufferRange
+	{
+		VBO* vbo;
+		uint32 binding_point;
+		uint32 offset;
+		uint32 size;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::BindBufferRange;
 	};
 };
 

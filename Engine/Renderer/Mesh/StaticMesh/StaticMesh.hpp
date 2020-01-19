@@ -12,8 +12,7 @@ TRE_NS_START
 class StaticMesh : public IPrimitiveMesh
 {
 public:
-	FORCEINLINE StaticMesh(VaoID vao) : m_VaoID(vao)
-	{}
+	StaticMesh(VaoID vao);
 
 	FORCEINLINE StaticMesh(StaticMesh&& other);
 
@@ -34,15 +33,15 @@ private:
 
 private:
 	Vector<SubMesh> m_Meshs;
-	VaoID m_VaoID;
 	Mat4f m_ModelTransformation;
-
+	VaoID m_VaoID;
+	
 	friend class ModelLoader;
 };
 
 FORCEINLINE StaticMesh::StaticMesh(StaticMesh&& other) :
-	m_Meshs(std::move(other.m_Meshs)), m_VaoID(other.m_VaoID),
-	m_ModelTransformation(other.m_ModelTransformation)
+	m_Meshs(std::move(other.m_Meshs)),
+	m_VaoID(other.m_VaoID), m_ModelTransformation(other.m_ModelTransformation)
 {
 }
 

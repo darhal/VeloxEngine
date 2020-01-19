@@ -6,6 +6,10 @@
 
 TRE_NS_START
 
+StaticMesh::StaticMesh(VaoID vao) : m_VaoID(vao)
+{
+}
+
 void StaticMesh::Submit(CommandBucket& CmdBucket)
 {
 	ResourcesManager& manager = ResourcesManager::Instance();

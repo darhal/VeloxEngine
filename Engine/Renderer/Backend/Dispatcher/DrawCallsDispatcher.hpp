@@ -39,6 +39,8 @@ struct BackendDispatch
 	static void DispatchCompute(const void* data);
 
 	static void UploadUniforms(const void* data);
+
+	static void BindBufferRange(const void* data);
 };
 
 

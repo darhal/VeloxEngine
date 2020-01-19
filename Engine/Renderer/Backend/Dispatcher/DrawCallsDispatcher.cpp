@@ -215,5 +215,12 @@ void BackendDispatch::UploadUniforms(const void* data)
 	real_data->m_Params.UploadUnfiroms(*real_data->shader);
 }
 
+void BackendDispatch::BindBufferRange(const void* data)
+{
+	const Commands::BindBufferRange* real_data = reinterpret_cast<const Commands::BindBufferRange*>(data);
+
+	Call_GL(glBindBufferRange(real_data->vbo->GetBindingTarget(), real_data->binding_point, real_data->vbo->GetID(), real_data->offset, real_data->size););
+}
+
 
 TRE_NS_END

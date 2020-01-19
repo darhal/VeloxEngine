@@ -31,8 +31,9 @@ private:
 	CommandBuffer m_CommandQueue;
 	VboID m_LightBuffer;
 
-	CONSTEXPR static float NEAR_PLANE = 1.0f;
+	CONSTEXPR static float NEAR_PLANE = 0.1f;
 	CONSTEXPR static float FAR_PLANE = 300.f;
+	CONSTEXPR static uint32 MAX_LIGHTS = 32;
 };
 
 TRE_NS_END
