@@ -162,6 +162,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Renderer\RenderPipline\Forward\Forward.cpp" />
+    <ClCompile Include="Renderer\RenderPipline\Forward+\ForwardPlus.cpp" />
     <ClCompile Include="Renderer\Backend\CommandBucket\CommandPacket\CommandPacket.cpp" />
     <ClCompile Include="Core\DataStructure\StaticBitset\StaticBitset.cpp" />
     <ClCompile Include="Core\Context\Context.cpp" />
@@ -298,6 +300,8 @@
     <ClCompile Include="Tests\TestingString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Renderer\RenderPipline\Forward\Forward.hpp" />
+    <ClInclude Include="Renderer\RenderPipline\Forward+\ForwardPlus.hpp" />
     <ClInclude Include="Renderer\Backend\ContextOperationQueue\ContextOperationQueue.hpp" />
     <ClInclude Include="Renderer\Backend\Camera\Camera.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\CommandPacket\CommandPacket.hpp" />
@@ -453,6 +457,7 @@
     <ClInclude Include="Renderer\Mesh\PrimitiveGeometry\PrimitiveGeometry.hpp" />
     <ClInclude Include="Renderer\Mesh\StaticMesh\StaticMesh.hpp" />
     <ClInclude Include="Renderer\Mesh\SubMesh\SubMesh.hpp" />
+    <ClInclude Include="Renderer\RenderPipline\Renderer\IRenderer.hpp" />
     <ClInclude Include="Tests\ShaderValidator.hpp" />
     <ClInclude Include="Tests\ThreadBarrier.hpp" />
   </ItemGroup>

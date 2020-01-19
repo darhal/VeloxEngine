@@ -10,6 +10,7 @@
 
 #include "Renderer/Common/Common.hpp"
 #include "Renderer/Backend/Dispatcher/DrawCallsDispatcher.hpp"
+#include <Renderer/Materials/MaterialParametres/MaterialParametres.hpp>
 
 TRE_NS_START
 
@@ -120,6 +121,18 @@ namespace Commands
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateVAO;
 	};
 
+	struct CreateVBO
+	{
+		typedef VBO                  Resource;
+		typedef VertexBufferSettings Settings;
+		typedef typename RMI<Resource>::ID ID;
+
+		VertexBufferSettings settings;
+		union { VBO* vbo; VBO* resource; };
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateVBO;
+	};
+
     struct CreateTexture
     {
 		typedef Texture         Resource;
@@ -166,6 +179,22 @@ namespace Commands
 		uint32 size;
 
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::EditSubBuffer;
+	};
+
+	struct DispatchCompute : public LinkCmd
+	{
+		ShaderProgram* shader;
+		uint32 workGroupX, workGroupY, workGroupZ;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::DispatchCompute;
+	};
+
+	struct UploadUniforms
+	{
+		ShaderProgram* shader;
+		UniformsParams<int32> m_Params;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::UploadUniforms;
 	};
 };
 

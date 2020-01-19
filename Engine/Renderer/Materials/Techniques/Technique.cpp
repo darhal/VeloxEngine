@@ -6,25 +6,7 @@ TRE_NS_START
 
 void Technique::UploadUnfiroms(const ShaderProgram& program) const
 {
-    for(const auto& uniform_data : m_MaterialParams.GetContainer<mat4>()) {
-        program.SetMat4(uniform_data.first, uniform_data.second);
-    }
-
-    for(const auto& uniform_data :  m_MaterialParams.GetContainer<vec3>()) {
-        program.SetVec3(uniform_data.first, uniform_data.second);
-    }
-
-    for(const auto& uniform_data : m_MaterialParams.GetContainer<float>()) {
-        program.SetFloat(uniform_data.first, uniform_data.second);
-    }
-
-	ResourcesManager& manaeger = ResourcesManager::Instance();
-
-    for(const auto& uniform_data : m_MaterialParams.GetContainer<TextureID>()) {
-        Texture& active_tex = manaeger.Get<Texture>(ResourcesTypes::TEXTURE, uniform_data.second);
-        glActiveTexture(GL_TEXTURE0 + uniform_data.first);
-        active_tex.Bind();
-    }
+	m_MaterialParams.UploadUnfiroms(program);
 }
 
 void Technique::UploadUnfiroms() const

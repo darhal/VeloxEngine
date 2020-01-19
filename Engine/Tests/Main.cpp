@@ -43,6 +43,7 @@
 #include <Core/Misc/Singleton/Singleton.hpp>
 #include <Renderer/MeshLoader/Model/Model.hpp>
 #include <Renderer/MeshLoader/MeshLoader.hpp>
+#include <Renderer/RenderPipline/Forward/Forward.hpp>
 #include "ShaderValidator.hpp"
 
 using namespace TRE;
@@ -136,8 +137,8 @@ bool firstMouse = true;
 int main()
 {
 	// settings
-	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 3.3)", WindowStyle::Resize);
-	window.initContext(3, 3);
+	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 4.3)", WindowStyle::Resize);
+	window.initContext(4, 3);
 
 	printf("- GPU Vendor........: %s\n", glGetString(GL_VENDOR));
 	printf("- Graphics..........: %s\n", glGetString(GL_RENDERER));
@@ -193,10 +194,9 @@ int main()
 	}
 
 	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
-	CommandBuffer cmd_buffer = CommandBuffer();
-	CommandBucket& bucket = cmd_buffer.CreateBucket();
-	bucket.GetCamera().Position = vec3(0.0f, 0.0f, 3.0f);
-	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 300.f);
+	ForwardRenderer renderer;
+	renderer.Initialize(SCR_WIDTH, SCR_HEIGHT);
+	CommandBucket& bucket = renderer.GetCommandQueue().GetCommandBucker(ForwardRenderer::MAIN_PASS);
 
 	ModelData data;
 	data.vertices = vertices;
@@ -217,6 +217,7 @@ int main()
 
 	Event ev;
 	Enable(Capability::DEPTH_TEST);
+	ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	INIT_BENCHMARK;
 
 	while (true) {
@@ -226,15 +227,14 @@ int main()
 			HandleEvent(deltaTime, bucket.GetProjectionMatrix(), bucket.GetCamera(), ev);
 		}
 
-		ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		Clear(Buffer::COLOR | Buffer::DEPTH);
 
 		op_queue.Flush();
-		carrot_mesh.Submit(bucket);
-		mesh.Submit(bucket);
-		bucket.End();
-		cmd_buffer.DispatchCommands();
 
+		renderer.Draw(carrot_mesh);
+		renderer.Draw(mesh);
+
+		renderer.Render();
 		window.Present();
 
 		//);

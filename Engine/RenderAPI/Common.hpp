@@ -396,11 +396,12 @@ namespace ShaderType {
 	{
 		VERTEX = GL_VERTEX_SHADER,
 		FRAGMENT = GL_FRAGMENT_SHADER,
-		GEOMETRY = GL_GEOMETRY_SHADER
+		GEOMETRY = GL_GEOMETRY_SHADER,
+		COMPUTE = GL_COMPUTE_SHADER
 	};
 
 	static FORCEINLINE const char* ToString(shader_type_t v) {
-		static const char* shadertype2str[] = { "VERTEX SHADER", " FRAGMENT SHADER", "GEOMETRY SHADER" };
+		static const char* shadertype2str[] = { "VERTEX SHADER", " FRAGMENT SHADER", "GEOMETRY SHADER", "COMPUTE SHADER" };
 		switch (v) {
 		case shader_type_t::VERTEX:
 			return shadertype2str[0];
@@ -408,6 +409,8 @@ namespace ShaderType {
 			return shadertype2str[1];
 		case shader_type_t::GEOMETRY:
 			return shadertype2str[2];
+		case shader_type_t::COMPUTE:
+			return shadertype2str[3];
 		default:
 			return "Unknown";
 		}

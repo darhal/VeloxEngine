@@ -132,6 +132,22 @@ void BackendDispatch::CreateIndexBuffer(const void* data)
 	// ::operator delete(indices_data.data);
 }
 
+void BackendDispatch::CreateVBO(const void* data)
+{
+	const Commands::CreateVBO* real_data = reinterpret_cast<const Commands::CreateVBO*>(data);
+
+	VBO& vbo = *real_data->vbo;
+	const VertexBufferSettings& settings = real_data->settings;
+
+	// Set up VBO
+	vbo.Generate(settings.target);
+	vbo.Bind();
+	vbo.FillData(settings.data, settings.size, settings.usage);
+	vbo.Unbind();
+
+	// ::operator delete(settings.data);
+}
+
 void BackendDispatch::CreateTexture(const void* data)
 {
     const Commands::CreateTexture* real_data = reinterpret_cast<const Commands::CreateTexture*>(data);
@@ -163,7 +179,8 @@ void BackendDispatch::CreateRenderBuffer(const void * data)
 	rbo->Generate(settings);
 }
 
-/************************************ Instanced Draw Commands ************************************/
+/************************************ Misc Commands ************************************/
+
 void BackendDispatch::EditSubBuffer(const void* data)
 {
 	const Commands::EditSubBuffer* real_data = reinterpret_cast<const Commands::EditSubBuffer*>(data);
@@ -171,5 +188,32 @@ void BackendDispatch::EditSubBuffer(const void* data)
 	real_data->vbo->Bind();
 	Call_GL(glBufferSubData(real_data->vbo->GetBindingTarget(), real_data->offset, real_data->size, real_data->data));
 }
+
+void BackendDispatch::DispatchCompute(const void* data)
+{
+	const Commands::DispatchCompute* real_data = reinterpret_cast<const Commands::DispatchCompute*>(data);
+
+	real_data->shader->Bind();
+	Cmd next_cmd = real_data->next_cmd;
+
+	while (next_cmd) {
+		const BackendDispatchFunction CommandFunction = Command::LoadBackendDispatchFunction(next_cmd);
+		const void* command = Command::LoadCommand(next_cmd);
+		CommandFunction(command);
+
+		next_cmd = ((Commands::LinkCmd*)command)->next_cmd;
+	}
+
+	Call_GL(glDispatchCompute(real_data->workGroupX, real_data->workGroupY, real_data->workGroupZ));
+}
+
+void BackendDispatch::UploadUniforms(const void* data)
+{
+	const Commands::UploadUniforms* real_data = reinterpret_cast<const Commands::UploadUniforms*>(data);
+
+	real_data->shader->Bind();
+	real_data->m_Params.UploadUnfiroms(*real_data->shader);
+}
+
 
 TRE_NS_END

@@ -3,6 +3,9 @@
 #include <utility>
 #include "Core/Misc/Defines/Common.hpp"
 #include "MaterialParamHelper.hpp"
+#include <RenderAPI/Shader/ShaderProgram.hpp>
+#include <Renderer/Backend/ResourcesManager/ResourcesManager.hpp>
+#include <RenderAPI/Texture/Texture.hpp>
 
 TRE_NS_START
 
@@ -72,6 +75,38 @@ struct MaterialParametres
         m_Ints.Clear();
         m_Textures.Clear();
     }
+
+	void UploadUnfiroms(const ShaderProgram& program) const
+	{
+		static_assert(true, "This function is not supported with another key types (Supported key types: int32).");
+	}
 };
+
+template<>
+void MaterialParametres<int32>::UploadUnfiroms(const ShaderProgram& program) const
+{
+	for (const auto& uniform_data : this->GetContainer<mat4>()) {
+		program.SetMat4(uniform_data.first, uniform_data.second);
+	}
+
+	for (const auto& uniform_data : this->GetContainer<vec3>()) {
+		program.SetVec3(uniform_data.first, uniform_data.second);
+	}
+
+	for (const auto& uniform_data : this->GetContainer<float>()) {
+		program.SetFloat(uniform_data.first, uniform_data.second);
+	}
+
+	ResourcesManager& manaeger = ResourcesManager::Instance();
+
+	for (const auto& uniform_data : this->GetContainer<TextureID>()) {
+		Texture& active_tex = manaeger.Get<Texture>(ResourcesTypes::TEXTURE, uniform_data.second);
+		glActiveTexture(GL_TEXTURE0 + uniform_data.first);
+		active_tex.Bind();
+	}
+}
+
+template<typename KEY_TYPE>
+using UniformsParams = MaterialParametres<KEY_TYPE>;
 
 TRE_NS_END

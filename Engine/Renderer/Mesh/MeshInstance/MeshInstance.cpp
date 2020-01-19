@@ -13,6 +13,7 @@ MeshInstance::MeshInstance(uint32 instance_count, VaoID vao_id, VboID vbo_id, Ma
 
 void MeshInstance::Submit(CommandBucket& CmdBucket)
 {
+	ResourcesManager& manager = ResourcesManager::Instance();
 	ModelRenderParams params = { 0, m_VaoID, (uint16)0 };
 	Commands::PreInstancedDrawCallCmd* prepare_cmd = NULL;
 	Commands::LinkCmd* link_cmd = NULL;
@@ -20,7 +21,7 @@ void MeshInstance::Submit(CommandBucket& CmdBucket)
 	BucketKey last_key = -1;
 
 	for (SubMesh& obj : m_Meshs) {
-		const Material& material = ResourcesManager::Instance().Get<Material>(ResourcesTypes::MATERIAL, obj.m_MaterialID);
+		const Material& material = manager.Get<Material>(ResourcesTypes::MATERIAL, obj.m_MaterialID);
 		const RenderState& state = material.GetRenderStates();
 		uint32 blend_dist = 0;
 
@@ -32,7 +33,64 @@ void MeshInstance::Submit(CommandBucket& CmdBucket)
 			packet = CmdBucket.SubmitCommand<Commands::PreInstancedDrawCallCmd>(&prepare_cmd, key, params.ToKey());
 			link_cmd = prepare_cmd;
 			prepare_cmd->vao_id = m_VaoID;
-			prepare_cmd->shader = &ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, material.GetTechnique().GetShaderID());
+			prepare_cmd->shader = &manager.Get<ShaderProgram>(ResourcesTypes::SHADER, material.GetTechnique().GetShaderID());
+			last_key = key;
+		}
+
+		if (obj.m_Geometry.m_Indexed) {
+			Commands::InstancedDrawIndexedCmd* draw_cmd = packet->CreateCommand<Commands::InstancedDrawIndexedCmd>(params.ToKey());
+			draw_cmd->mode = obj.m_Geometry.m_Primitive;
+			draw_cmd->type = obj.m_Geometry.m_DataType;
+			draw_cmd->count = obj.m_Geometry.m_Count;
+			draw_cmd->offset = obj.m_Geometry.m_Offset;
+			draw_cmd->instance_count = m_InstanceCount;
+
+			draw_cmd->material = &material;
+			draw_cmd->prepare_cmd = prepare_cmd;
+			draw_cmd->next_cmd = NULL;
+
+			link_cmd->next_cmd = Command::GetRawCommand(draw_cmd);
+			link_cmd = draw_cmd;
+		} else {
+			Commands::InstancedDrawCmd* draw_cmd = packet->CreateCommand<Commands::InstancedDrawCmd>(params.ToKey());
+			draw_cmd->mode = obj.m_Geometry.m_Primitive;
+			draw_cmd->start = obj.m_Geometry.m_Start;
+			draw_cmd->end = obj.m_Geometry.m_End;
+			draw_cmd->instance_count = m_InstanceCount;
+
+			draw_cmd->material = &material;
+			draw_cmd->prepare_cmd = prepare_cmd;
+			draw_cmd->next_cmd = NULL;
+
+			link_cmd->next_cmd = Command::GetRawCommand(draw_cmd);
+			link_cmd = draw_cmd;
+		}
+	}
+}
+
+void MeshInstance::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
+{
+	ResourcesManager& manager = ResourcesManager::Instance();
+	ModelRenderParams params = { 0, m_VaoID, (uint16)0 };
+	Commands::PreInstancedDrawCallCmd* prepare_cmd = NULL;
+	Commands::LinkCmd* link_cmd = NULL;
+	CommandPacket* packet = NULL;
+	BucketKey last_key = -1;
+
+	for (SubMesh& obj : m_Meshs) {
+		const Material& material = manager.Get<Material>(ResourcesTypes::MATERIAL, obj.m_MaterialID);
+		const RenderState& state = material.GetRenderStates();
+		uint32 blend_dist = 0;
+
+		params.material_id = obj.m_MaterialID;
+		params.blend_dist = (uint16)blend_dist;
+		BucketKey key = state.ToKey(shader_id);
+
+		if (key != last_key) {
+			packet = CmdBucket.SubmitCommand<Commands::PreInstancedDrawCallCmd>(&prepare_cmd, key, params.ToKey());
+			link_cmd = prepare_cmd;
+			prepare_cmd->vao_id = m_VaoID;
+			prepare_cmd->shader = &manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
 			last_key = key;
 		}
 

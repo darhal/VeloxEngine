@@ -49,9 +49,13 @@ public:
 
 	const Mat4f& GetProjectionMatrix() const { return m_Projection; }
 
+	RenderTarget& GetRenderTarget() { return m_RenderTarget; }
+
+	const RenderTarget& GetRenderTarget() const { return m_RenderTarget; }
+
 	void Flush() const;
 
-	void End();
+	void Finalize();
 private:
 	RenderTarget m_RenderTarget;
 	Mat4f m_Projection;

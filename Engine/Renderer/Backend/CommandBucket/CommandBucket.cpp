@@ -77,7 +77,7 @@ void CommandBucket::Flush() const
 	}
 }
 
-void CommandBucket::End()
+void CommandBucket::Finalize()
 {
 	Map<BucketKey, CommandPacket*>::CIterator itr = m_Packets.crbegin();
 	Map<BucketKey, CommandPacket*>::CIterator end = m_Packets.crend();

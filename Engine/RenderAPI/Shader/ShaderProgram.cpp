@@ -27,6 +27,7 @@ ShaderProgram::ShaderProgram(std::initializer_list<Shader> shaderList) : m_Shade
 
 	for (const Shader& shader : shaderList) {
 		glAttachShader(m_ID, shader.GetID());
+		m_Shaders.EmplaceBack(shader);
 	}
 }
 

@@ -24,6 +24,8 @@ struct BackendDispatch
 	static void CreateVAO(const void* data);
 
     static void CreateIndexBuffer(const void* data);
+
+	static void CreateVBO(const void* data);
     
     static void CreateTexture(const void* data);
 
@@ -33,6 +35,10 @@ struct BackendDispatch
 
 	// Misc commands:
 	static void EditSubBuffer(const void* data);
+
+	static void DispatchCompute(const void* data);
+
+	static void UploadUniforms(const void* data);
 };
 
 

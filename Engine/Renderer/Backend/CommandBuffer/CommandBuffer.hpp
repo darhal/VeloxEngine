@@ -22,5 +22,6 @@ private:
 	Vector<CommandBucket> m_Buckets;
 };
 
+typedef CommandBuffer CommandQueue;
 
 TRE_NS_END
