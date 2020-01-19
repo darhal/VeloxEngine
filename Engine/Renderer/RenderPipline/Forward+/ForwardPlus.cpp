@@ -24,12 +24,12 @@ void ForwardPlusRenderer::Initialize(uint32 screen_width, uint32 screen_height)
 	m_LightBuffer = manager.CreateResource<VBO>(ResourcesTypes::VBO);
 	Commands::CreateVBO* cmd = op_queue.SubmitCommand<Commands::CreateVBO>();
 	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_LightBuffer);
-	cmd->settings = VertexBufferSettings(BufferTarget::SHADER_STORAGE_BUFFER, BufferUsage::DYNAMIC_DRAW, sizeof(Mat4f), MAX_LIGHTS);
+	cmd->settings = VertexBufferSettings(MAX_LIGHTS * sizeof(Mat4f), BufferTarget::SHADER_STORAGE_BUFFER, BufferUsage::DYNAMIC_DRAW);
 
 	m_VisisbleLightIndicesBuffer = manager.CreateResource<VBO>(ResourcesTypes::VBO);
 	cmd = op_queue.SubmitCommand<Commands::CreateVBO>();
 	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_VisisbleLightIndicesBuffer);
-	cmd->settings = VertexBufferSettings(BufferTarget::SHADER_STORAGE_BUFFER, BufferUsage::STATIC_DRAW, sizeof(uint32), number_of_tiles * MAX_LIGHTS);
+	cmd->settings = VertexBufferSettings(number_of_tiles * MAX_LIGHTS * sizeof(uint32), BufferTarget::SHADER_STORAGE_BUFFER, BufferUsage::STATIC_DRAW);
 
 	this->SetupFramebuffers(screen_width, screen_height);
 }

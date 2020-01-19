@@ -14,20 +14,18 @@ TRE_NS_START
 struct VertexBufferSettings
 {
 	template<typename T>
-	VertexBufferSettings(BufferTarget::buffer_target_t target, BufferUsage::buffer_usage_t usage, const T* data, uint32 count) :
-		data(data), size(sizeof(T) * count), target(target), usage(usage)
+	VertexBufferSettings(const T* data, uint32 count, BufferTarget::buffer_target_t target = BufferTarget::ARRAY_BUFFER, 
+		BufferUsage::buffer_usage_t usage = BufferUsage::STATIC_DRAW) :
+		data(data), total_size(sizeof(T) * count), target(target), usage(usage)
 	{}
 
-	VertexBufferSettings(BufferTarget::buffer_target_t target, BufferUsage::buffer_usage_t usage, uint32 size_per_unit, uint32 count) :
-		data(NULL), size(size_per_unit * count), target(target), usage(usage)
-	{}
-
-	VertexBufferSettings(BufferTarget::buffer_target_t target, BufferUsage::buffer_usage_t usage, uint32 total_size) :
-		data(NULL), size(total_size), target(target), usage(usage)
+	VertexBufferSettings(uint32 total_size, BufferTarget::buffer_target_t target = BufferTarget::ARRAY_BUFFER,
+		BufferUsage::buffer_usage_t usage = BufferUsage::STATIC_DRAW) :
+		data(NULL), total_size(total_size), target(target), usage(usage)
 	{}
 
 	const void* data;
-	uint32 size;
+	uint32 total_size;
 	BufferTarget::buffer_target_t target;
 	BufferUsage::buffer_usage_t usage;
 };

@@ -16,23 +16,24 @@ struct VertexSettings
 	struct VertexBufferData {
 		template<typename T>
 		VertexBufferData(T* data, uint32 count, VBO* vbo) :
-			vbo(vbo), data((void*)data), elements_count(count), size(sizeof(T))
+			buffer_settings(data, count),
+			vbo(vbo)
 		{}
 
 		template<typename T>
 		VertexBufferData(Vector<T>& data_container, VBO* vbo) :
-			vbo(vbo), data(NULL), elements_count((uint32)data_container.Length()), size(sizeof(T))
-		{
-			data = (void*) data_container.StealPtr();
-		}
-
-		VertexBufferData() : vbo(0), data(NULL), elements_count(0), size(0)
+			buffer_settings(data_container.StealPtr(), (uint32)data_container.Length()),
+			vbo(vbo)
 		{}
 
+		VertexBufferData(const VertexBufferSettings& settings, VBO* vbo) : buffer_settings(settings), vbo(vbo)
+		{}
+
+		VertexBufferData() : buffer_settings(0), vbo(0)
+		{}
+
+		VertexBufferSettings buffer_settings;
 		VBO* vbo;
-		void* data;
-		uint32 elements_count;
-		uint32 size;
 	};
 
 	struct VertexAttribute {

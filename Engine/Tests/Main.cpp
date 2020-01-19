@@ -238,7 +238,7 @@ int main()
 		op_queue.Flush();
 
 		renderer.Draw(carrot_mesh);
-		// renderer.Draw(mesh);
+		renderer.Draw(mesh);
 
 		renderer.Render();
 		window.Present();

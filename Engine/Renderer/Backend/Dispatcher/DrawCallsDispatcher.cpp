@@ -98,9 +98,9 @@ void BackendDispatch::CreateVAO(const void* data)
 
 	for (const VertexSettings::VertexBufferData& data : vert_data) {
 		VBO& vbo = *data.vbo;
-		vbo.Generate(BufferTarget::ARRAY_BUFFER);
+		vbo.Generate(data.buffer_settings.target);
 		vbo.Bind();
-		vbo.FillData(data.data, data.elements_count * data.size);
+		vbo.FillData(data.buffer_settings.data, data.buffer_settings.total_size, data.buffer_settings.usage);
 		// ::operator delete(data.data);
 	}
 
@@ -125,7 +125,7 @@ void BackendDispatch::CreateIndexBuffer(const void* data)
 	// Set up indices
 	indexVBO.Generate(BufferTarget::ELEMENT_ARRAY_BUFFER);
 	indexVBO.Bind();
-	indexVBO.FillData(indices_data.data, indices_data.elements_count * indices_data.size);
+	indexVBO.FillData(indices_data.buffer_settings.data, indices_data.buffer_settings.total_size);
 	modelVAO.Unbind();
 	indexVBO.Unbind();
 
@@ -142,7 +142,7 @@ void BackendDispatch::CreateVBO(const void* data)
 	// Set up VBO
 	vbo.Generate(settings.target);
 	vbo.Bind();
-	vbo.FillData(settings.data, settings.size, settings.usage);
+	vbo.FillData(settings.data, settings.total_size, settings.usage);
 	vbo.Unbind();
 
 	// ::operator delete(settings.data);

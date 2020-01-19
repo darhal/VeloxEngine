@@ -30,7 +30,7 @@ void ForwardRenderer::SetupLightsBuffer()
 	m_LightBuffer = manager.CreateResource<VBO>(ResourcesTypes::VBO);
 	Commands::CreateVBO* cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVBO>();
 	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_LightBuffer);
-	cmd->settings = VertexBufferSettings(BufferTarget::UNIFORM_BUFFER, BufferUsage::STATIC_DRAW, sizeof(ILight) * MAX_LIGHTS + sizeof(uint32));
+	cmd->settings = VertexBufferSettings(sizeof(ILight) * MAX_LIGHTS + sizeof(uint32), BufferTarget::UNIFORM_BUFFER, BufferUsage::STATIC_DRAW);
 
 	Commands::BindBufferRange* bind_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::BindBufferRange>();
 	bind_cmd->vbo = cmd->vbo;
