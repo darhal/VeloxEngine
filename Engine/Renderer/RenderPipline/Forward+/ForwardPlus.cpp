@@ -22,12 +22,12 @@ void ForwardPlusRenderer::Initialize(uint32 screen_width, uint32 screen_height)
 	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
 
 	m_LightBuffer = manager.CreateResource<VBO>(ResourcesTypes::VBO);
-	Commands::CreateVBO* cmd = op_queue.SubmitCommand<Commands::CreateVBO>();
+	Commands::CreateVBOCmd* cmd = op_queue.SubmitCommand<Commands::CreateVBOCmd>();
 	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_LightBuffer);
 	cmd->settings = VertexBufferSettings(MAX_LIGHTS * sizeof(Mat4f), BufferTarget::SHADER_STORAGE_BUFFER, BufferUsage::DYNAMIC_DRAW);
 
 	m_VisisbleLightIndicesBuffer = manager.CreateResource<VBO>(ResourcesTypes::VBO);
-	cmd = op_queue.SubmitCommand<Commands::CreateVBO>();
+	cmd = op_queue.SubmitCommand<Commands::CreateVBOCmd>();
 	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_VisisbleLightIndicesBuffer);
 	cmd->settings = VertexBufferSettings(number_of_tiles * MAX_LIGHTS * sizeof(uint32), BufferTarget::SHADER_STORAGE_BUFFER, BufferUsage::STATIC_DRAW);
 
@@ -40,7 +40,7 @@ void ForwardPlusRenderer::SetupFramebuffers(uint32 screen_width, uint32 screen_h
 	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
 
 	TextureID depthMap = manager.CreateResource<Texture>(ResourcesTypes::TEXTURE);
-	Commands::CreateTexture* cmd_tex = op_queue.SubmitCommand<Commands::CreateTexture>();
+	Commands::CreateTextureCmd* cmd_tex = op_queue.SubmitCommand<Commands::CreateTextureCmd>();
 	cmd_tex->texture = &manager.Get<Texture>(ResourcesTypes::TEXTURE, depthMap);
 	cmd_tex->settings = TextureSettings(
 		TexTarget::TEX2D, screen_width, screen_height, NULL,
@@ -51,7 +51,7 @@ void ForwardPlusRenderer::SetupFramebuffers(uint32 screen_width, uint32 screen_h
 	);
 
 	m_DepthMapFbo = manager.CreateResource<FBO>(ResourcesTypes::FBO);
-	Commands::CreateFrameBuffer* cmd_fbo = op_queue.SubmitCommand<Commands::CreateFrameBuffer>();
+	Commands::CreateFrameBufferCmd* cmd_fbo = op_queue.SubmitCommand<Commands::CreateFrameBufferCmd>();
 	cmd_fbo->fbo = &manager.Get<FBO>(ResourcesTypes::FBO, m_DepthMapFbo);
 	cmd_fbo->settings = FramebufferSettings(
 		{ { cmd_tex->texture, FBOAttachement::DEPTH_ATTACH } },

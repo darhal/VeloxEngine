@@ -86,7 +86,7 @@ void BackendDispatch::InstancedDrawIndexed(const void* data)
 
 void BackendDispatch::CreateVAO(const void* data)
 {
-	const Commands::CreateVAO* real_data = reinterpret_cast<const Commands::CreateVAO*>(data);
+	const Commands::CreateVAOCmd* real_data = reinterpret_cast<const Commands::CreateVAOCmd*>(data);
 	VAO* modelVAO = real_data->vao;
 	const VertexSettings& settings = real_data->settings;
 
@@ -116,7 +116,7 @@ void BackendDispatch::CreateVAO(const void* data)
 
 void BackendDispatch::CreateIndexBuffer(const void* data)
 {
-    const Commands::CreateIndexBuffer* real_data = reinterpret_cast<const Commands::CreateIndexBuffer*>(data);
+    const Commands::CreateIndexBufferCmd* real_data = reinterpret_cast<const Commands::CreateIndexBufferCmd*>(data);
 
     VAO& modelVAO = *real_data->vao;
 	const VertexSettings::VertexBufferData& indices_data = real_data->settings;
@@ -134,7 +134,7 @@ void BackendDispatch::CreateIndexBuffer(const void* data)
 
 void BackendDispatch::CreateVBO(const void* data)
 {
-	const Commands::CreateVBO* real_data = reinterpret_cast<const Commands::CreateVBO*>(data);
+	const Commands::CreateVBOCmd* real_data = reinterpret_cast<const Commands::CreateVBOCmd*>(data);
 
 	VBO& vbo = *real_data->vbo;
 	const VertexBufferSettings& settings = real_data->settings;
@@ -150,7 +150,7 @@ void BackendDispatch::CreateVBO(const void* data)
 
 void BackendDispatch::CreateTexture(const void* data)
 {
-    const Commands::CreateTexture* real_data = reinterpret_cast<const Commands::CreateTexture*>(data);
+    const Commands::CreateTextureCmd* real_data = reinterpret_cast<const Commands::CreateTextureCmd*>(data);
     Texture* tex = real_data->texture;
     const TextureSettings& settings = real_data->settings;
 
@@ -163,7 +163,7 @@ void BackendDispatch::CreateTexture(const void* data)
 
 void BackendDispatch::CreateFrameBuffer(const void * data)
 {
-	const Commands::CreateFrameBuffer* real_data = reinterpret_cast<const Commands::CreateFrameBuffer*>(data);
+	const Commands::CreateFrameBufferCmd* real_data = reinterpret_cast<const Commands::CreateFrameBufferCmd*>(data);
 	Framebuffer* fbo = real_data->fbo;
 	const FramebufferSettings& settings = real_data->settings;
 
@@ -172,7 +172,7 @@ void BackendDispatch::CreateFrameBuffer(const void * data)
 
 void BackendDispatch::CreateRenderBuffer(const void * data)
 {
-	const Commands::CreateRenderBuffer* real_data = reinterpret_cast<const Commands::CreateRenderBuffer*>(data);
+	const Commands::CreateRenderBufferCmd* real_data = reinterpret_cast<const Commands::CreateRenderBufferCmd*>(data);
 	Renderbuffer* rbo = real_data->rbo;
 	const RenderbufferSettings& settings = real_data->settings;
 
@@ -183,7 +183,7 @@ void BackendDispatch::CreateRenderBuffer(const void * data)
 
 void BackendDispatch::EditSubBuffer(const void* data)
 {
-	const Commands::EditSubBuffer* real_data = reinterpret_cast<const Commands::EditSubBuffer*>(data);
+	const Commands::EditSubBufferCmd* real_data = reinterpret_cast<const Commands::EditSubBufferCmd*>(data);
 
 	real_data->vbo->Bind();
 	Call_GL(glBufferSubData(real_data->vbo->GetBindingTarget(), real_data->offset, real_data->size, real_data->data));
@@ -191,7 +191,7 @@ void BackendDispatch::EditSubBuffer(const void* data)
 
 void BackendDispatch::DispatchCompute(const void* data)
 {
-	const Commands::DispatchCompute* real_data = reinterpret_cast<const Commands::DispatchCompute*>(data);
+	const Commands::DispatchComputeCmd* real_data = reinterpret_cast<const Commands::DispatchComputeCmd*>(data);
 
 	real_data->shader->Bind();
 	Cmd next_cmd = real_data->next_cmd;
@@ -209,7 +209,7 @@ void BackendDispatch::DispatchCompute(const void* data)
 
 void BackendDispatch::UploadUniforms(const void* data)
 {
-	const Commands::UploadUniforms* real_data = reinterpret_cast<const Commands::UploadUniforms*>(data);
+	const Commands::UploadUniformsCmd* real_data = reinterpret_cast<const Commands::UploadUniformsCmd*>(data);
 
 	real_data->shader->Bind();
 	real_data->m_Params.UploadUnfiroms(*real_data->shader);
@@ -217,10 +217,26 @@ void BackendDispatch::UploadUniforms(const void* data)
 
 void BackendDispatch::BindBufferRange(const void* data)
 {
-	const Commands::BindBufferRange* real_data = reinterpret_cast<const Commands::BindBufferRange*>(data);
+	const Commands::BindBufferRangeCmd* real_data = reinterpret_cast<const Commands::BindBufferRangeCmd*>(data);
 
 	Call_GL(glBindBufferRange(real_data->vbo->GetBindingTarget(), real_data->binding_point, real_data->vbo->GetID(), real_data->offset, real_data->size););
 }
 
+void BackendDispatch::MapBufferCmd(const void* data)
+{
+	const Commands::MapBufferCmd* real_data = reinterpret_cast<const Commands::MapBufferCmd*>(data);
+
+	void* mapped_data = glMapBuffer(real_data->target, real_data->access);
+	real_data->callback(mapped_data, real_data);
+	glUnmapBuffer(real_data->target);
+}
+
+void BackendDispatch::CallFunctionCmd(const void* data)
+{
+	const Commands::CallFunctionCmd* real_data = reinterpret_cast<const Commands::CallFunctionCmd*>(data);
+
+	real_data->callback(real_data->data);
+	// TODO: Free real_data->data;
+}
 
 TRE_NS_END

@@ -31,10 +31,10 @@ public:
 
 	MeshInstance LoadInstancedMesh(uint32 instance_count, ShaderID shader_id = 0);
 private:
-	Commands::CreateVAO* LoadFromSettings(const ModelData& data);
-	Commands::CreateVAO* LoadFromVertexData(Vector<VertexData>& ver_data);
+	Commands::CreateVAOCmd* LoadFromSettings(const ModelData& data);
+	Commands::CreateVAOCmd* LoadFromVertexData(Vector<VertexData>& ver_data);
 
-	Commands::CreateVAO* m_CreateVaoCmd;
+	Commands::CreateVAOCmd* m_CreateVaoCmd;
 	Vector<ModelMaterialData> m_Materials;
 	uint32 m_VertexCount;
 	VaoID m_VaoID;

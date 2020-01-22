@@ -15,7 +15,7 @@ Model::Model(const ModelData& data)
 		m_HaveIndexBuffer = true;
 
 		VboID indexVboID = manager.CreateResource<VBO>(ResourcesTypes::VBO);
-		Commands::CreateIndexBuffer* create_index_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateIndexBuffer>();
+		Commands::CreateIndexBufferCmd* create_index_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateIndexBufferCmd>();
 		// m_VboIDs.EmplaceBack(indexVboID);
 		create_index_cmd->vao = m_CreateVaoCmd->vao;
 		create_index_cmd->settings = VertexSettings::VertexBufferData(data.indices, data.indexSize, &manager.Get<VBO>(ResourcesTypes::VBO, indexVboID));
@@ -39,7 +39,7 @@ Model::Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_
 		m_HaveIndexBuffer = true;
 
 		VboID indexVboID = manager.CreateResource<VBO>(ResourcesTypes::VBO);
-		Commands::CreateIndexBuffer* create_index_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateIndexBuffer>();
+		Commands::CreateIndexBufferCmd* create_index_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateIndexBufferCmd>();
 		// m_VboIDs.EmplaceBack(indexVboID);
 		create_index_cmd->vao = m_CreateVaoCmd->vao;
 		create_index_cmd->settings = VertexSettings::VertexBufferData(*indices, &manager.Get<VBO>(ResourcesTypes::VBO, indexVboID));
@@ -55,11 +55,11 @@ Model::Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_
 	}
 }
 
-Commands::CreateVAO* Model::LoadFromSettings(const ModelData& data)
+Commands::CreateVAOCmd* Model::LoadFromSettings(const ModelData& data)
 {
 	ASSERTF((data.vertexSize == 0 || data.vertices == NULL), "Attempt to create a ModelLoader with empty vertecies!");
 	ResourcesManager& manager = ResourcesManager::Instance();
-	Commands::CreateVAO* createVaoCmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVAO>();
+	Commands::CreateVAOCmd* createVaoCmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVAOCmd>();
 
 	m_VaoID = manager.CreateResource<VAO>(ResourcesTypes::VAO);
 	createVaoCmd->vao = &manager.Get<VAO>(ResourcesTypes::VAO, m_VaoID);
@@ -93,11 +93,11 @@ Commands::CreateVAO* Model::LoadFromSettings(const ModelData& data)
 	return createVaoCmd;
 }
 
-Commands::CreateVAO* Model::LoadFromVertexData(Vector<VertexData>& ver_data)
+Commands::CreateVAOCmd* Model::LoadFromVertexData(Vector<VertexData>& ver_data)
 {
 	ASSERTF((ver_data.Size() == 0), "Attempt to create a ModelLoader with empty vertecies!");
 	ResourcesManager& manager = ResourcesManager::Instance();
-	Commands::CreateVAO* createVaoCmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVAO>();
+	Commands::CreateVAOCmd* createVaoCmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVAOCmd>();
 	m_VaoID = manager.CreateResource<VAO>(ResourcesTypes::VAO);
 
 	VboID vboID = manager.CreateResource<VBO>(ResourcesTypes::VBO);

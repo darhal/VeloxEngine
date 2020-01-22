@@ -209,7 +209,7 @@ int main()
 	StaticMesh mesh = model.LoadMesh(shader_id);
 	//MeshInstance mesh = model.LoadInstancedMesh(1'000, shader_id3);
 
-	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
+	MeshLoader loader("res/obj/Chees_pawn/LP_Queen.obj");
 	Model carrot = loader.LoadAsOneObject();
 	// MeshInstance carrot_mesh = carrot.LoadInstancedMesh(2'000, shader_id3);
 	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
@@ -224,8 +224,14 @@ int main()
 	Enable(GL_MULTISAMPLE);
 	ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
-	INIT_BENCHMARK;
+	Commands::MapBufferCmd* main = op_queue.SubmitCommand<Commands::MapBufferCmd>();
+	main->target = BufferTarget::ARRAY_BUFFER;
+	main->access = AccessTypes::WRITE;
+	main->callback = [](const void* data, const Commands::MapBufferCmd* cmd) { printf("Callback is here\n"); };
 
+
+
+	INIT_BENCHMARK;
 	while (true) {
 		//BENCHMARK("Render Thread",
 
@@ -238,7 +244,7 @@ int main()
 		op_queue.Flush();
 
 		renderer.Draw(carrot_mesh);
-		renderer.Draw(mesh);
+		// renderer.Draw(mesh);
 
 		renderer.Render();
 		window.Present();

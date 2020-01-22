@@ -41,6 +41,10 @@ struct BackendDispatch
 	static void UploadUniforms(const void* data);
 
 	static void BindBufferRange(const void* data);
+
+	static void MapBufferCmd(const void* data);
+
+	static void CallFunctionCmd(const void* data);
 };
 
 

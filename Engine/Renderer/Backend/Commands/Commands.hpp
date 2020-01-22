@@ -101,7 +101,7 @@ namespace Commands
 	};
 
     /*************************************** RESOURCES COMMANDS ***************************************/
-    struct CreateIndexBuffer
+    struct CreateIndexBufferCmd
     {
 		VertexSettings::VertexBufferData settings;
         VAO* vao;
@@ -109,7 +109,7 @@ namespace Commands
         CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateIndexBuffer;
     };
 
-	struct CreateVAO
+	struct CreateVAOCmd
 	{
 		typedef VAO            Resource;
 		typedef VertexSettings Settings;
@@ -121,7 +121,7 @@ namespace Commands
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateVAO;
 	};
 
-	struct CreateVBO
+	struct CreateVBOCmd
 	{
 		typedef VBO                  Resource;
 		typedef VertexBufferSettings Settings;
@@ -133,7 +133,7 @@ namespace Commands
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateVBO;
 	};
 
-    struct CreateTexture
+    struct CreateTextureCmd
     {
 		typedef Texture         Resource;
 		typedef TextureSettings Settings;
@@ -145,7 +145,7 @@ namespace Commands
         CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateTexture;
     };
 
-	struct CreateFrameBuffer
+	struct CreateFrameBufferCmd
 	{
 		typedef Framebuffer         Resource;
 		typedef FramebufferSettings Settings;
@@ -157,7 +157,7 @@ namespace Commands
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CreateFrameBuffer;
 	};
 
-	struct CreateRenderBuffer
+	struct CreateRenderBufferCmd
 	{
 		typedef Renderbuffer         Resource;
 		typedef RenderbufferSettings Settings;
@@ -171,7 +171,7 @@ namespace Commands
 
 	/*************************************** MISC COMMANDS ***************************************/
 
-	struct EditSubBuffer
+	struct EditSubBufferCmd
 	{
 		VBO* vbo;
 		const void* data;
@@ -181,7 +181,7 @@ namespace Commands
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::EditSubBuffer;
 	};
 
-	struct DispatchCompute : public LinkCmd
+	struct DispatchComputeCmd : public LinkCmd
 	{
 		ShaderProgram* shader;
 		uint32 workGroupX, workGroupY, workGroupZ;
@@ -189,7 +189,7 @@ namespace Commands
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::DispatchCompute;
 	};
 
-	struct UploadUniforms
+	struct UploadUniformsCmd
 	{
 		ShaderProgram* shader;
 		UniformsParams<int32> m_Params;
@@ -197,7 +197,7 @@ namespace Commands
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::UploadUniforms;
 	};
 
-	struct BindBufferRange
+	struct BindBufferRangeCmd
 	{
 		VBO* vbo;
 		uint32 binding_point;
@@ -205,6 +205,27 @@ namespace Commands
 		uint32 size;
 
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::BindBufferRange;
+	};
+
+	struct MapBufferCmd
+	{
+		typedef void(*CallbackFunction)(const void*, const MapBufferCmd*);
+
+		CallbackFunction callback;
+		BufferTarget::buffer_target_t target;
+		AccessTypes::access_types_t access;
+		
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::MapBufferCmd;
+	};
+
+	struct CallFunctionCmd
+	{
+		typedef void(*CallbackFunction)(const void*);
+
+		CallbackFunction callback;
+		void* data;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CallFunctionCmd;
 	};
 };
 

@@ -129,7 +129,7 @@ void MeshInstance::UpdateTransforms(uint32 instance_id)
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
 	auto& op_queue = manager.GetContextOperationsQueue();
-	Commands::EditSubBuffer* cmd = op_queue.SubmitCommand<Commands::EditSubBuffer>();
+	Commands::EditSubBufferCmd* cmd = op_queue.SubmitCommand<Commands::EditSubBufferCmd>();
 	
 	cmd->data = m_ModelTransformations + instance_id;
 	cmd->offset = sizeof(Mat4f) * instance_id;

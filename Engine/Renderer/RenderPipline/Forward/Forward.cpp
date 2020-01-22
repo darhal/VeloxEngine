@@ -28,28 +28,28 @@ void ForwardRenderer::SetupLightsBuffer()
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
 	m_LightBuffer = manager.CreateResource<VBO>(ResourcesTypes::VBO);
-	Commands::CreateVBO* cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVBO>();
+	Commands::CreateVBOCmd* cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVBOCmd>();
 	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_LightBuffer);
 	cmd->settings = VertexBufferSettings(sizeof(ILight) * MAX_LIGHTS + sizeof(uint32), BufferTarget::UNIFORM_BUFFER, BufferUsage::STATIC_DRAW);
 
-	Commands::BindBufferRange* bind_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::BindBufferRange>();
+	Commands::BindBufferRangeCmd* bind_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::BindBufferRangeCmd>();
 	bind_cmd->vbo = cmd->vbo;
 	bind_cmd->binding_point = 0;
 	bind_cmd->offset = 0;
 	bind_cmd->size = sizeof(ILight) * MAX_LIGHTS + sizeof(uint32);
 
 	{
-		Commands::EditSubBuffer* edit_sub_buff = manager.GetContextOperationsQueue().SubmitCommand<Commands::EditSubBuffer>();
+		Commands::EditSubBufferCmd* edit_sub_buff = manager.GetContextOperationsQueue().SubmitCommand<Commands::EditSubBufferCmd>();
 		edit_sub_buff->vbo = cmd->vbo;
 		DirectionalLight* light = new DirectionalLight();
 		light->SetDirection(vec3(0.f, -0.5f, 0.f));
-		light->SetLightColor(vec3(1.0f, 1.0f, 0.8f));
+		light->SetLightColor(vec3(0.5f, 0.0f, 0.5f));
 		edit_sub_buff->data = &light->GetLightMatrix();
 		edit_sub_buff->offset = 0;
 		edit_sub_buff->size = sizeof(Mat4f);
 	}
 	{
-		Commands::EditSubBuffer* edit_sub_buff = manager.GetContextOperationsQueue().SubmitCommand<Commands::EditSubBuffer>();
+		Commands::EditSubBufferCmd* edit_sub_buff = manager.GetContextOperationsQueue().SubmitCommand<Commands::EditSubBufferCmd>();
 		edit_sub_buff->vbo = cmd->vbo;
 		uint32* count = new uint32(1);
 		edit_sub_buff->data = count;
