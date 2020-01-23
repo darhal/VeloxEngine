@@ -20,8 +20,6 @@ public:
 
 	FORCEINLINE Mat4f& GetTransformationMatrix();
 
-	void Submit(CommandBucket& CmdBucket) final;
-
 	void Submit(CommandBucket& CmdBucket, ShaderID shader_id) final;
 
 	FORCEINLINE const Vector<SubMesh>& GetSubMeshes() const;

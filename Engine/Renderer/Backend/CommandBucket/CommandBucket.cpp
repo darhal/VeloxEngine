@@ -1,15 +1,20 @@
 #include "CommandBucket.hpp"
 #include <Renderer/Backend/ResourcesManager/ResourcesManager.hpp>
 #include <RenderAPI/Shader/ShaderProgram.hpp>
+#include <RenderAPI/FrameBuffer/FBO.hpp>
 
 TRE_NS_START
 
-CommandBucket::CommandBucket() : m_RenderTarget(), m_Projection(), m_Camera(), m_Packets(), m_PacketAllocator(sizeof(CommandPacket), 1)
+CommandBucket::CommandBucket() : 
+	m_RenderTarget(), m_OnKeyChangeCallback(OnKeyChangeCallback), m_OnBucketFlushCallback(OnBucketFlushCallback),
+	m_Projection(), m_Camera(), m_Packets(), m_PacketAllocator(sizeof(CommandPacket), 1)
 {
 }
 
 CommandBucket::CommandBucket(CommandBucket&& bucket) : 
 	m_RenderTarget(std::move(bucket.m_RenderTarget)), 
+	m_OnKeyChangeCallback(bucket.m_OnKeyChangeCallback),
+	m_OnBucketFlushCallback(bucket.m_OnBucketFlushCallback),
 	m_Projection(bucket.m_Projection),
 	m_Camera(bucket.m_Camera),
 	m_Packets(std::move(bucket.m_Packets)), 
@@ -20,6 +25,8 @@ CommandBucket::CommandBucket(CommandBucket&& bucket) :
 CommandBucket& CommandBucket::operator=(CommandBucket&& bucket)
 {
 	m_RenderTarget = std::move(bucket.m_RenderTarget);
+	m_OnKeyChangeCallback = bucket.m_OnKeyChangeCallback;
+	m_OnBucketFlushCallback = bucket.m_OnBucketFlushCallback;
 	m_Projection = bucket.m_Projection;
 	m_Camera = bucket.m_Camera;
 	m_Packets = std::move(bucket.m_Packets);
@@ -55,26 +62,44 @@ CommandPacket& CommandBucket::GetOrCreateCommandPacket(const BucketKey& key)
 	return *res;
 }
 
+void CommandBucket::OnKeyChangeCallback(ResourcesManager& manager, const BucketKey& key, const Mat4f& proj_view, const Mat4f& proj, const Camera& camera)
+{
+	uint32 shader_id;
+	RenderState state = RenderState::FromKey(key, &shader_id);
+	state.ApplyStates();
+
+	// Set Shader
+	ShaderProgram& shader = manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
+	shader.Bind();
+	shader.SetMat4("u_ProjView", proj_view);
+	shader.SetVec3("u_ViewPosition", camera.Position);
+}
+
+void CommandBucket::OnBucketFlushCallback(ResourcesManager& manager, const RenderTarget& rt)
+{
+	// Apply framer buffer here!
+	if (rt.m_FboID != 0) {
+		FBO& fbo = manager.Get<FBO>(ResourcesTypes::FBO, rt.m_FboID);
+		fbo.Bind();
+	}
+
+	// TODO: Maybe set viewport
+}
+
+
 void CommandBucket::Flush() const
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
-	// TODO: Apply framer buffer
+	// Call call back
+	m_OnBucketFlushCallback(manager, m_RenderTarget);
 	const Mat4f projView = m_Projection * m_Camera.GetViewMatrix();
 	const vec3& camera_position = m_Camera.Position;
 
 	for (const auto& key_packet_pair : m_Packets) {
-		// Decode and apply key
-		uint32 shader_id;
-		RenderState state = RenderState::FromKey(key_packet_pair.first, &shader_id);
-		state.ApplyStates();
+		// Decode the key,  and apply render states and shader
+		m_OnKeyChangeCallback(manager, key_packet_pair.first, projView, m_Projection, m_Camera);
 
-		// Set Shader
-		ShaderProgram& shader = manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
-		shader.Bind();
-		shader.SetMat4("ProjView", projView);
-		shader.SetVec3("ViewPosition", camera_position);
-
-		key_packet_pair.second->Flush(manager, shader, projView);
+		key_packet_pair.second->Flush();
 		key_packet_pair.second->SwapBuffer();
 	}
 }

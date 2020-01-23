@@ -21,6 +21,7 @@ TRE_NS_START
  ---	Leftover : 0 bits.	 ---
 */
 typedef uint64 BucketKey;
+typedef uint64 PacketKey;
 
 /**
  * Source Blend			- 14 bits.

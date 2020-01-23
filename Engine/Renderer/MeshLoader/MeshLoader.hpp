@@ -30,9 +30,9 @@ public:
 
  	MaterialLoader& GetMaterialLoader() { return m_MaterialLoader; };
 	
-	Model LoadAsOneObject();
+	Model LoadAsOneObject(uint32 processing = 0);
 
-	Model LoadObject(const String& name);
+	Model LoadObject(const String& name, uint32 processing = 0);
 private:
 	Map<uint8, Vector<vec3>> m_Verticies;
 	Map<uint8, Vector<vec3>> m_Normals;

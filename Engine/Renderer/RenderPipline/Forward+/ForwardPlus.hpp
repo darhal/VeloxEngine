@@ -26,7 +26,7 @@ public:
 private:
 	void SetupFramebuffers(uint32 screen_width, uint32 screen_height);
 
-	void SetupCommandBuffer();
+	void SetupCommandBuffer(const Vec2<uint32>& work_groups);
 
 	void SetupShaders();
 private:

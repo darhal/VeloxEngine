@@ -214,7 +214,7 @@ void MeshLoader::ProcessData(Vector<Model>& arrayOfObjects)
 	}while (objectIndex < m_ObjectCount);
 }
 
-Model MeshLoader::LoadAsOneObject()
+Model MeshLoader::LoadAsOneObject(uint32 processing)
 {
 	int32 objectIndex = (m_ObjectCount > 1 ? 1 : 0);
 	Vector<VertexData> vert_data_global = std::move(m_VerteciesData[objectIndex]);
@@ -235,16 +235,16 @@ Model MeshLoader::LoadAsOneObject()
 		objectIndex++;
 	}while (objectIndex < m_ObjectCount);
 
-	Model object(vert_data_global, material_data_global, &indices_data_global);
+	Model object(vert_data_global, material_data_global, &indices_data_global, processing);
 	return object;
 }
 
-Model MeshLoader::LoadObject(const String& name)
+Model MeshLoader::LoadObject(const String& name, uint32 processing)
 {
 	uint8* obj_index = m_Objects.Get(name);
 	ASSERTF(obj_index == NULL, "Attempt to load an object which isn't present.");
 	uint8 id = *obj_index + 1;
-	Model object(m_VerteciesData[id], m_Materials[id], &m_DataIndex[id]);
+	Model object(m_VerteciesData[id], m_Materials[id], &m_DataIndex[id], processing);
 	return object;
 }
 

@@ -20,19 +20,30 @@ public:
 	{
 		POSITION, 
 		NORMAL, 
-		TEXTURE_COORDINATES
+		TEXTURE_COORDINATES,
+		TANGENT,
+		BITANGET,
 	};
 
-	Model(const ModelData& data);
+	enum Processing
+	{
+		NONE = 0x0,
+		CALC_TANGET = 0x1,
+		CALC_BITANGET = 0x2,
+	};
 
-	Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_vec, Vector<uint32>* indices = NULL);
+	Model(const ModelData& data, uint32 processing = 0);
+
+	Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_vec, Vector<uint32>* indices = NULL, uint32 processing = 0);
 
 	StaticMesh LoadMesh(ShaderID shader_id = 0);
 
 	MeshInstance LoadInstancedMesh(uint32 instance_count, ShaderID shader_id = 0);
+
+	Vector<NormalVertexData> ProcessModel(uint32 processing, const Vector<VertexData>& vertices, Vector<uint32>* indices = NULL);
 private:
 	Commands::CreateVAOCmd* LoadFromSettings(const ModelData& data);
-	Commands::CreateVAOCmd* LoadFromVertexData(Vector<VertexData>& ver_data);
+	Commands::CreateVAOCmd* LoadFromVertexData(uint32 processing, Vector<VertexData>& ver_data, Vector<uint32>* indices);
 
 	Commands::CreateVAOCmd* m_CreateVaoCmd;
 	Vector<ModelMaterialData> m_Materials;

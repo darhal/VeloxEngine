@@ -16,17 +16,15 @@ CommandPacket::CommandPacket(CommandBucket* bucket, const BucketKey& key) :
 	m_Commands = (Pair<uint64, Cmd>*) m_CmdsAllocator.Allocate(DEFAULT_MAX_ELEMENTS * COMMAND_PTR * MULTIPLIER);
 }
 
-void CommandPacket::Flush(ResourcesManager& manager, const ShaderProgram& shader, const Mat4f& proj_view)
+void CommandPacket::Flush()
 {
 	const uint32 start = m_BufferMarker * DEFAULT_MAX_ELEMENTS;
 	const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;
-	VaoID last_vao_id = -1; MaterialID last_material_id = -1;
 
 	for (uint32 i = start; i < end; i++) {
 		const uint64& internal_key = m_Commands[i].first;
 		Cmd cmd = m_Commands[i].second;
-		// ModelRenderParams render_params = ModelRenderParams::FromKey(internal_key);
-	
+
 		// Issue the draw call
 		const BackendDispatchFunction CommandFunction = Command::LoadBackendDispatchFunction(cmd);
 		const void* command = Command::LoadCommand(cmd);

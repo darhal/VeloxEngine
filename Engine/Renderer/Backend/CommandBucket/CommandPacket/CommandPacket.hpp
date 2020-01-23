@@ -23,7 +23,7 @@ public:
 	template<typename U>
 	U* CreateCommand(const uint64& internal_key);
 
-	void Flush(ResourcesManager& manager, const ShaderProgram& shader, const Mat4f& proj_view);
+	void Flush();
 
 	void SwapBuffer();
 

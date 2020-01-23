@@ -16,6 +16,9 @@ TRE_NS_START
 class CommandBucket
 {
 public:
+	typedef void(*OnPacketKeyChange)(ResourcesManager&, const BucketKey&, const Mat4f&, const Mat4f&, const Camera&);
+	typedef void(*OnBucketFlush)(ResourcesManager&, const RenderTarget&);
+public:
 	CommandBucket();
 
 	CommandBucket(const CommandBucket&) = delete;
@@ -53,11 +56,22 @@ public:
 
 	const RenderTarget& GetRenderTarget() const { return m_RenderTarget; }
 
+	void SetOnKeyChangeCallback(OnPacketKeyChange callback) { m_OnKeyChangeCallback  = callback; }
+
+	void SetOnBucketFlushCallback(OnBucketFlush callback) { m_OnBucketFlushCallback = callback; }
+
 	void Flush() const;
 
 	void Finalize();
+
+	static void OnKeyChangeCallback(ResourcesManager& manager, const BucketKey& key, const Mat4f& proj_view, const Mat4f& proj, const Camera& camera);
+
+	static void OnBucketFlushCallback(ResourcesManager& manager, const RenderTarget& rt);
 private:
+
 	RenderTarget m_RenderTarget;
+	OnPacketKeyChange m_OnKeyChangeCallback;
+	OnBucketFlush m_OnBucketFlushCallback;
 	Mat4f m_Projection;
 	Camera m_Camera;
 	Map<BucketKey, CommandPacket*> m_Packets;

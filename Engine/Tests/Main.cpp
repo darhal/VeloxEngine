@@ -166,9 +166,9 @@ int main()
 		shader.LinkProgram();
 		shader.Use();
 		//shader.AddUniform("MVP");
-		shader.AddUniform("ProjView");
-		shader.AddUniform("Model");
-		shader.AddUniform("ViewPosition");
+		shader.AddUniform("u_ProjView");
+		shader.AddUniform("u_Model");
+		shader.AddUniform("u_ViewPosition");
 	}
 
 	{
@@ -180,9 +180,9 @@ int main()
 			shader.SetUniformBlockBinding("LightUBO", 0);
 
 			// shader.AddUniform("MVP");
-			shader.AddUniform("ViewPosition");
-			shader.AddUniform("ProjView");
-			shader.AddUniform("Model");
+			shader.AddUniform("u_ViewPosition");
+			shader.AddUniform("u_ProjView");
+			shader.AddUniform("u_Model");
 
 			shader.AddUniform("material.ambient");
 			shader.AddUniform("material.diffuse");
@@ -207,9 +207,9 @@ int main()
 	data.vertexSize = ARRAY_SIZE(vertices);
 	Model model(data);
 	StaticMesh mesh = model.LoadMesh(shader_id);
-	//MeshInstance mesh = model.LoadInstancedMesh(1'000, shader_id3);
+	// MeshInstance mesh = model.LoadInstancedMesh(1'000, shader_id3);
 
-	MeshLoader loader("res/obj/Chees_pawn/LP_Queen.obj");
+	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
 	Model carrot = loader.LoadAsOneObject();
 	// MeshInstance carrot_mesh = carrot.LoadInstancedMesh(2'000, shader_id3);
 	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
@@ -221,15 +221,10 @@ int main()
 
 	Event ev;
 	Enable(Capability::DEPTH_TEST);
+	Enable(Capability::CULL_FACE);
 	Enable(GL_MULTISAMPLE);
 	ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
-	Commands::MapBufferCmd* main = op_queue.SubmitCommand<Commands::MapBufferCmd>();
-	main->target = BufferTarget::ARRAY_BUFFER;
-	main->access = AccessTypes::WRITE;
-	main->callback = [](const void* data, const Commands::MapBufferCmd* cmd) { printf("Callback is here\n"); };
-
-
 
 	INIT_BENCHMARK;
 	while (true) {
@@ -244,7 +239,7 @@ int main()
 		op_queue.Flush();
 
 		renderer.Draw(carrot_mesh);
-		// renderer.Draw(mesh);
+		renderer.Draw(mesh);
 
 		renderer.Render();
 		window.Present();

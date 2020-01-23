@@ -17,7 +17,7 @@ void BackendDispatch::PreDrawCall(const void* data)
 
 	VAO& vao = ResourcesManager::Instance().Get<VAO>(ResourcesTypes::VAO, real_data->vao_id);
 	vao.Bind();
-	real_data->shader->SetMat4("Model", real_data->model);
+	real_data->shader->SetMat4("u_Model", real_data->model);
 
 	Cmd next_cmd = real_data->next_cmd;
 

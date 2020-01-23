@@ -12,7 +12,7 @@ ForwardPlusRenderer::ForwardPlusRenderer()
 
 void ForwardPlusRenderer::Initialize(uint32 screen_width, uint32 screen_height)
 {
-	m_WorkGroups = Vec<2, uint32, normal>(
+	m_WorkGroups = Vec2<uint32>(
 		(screen_width + (screen_width % GROUP_SIZE)) / GROUP_SIZE,
 		(screen_height + (screen_height % GROUP_SIZE)) / GROUP_SIZE
 	);
@@ -31,7 +31,9 @@ void ForwardPlusRenderer::Initialize(uint32 screen_width, uint32 screen_height)
 	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_VisisbleLightIndicesBuffer);
 	cmd->settings = VertexBufferSettings(number_of_tiles * MAX_LIGHTS * sizeof(uint32), BufferTarget::SHADER_STORAGE_BUFFER, BufferUsage::STATIC_DRAW);
 
+	this->SetupShaders();
 	this->SetupFramebuffers(screen_width, screen_height);
+	this->SetupCommandBuffer(m_WorkGroups);
 }
 
 void ForwardPlusRenderer::SetupFramebuffers(uint32 screen_width, uint32 screen_height)
@@ -57,26 +59,6 @@ void ForwardPlusRenderer::SetupFramebuffers(uint32 screen_width, uint32 screen_h
 		{ { cmd_tex->texture, FBOAttachement::DEPTH_ATTACH } },
 		FBOTarget::FBO, NULL, FBOAttachement::DEPTH_ATTACH, {}, GL_NONE
 	);
-}
-
-void ForwardPlusRenderer::SetupCommandBuffer()
-{
-	// These are later executed in this same order
-	CommandBucket& depth_bucket = m_CommandQueue.CreateBucket();
-	{
-		RenderTarget& render_target = depth_bucket.GetRenderTarget();
-		render_target.m_FboID = 0;
-		/*render_target.m_Width = ;
-		render_target.m_Height = ;*/
-	}
-
-	CommandBucket& light_accum_bucket = m_CommandQueue.CreateBucket();
-	{
-		RenderTarget& render_target = depth_bucket.GetRenderTarget();
-		render_target.m_FboID = 0;
-		/*render_target.m_Width = ;
-		render_target.m_Height = ;*/
-	}
 }
 
 void ForwardPlusRenderer::SetupShaders()
@@ -110,7 +92,7 @@ void ForwardPlusRenderer::SetupShaders()
 	m_LightAccum = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
 		Shader("res/Shader/Forward+/light_accumulation.vert.glsl", ShaderType::VERTEX),
 		Shader("res/Shader/Forward+/light_accumulation.frag.glsl", ShaderType::FRAGMENT)
-	);
+		);
 	{
 		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, m_LightAccum);
 		shader.LinkProgram();
@@ -120,15 +102,57 @@ void ForwardPlusRenderer::SetupShaders()
 		shader.AddUniform("numberOfTilesX");
 		shader.AddUniform("viewPosition");
 	}
+
+	ResourcesManager& manager = ResourcesManager::Instance();
+	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
 }
+
+void ForwardPlusRenderer::SetupCommandBuffer(const Vec2<uint32>& work_groups)
+{
+	ResourcesManager& manager = ResourcesManager::Instance();
+
+	// These are later executed in this same order
+	CommandBucket& depth_bucket = m_CommandQueue.CreateBucket();
+	{
+		RenderTarget& render_target = depth_bucket.GetRenderTarget();
+		render_target.m_FboID = m_DepthMapFbo;
+		/*render_target.m_Width = ;
+		render_target.m_Height = ;*/
+	}
+
+	CommandBucket& light_culling_bucket = m_CommandQueue.CreateBucket();
+	{
+		RenderTarget& render_target = depth_bucket.GetRenderTarget();
+		render_target.m_FboID = 0;
+		// light_culling_bucket.SetOnBucketFlushCallback();
+		// light_culling_bucket.SetOnKeyChangeCallback();
+
+		// TODO: Set projection, set view, set depthMap, bind bufferbase for light buffers
+		Commands::DispatchComputeCmd* dispatchcmd = light_culling_bucket.SubmitCommand<Commands::DispatchComputeCmd>();
+		dispatchcmd->shader = &manager.Get<ShaderProgram>(ResourcesTypes::SHADER, m_LightCull);
+		dispatchcmd->workGroupX = work_groups.x;
+		dispatchcmd->workGroupY = work_groups.y;
+		dispatchcmd->workGroupZ = 0;
+		dispatchcmd->next_cmd = NULL;
+	}
+
+	CommandBucket& light_accum_bucket = m_CommandQueue.CreateBucket();
+	{
+		RenderTarget& render_target = depth_bucket.GetRenderTarget();
+		render_target.m_FboID = 0;
+		/*render_target.m_Width = ;
+		render_target.m_Height = ;*/
+	}
+}
+
 
 void ForwardPlusRenderer::Draw(IPrimitiveMesh& mesh)
 {
 	// Depth Pass:
 	mesh.Submit(m_CommandQueue.GetCommandBucker(DPETH_PASS), m_DepthShader);
 
-	// TODO: ADD compute shader phase here
-	// Code...
+	// ADD compute shader phase here
+	
 
 	// Light Accumlation Pass:
 	mesh.Submit(m_CommandQueue.GetCommandBucker(LIGHT_ACCUM), m_LightAccum);

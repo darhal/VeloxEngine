@@ -14,4 +14,9 @@ struct VertexData
 	vec2 texture;
 };
 
+struct NormalVertexData
+{
+	vec3 tanget, bitanget;
+};
+
 TRE_NS_END
