@@ -21,11 +21,13 @@ void World::UpdateSystems(float delta)
 
 	for (uint32 i = 0; i < systems_sz; i++) {
 		BaseSystem& system = *m_SystemList[i];
-		const Bitset& sig = system.GetSignature();
+		// const Bitset& sig = system.GetSignature();
 		Archetype* arche = system.GetArchetype();
 		
 		if (!arche->IsEmpty()) {
-			for (auto& c : arche->GetTypesBufferMarker()) {
+			system.UpdateComponents(delta, arche);
+
+			/*for (auto& c : arche->GetTypesBufferMarker()) {
 				ArchetypeChunk* chunk = arche->GetLastOccupiedChunk();
 				uint32 size = (uint32) BaseComponent::GetTypeSize(c.first);
 				
@@ -38,7 +40,7 @@ void World::UpdateSystems(float delta)
 
 					chunk = chunk->GetNextChunk();
 				} while (chunk);
-			}
+			}*/
 		}
 	}
 }

@@ -1,149 +1,88 @@
+#include <Core/Memory/Utils/Utils.hpp>
 
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::PackedArray() 
-    : m_Objects(NULL), m_NumObjects(0),  m_FreelistEnqueue(MAX_OBJECTS - 1), m_FreelistDequeue(0)
+template<typename T>
+PackedArray<T>::PackedArray(uint32 capacity) : 
+	m_Objects(NULL), m_Capacity(capacity), m_ObjectCount(0), 
+	m_FreelistEnqueue(m_Capacity - 1), m_FreelistDequeue(0)
 {
-	m_Objects = (Object*) ::operator new(sizeof(Object) * MAX_OBJECTS);
+	void* data = Allocate<uint8>((sizeof(Pair<ID, T>) + sizeof(Index)) * m_Capacity);
+	m_Objects = (Pair<ID, T>*) data;
 
-	for (ID i = 0; i < MAX_OBJECTS; ++i) {
-		m_Indices[i].id = i;
-		m_Indices[i].next = i+1;
-		m_Indices[i].index = MAX;
-	}	
+	Index* indices = this->GetIndexArray();
+	for (uint32 i = 0; i < m_Capacity; i++) {
+		indices[i].index = INVALID_INDEX;
+		indices[i].next_free = i + 1;
+	}
 }
 
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-template<typename... Args>
-typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::ID PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Emplace(Args&&... args) 
+template<typename T>
+typename PackedArray<T>::ID PackedArray<T>::Add(const T& object)
 {
-	Index& in = m_Indices[m_FreelistDequeue];
-	m_FreelistDequeue = in.next;
-	in.id += NEW_OBJECT_ID_ADD;
-	in.index = (INDEX_TYPE) m_NumObjects++;
-	new (&m_Objects[in.index]) Object(in.id, std::forward<Args>(args)...); 
-	Object& o = m_Objects[in.index];
-    // o.second = obj;  // Setup the object
-	// o.first = in.id; // o.first instead of o.id
-	return o.first;
+	const Pair<typename PackedArray<T>::ID, T>& pair = this->Emplace(object);
+	return pair.first;
 }
 
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-template<typename... Args>
-typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Object& PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Put(Args&&... args)
+template<typename T>
+void PackedArray<T>::Remove(ID id)
 {
-	Index& in = m_Indices[m_FreelistDequeue];
-	m_FreelistDequeue = in.next;
-	in.id += NEW_OBJECT_ID_ADD;
-	in.index = (INDEX_TYPE)m_NumObjects++;
-	new (&m_Objects[in.index]) Object(in.id, std::forward<Args>(args)...);
-	Object& o = m_Objects[in.index];
-	return o;
+	Index* indices = this->GetIndexArray();
+	Index& in = indices[id]; // Get index
+	Pair<ID, T>& object_to_delete = m_Objects[in.index]; // Get Object to delete
+	object_to_delete.~T(); // Call dtor
+
+	Pair<ID, T>& last_element = m_Objects[--m_ObjectCount]; // Get last element
+	new (&m_Objects[in.index].second) T(std::move(last_element.second)); // Swap last element and element to delete
+	indices[last_element.first].index = in.index;
+
+	in.index = INVALID_INDEX;
+	indices[m_FreelistEnqueue].next = id;
+	m_FreelistEnqueue = id;
 }
 
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::ID PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Add(const T& obj) 
+template<typename T>
+T* PackedArray<T>::Lookup(ID id) const
 {
-	Index& in = m_Indices[m_FreelistDequeue];
-	m_FreelistDequeue = in.next;
-	in.id += NEW_OBJECT_ID_ADD;
-	in.index = m_NumObjects++;
-	new (&m_Objects[in.index]) Object(in.id, obj); 
-	Object& o = m_Objects[in.index];
-    // o.second = obj;  // Setup the object
-	// o.first = in.id; // o.first instead of o.id
-	return o.first;
+	Index* indices = this->GetIndexArray();
+	Index& in = indices[id];
+
+	if (in.index == INVALID_INDEX)
+		return NULL;
+
+	return &m_Objects[in.index].second;
 }
 
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::ID PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Add(T&& obj) 
-{
-	Index& in = m_Indices[m_FreelistDequeue];
-	m_FreelistDequeue = in.next;
-	in.id += NEW_OBJECT_ID_ADD;
-	in.index = m_NumObjects++;
-	new (&m_Objects[in.index]) Object(in.id, std::forward<T>(obj)); 
-	Object& o = m_Objects[in.index];
-    // o.second = obj;  // Setup the object
-	// o.first = in.id; // o.first instead of o.id
-	return o.first;
-}
-
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-void PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Remove(ID id) 
-{
-	Index& in = m_Indices[id & INDEX_MASK];
-	Object& object_to_delete = m_Objects[in.index];
-	object_to_delete.~Object(); // call dtor;
-	new (&object_to_delete) Object(std::move(m_Objects[--m_NumObjects]));
-	Object& o = m_Objects[in.index];
-
-	// Object& o = m_Objects[in.index];
-	// o = m_Objects[--m_NumObjects];
-		
-	m_Indices[o.first & INDEX_MASK].index = in.index; // o.first instead of o.id
-		
-	in.index = MAX;
-	m_Indices[m_FreelistEnqueue].next = id & INDEX_MASK;
-	m_FreelistEnqueue = id & INDEX_MASK;
-}
-
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-FORCEINLINE bool PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Has(ID id) 
-{
-	Index& in = m_Indices[id & INDEX_MASK];
-	return in.id == id && in.index != MAX;
-}
-
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-FORCEINLINE typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Object& PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Lookup(ID id) const
-{
-	return m_Objects[m_Indices[id & INDEX_MASK].index];
-}
-
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-FORCEINLINE INDEX_TYPE PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::CompressID(ID id) const
-{
-	return INDEX_TYPE(id & INDEX_MASK);
-}
-
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-FORCEINLINE const typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Iterator PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::begin() const noexcept
+template<typename T>
+FORCEINLINE const typename PackedArray<T>::Iterator PackedArray<T>::begin() const noexcept
 {
 	return Iterator(m_Objects);
 }
 
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-FORCEINLINE const typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Iterator PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::end() const noexcept
+template<typename T>
+FORCEINLINE const typename PackedArray<T>::Iterator PackedArray<T>::end() const noexcept
 {
-	return Iterator(m_Objects + m_NumObjects);
+	return Iterator(m_Objects + m_ObjectCount);
 }
 
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-FORCEINLINE typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Iterator PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::begin() noexcept
+template<typename T>
+FORCEINLINE typename PackedArray<T>::Iterator PackedArray<T>::begin() noexcept
 {
 	return Iterator(m_Objects);
 }
 
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-FORCEINLINE typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::Iterator PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::end() noexcept
+template<typename T>
+FORCEINLINE typename PackedArray<T>::Iterator PackedArray<T>::end() noexcept
 {
-	return Iterator(m_Objects + m_NumObjects);
+	return Iterator(m_Objects + m_ObjectCount);
 }
 
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-FORCEINLINE typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::CIterator PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::cbegin() const noexcept
+template<typename T>
+FORCEINLINE typename PackedArray<T>::CIterator PackedArray<T>::cbegin() const noexcept
 {
 	return CIterator(m_Objects);
 }
 
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-FORCEINLINE typename PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::CIterator PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::cend() const noexcept
+template<typename T>
+FORCEINLINE typename PackedArray<T>::CIterator PackedArray<T>::cend() const noexcept
 {
-	return CIterator(m_Objects + m_NumObjects);
-}
-
-template<typename T, usize MAX_OBJECTS, typename ID_TYPE, typename INDEX_TYPE>
-PackedArray<T, MAX_OBJECTS, ID_TYPE, INDEX_TYPE>::~PackedArray()
-{
-	::operator delete(m_Objects);
+	return CIterator(m_Objects + m_ObjectCount);
 }

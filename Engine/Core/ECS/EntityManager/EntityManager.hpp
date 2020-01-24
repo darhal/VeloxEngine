@@ -56,9 +56,9 @@ public:
 
 	Archetype* GetArchetype(const Bitset& sig);
 
-	Vector<Archetype*> GetAllArchetypesThatInclude(const Bitset& signature) const;
+	Vector<const Archetype*> GetAllArchetypesThatInclude(const Bitset& signature) const;
 
-	Vector<Archetype*> GettAllArchetypeThatMatch(const ArchetypeQuerry& querry) const;
+	Vector<const Archetype*> GettAllArchetypeThatMatch(const ArchetypeQuerry& querry) const;
 
 	// World :
 	World& GetWorld();

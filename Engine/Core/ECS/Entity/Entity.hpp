@@ -18,6 +18,9 @@ public:
 	Entity(EntityManager* manager, EntityID id) : m_Manager(manager), m_Chunk(NULL), m_Id(id), m_InternalId(-1)
 	{}
 
+	Entity(EntityManager* manager) : m_Manager(manager), m_Chunk(NULL), m_Id(-1), m_InternalId(-1)
+	{}
+
 	virtual ~Entity() = default;
 
 	FORCEINLINE EntityID GetEntityID() const { return this->m_Id; }

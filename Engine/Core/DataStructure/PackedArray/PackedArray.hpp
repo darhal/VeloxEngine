@@ -1,62 +1,46 @@
 #pragma once
 
-#include <limits>
+#include <Core/Misc/Defines/Common.hpp>
+#include <Core/DataStructure/Tuple/Pair.hpp>
 #include <iterator>
-#include "Core/Misc/Defines/Common.hpp"
-#include "Core/DataStructure/Tuple/Pair.hpp"
 
 TRE_NS_START
 
-template<typename T, usize MAX_OBJECTS = 64 * 1024, typename ID_TYPE = uint32, typename INDEX_TYPE = uint16>
+template<typename T>
 class PackedArray
 {
 public:
-	typedef ID_TYPE ID_t;
-	typedef INDEX_TYPE INDEX_t;
-
-    typedef ID_TYPE ID;
-    typedef Pair<ID, T> Object; // First the ID then the Object.
+	typedef uint32 ID;
+	typedef Pair<ID, T> Element;
 
 	template<typename PointerType>
 	class GIterator;
 
-	typedef GIterator<Object> Iterator;
-	typedef GIterator<const Object> CIterator;
+	typedef GIterator<Element> Iterator;
+	typedef GIterator<const Element> CIterator;
+	
+	struct Index {
+		ID index;
+		uint32 next_free;
+	};
 
+	CONSTEXPR static uint32 DEFAULT_CAPACITY = 1 << 16;
+	CONSTEXPR static uint32 INVALID_INDEX = ID(-1);
 public:
-    CONSTEXPR static INDEX_TYPE MAX = std::numeric_limits<INDEX_TYPE>::max();
-    CONSTEXPR static INDEX_TYPE INDEX_MASK = std::numeric_limits<INDEX_TYPE>::max();
-    CONSTEXPR static ID_TYPE NEW_OBJECT_ID_ADD = std::numeric_limits<INDEX_TYPE>::max() + 1;
+	PackedArray(uint32 capacity = DEFAULT_CAPACITY);
 
-    struct Index {
-	    ID id;
-	    INDEX_TYPE index;
-	    INDEX_TYPE next;
-    };
-
-    PackedArray();
-
-	~PackedArray();
-
-	FORCEINLINE INDEX_TYPE CompressID(ID id) const;
-
-	FORCEINLINE bool Has(ID id);
-	
-	FORCEINLINE Object& Lookup(ID id) const;
-	
-	ID Add(const T& obj);
-
-	ID Add(T&& obj);
+	ID Add(const T& object);
 
 	template<typename... Args>
-	ID Emplace(Args&&... args);
+	Pair<ID, T>& Emplace(Args... args);
 
-	template<typename... Args>
-	Object& Put(Args&&... args);
-	
 	void Remove(ID id);
 
-	FORCEINLINE T& operator[](ID id) const  { return this->Lookup(id).second; }
+	T* Lookup(ID id) const;
+
+	FORCEINLINE T& Get(ID id) const;
+
+	FORCEINLINE T& operator[](ID id) const;
 
 	FORCEINLINE Iterator begin() noexcept;
 	FORCEINLINE Iterator end() noexcept;
@@ -66,42 +50,37 @@ public:
 
 	FORCEINLINE CIterator cbegin() const noexcept;
 	FORCEINLINE CIterator cend() const noexcept;
-
 private:
-    Object* m_Objects; // Object m_Objects[MAX_OBJECTS];
- 	Index m_Indices[MAX_OBJECTS];
+	Pair<ID, T>* m_Objects;
+	uint32 m_Capacity;
+	uint32 m_ObjectCount;
+	uint32 m_FreelistEnqueue;
+	uint32 m_FreelistDequeue;
 
-    ID m_NumObjects;
-    INDEX_TYPE m_FreelistEnqueue;
-	INDEX_TYPE m_FreelistDequeue;
-
-public:
+	FORCEINLINE Index* GetIndexArray() const { return (Index*)((uint8*)m_Objects + sizeof(Pair<ID, T>) * m_Capacity); }
 
 	template<typename DataType>
 	class GIterator : public std::iterator<std::random_access_iterator_tag, DataType, ptrdiff_t, DataType*, DataType&>
 	{
 	public:
-		GIterator() : m_Current(m_Objects) { }
-		GIterator(DataType* node) : m_Current(node) { }
+		GIterator() : m_Current(m_Objects) {}
+		GIterator(DataType* node) : m_Current(node) {}
 
 		GIterator(const GIterator<DataType>& rawIterator) = default;
 		GIterator& operator=(const GIterator<DataType>& rawIterator) = default;
 
 		GIterator(GIterator<DataType>&& rawIterator) = default;
 		GIterator& operator=(GIterator<DataType>&& rawIterator) = default;
-		
+
 		~GIterator() {}
 
 		bool operator!=(const GIterator& iterator) { return m_Current != iterator.m_Current; }
 
-		DataType& operator*() { return *m_Current; }
-		const DataType& operator*() const { return (*m_Current); }
+		typename DataType::Second& operator*() { return m_Current->second; }
+		typename DataType::Second& operator*() const { return m_Current->second; }
 
-		DataType* operator->() { return m_Current; }
-		const DataType* operator->() const { return m_Current; }
-
-		DataType* getPtr() const { return m_Current; }
-		const DataType* getConstPtr() const { return m_Current; }
+		typename DataType::Second* operator->() { return &m_Current->second; }
+		typename DataType::Second* operator->() const { return &m_Current->second; }
 
 		GIterator<DataType>& operator+=(const ptrdiff_t& movement) { m_Current += movement; return (*this); }
 		GIterator<DataType>& operator-=(const ptrdiff_t& movement) { m_Current -= movement; return (*this); }
@@ -115,6 +94,35 @@ public:
 		DataType* m_Current;
 	};
 };
+
+
+template<typename T>
+template<typename... Args>
+Pair<typename PackedArray<T>::ID, T>& PackedArray<T>::Emplace(Args... args)
+{
+	ID id = m_FreelistDequeue;
+	Index& in = this->GetIndexArray()[id];
+	m_FreelistDequeue = in.next_free;
+	in.index = m_ObjectCount++;
+	Pair<ID, T>* pair = new (&m_Objects[in.index]) Pair<ID, T>(id, std::forward<Args>(args)...);
+	return *pair;
+}
+
+template<typename T>
+T& PackedArray<T>::Get(ID id) const
+{
+	Index* indices = this->GetIndexArray();
+	Index& in = indices[id];
+
+	ASSERTF(in.index == INVALID_INDEX, "Invalid ID supplied to the PackedArray:Get().\n");
+	return m_Objects[in.index].second;
+}
+
+template<typename T>
+T& PackedArray<T>::operator[](ID id) const
+{
+	return this->Get(id);
+}
 
 #include "PackedArray.inl"
 

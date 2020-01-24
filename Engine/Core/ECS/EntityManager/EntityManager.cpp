@@ -16,7 +16,7 @@ World& EntityManager::GetWorld()
 
 Archetype& EntityManager::CreateArchetype(const Bitset& signature)
 {
-	ArchetypeContainer::Object& archetype_pair = m_Archetypes.Put(this, signature);
+	ArchetypeContainer::Element& archetype_pair = m_Archetypes.Emplace(this, signature);
 	Archetype& archetype = archetype_pair.second;
 	archetype.SetID(archetype_pair.first);
 	m_SigToArchetypes.Emplace(signature, archetype_pair.first);
@@ -161,8 +161,7 @@ Vector<BaseComponent*> EntityManager::GetAllComponents(ComponentTypeID id) const
 	sig.Set(id, true);
 	uint32 size = (uint32)BaseComponent::GetTypeSize(id);
 
-	for (const ArchetypeContainer::Object& arche_pair : m_Archetypes) {
-		const Archetype& arche = arche_pair.second;
+	for (const Archetype& arche : m_Archetypes) {
 		
 		if ((arche.GetSignature() & sig) == sig) {
 
@@ -184,9 +183,7 @@ Map<ComponentTypeID, Vector<BaseComponent*>> EntityManager::GetAllComponentsMatc
 {
 	Map<ComponentTypeID, Vector<BaseComponent*>> res;
 	
-	for (const ArchetypeContainer::Object& arche_pair : m_Archetypes) {
-		const Archetype& arche = arche_pair.second;
-
+	for (const Archetype& arche : m_Archetypes) {
 		if ((arche.GetSignature() & signature)) {
 			for (auto& c : arche.GetTypesBufferMarker()) {
 				if (signature.Get(c.first)) {
@@ -207,12 +204,11 @@ Map<ComponentTypeID, Vector<BaseComponent*>> EntityManager::GetAllComponentsMatc
 	return res;
 }
 
-Vector<Archetype*> EntityManager::GetAllArchetypesThatInclude(const Bitset& signature) const
+Vector<const Archetype*> EntityManager::GetAllArchetypesThatInclude(const Bitset& signature) const
 {
-	Vector<Archetype*> res;
+	Vector<const Archetype*> res;
 
-	for (ArchetypeContainer::Object& arche_pair : m_Archetypes) {
-		Archetype& arche = arche_pair.second;
+	for (const Archetype& arche : m_Archetypes) {
 
 		if ((arche.GetSignature() & signature)) {
 			res.EmplaceBack(&arche);
@@ -222,12 +218,11 @@ Vector<Archetype*> EntityManager::GetAllArchetypesThatInclude(const Bitset& sign
 	return res;
 }
 
-Vector<Archetype*> EntityManager::GettAllArchetypeThatMatch(const ArchetypeQuerry& querry) const
+Vector<const Archetype*> EntityManager::GettAllArchetypeThatMatch(const ArchetypeQuerry& querry) const
 {
-	Vector<Archetype*> res;
+	Vector<const Archetype*> res;
 
-	for (ArchetypeContainer::Object& arche_pair : m_Archetypes) {
-		Archetype& arche = arche_pair.second;
+	for (const Archetype& arche : m_Archetypes) {
 		const Bitset& sig = arche.GetSignature();
 
 		if ((((sig & querry.All) == querry.All) || (sig & querry.Any)) && !(sig & querry.None)) {

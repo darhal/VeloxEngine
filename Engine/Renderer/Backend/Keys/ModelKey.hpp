@@ -45,7 +45,7 @@ ModelRenderParams ModelRenderParams::FromKey(ModelKey key)
 
 	ModelRenderParams params;
 	params.material_id = key & 0xFFFF;
-	params.vao_id = (key & 0xFFFF0000) >> SHIFT_BITS[0];
+	params.vao_id = (VaoID)((key & 0xFFFF0000) >> SHIFT_BITS[0]);
 	params.blend_dist = uint16((key & 0xFFFF00000000) >> (SHIFT_BITS[0] + SHIFT_BITS[1]));
 
 	return params;

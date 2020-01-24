@@ -113,7 +113,6 @@ namespace Commands
 	{
 		typedef VAO            Resource;
 		typedef VertexSettings Settings;
-		typedef typename RMI<Resource>::ID ID;
 
 		VertexSettings settings;
 		union { VAO* vao; VAO* resource; };
@@ -125,7 +124,6 @@ namespace Commands
 	{
 		typedef VBO                  Resource;
 		typedef VertexBufferSettings Settings;
-		typedef typename RMI<Resource>::ID ID;
 
 		VertexBufferSettings settings;
 		union { VBO* vbo; VBO* resource; };
@@ -137,7 +135,6 @@ namespace Commands
     {
 		typedef Texture         Resource;
 		typedef TextureSettings Settings;
-		typedef typename RMI<Resource>::ID ID;
 
         TextureSettings settings;
 		union { Texture* texture; Texture* resource; };
@@ -149,7 +146,6 @@ namespace Commands
 	{
 		typedef Framebuffer         Resource;
 		typedef FramebufferSettings Settings;
-		typedef typename RMI<Resource>::ID ID;
 
 		FramebufferSettings settings;
 		union { Framebuffer* fbo; Framebuffer* resource; };
@@ -161,7 +157,6 @@ namespace Commands
 	{
 		typedef Renderbuffer         Resource;
 		typedef RenderbufferSettings Settings;
-		typedef typename RMI<Resource>::ID ID;
 
 		RenderbufferSettings settings;
 		union { Renderbuffer* rbo; Renderbuffer* resource; };

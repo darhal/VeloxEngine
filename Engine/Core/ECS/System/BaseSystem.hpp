@@ -14,11 +14,7 @@ class Archetype;
 class BaseSystem
 {
 public:
-	enum {
-		FLAG_OPTIONAL = 1,
-	};
-
-	virtual void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) {};
+	virtual void UpdateComponents(float delta, Archetype* archetype) = 0;
 
 	virtual const ComponentTypeID* const GetComponentsTypes() const = 0;
 

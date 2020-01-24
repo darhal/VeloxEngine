@@ -12,7 +12,6 @@
 #include <Core/Misc/Utils/Image.hpp>
 #include <Core/Context/Context.hpp>
 #include <Core/FileSystem/Directory/Directory.hpp>
-#include <Core/DataStructure/PackedArray/RefPackedArray.hpp>
 #include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <Core/TaskSystem/TaskManager/TaskManager.hpp>
 #include <Core/DataStructure/PackedArray/PackedArray.hpp>
@@ -47,26 +46,6 @@
 #include "ShaderValidator.hpp"
 
 using namespace TRE;
-/*
-	const uint32 bucket_count = 10;
-	const uint32 cmds_count = 5'000;
-	CommandBuffer cmd_buffer = CommandBuffer();
-	CommandBucket& bucket = cmd_buffer.CreateBucket();
-	INIT_BENCHMARK;
-
-	for (uint32 i = 0; i < bucket_count; i++) {
-		for (uint32 j = 0; j < cmds_count; j++) {
-			Commands::DrawCmd* cmd = bucket.SubmitCommand<Commands::DrawCmd>(i, std::rand() % 30);
-			cmd->start = i;
-			cmd->end = i + 1;
-			cmd->mode = Primitive::TRIANGLES;
-		}
-	}
-
-	bucket.End();
-
-	cmd_buffer.DispatchCommands();
-*/
 
 #define INIT_BENCHMARK std::chrono::time_point<std::chrono::high_resolution_clock> start, end; std::chrono::microseconds duration;
 
@@ -137,7 +116,7 @@ bool firstMouse = true;
 int main()
 {
 	// settings
-	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 4.3)", WindowStyle::Resize);
+	/*TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 4.3)", WindowStyle::Resize);
 	window.initContext(4, 3);
 
 	printf("- GPU Vendor........: %s\n", glGetString(GL_VENDOR));
@@ -247,7 +226,7 @@ int main()
 		//);
 	}
 
-	getchar();
+	getchar();*/
 	return 0;
 }
 

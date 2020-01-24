@@ -300,6 +300,7 @@
     <ClCompile Include="Tests\TestingString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Core\DataStructure\PackedArray\PackedArray.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\ICommandBucket.hpp" />
     <ClInclude Include="Renderer\RenderPipline\Forward\Forward.hpp" />
     <ClInclude Include="Renderer\RenderPipline\Forward+\ForwardPlus.hpp" />
@@ -325,8 +326,6 @@
     <ClInclude Include="Core\DataStructure\HashMap\Map.hpp" />
     <ClInclude Include="Core\DataStructure\LinkedList\List\List.hpp" />
     <ClInclude Include="Core\DataStructure\LinkedList\SingleList\SingleList.hpp" />
-    <ClInclude Include="Core\DataStructure\PackedArray\PackedArray.hpp" />
-    <ClInclude Include="Core\DataStructure\PackedArray\RefPackedArray.hpp" />
     <ClInclude Include="Core\DataStructure\Queue\Queue.hpp" />
     <ClInclude Include="Core\DataStructure\Stack\Stack.hpp" />
     <ClInclude Include="Core\DataStructure\StringBuffer\StringBuffer.hpp" />
@@ -472,7 +471,6 @@
     <None Include="Core\DataStructure\LinkedList\List\List.inl" />
     <None Include="Core\DataStructure\LinkedList\SingleList\SingleList.inl" />
     <None Include="Core\DataStructure\PackedArray\PackedArray.inl" />
-    <None Include="Core\DataStructure\PackedArray\RefPackedArray.inl" />
     <None Include="Core\DataStructure\String\String.inl" />
     <None Include="Core\DataStructure\Vector\Vector.inl" />
     <None Include="Core\ECS\Entity\Entity.hpp" />

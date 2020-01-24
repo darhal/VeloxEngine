@@ -8,6 +8,9 @@ TRE_NS_START
 template<typename T1, typename T2>
 struct Pair
 {
+	typedef T1 First;
+	typedef T2 Second;
+
 	Pair()
 	{}
 
