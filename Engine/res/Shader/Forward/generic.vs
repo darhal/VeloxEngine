@@ -17,7 +17,7 @@ void main()
 {
 	ViewPos = u_ViewPosition;
 	FragPos = vec3(u_Model * vec4(aPos, 1.0));
-    Normal = mat3(transpose(inverse(u_Model))) * aBitangent;  
+    Normal = mat3(transpose(inverse(u_Model))) * aNormals;  
 	
 	gl_Position =  u_ProjView * u_Model * vec4(aPos, 1.0);
 }

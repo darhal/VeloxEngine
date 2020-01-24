@@ -1,6 +1,6 @@
 #version 430
 
-in VERTEX_OUT{
+in VERTEX_OUT {
 	vec3 fragmentPosition;
 	vec2 textureCoordinates;
 	mat3 TBN;
@@ -31,7 +31,7 @@ layout(std430, binding = 1) readonly buffer VisibleLightIndicesBuffer {
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
 uniform sampler2D texture_normal1;
-uniform int numberOfTilesX;
+uniform int u_NumberOfTilesX;
 
 out vec4 fragColor;
 
@@ -49,7 +49,7 @@ void main() {
 	// Determine which tile this pixel belongs to
 	ivec2 location = ivec2(gl_FragCoord.xy);
 	ivec2 tileID = location / ivec2(16, 16);
-	uint index = tileID.y * numberOfTilesX + tileID.x;
+	uint index = tileID.y * u_NumberOfTilesX + tileID.x;
 
 	// Get color and normal components from texture maps
 	vec4 base_diffuse = texture(texture_diffuse1, fragment_in.textureCoordinates);

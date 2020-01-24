@@ -23,6 +23,9 @@ public:
 	template<typename U>
 	U* CreateCommand(const uint64& internal_key);
 
+	template<typename U>
+	U* GetCommandFromID(uint32 id);
+
 	void Flush();
 
 	void SwapBuffer();
@@ -62,6 +65,16 @@ U* CommandPacket::CreateCommand(const uint64& internal_key)
 	Cmd cmd = Command::CreateCommand<U>(m_CmdsAllocator);
 	Command::StoreBackendDispatchFunction(cmd, U::DISPATCH_FUNCTION);
 	return Command::GetCommand<U>(cmd);
+}
+
+template<typename U>
+U* CommandPacket::GetCommandFromID(uint32 id)
+{
+	ASSERTF(id >= DEFAULT_MAX_ELEMENTS, "Command Index out of bound\n");
+
+	const uint32 real_id = m_BufferMarker * DEFAULT_MAX_ELEMENTS + id;
+	Cmd cmd = m_Commands[real_id].second;
+	return (U*)Command::LoadCommand(cmd);
 }
 
 TRE_NS_END

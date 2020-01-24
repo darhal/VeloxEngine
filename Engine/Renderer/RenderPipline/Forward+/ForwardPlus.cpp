@@ -33,7 +33,7 @@ void ForwardPlusRenderer::Initialize(uint32 screen_width, uint32 screen_height)
 
 	this->SetupShaders();
 	this->SetupFramebuffers(screen_width, screen_height);
-	this->SetupCommandBuffer(m_WorkGroups);
+	this->SetupCommandBuffer();
 }
 
 void ForwardPlusRenderer::SetupFramebuffers(uint32 screen_width, uint32 screen_height)
@@ -41,9 +41,9 @@ void ForwardPlusRenderer::SetupFramebuffers(uint32 screen_width, uint32 screen_h
 	ResourcesManager& manager = ResourcesManager::Instance();
 	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
 
-	TextureID depthMap = manager.CreateResource<Texture>(ResourcesTypes::TEXTURE);
+	m_DepthMap = manager.CreateResource<Texture>(ResourcesTypes::TEXTURE);
 	Commands::CreateTextureCmd* cmd_tex = op_queue.SubmitCommand<Commands::CreateTextureCmd>();
-	cmd_tex->texture = &manager.Get<Texture>(ResourcesTypes::TEXTURE, depthMap);
+	cmd_tex->texture = &manager.Get<Texture>(ResourcesTypes::TEXTURE, m_DepthMap);
 	cmd_tex->settings = TextureSettings(
 		TexTarget::TEX2D, screen_width, screen_height, NULL,
 		{
@@ -71,8 +71,8 @@ void ForwardPlusRenderer::SetupShaders()
 		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, m_DepthShader);
 		shader.LinkProgram();
 		shader.Use();
-		shader.AddUniform("ProjView");
-		shader.AddUniform("Model");
+		shader.AddUniform("u_ProjView");
+		shader.AddUniform("u_Model");
 	}
 
 	m_LightCull = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
@@ -82,11 +82,11 @@ void ForwardPlusRenderer::SetupShaders()
 		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, m_LightCull);
 		shader.LinkProgram();
 		shader.Use();
-		shader.AddUniform("lightCount");
-		shader.AddUniform("screenSize");
-		shader.AddUniform("projection");
-		shader.AddUniform("view");
-		shader.AddUniform("depthMap");
+		shader.AddUniform("u_LightCount");
+		shader.AddUniform("u_ScreenSize");
+		shader.AddUniform("u_Projection");
+		shader.AddUniform("u_View");
+		shader.AddUniform("u_DepthMap");
 	}
 
 	m_LightAccum = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
@@ -97,17 +97,17 @@ void ForwardPlusRenderer::SetupShaders()
 		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, m_LightAccum);
 		shader.LinkProgram();
 		shader.Use();
-		shader.AddUniform("ProjView");
-		shader.AddUniform("Model");
-		shader.AddUniform("numberOfTilesX");
-		shader.AddUniform("viewPosition");
+		shader.AddUniform("u_ProjView");
+		shader.AddUniform("u_Model");
+		shader.AddUniform("u_NumberOfTilesX");
+		shader.AddUniform("u_ViewPosition");
 	}
 
 	ResourcesManager& manager = ResourcesManager::Instance();
 	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
 }
 
-void ForwardPlusRenderer::SetupCommandBuffer(const Vec2<uint32>& work_groups)
+void ForwardPlusRenderer::SetupCommandBuffer()
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
 
@@ -116,43 +116,62 @@ void ForwardPlusRenderer::SetupCommandBuffer(const Vec2<uint32>& work_groups)
 	{
 		RenderTarget& render_target = depth_bucket.GetRenderTarget();
 		render_target.m_FboID = m_DepthMapFbo;
-		/*render_target.m_Width = ;
-		render_target.m_Height = ;*/
 	}
 
 	CommandBucket& light_culling_bucket = m_CommandQueue.CreateBucket();
 	{
 		RenderTarget& render_target = depth_bucket.GetRenderTarget();
 		render_target.m_FboID = 0;
-		// light_culling_bucket.SetOnBucketFlushCallback();
-		// light_culling_bucket.SetOnKeyChangeCallback();
-
-		// TODO: Set projection, set view, set depthMap, bind bufferbase for light buffers
-		Commands::DispatchComputeCmd* dispatchcmd = light_culling_bucket.SubmitCommand<Commands::DispatchComputeCmd>();
-		dispatchcmd->shader = &manager.Get<ShaderProgram>(ResourcesTypes::SHADER, m_LightCull);
-		dispatchcmd->workGroupX = work_groups.x;
-		dispatchcmd->workGroupY = work_groups.y;
-		dispatchcmd->workGroupZ = 0;
-		dispatchcmd->next_cmd = NULL;
+		light_culling_bucket.SetOnBucketFlushCallback(NULL);
+		light_culling_bucket.SetOnKeyChangeCallback(NULL);
 	}
 
 	CommandBucket& light_accum_bucket = m_CommandQueue.CreateBucket();
 	{
 		RenderTarget& render_target = depth_bucket.GetRenderTarget();
 		render_target.m_FboID = 0;
-		/*render_target.m_Width = ;
-		render_target.m_Height = ;*/
 	}
 }
 
+
+void ForwardPlusRenderer::CullLights()
+{
+	ResourcesManager& manager = ResourcesManager::Instance();
+    // Get our main and only packet
+	CommandPacket& packet = m_CommandQueue.GetCommandBucker(LIGHT_CULLING_PASS).GetOrCreateCommandPacket(0);
+
+	// Set Uniforms (projection, set view, set depthMap), bind bufferbase for light buffers, then finally dispatch compute
+	// Submit commands in this orderer.
+	Commands::UploadUniformsCmd* setup_uniforms_cmd = packet.SubmitCommand<Commands::UploadUniformsCmd>(0);
+	setup_uniforms_cmd->shader = &manager.Get<ShaderProgram>(ResourcesTypes::SHADER, m_LightCull);
+	setup_uniforms_cmd->m_Params = UniformsParams<int32>();
+	setup_uniforms_cmd->m_Params.AddParameter<Mat4f>(setup_uniforms_cmd->shader->GetUniform("u_View").second, Mat4f());
+	setup_uniforms_cmd->m_Params.AddParameter<Mat4f>(setup_uniforms_cmd->shader->GetUniform("u_Projection").second, Mat4f());
+	setup_uniforms_cmd->m_Params.AddParameter<TextureID>(setup_uniforms_cmd->shader->GetUniform("u_DepthMap").second, m_DepthMap);
+	setup_uniforms_cmd->m_Params.AddParameter<int32>(setup_uniforms_cmd->shader->GetUniform("u_LightCount").second, m_LightCount);
+	// setup_uniforms_cmd->m_Params.AddParameter<Vec2<int32>>(setup_uniforms_cmd->shader->GetUniform("u_ScreenSize").second, m_DepthMap);
+
+	Commands::BindBufferBaseCmd* bind_buffer_base = packet.SubmitCommand<Commands::BindBufferBaseCmd>(0);
+	bind_buffer_base->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_LightBuffer);
+	bind_buffer_base->binding_point = 0;
+
+	bind_buffer_base = packet.SubmitCommand<Commands::BindBufferBaseCmd>(0);
+	bind_buffer_base->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_VisisbleLightIndicesBuffer);
+	bind_buffer_base->binding_point = 1;
+
+	Commands::DispatchComputeCmd* dispatchcmd = packet.SubmitCommand<Commands::DispatchComputeCmd>(0);
+	dispatchcmd->workGroupX = m_WorkGroups.x;
+	dispatchcmd->workGroupY = m_WorkGroups.y;
+	dispatchcmd->workGroupZ = 1;
+	dispatchcmd->next_cmd = NULL;
+}
 
 void ForwardPlusRenderer::Draw(IPrimitiveMesh& mesh)
 {
 	// Depth Pass:
 	mesh.Submit(m_CommandQueue.GetCommandBucker(DPETH_PASS), m_DepthShader);
 
-	// ADD compute shader phase here
-	
+	// Compute shader phase here (It's automatic)
 
 	// Light Accumlation Pass:
 	mesh.Submit(m_CommandQueue.GetCommandBucker(LIGHT_ACCUM), m_LightAccum);

@@ -209,7 +209,7 @@ int main()
 	StaticMesh mesh = model.LoadMesh(shader_id);
 	// MeshInstance mesh = model.LoadInstancedMesh(1'000, shader_id3);
 
-	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
+	MeshLoader loader("res/obj/Chees_pawn/Bishop_with_Notch_1.obj");
 	Model carrot = loader.LoadAsOneObject();
 	// MeshInstance carrot_mesh = carrot.LoadInstancedMesh(2'000, shader_id3);
 	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);

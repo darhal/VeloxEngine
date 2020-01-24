@@ -300,6 +300,7 @@
     <ClCompile Include="Tests\TestingString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Renderer\Backend\CommandBucket\ICommandBucket.hpp" />
     <ClInclude Include="Renderer\RenderPipline\Forward\Forward.hpp" />
     <ClInclude Include="Renderer\RenderPipline\Forward+\ForwardPlus.hpp" />
     <ClInclude Include="Renderer\Backend\ContextOperationQueue\ContextOperationQueue.hpp" />

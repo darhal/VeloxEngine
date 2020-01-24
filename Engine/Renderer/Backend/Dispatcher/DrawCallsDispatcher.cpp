@@ -193,7 +193,6 @@ void BackendDispatch::DispatchCompute(const void* data)
 {
 	const Commands::DispatchComputeCmd* real_data = reinterpret_cast<const Commands::DispatchComputeCmd*>(data);
 
-	real_data->shader->Bind();
 	Cmd next_cmd = real_data->next_cmd;
 
 	while (next_cmd) {
@@ -213,6 +212,13 @@ void BackendDispatch::UploadUniforms(const void* data)
 
 	real_data->shader->Bind();
 	real_data->m_Params.UploadUnfiroms(*real_data->shader);
+}
+
+void BackendDispatch::BindBufferBase(const void* data)
+{
+	const Commands::BindBufferBaseCmd* real_data = reinterpret_cast<const Commands::BindBufferBaseCmd*>(data);
+
+	Call_GL(glBindBufferBase(real_data->vbo->GetBindingTarget(), real_data->binding_point, real_data->vbo->GetID()););
 }
 
 void BackendDispatch::BindBufferRange(const void* data)

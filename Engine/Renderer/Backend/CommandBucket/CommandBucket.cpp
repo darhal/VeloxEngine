@@ -83,21 +83,24 @@ void CommandBucket::OnBucketFlushCallback(ResourcesManager& manager, const Rende
 		fbo.Bind();
 	}
 
-	// TODO: Maybe set viewport
+	// TODO: Maybe set viewport width and height
 }
 
 
 void CommandBucket::Flush() const
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
-	// Call call back
-	m_OnBucketFlushCallback(manager, m_RenderTarget);
+	// Call call back function
+	if (m_OnBucketFlushCallback)
+		m_OnBucketFlushCallback(manager, m_RenderTarget);
+
 	const Mat4f projView = m_Projection * m_Camera.GetViewMatrix();
 	const vec3& camera_position = m_Camera.Position;
 
 	for (const auto& key_packet_pair : m_Packets) {
 		// Decode the key,  and apply render states and shader
-		m_OnKeyChangeCallback(manager, key_packet_pair.first, projView, m_Projection, m_Camera);
+		if (m_OnKeyChangeCallback)
+			m_OnKeyChangeCallback(manager, key_packet_pair.first, projView, m_Projection, m_Camera);
 
 		key_packet_pair.second->Flush();
 		key_packet_pair.second->SwapBuffer();

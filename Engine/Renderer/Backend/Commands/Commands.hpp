@@ -183,7 +183,6 @@ namespace Commands
 
 	struct DispatchComputeCmd : public LinkCmd
 	{
-		ShaderProgram* shader;
 		uint32 workGroupX, workGroupY, workGroupZ;
 
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::DispatchCompute;
@@ -195,6 +194,14 @@ namespace Commands
 		UniformsParams<int32> m_Params;
 
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::UploadUniforms;
+	};
+
+	struct BindBufferBaseCmd
+	{
+		VBO* vbo;
+		uint32 binding_point;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::BindBufferBase;
 	};
 
 	struct BindBufferRangeCmd

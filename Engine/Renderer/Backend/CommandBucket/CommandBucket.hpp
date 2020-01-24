@@ -30,13 +30,13 @@ public:
 	CommandBucket& operator=(CommandBucket&& bucket);
 
 	template<typename U>
-	CommandPacket* SubmitCommand(U** cmd_out, const BucketKey& key, const uint64& internal_key = 0);
+	CommandPacket* SubmitCommand(U** cmd_out, const BucketKey& key = 0, const uint64& internal_key = 0);
 
 	template<typename U>
-	U* SubmitCommand(const BucketKey& key, const uint64& internal_key = 0);
+	U* SubmitCommand(const BucketKey& key = 0, const uint64& internal_key = 0);
 
 	template<typename U>
-	U* SubmitCommand(const RenderState& render_state = RenderState(), uint32 shader_id = 0, const uint64& internal_key = 0);
+	U* SubmitCommand(const RenderState& render_state, uint32 shader_id, const uint64& internal_key = 0);
 
 	CommandPacket* GetCommandPacket(const BucketKey& key) const;
 
@@ -68,7 +68,6 @@ public:
 
 	static void OnBucketFlushCallback(ResourcesManager& manager, const RenderTarget& rt);
 private:
-
 	RenderTarget m_RenderTarget;
 	OnPacketKeyChange m_OnKeyChangeCallback;
 	OnBucketFlush m_OnBucketFlushCallback;

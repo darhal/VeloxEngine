@@ -12,7 +12,7 @@ struct VisibleIndex {
 
 // Shader storage buffer objects
 layout(std430, binding = 0) readonly buffer LightBuffer {
-	PointLight data[];
+	Mat4f data[];
 } lightBuffer;
 
 layout(std430, binding = 1) writeonly buffer VisibleLightIndicesBuffer {
@@ -20,11 +20,11 @@ layout(std430, binding = 1) writeonly buffer VisibleLightIndicesBuffer {
 } visibleLightIndicesBuffer;
 
 // Uniforms
-uniform sampler2D depthMap;
-uniform mat4 view;
-uniform mat4 projection;
-uniform ivec2 screenSize;
-uniform int lightCount;
+uniform sampler2D u_DepthMap;
+uniform mat4 u_View;
+uniform mat4 u_Projection;
+uniform ivec2 u_ScreenSize;
+uniform int u_LightCount;
 
 // Shared values between all the threads in the group
 shared uint minDepthInt;
@@ -52,17 +52,17 @@ void main() {
 		minDepthInt = 0xFFFFFFFF;
 		maxDepthInt = 0;
 		visibleLightCount = 0;
-		viewProjection = projection * view;
+		viewProjection = u_Projection * u_View;
 	}
 
 	barrier();
 
 	// Step 1: Calculate the minimum and maximum depth values (from the depth buffer) for this group's tile
 	float maxDepth, minDepth;
-	vec2 text = vec2(location) / screenSize;
-	float depth = texture(depthMap, text).r;
-	// Linearize the depth value from depth buffer (must do this because we created it using projection)
-	depth = (0.5 * projection[3][2]) / (depth + 0.5 * projection[2][2] - 0.5);
+	vec2 text = vec2(location) / u_ScreenSize;
+	float depth = texture(u_DepthMap, text).r;
+	// Linearize the depth value from depth buffer (must do this because we created it using u_Projection)
+	depth = (0.5 * u_Projection[3][2]) / (depth + 0.5 * u_Projection[2][2] - 0.5);
 
 	// Convert depth to uint so we can do atomic min and max comparisons between the threads
 	uint depthInt = floatBitsToUint(depth);
@@ -96,9 +96,9 @@ void main() {
 		}
 
 		// Transform the depth planes
-		frustumPlanes[4] *= view;
+		frustumPlanes[4] *= u_View;
 		frustumPlanes[4] /= length(frustumPlanes[4].xyz);
-		frustumPlanes[5] *= view;
+		frustumPlanes[5] *= u_View;
 		frustumPlanes[5] /= length(frustumPlanes[5].xyz);
 	}
 
@@ -108,11 +108,11 @@ void main() {
 	// Parallelize the threads against the lights now.
 	// Can handle 256 simultaniously. Anymore lights than that and additional passes are performed
 	uint threadCount = TILE_SIZE * TILE_SIZE;
-	uint passCount = (lightCount + threadCount - 1) / threadCount;
+	uint passCount = (u_LightCount + threadCount - 1) / threadCount;
 	for (uint i = 0; i < passCount; i++) {
 		// Get the lightIndex to test for this thread / pass. If the index is >= light count, then this thread can stop testing lights
 		uint lightIndex = i * threadCount + gl_LocalInvocationIndex;
-		if (lightIndex >= lightCount) {
+		if (lightIndex >= u_LightCount) {
 			break;
 		}
 

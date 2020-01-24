@@ -22,19 +22,23 @@ public:
 
 	void Draw(IPrimitiveMesh& mesh);
 
+	void CullLights();
+
 	void Render();
 private:
 	void SetupFramebuffers(uint32 screen_width, uint32 screen_height);
 
-	void SetupCommandBuffer(const Vec2<uint32>& work_groups);
+	void SetupCommandBuffer();
 
 	void SetupShaders();
 private:
 	CommandBuffer m_CommandQueue;
 	Vec<2, uint32, normal> m_WorkGroups;
+	uint32 m_LightCount;
 	VboID m_LightBuffer, m_VisisbleLightIndicesBuffer;
 	ShaderID m_DepthShader, m_LightCull, m_LightAccum, m_HdrShader;
 	FboID m_DepthMapFbo, m_HdrFbo;
+	TextureID m_DepthMap;
 
 	CONSTEXPR static uint32 MAX_LIGHTS = 1024;
 	CONSTEXPR static uint32 GROUP_SIZE = 16;
