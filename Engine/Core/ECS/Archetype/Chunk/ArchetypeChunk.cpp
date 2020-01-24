@@ -171,7 +171,6 @@ void ArchetypeChunk::AddEntity(Entity& entity)
 	entity.AttachToArchetypeChunk(this, this->ReserveEntity(entity));
 }
 
-
 BaseComponent* ArchetypeChunk::UpdateComponentMemory(Entity& entity, BaseComponent* component, ComponentTypeID component_id)
 {
 	return this->UpdateComponentMemoryInternal(entity.m_InternalId, entity, component, component_id);
@@ -196,7 +195,7 @@ uint32 ArchetypeChunk::DestroyEntityComponents(Entity& entity)
 
 EntityID& ArchetypeChunk::GetEntityID(uint32 internal_id) 
 { 
-	return ((EntityID*)m_ComponentBuffer)[m_EntitiesCount]; 
+	return ((EntityID*)m_ComponentBuffer)[internal_id];
 }
 
 uint8* ArchetypeChunk::GetComponentsBuffer() const

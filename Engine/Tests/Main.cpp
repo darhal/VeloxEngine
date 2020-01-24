@@ -1,3 +1,5 @@
+#ifdef bougabouga
+
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -116,7 +118,7 @@ bool firstMouse = true;
 int main()
 {
 	// settings
-	/*TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 4.3)", WindowStyle::Resize);
+	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 4.3)", WindowStyle::Resize);
 	window.initContext(4, 3);
 
 	printf("- GPU Vendor........: %s\n", glGetString(GL_VENDOR));
@@ -226,7 +228,7 @@ int main()
 		//);
 	}
 
-	getchar();*/
+	getchar();
 	return 0;
 }
 
@@ -285,3 +287,5 @@ void HandleEvent(float dt, Mat4f& projecton, Camera& camera, const Event& e)
 		camera.ProcessMouseMovement(xoffset, yoffset);
 	}
 }
+
+#endif

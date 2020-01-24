@@ -25,9 +25,9 @@ void World::UpdateSystems(float delta)
 		Archetype* arche = system.GetArchetype();
 		
 		if (!arche->IsEmpty()) {
-			system.UpdateComponents(delta, arche);
+			//system.UpdateComponents(delta, arche);
 
-			/*for (auto& c : arche->GetTypesBufferMarker()) {
+			for (auto& c : arche->GetTypesBufferMarker()) {
 				ArchetypeChunk* chunk = arche->GetLastOccupiedChunk();
 				uint32 size = (uint32) BaseComponent::GetTypeSize(c.first);
 				
@@ -40,7 +40,7 @@ void World::UpdateSystems(float delta)
 
 					chunk = chunk->GetNextChunk();
 				} while (chunk);
-			}*/
+			}
 		}
 	}
 }

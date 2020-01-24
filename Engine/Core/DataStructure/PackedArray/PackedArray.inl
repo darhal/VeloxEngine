@@ -7,8 +7,8 @@ PackedArray<T>::PackedArray(uint32 capacity) :
 {
 	void* data = Allocate<uint8>((sizeof(Pair<ID, T>) + sizeof(Index)) * m_Capacity);
 	m_Objects = (Pair<ID, T>*) data;
-
 	Index* indices = this->GetIndexArray();
+
 	for (uint32 i = 0; i < m_Capacity; i++) {
 		indices[i].index = INVALID_INDEX;
 		indices[i].next_free = i + 1;
@@ -28,14 +28,14 @@ void PackedArray<T>::Remove(ID id)
 	Index* indices = this->GetIndexArray();
 	Index& in = indices[id]; // Get index
 	Pair<ID, T>& object_to_delete = m_Objects[in.index]; // Get Object to delete
-	object_to_delete.~T(); // Call dtor
+	object_to_delete.second.~T(); // Call dtor
 
 	Pair<ID, T>& last_element = m_Objects[--m_ObjectCount]; // Get last element
-	new (&m_Objects[in.index].second) T(std::move(last_element.second)); // Swap last element and element to delete
-	indices[last_element.first].index = in.index;
+	new (&object_to_delete) Pair<ID, T>(std::move(last_element)); // Swap last element and element to delete
 
-	in.index = INVALID_INDEX;
-	indices[m_FreelistEnqueue].next = id;
+	indices[object_to_delete.first].index = in.index; // object to delete here is actually the last element we just swapped
+	in.index = INVALID_INDEX; // Invalidate old index
+	indices[m_FreelistEnqueue].next_free = id;
 	m_FreelistEnqueue = id;
 }
 
