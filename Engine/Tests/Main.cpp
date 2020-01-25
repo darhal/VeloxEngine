@@ -46,6 +46,8 @@
 #include <Renderer/MeshLoader/MeshLoader.hpp>
 #include <Renderer/RenderPipline/Forward/Forward.hpp>
 #include <Renderer/Components/LightComponents/DirectionalLightComponent/DirectionalLight.hpp>
+#include <Renderer/Components/LightComponents/PointLightComponent/PointLight.hpp>
+#include <Renderer/Components/LightComponents/SpotLightComponent/SpotLight.hpp>
 #include "ShaderValidator.hpp"
 
 using namespace TRE;
@@ -209,11 +211,28 @@ int main()
 		Entity& ent2 = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent>(carrot_mesh, trans);
 	}
 
+	Entity& ent2 = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent>(carrot_mesh, TransformComponent());
+
+	/*DirectionalLightComponent comp;
+	comp.SetDirection(vec3(0, -1.2, 0));
+	comp.SetLightColor(vec3(0.1f, 0.5f, 0.2f));
+	renderer.GetLightSystem().AddLight((Mat4f*)&comp);*/
+	vec3 light_pos = vec3(0, 3, 0);
+	PointLightComponent pointlight;
+	pointlight.SetPosition(light_pos);
+	pointlight.SetLightColor(vec3(1,1,1));
+	pointlight.SetLinear(0.09f);
+	pointlight.SetQuadratic(0.032f);
+	pointlight.SetConstant(0.5f);
+	renderer.GetLightSystem().AddLight((Mat4f*)&pointlight);
+	ent1.GetComponent<TransformComponent>()->transform_matrix.translate(light_pos);
+	ent1.GetComponent<TransformComponent>()->transform_matrix.scale(vec3(0.2, 0.2, 0.2));
+
 	Event ev;
 	Enable(Capability::DEPTH_TEST);
 	// Enable(Capability::CULL_FACE);
 	Enable(GL_MULTISAMPLE);
-	ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	// ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
 
 	INIT_BENCHMARK;

@@ -2,16 +2,23 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Renderer/Components/LightComponents/DirectionalLightComponent/DirectionalLight.hpp>
-#include <Core/ECS/System/BaseSystem.hpp>
 
 TRE_NS_START
 
-class DirectionalLightSystem : public System<DirectionalLightComponent>
+class VBO;
+
+class LightSystem
 {
 public:
-	void UpdateComponents(float dt, Archetype& arche) final;
-private:
+	LightSystem();
 
+	void AddLight(Mat4f* comp);
+private:
+	VBO* m_LightVbo;
+	uint32 m_LightCount;
+	uint32 m_MaxLight;
+
+	friend class ForwardRenderer;
 };
 
 TRE_NS_END

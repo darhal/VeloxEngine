@@ -4,7 +4,6 @@
 #include <RenderAPI/Shader/Shader.hpp>
 #include <RenderAPI/Shader/ShaderProgram.hpp>
 #include <Renderer/Backend/Lights/ILight/ILight.hpp>
-#include <Renderer/Backend/Lights/DirectionalLight/DirectionalLight.hpp>
 
 TRE_NS_START
 
@@ -24,8 +23,7 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)scr_width / (float)scr_height, NEAR_PLANE, FAR_PLANE);
 
 	m_MeshSystem.SetCommandBucket(&bucket);
-	ResourcesManager::Instance().GetRenderWorld().GetSystsemList().AddSystem(&m_MeshSystem);
-	ResourcesManager::Instance().GetRenderWorld().GetSystsemList().AddSystem(&m_LightSystem);
+	ResourcesManager::Instance().GetRenderWorld().GetSystsemList(SystemList::ACTIVE).AddSystem(&m_MeshSystem);
 }
 
 void ForwardRenderer::SetupLightsBuffer()
@@ -42,24 +40,8 @@ void ForwardRenderer::SetupLightsBuffer()
 	bind_cmd->offset = 0;
 	bind_cmd->size = sizeof(ILight) * MAX_LIGHTS + sizeof(uint32);
 
-	{
-		Commands::EditSubBufferCmd* edit_sub_buff = manager.GetContextOperationsQueue().SubmitCommand<Commands::EditSubBufferCmd>();
-		edit_sub_buff->vbo = cmd->vbo;
-		DirectionalLight* light = new DirectionalLight();
-		light->SetDirection(vec3(0.f, -0.5f, 0.f));
-		light->SetLightColor(vec3(0.5f, 0.0f, 0.5f));
-		edit_sub_buff->data = &light->GetLightMatrix();
-		edit_sub_buff->offset = 0;
-		edit_sub_buff->size = sizeof(Mat4f);
-	}
-	{
-		Commands::EditSubBufferCmd* edit_sub_buff = manager.GetContextOperationsQueue().SubmitCommand<Commands::EditSubBufferCmd>();
-		edit_sub_buff->vbo = cmd->vbo;
-		uint32* count = new uint32(1);
-		edit_sub_buff->data = count;
-		edit_sub_buff->offset = sizeof(ILight) * MAX_LIGHTS;
-		edit_sub_buff->size = sizeof(uint32);
-	}
+	m_LightSystem.m_LightVbo = cmd->vbo;
+	m_LightSystem.m_MaxLight = MAX_LIGHTS;
 }
 
 /*void ForwardRenderer::Draw(IPrimitiveMesh& mesh)

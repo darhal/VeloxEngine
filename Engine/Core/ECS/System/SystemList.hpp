@@ -12,17 +12,17 @@ class SystemList
 public:
 	enum SystemStatus
 	{
-		ACTIVE,
-		SLEEP,
+		ACTIVE = 0,
+		SLEEP = 1,
 	};
+
+	CONSTEXPR static uint32 NUM_LIST = 2;
 public:
 	SystemList(World* world);
 
 	bool RemoveSystem(BaseSystem& system);
 
-	bool AddSystem(BaseSystem* system, SystemStatus status = ACTIVE);
-
-	void SetSystemStatus(BaseSystem* system, SystemStatus status);
+	bool AddSystem(BaseSystem* system);
 
 	template<typename... Systems>
 	void AddSystems(Systems*... sys);
@@ -30,11 +30,8 @@ public:
 	FORCEINLINE usize GetSize() { return m_Systems.Size(); }
 
 	FORCEINLINE BaseSystem* operator[](uint32 index) { return m_Systems[index]; }
-
-	FORCEINLINE uint32 GetActiveSystemsCount() { return m_ActiveSystemsCount; }
 private:
 	Vector<BaseSystem*> m_Systems;
-	uint32 m_ActiveSystemsCount;
 	World* m_World;
 };
 

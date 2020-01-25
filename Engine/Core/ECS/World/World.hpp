@@ -20,14 +20,16 @@ public:
 
 	EntityManager& GetEntityManager() { return m_EntityManager; }
 
-	SystemList& GetSystsemList() { return m_SystemList; }
+	SystemList& GetSystsemList(SystemList::SystemStatus status) { return m_SystemList[status]; }
 
 	void UpdateSystems(float delta);
+
 public:
 	EntityManager m_EntityManager;
-	SystemList m_SystemList;
+	SystemList m_SystemList[SystemList::NUM_LIST];
 
 private:
+	
 	uint32 m_WorldId;
 
 	friend class ECS;

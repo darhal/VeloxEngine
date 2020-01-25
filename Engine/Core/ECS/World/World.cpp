@@ -7,7 +7,7 @@
 TRE_NS_START
 
 World::World() : 
-	m_EntityManager(this), m_SystemList(this), m_WorldId(ECS::DefaultWorld)
+	m_EntityManager(this), m_SystemList{this, this}, m_WorldId(ECS::DefaultWorld)
 {
 }
 
@@ -17,10 +17,11 @@ World::~World()
 
 void World::UpdateSystems(float delta)
 {
-	usize systems_sz = m_SystemList.GetActiveSystemsCount();
+	SystemList& list = m_SystemList[SystemList::ACTIVE];
+	usize systems_sz = list.GetSize();
 
 	for (uint32 i = 0; i < systems_sz; i++) {
-		BaseSystem& system = *m_SystemList[i];
+		BaseSystem& system = *list[i];
 		// const Bitset& sig = system.GetSignature();
 		Archetype* arche = system.GetArchetype();
 		

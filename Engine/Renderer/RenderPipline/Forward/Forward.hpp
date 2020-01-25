@@ -5,7 +5,7 @@
 #include <Renderer/RenderPipline/Renderer/IRenderer.hpp>
 #include <Renderer/Mesh/IPrimitiveMesh/IPrimitiveMesh.hpp>
 #include <Renderer/Systems/MeshSystems/MeshSystem.hpp>
-#include <Renderer/Systems/LightSystems/DirectionalLightSystem.hpp>
+#include <Renderer/Systems/LightSystems/LightSystem.hpp>
 
 TRE_NS_START
 
@@ -29,10 +29,12 @@ public:
 	void Render();
 
 	CommandBuffer& GetCommandQueue() { return m_CommandQueue; }
+
+	LightSystem& GetLightSystem() { return m_LightSystem; }
 private:
 	CommandBuffer m_CommandQueue;
 	MeshSystem m_MeshSystem;
-	DirectionalLightSystem m_LightSystem;
+	LightSystem m_LightSystem;
 	VboID m_LightBuffer;
 
 	CONSTEXPR static float NEAR_PLANE = 0.1f;

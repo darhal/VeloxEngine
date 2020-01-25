@@ -163,7 +163,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Core\ECS\EntityContainer\EntityContainer.cpp" />
-    <ClCompile Include="Renderer\Systems\LightSystems\DirectionalLightSystem.cpp" />
+    <ClCompile Include="Renderer\Systems\LightSystems\LightSystem.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward\Forward.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward+\ForwardPlus.cpp" />
     <ClCompile Include="Renderer\Backend\CommandBucket\CommandPacket\CommandPacket.cpp" />
@@ -304,7 +304,7 @@
   <ItemGroup>
     <ClInclude Include="Core\DataStructure\PackedArray\PackedArray.hpp" />
     <ClInclude Include="Core\ECS\EntityContainer\EntityContainer.hpp" />
-    <ClInclude Include="Renderer\Systems\LightSystems\DirectionalLightSystem.hpp" />
+    <ClInclude Include="Renderer\Systems\LightSystems\LightSystem.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\ICommandBucket.hpp" />
     <ClInclude Include="Renderer\Components\LightComponents\DirectionalLightComponent\DirectionalLight.hpp" />
     <ClInclude Include="Renderer\Components\LightComponents\LightTypes.hpp" />
