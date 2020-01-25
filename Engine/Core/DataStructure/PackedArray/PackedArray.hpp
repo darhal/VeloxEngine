@@ -42,6 +42,10 @@ public:
 
 	FORCEINLINE T& operator[](ID id) const;
 
+	FORCEINLINE uint32 Size() const { return m_ObjectCount; }
+
+	FORCEINLINE uint32 Capacity() const { return m_Capacity; }
+
 	FORCEINLINE Iterator begin() noexcept;
 	FORCEINLINE Iterator end() noexcept;
 

@@ -21,8 +21,6 @@ public:
 	Entity(EntityManager* manager) : m_Manager(manager), m_Chunk(NULL), m_Id(-1), m_InternalId(-1)
 	{}
 
-	virtual ~Entity() = default;
-
 	FORCEINLINE EntityID GetEntityID() const { return this->m_Id; }
 
 	FORCEINLINE ArchetypeChunk* GetChunk() const { return this->m_Chunk; }
@@ -40,6 +38,7 @@ public:
 
 	template<typename Component>
 	FORCEINLINE Component* GetComponent();
+
 protected:
 	EntityManager* m_Manager;
 	ArchetypeChunk* m_Chunk;
@@ -47,6 +46,7 @@ protected:
 	EntityID m_InternalId;
 	
 	friend class EntityManager;
+	friend class EntityContainer;
 	friend class BaseSystem;
 	friend class Archetype;
 	friend class ArchetypeChunk;

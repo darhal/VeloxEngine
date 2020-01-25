@@ -5,7 +5,7 @@
 
 TRE_NS_START
 
-EntityManager::EntityManager(World* world) : m_World(world)
+EntityManager::EntityManager(World* world) : m_Entities(this), m_World(world)
 {
 }
 
@@ -57,22 +57,19 @@ Entity& EntityManager::CreateEntity(BaseComponent** components, const ComponentT
 	return entity;
 }
 
-void EntityManager::DeleteEntity(EntityHandle handle)
+void EntityManager::DeleteEntity(EntityID id)
 {
-	Entity* entity = (Entity*)(handle);
+	Entity* entity = m_Entities.Lookup(id);
+
+	if (!entity || entity->m_Id != id)
+		return;
+
 	ArchetypeChunk* chunk = entity->GetChunk();
-	chunk->DestroyEntityComponents(*entity);
 
-	uint32 destIndex = entity->m_Id;
-	ssize srcIndex = (ssize)m_Entities.Size() - 1;
+	if (chunk)
+		chunk->DestroyEntityComponents(*entity);
 
-	if (srcIndex > 0) {
-		m_Entities[destIndex] = m_Entities[srcIndex];
-		m_Entities[destIndex].m_Id = destIndex;
-		m_Entities[destIndex].GetChunk()->GetEntityID(m_Entities[destIndex].m_InternalId) = destIndex;
-	}
-
-	m_Entities.PopBack();
+	m_Entities.Remove(id);
 }
 
 BaseComponent* EntityManager::AddComponentInternal(Entity& entity, uint32 component_id, BaseComponent* component)

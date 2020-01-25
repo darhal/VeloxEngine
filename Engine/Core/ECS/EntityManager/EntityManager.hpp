@@ -8,6 +8,7 @@
 #include <Core/ECS/Archetype/Archetype.hpp>
 #include <Core/ECS/Entity/Entity.hpp>
 #include <Core/ECS/ArchetypeQuerry/ArchetypeQuerry.hpp>
+#include <Core/ECS/EntityContainer/EntityContainer.hpp>
 
 TRE_NS_START
 
@@ -30,7 +31,9 @@ public:
 
 	FORCEINLINE Entity& GetEntityByID(uint32 id);
 
-	void DeleteEntity(EntityHandle);
+	FORCEINLINE Entity* LookupEntity(EntityID id);
+
+	void DeleteEntity(EntityID id);
 
 	// Components : 
 	template<typename Component>
@@ -69,7 +72,7 @@ private:
 	BaseComponent* GetComponentInternal(const Entity& entity, uint32 component_id);
 
 private:
-	Vector<Entity> m_Entities;
+	EntityContainer m_Entities;
 	ArchetypeContainer m_Archetypes;
 	HashMap<Bitset, uint32> m_SigToArchetypes;
 	World* m_World;
@@ -78,7 +81,7 @@ private:
 FORCEINLINE Entity& EntityManager::CreateEntity()
 {
 	// Adding empty component we dont need any archetype for this
-	return m_Entities.EmplaceBack(this, (uint32)m_Entities.Size());
+	return m_Entities.CreateEntity();
 }
 
 template<typename... Components>
@@ -92,8 +95,14 @@ FORCEINLINE Entity& EntityManager::CreateEntityWithComponents(const Components&.
 
 FORCEINLINE Entity& EntityManager::GetEntityByID(uint32 id)
 {
-	ASSERTF(id >= m_Entities.Size(), "Invalid usage of 'GetEntityByID', invalid ID is supplied.");
-	return m_Entities[id];
+	Entity* ent = m_Entities.Lookup(id);
+	ASSERTF(ent == NULL, "Invalid usage of 'GetEntityByID', invalid ID is supplied.");
+	return *ent;
+}
+
+FORCEINLINE Entity* EntityManager::LookupEntity(EntityID id)
+{
+	return m_Entities.Lookup(id);
 }
 
 template<typename Component>

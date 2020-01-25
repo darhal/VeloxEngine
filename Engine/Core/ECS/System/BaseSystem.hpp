@@ -14,9 +14,7 @@ class Archetype;
 class BaseSystem
 {
 public:
-	// virtual void UpdateComponents(float delta, Archetype* archetype) = 0;
-
-	virtual void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) = 0;
+	virtual void UpdateComponents(float delta, Archetype& archetype) = 0;
 
 	virtual const ComponentTypeID* const GetComponentsTypes() const = 0;
 

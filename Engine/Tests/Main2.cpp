@@ -130,16 +130,19 @@ public:
 	{
 	}
 
-	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
+	void UpdateComponents(float delta, Archetype& archetype) final
 	{
 		//printf("System A [ComponentType : %d]\n", comp_type);
 		//LOG::Write("Updating the componenet : %p", components);
-		if (comp_type == TestComponent::ID) {
-			TestComponent& test = *(TestComponent*)components;
-			LOG::Write("[System A] Updating the componenet : (%f, %f, %f)", test.smthg.x, test.smthg.y, test.smthg.z);
-		} else {
-			TestComponent2& test2 = *(TestComponent2*)components;
-			LOG::Write("[System A] Updating the componenet : %s", test2.test.Buffer());
+		for (ArchetypeChunk& chunk : archetype) {
+			for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
+				comp.smthg += vec3(1.f, 2.f, 3.f);
+				LOG::Write("[System A] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
+			}
+
+			for (const TestComponent2& comp : chunk.Iterator<TestComponent2>()) {
+				// LOG::Write("[System A] Updating the componenet : %s", comp.test.Buffer());
+			}
 		}
 	}
 };
@@ -151,12 +154,13 @@ public:
 	{
 	}
 
-	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
+	void UpdateComponents(float delta, Archetype& archetype) final
 	{
-		//LOG::Write("Updating the componenet : %p", components);
-		if (comp_type == TestComponent::ID) {
-			TestComponent& test = *(TestComponent*)components;
-			LOG::Write("[System B] Updating the componenet : (%f, %f, %f)", test.smthg.x, test.smthg.y, test.smthg.z);
+		for (const ArchetypeChunk& chunk : archetype) {
+			for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
+				comp.smthg += vec3(3.f, 2.f, 1.f);
+				LOG::Write("[System B] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
+			}
 		}
 	}
 };
@@ -168,13 +172,14 @@ public:
 	{
 	}
 
-	void UpdateComponents(float delta, ComponentTypeID comp_type, BaseComponent* components) final
+	void UpdateComponents(float delta, Archetype& archetype) final
 	{
 		//LOG::Write("Updating the componenet : %p", components);
-
-		if (comp_type == TestComponent2::ID) {
-			TestComponent2& test2 = *(TestComponent2*)components;
-			LOG::Write("[System C] Updating the componenet : %s", test2.test.Buffer());
+		for (const ArchetypeChunk& chunk : archetype) {
+			for (TestComponent2& comp : chunk.Iterator<TestComponent2>()) {
+				comp.test += ", There!";
+				LOG::Write("[System C] Updating the componenet : %s", comp.test.Buffer());
+			}
 		}
 	}
 };
@@ -252,8 +257,8 @@ int main()
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
 	world.GetSystsemList().AddSystems(&test_systemA, &test_systemB, &test_systemC);
 
-	EntityID* ent = (EntityID*) Allocate<EntityID>(10);
-	for (int i = 0; i < 10; i++) {
+	EntityID* ent = (EntityID*) Allocate<EntityID>(1'000);
+	for (int i = 0; i < 1'000; i++) {
 		// ent[i] = ECS::CreateEntityWithComponents(TestComponent2("Hello")).GetEntityID();
 		if (i % 3 == 1) {
 			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
@@ -302,15 +307,17 @@ int main()
 
 	Entity& entity2 = ECS::CreateEntityWithComponents(TestComponent(8));
 	// entity2.CreateComponent<TestComponent>(8);
-	// 2, 4, 2, 1 will crash it*/
+	*/
 	int c;
 	do {
 		INIT_BENCHMARK
 		BENCHMARK("Updating all components", world.UpdateSystems(0.0););
 
-		uint32 id;
-		std::cout << "Choose option (1, 2, 3, 4, 5): "; std::cin >> c;
-		std::cout << "Choose option (0-1'000'000): "; std::cin >> id;
+		uint32 index;
+		std::cout << "Choose option (in [1..7]): "; std::cin >> c;
+		std::cout << "Choose option (0-1'000'000): "; std::cin >> index;
+		EntityID id = ent[index];
+
 		if (c == 1) {
 			INIT_BENCHMARK
 			BENCHMARK("Remove TestComponent", world.GetEntityManager().GetEntityByID(id).RemoveComponent<TestComponent>(););
@@ -324,6 +331,14 @@ int main()
 			BENCHMARK("Create TestComponent2 & TestComponent", 
 				world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent2>("Mat4f()");
 			world.GetEntityManager().GetEntityByID(id).CreateComponent<TestComponent>(vec3());
+			);
+		} else if (c == 6) {
+			BENCHMARK("Delete an entity!",
+				world.GetEntityManager().DeleteEntity(id);
+			);
+		} else if (c == 7) {
+			BENCHMARK("Create an entity!",
+				ent[index] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2("New Entity!"), TestComponent(vec3())).GetEntityID();
 			);
 		}
 	}while(c !=  0);
