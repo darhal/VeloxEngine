@@ -11,14 +11,19 @@ TRE_NS_START
 
 struct BaseComponent
 {
+public:
+	FORCEINLINE static usize GetComponentsCount() { return s_ComponentsTypes->Size(); }
+
 private:
 	friend class ECS;
+	friend class Archetype;
+	friend class ArchetypeChunk;
+	friend class EntityManager;
+	friend class BaseSystem;
 
 	static Vector<Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32>>* s_ComponentsTypes;
-public:	
+protected:	
 	static uint32 RegisterComponentType(ComponentCreateFunction createfn, ComponentDeleteFunction freefn, uint32 size);
-
-	FORCEINLINE static usize GetComponentsCount() { return s_ComponentsTypes->Size();}
 
 	FORCEINLINE static ComponentCreateFunction GetTypeCreateFunction(uint32 id)
 	{
@@ -58,14 +63,15 @@ public:
 template<typename T>
 struct Component : public BaseComponent
 {
-	static const ComponentCreateFunction CREATE_FUNCTION;
-	static const ComponentDeleteFunction FREE_FUNCTION;
+public:
 	static const usize SIZE;
 	static const ComponentTypeID ID;
 
-	static CONSTEXPR ComponentTypeID _ID = Utils::NextID();
-
-	FORCEINLINE usize GetTypeID() { return ID; }
+	FORCEINLINE static usize GetTypeID() { return ID; }
+private:
+	static const ComponentCreateFunction CREATE_FUNCTION;
+	static const ComponentDeleteFunction FREE_FUNCTION;
+	// static CONSTEXPR ComponentTypeID _ID = Utils::NextID();
 };
 
 template<typename T>

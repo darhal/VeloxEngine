@@ -4,6 +4,8 @@
 #include <Renderer/Backend/CommandBuffer/CommandBuffer.hpp>
 #include <Renderer/RenderPipline/Renderer/IRenderer.hpp>
 #include <Renderer/Mesh/IPrimitiveMesh/IPrimitiveMesh.hpp>
+#include <Renderer/Systems/MeshSystems/MeshSystem.hpp>
+#include <Renderer/Systems/LightSystems/DirectionalLightSystem.hpp>
 
 TRE_NS_START
 
@@ -22,13 +24,15 @@ public:
 
 	void SetupLightsBuffer();
 
-	void Draw(IPrimitiveMesh& mesh);
+	// void Draw(IPrimitiveMesh& mesh);
 
 	void Render();
 
 	CommandBuffer& GetCommandQueue() { return m_CommandQueue; }
 private:
 	CommandBuffer m_CommandQueue;
+	MeshSystem m_MeshSystem;
+	DirectionalLightSystem m_LightSystem;
 	VboID m_LightBuffer;
 
 	CONSTEXPR static float NEAR_PLANE = 0.1f;

@@ -22,6 +22,10 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 {
 	CommandBucket& bucket = m_CommandQueue.CreateBucket();
 	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)scr_width / (float)scr_height, NEAR_PLANE, FAR_PLANE);
+
+	m_MeshSystem.SetCommandBucket(&bucket);
+	ResourcesManager::Instance().GetRenderWorld().GetSystsemList().AddSystem(&m_MeshSystem);
+	ResourcesManager::Instance().GetRenderWorld().GetSystsemList().AddSystem(&m_LightSystem);
 }
 
 void ForwardRenderer::SetupLightsBuffer()
@@ -58,11 +62,11 @@ void ForwardRenderer::SetupLightsBuffer()
 	}
 }
 
-void ForwardRenderer::Draw(IPrimitiveMesh& mesh)
+/*void ForwardRenderer::Draw(IPrimitiveMesh& mesh)
 {
 	// Main Pass:
-	mesh.Submit(m_CommandQueue.GetCommandBucker(MAIN_PASS));
-}
+	// mesh.Submit(m_CommandQueue.GetCommandBucker(MAIN_PASS));
+}*/
 
 void ForwardRenderer::Render()
 {

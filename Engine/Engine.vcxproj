@@ -163,6 +163,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Core\ECS\EntityContainer\EntityContainer.cpp" />
+    <ClCompile Include="Renderer\Systems\LightSystems\DirectionalLightSystem.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward\Forward.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward+\ForwardPlus.cpp" />
     <ClCompile Include="Renderer\Backend\CommandBucket\CommandPacket\CommandPacket.cpp" />
@@ -295,6 +296,7 @@
     <ClCompile Include="Renderer\MeshLoader\Model\Model.cpp" />
     <ClCompile Include="Renderer\Mesh\MeshInstance\MeshInstance.cpp" />
     <ClCompile Include="Renderer\Mesh\StaticMesh\StaticMesh.cpp" />
+    <ClCompile Include="Renderer\Systems\MeshSystems\MeshSystem.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
     <ClCompile Include="Tests\Main2.cpp" />
     <ClCompile Include="Tests\TestingString.cpp" />
@@ -302,7 +304,14 @@
   <ItemGroup>
     <ClInclude Include="Core\DataStructure\PackedArray\PackedArray.hpp" />
     <ClInclude Include="Core\ECS\EntityContainer\EntityContainer.hpp" />
+    <ClInclude Include="Renderer\Systems\LightSystems\DirectionalLightSystem.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\ICommandBucket.hpp" />
+    <ClInclude Include="Renderer\Components\LightComponents\DirectionalLightComponent\DirectionalLight.hpp" />
+    <ClInclude Include="Renderer\Components\LightComponents\LightTypes.hpp" />
+    <ClInclude Include="Renderer\Components\LightComponents\PointLightComponent\PointLight.hpp" />
+    <ClInclude Include="Renderer\Components\LightComponents\SpotLightComponent\SpotLight.hpp" />
+    <ClInclude Include="Renderer\Components\MeshComponents\StaticMeshComponent.hpp" />
+    <ClInclude Include="Renderer\Components\Misc\TransformComponent.hpp" />
     <ClInclude Include="Renderer\RenderPipline\Forward\Forward.hpp" />
     <ClInclude Include="Renderer\RenderPipline\Forward+\ForwardPlus.hpp" />
     <ClInclude Include="Renderer\Backend\ContextOperationQueue\ContextOperationQueue.hpp" />
@@ -459,6 +468,7 @@
     <ClInclude Include="Renderer\Mesh\StaticMesh\StaticMesh.hpp" />
     <ClInclude Include="Renderer\Mesh\SubMesh\SubMesh.hpp" />
     <ClInclude Include="Renderer\RenderPipline\Renderer\IRenderer.hpp" />
+    <ClInclude Include="Renderer\Systems\MeshSystems\MeshSystem.hpp" />
     <ClInclude Include="Tests\ShaderValidator.hpp" />
     <ClInclude Include="Tests\ThreadBarrier.hpp" />
   </ItemGroup>

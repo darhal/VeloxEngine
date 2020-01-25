@@ -129,14 +129,14 @@ template<typename Component>
 FORCEINLINE Component& ArchetypeChunk::GetComponentByInternalID(uint32 id)
 {
 	ASSERTF(id >= m_EntitiesCount, "Invalid internal ID supplied to the chunk.");
-	return *(Component*)this->GetComponentBuffer(Component::ID)[id];
+	return *(Component*)(this->GetComponentBuffer(Component::ID) + BaseComponent::GetTypeSize(Component::ID) * id);
 }
 
 template<typename Component>
 FORCEINLINE Component& ArchetypeChunk::GetComponentByInternalID(uint32 id) const
 {
 	ASSERTF(id >= m_EntitiesCount, "Invalid internal ID supplied to the chunk.");
-	return *(Component*)this->GetComponentBuffer(Component::ID)[id];
+	return *(Component*)(this->GetComponentBuffer(Component::ID) + BaseComponent::GetTypeSize(Component::ID) * id);
 }
 
 TRE_NS_END

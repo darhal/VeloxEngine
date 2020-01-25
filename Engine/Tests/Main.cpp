@@ -1,4 +1,4 @@
-#ifdef bougabouga
+// #ifdef bougabouga
 
 #include <iostream>
 #include <chrono>
@@ -45,6 +45,7 @@
 #include <Renderer/MeshLoader/Model/Model.hpp>
 #include <Renderer/MeshLoader/MeshLoader.hpp>
 #include <Renderer/RenderPipline/Forward/Forward.hpp>
+#include <Renderer/Components/LightComponents/DirectionalLightComponent/DirectionalLight.hpp>
 #include "ShaderValidator.hpp"
 
 using namespace TRE;
@@ -108,8 +109,8 @@ float deltaTime = 0.5f;
 double  frameRate = 30;
 bool start = false;
 int32 speed = 1;
-const unsigned int SCR_WIDTH = 1900 / 2;
-const unsigned int SCR_HEIGHT = 1000 / 2;
+const unsigned int SCR_WIDTH = 1920 / 2;
+const unsigned int SCR_HEIGHT = 1080 / 2;
 
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
@@ -182,27 +183,35 @@ int main()
 	ForwardRenderer renderer;
 	renderer.Initialize(SCR_WIDTH, SCR_HEIGHT);
 	CommandBucket& bucket = renderer.GetCommandQueue().GetCommandBucker(ForwardRenderer::MAIN_PASS);
+	EntityManager& ent_manager = ResourcesManager::Instance().GetRenderWorld().GetEntityManager();
 
 	ModelData data;
 	data.vertices = vertices;
 	data.vertexSize = ARRAY_SIZE(vertices);
 	Model model(data);
-	StaticMesh mesh = model.LoadMesh(shader_id);
+	StaticMeshComponent mesh = model.LoadMeshComponent(shader_id);
+	Entity& ent1 = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent>(mesh, TransformComponent());
 	// MeshInstance mesh = model.LoadInstancedMesh(1'000, shader_id3);
 
-	MeshLoader loader("res/obj/Chees_pawn/Bishop_with_Notch_1.obj");
+	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
 	Model carrot = loader.LoadAsOneObject();
 	// MeshInstance carrot_mesh = carrot.LoadInstancedMesh(2'000, shader_id3);
-	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
+	StaticMeshComponent carrot_mesh = carrot.LoadMeshComponent(shader_id2);
 
-	/*for (int i = 0; i < 2'000; i++) {
-		carrot_mesh.GetTransformationMatrix(i).translate(vec3(1.f * i, 0.f, 1.f * i));
-		carrot_mesh.UpdateTransforms(i);
-	}*/
+	srand(static_cast <unsigned> (time(0)));
+	for (int i = 0; i < 10; i++) {
+		TransformComponent trans;
+		float X = 10.f;
+		float r1 = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
+		float r2 = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
+		float r3 = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
+		trans.transform_matrix.translate(vec3(r1, r2, r3));
+		Entity& ent2 = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent>(carrot_mesh, trans);
+	}
 
 	Event ev;
 	Enable(Capability::DEPTH_TEST);
-	Enable(Capability::CULL_FACE);
+	// Enable(Capability::CULL_FACE);
 	Enable(GL_MULTISAMPLE);
 	ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
@@ -219,10 +228,9 @@ int main()
 
 		op_queue.Flush();
 
-		renderer.Draw(carrot_mesh);
-		renderer.Draw(mesh);
-
+		ResourcesManager::Instance().GetRenderWorld().UpdateSystems(0);
 		renderer.Render();
+
 		window.Present();
 
 		//);
@@ -288,4 +296,4 @@ void HandleEvent(float dt, Mat4f& projecton, Camera& camera, const Event& e)
 	}
 }
 
-#endif
+// #endif

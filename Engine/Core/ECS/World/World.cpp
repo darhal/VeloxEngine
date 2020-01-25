@@ -17,7 +17,7 @@ World::~World()
 
 void World::UpdateSystems(float delta)
 {
-	usize systems_sz = m_SystemList.GetSize();
+	usize systems_sz = m_SystemList.GetActiveSystemsCount();
 
 	for (uint32 i = 0; i < systems_sz; i++) {
 		BaseSystem& system = *m_SystemList[i];

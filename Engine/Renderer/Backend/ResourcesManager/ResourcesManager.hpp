@@ -3,6 +3,7 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Singleton/Singleton.hpp>
 #include <Core/DataStructure/Vector/Vector.hpp>
+#include <Core/ECS/ECS/ECS.hpp>
 #include <Renderer/Common/Common.hpp>
 #include <Renderer/Backend/ContextOperationQueue/ContextOperationQueue.hpp>
 
@@ -12,7 +13,8 @@ class ResourcesManager : public Singleton<ResourcesManager>
 {
 public:
 
-	ResourcesManager() {
+	ResourcesManager() : m_RenderWorld(ECS::CreateWorld())
+	{
 		for (uint32 i = 0; i < RESOURCES_COUNT; i++)
 			m_MemoryPool[i].Reserve(1024);
 	}
@@ -26,9 +28,12 @@ public:
 	FORCEINLINE uint8* GetRawMemory(ResourcesTypes type, uint32 id, uint32 size);
 
 	ContextOperationQueue& GetContextOperationsQueue(){ return m_OperationQueue; }
+
+	World& GetRenderWorld() { return m_RenderWorld; }
 private:
 	Vector<uint8> m_MemoryPool[RESOURCES_COUNT];
 	ContextOperationQueue m_OperationQueue;
+	World& m_RenderWorld;
 };
 
 template<typename T, typename... Args>

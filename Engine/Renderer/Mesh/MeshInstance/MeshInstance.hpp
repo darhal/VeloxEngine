@@ -40,8 +40,7 @@ private:
 FORCEINLINE MeshInstance::MeshInstance(MeshInstance&& other) :
 	m_Meshs(std::move(other.m_Meshs)), m_ModelTransformations(other.m_ModelTransformations),
 	m_InstanceCount(other.m_InstanceCount), m_VaoID(other.m_VaoID), m_DataVboID(other.m_DataVboID)
-{
-}
+{}
 
 FORCEINLINE void MeshInstance::AddSubMesh(PrimitiveGeometry& geo, MaterialID mat)
 {

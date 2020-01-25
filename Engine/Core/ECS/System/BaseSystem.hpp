@@ -25,6 +25,8 @@ public:
 	Archetype* GetArchetype() { return m_Archetype; }
 
 	void SetArchetype(Archetype* archetype) { m_Archetype = archetype; }
+
+	virtual ~BaseSystem() = default;
 protected:
 	BaseSystem() : m_Archetype(NULL)
 	{};

@@ -17,8 +17,9 @@ public:
 	typedef const T* CIterator;
 public:
 	Array();
-	template<typename... Args>
-	Array(Args&&... args);
+
+	//template<typename... Args>
+	//Array(Args&&... args);
 
 	Array(const Array<T, S>& other);
 	Array<T, S>& operator=(const Array<T, S>& other);
@@ -97,11 +98,11 @@ Array<T, S>::Array(const std::initializer_list<T>& list) : m_Length(list.size())
 	//m_Data = list;
 }*/
 
-template<typename T, usize S>
+/*template<typename T, usize S>
 template<typename... Args>
 Array<T, S>::Array(Args&&... args) : m_Length(sizeof...(Args)), m_Data{ static_cast<T>(std::forward<Args>(args))... }
 {
-}
+}*/
 
 template<typename T, usize S>
 Array<T, S>::Array(const Array<T, S>& other) : m_Length(other.m_Length)

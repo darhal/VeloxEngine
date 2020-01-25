@@ -1,4 +1,4 @@
-// #ifdef BLABLA
+#ifdef BLABLA
 
 #include <iostream>
 #include <chrono>
@@ -347,4 +347,4 @@ int main()
 	getchar();
 }
 
-// #endif
+#endif

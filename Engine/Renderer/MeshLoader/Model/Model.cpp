@@ -161,6 +161,31 @@ StaticMesh Model::LoadMesh(ShaderID shader_id)
 	return mesh;
 }
 
+StaticMeshComponent Model::LoadMeshComponent(ShaderID shader_id)
+{
+	StaticMeshComponent mesh(m_VaoID);
+	int32 lastVertexCount = 0;
+	ResourcesManager& manager = ResourcesManager::Instance();
+
+	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
+		for (const ModelMaterialData& mat : m_Materials) {
+			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
+			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, mat.material, shader_id);
+			mesh.submeshs.EmplaceBack(model_geo, matID);
+			lastVertexCount += mat.vcount;
+		}
+	} else {
+		for (const ModelMaterialData& mat : m_Materials) {
+			PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
+			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, mat.material, shader_id);
+			mesh.submeshs.EmplaceBack(model_geo, matID);
+			lastVertexCount += mat.vcount;
+		}
+	}
+
+	return mesh;
+}
+
 MeshInstance Model::LoadInstancedMesh(uint32 instance_count, ShaderID shader_id)
 {
 	ResourcesManager& manager = ResourcesManager::Instance();

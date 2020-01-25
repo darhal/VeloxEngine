@@ -11,6 +11,8 @@
 #include <Renderer/Mesh/MeshInstance/MeshInstance.hpp>
 #include <Renderer/MeshLoader/ModelData/ModelMaterialData.hpp>
 
+#include <Renderer/Components/MeshComponents/StaticMeshComponent.hpp>
+
 TRE_NS_START
 
 class Model
@@ -37,6 +39,8 @@ public:
 	Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_vec, Vector<uint32>* indices = NULL, uint32 processing = 0);
 
 	StaticMesh LoadMesh(ShaderID shader_id = 0);
+
+	StaticMeshComponent LoadMeshComponent(ShaderID shader_id = 0);
 
 	MeshInstance LoadInstancedMesh(uint32 instance_count, ShaderID shader_id = 0);
 
