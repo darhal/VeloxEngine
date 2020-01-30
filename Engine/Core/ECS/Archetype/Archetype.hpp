@@ -49,10 +49,10 @@ public:
 
 	FORCEINLINE uint32 GetComponentsTypesCount() const { return m_TypesCount; }
 
-	bool Has(ComponentTypeID id) const;
+	bool HasComponentType(ComponentTypeID id) const;
 
 	template<typename Component>
-	bool Has() const { return Has(Component::ID); }
+	bool HasComponentType() const { return Has(Component::ID); }
 
 	Iterator begin() { return Iterator(m_OccupiedChunks); }
 	Iterator end() { return Iterator(NULL); }

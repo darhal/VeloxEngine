@@ -162,6 +162,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Core\ECS\ComponentGroup\ComponentGroup.cpp" />
     <ClCompile Include="Core\ECS\EntityContainer\EntityContainer.cpp" />
     <ClCompile Include="Renderer\Systems\LightSystems\LightSystem.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward\Forward.cpp" />
@@ -302,6 +303,7 @@
     <ClCompile Include="Tests\TestingString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Core\ECS\ComponentGroup\ComponentGroup.hpp" />
     <ClInclude Include="Core\DataStructure\PackedArray\PackedArray.hpp" />
     <ClInclude Include="Core\ECS\EntityContainer\EntityContainer.hpp" />
     <ClInclude Include="Renderer\Systems\LightSystems\LightSystem.hpp" />

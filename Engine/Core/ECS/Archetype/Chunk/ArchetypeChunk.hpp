@@ -94,7 +94,7 @@ private:
 template<typename Component>
 ArchetypeChunkIterator<Component> ArchetypeChunk::Iterator()
 {
-	if (m_Archetype->Has(Component::ID))
+	if (m_Archetype->HasComponentType(Component::ID))
 		return ArchetypeChunkIterator<Component>{ (Component*) this->GetComponentBuffer(Component::ID), m_EntitiesCount };
 
 	return ArchetypeChunkIterator<Component>{ NULL, 0 };
@@ -103,7 +103,7 @@ ArchetypeChunkIterator<Component> ArchetypeChunk::Iterator()
 template<typename Component>
 ArchetypeChunkIterator<Component> ArchetypeChunk::Iterator() const
 {
-	if (m_Archetype->Has(Component::ID))
+	if (m_Archetype->HasComponentType(Component::ID))
 		return ArchetypeChunkIterator<Component>{ (Component*)this->GetComponentBuffer(Component::ID), m_EntitiesCount };
 
 	return ArchetypeChunkIterator<Component>{ NULL, 0 };

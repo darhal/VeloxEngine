@@ -131,7 +131,7 @@ void Archetype::PushFreeChunk(ArchetypeChunk* chunk)
 	m_FreeChunks = chunk;
 }
 
-bool Archetype::Has(ComponentTypeID id) const
+bool Archetype::HasComponentType(ComponentTypeID id) const
 {
 	return m_Signature.Get(id);
 }

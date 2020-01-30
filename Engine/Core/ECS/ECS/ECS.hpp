@@ -21,7 +21,7 @@ public:
 	static void ShutDown();
 
 	template<typename... Components>
-	static Bitset BuildSignature();
+	static Bitset GetSignature();
 private:
 	CONSTEXPR static uint32 MAX_WORLDS = 5;
 
@@ -30,11 +30,11 @@ private:
 };
 
 template<typename... Components>
-static Bitset ECS::BuildSignature()
+static Bitset ECS::GetSignature()
 {
 	Bitset sig(BaseComponent::GetComponentsCount());
 	CONSTEXPR usize numComponents = sizeof...(Components);
-	ComponentTypeID component_ids[numComponents] = { Components::ID... };
+	CONSTEXPR ComponentTypeID component_ids[numComponents] = { Components::ID... };
 
 	for (ComponentTypeID id : component_ids) {
 		sig.Set(id, true);

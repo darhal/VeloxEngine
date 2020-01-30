@@ -123,10 +123,41 @@ struct TestComponent3 : public Component<TestComponent3>
 	Mat4f test;
 };
 
+struct TagComponent2 : public Component<TagComponent2>
+{
+};
+
+struct TagComponent1 : public Component<TagComponent1>
+{
+};
+
 class TestSystemA : public System<TestComponent, TestComponent2>
 {
 public:
 	TestSystemA()
+	{}
+
+	void UpdateComponents(float delta, Archetype& archetype) final
+	{
+		//printf("System A [ComponentType : %d]\n", comp_type);
+		//LOG::Write("Updating the componenet : %p", components);
+		for (ArchetypeChunk& chunk : archetype) {
+			for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
+				comp.smthg += vec3(1.f, 2.f, 3.f);
+				LOG::Write("[System A] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
+			}
+
+			for (const TestComponent2& comp : chunk.Iterator<TestComponent2>()) {
+				// LOG::Write("[System A] Updating the componenet : %s", comp.test.Buffer());
+			}
+		}
+	}
+};
+
+class TestSystemA1 : public System<TagComponent1, TestComponent, TestComponent2>
+{
+public:
+	TestSystemA1()
 	{
 	}
 
@@ -137,7 +168,31 @@ public:
 		for (ArchetypeChunk& chunk : archetype) {
 			for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
 				comp.smthg += vec3(1.f, 2.f, 3.f);
-				LOG::Write("[System A] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
+				LOG::Write("[System A1] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
+			}
+
+			for (const TestComponent2& comp : chunk.Iterator<TestComponent2>()) {
+				// LOG::Write("[System A] Updating the componenet : %s", comp.test.Buffer());
+			}
+		}
+	}
+};
+
+class TestSystemA2 : public System<TagComponent2, TestComponent, TestComponent2>
+{
+public:
+	TestSystemA2()
+	{
+	}
+
+	void UpdateComponents(float delta, Archetype& archetype) final
+	{
+		//printf("System A [ComponentType : %d]\n", comp_type);
+		//LOG::Write("Updating the componenet : %p", components);
+		for (ArchetypeChunk& chunk : archetype) {
+			for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
+				comp.smthg += vec3(1.f, 2.f, 3.f);
+				LOG::Write("[System A2] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
 			}
 
 			for (const TestComponent2& comp : chunk.Iterator<TestComponent2>()) {
@@ -169,8 +224,7 @@ class TestSystemC : public System<TestComponent2>
 {
 public:
 	TestSystemC()
-	{
-	}
+	{}
 
 	void UpdateComponents(float delta, Archetype& archetype) final
 	{
@@ -200,72 +254,23 @@ class EntityA : public Entity
 
 int main()
 {
-	// Testing PackedArray:
-	/*PackedArray<char> array;
-
-	auto& p1 = array.Emplace('A');
-	printf("P1 (ID:%d, CHAR: %c)\n", p1.first, p1.second);
-	auto& p2 = array.Emplace('B');
-	printf("P2 (ID:%d, CHAR: %c)\n", p2.first, p2.second);
-	auto& p3 = array.Emplace('C');
-	printf("P3 (ID:%d, CHAR: %c)\n", p3.first, p3.second);
-
-	{
-		auto& c1 = array.Get(p1.first);
-		printf("P1 (ID:%d, CHAR: %c)\n", p1.first, c1);
-		auto& c2 = array.Get(p2.first);
-		printf("P2 (ID:%d, CHAR: %c)\n", p2.first, c2);
-		auto& c3 = array.Get(p3.first);
-		printf("P3 (ID:%d, CHAR: %c)\n", p3.first, c3);
-	}
-
-	printf("Removing p1.first\n"); array.Remove(p1.first);
-
-	{
-		auto& c2 = array.Get(p2.first);
-		printf("P2 (ID:%d, CHAR: %c)\n", p2.first, c2);
-		auto& c3 = array.Get(p3.first);
-		printf("P3 (ID:%d, CHAR: %c)\n", p3.first, c3);
-	}
-
-	auto& p4 = array.Emplace('D');
-	printf("P4 (ID:%d, CHAR: %c)\n", p4.first, p4.second);
-	auto& p5 = array.Emplace('E');
-	printf("P5 (ID:%d, CHAR: %c)\n", p5.first, p5.second);
-	auto& p6 = array.Emplace('F');
-	printf("P6 (ID:%d, CHAR: %c)\n", p6.first, p6.second);
-
-	{
-		auto c2 = array.Get(p2.first);
-		printf("P2 (ID:%d, CHAR: %c)\n", p2.first, c2);
-		auto c3 = array.Get(p3.first);
-		printf("P3 (ID:%d, CHAR: %c)\n", p3.first, c3);
-
-		auto c4 = array.Get(p4.first);
-		printf("P4 (ID:%d, CHAR: %c)\n", p4.first, c4);
-		auto c5 = array.Get(p5.first);
-		printf("P5 (ID:%d, CHAR: %c)\n", p5.first, c5);
-		auto c6 = array.Get(p6.first);
-		printf("P6 (ID:%d, CHAR: %c)\n", p6.first, c6);
-	}
-
-	getchar();
-	return 0;*/
-
 	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
 	World& world = ECS::CreateWorld();
 	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
-	world.GetSystsemList().AddSystems(&test_systemA, &test_systemB, &test_systemC);
+	TestSystemA1 test_systemA1; TestSystemA2 test_systemA2;
+	world.GetSystsemList(SystemList::ACTIVE).AddSystems(&test_systemA, &test_systemA1, &test_systemA2, &test_systemB, &test_systemC);
 
-	EntityID* ent = (EntityID*) Allocate<EntityID>(1'000);
-	for (int i = 0; i < 1'000; i++) {
+	EntityID* ent = (EntityID*) Allocate<EntityID>(50);
+	for (int i = 0; i < 50; i++) {
 		// ent[i] = ECS::CreateEntityWithComponents(TestComponent2("Hello")).GetEntityID();
 		if (i % 3 == 1) {
 			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 2) {
-			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent(vec3())).GetEntityID();
+			// ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent(vec3())).GetEntityID();
+			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TagComponent1(), TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 0) {
-			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2("Hey")).GetEntityID();
+			// ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2("Hey")).GetEntityID();
+			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TagComponent2(), TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
 		}
 	}
 
@@ -348,3 +353,82 @@ int main()
 }
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// Testing PackedArray:
+	/*PackedArray<char> array;
+
+	auto& p1 = array.Emplace('A');
+	printf("P1 (ID:%d, CHAR: %c)\n", p1.first, p1.second);
+	auto& p2 = array.Emplace('B');
+	printf("P2 (ID:%d, CHAR: %c)\n", p2.first, p2.second);
+	auto& p3 = array.Emplace('C');
+	printf("P3 (ID:%d, CHAR: %c)\n", p3.first, p3.second);
+
+	{
+		auto& c1 = array.Get(p1.first);
+		printf("P1 (ID:%d, CHAR: %c)\n", p1.first, c1);
+		auto& c2 = array.Get(p2.first);
+		printf("P2 (ID:%d, CHAR: %c)\n", p2.first, c2);
+		auto& c3 = array.Get(p3.first);
+		printf("P3 (ID:%d, CHAR: %c)\n", p3.first, c3);
+	}
+
+	printf("Removing p1.first\n"); array.Remove(p1.first);
+
+	{
+		auto& c2 = array.Get(p2.first);
+		printf("P2 (ID:%d, CHAR: %c)\n", p2.first, c2);
+		auto& c3 = array.Get(p3.first);
+		printf("P3 (ID:%d, CHAR: %c)\n", p3.first, c3);
+	}
+
+	auto& p4 = array.Emplace('D');
+	printf("P4 (ID:%d, CHAR: %c)\n", p4.first, p4.second);
+	auto& p5 = array.Emplace('E');
+	printf("P5 (ID:%d, CHAR: %c)\n", p5.first, p5.second);
+	auto& p6 = array.Emplace('F');
+	printf("P6 (ID:%d, CHAR: %c)\n", p6.first, p6.second);
+
+	{
+		auto c2 = array.Get(p2.first);
+		printf("P2 (ID:%d, CHAR: %c)\n", p2.first, c2);
+		auto c3 = array.Get(p3.first);
+		printf("P3 (ID:%d, CHAR: %c)\n", p3.first, c3);
+
+		auto c4 = array.Get(p4.first);
+		printf("P4 (ID:%d, CHAR: %c)\n", p4.first, c4);
+		auto c5 = array.Get(p5.first);
+		printf("P5 (ID:%d, CHAR: %c)\n", p5.first, c5);
+		auto c6 = array.Get(p6.first);
+		printf("P6 (ID:%d, CHAR: %c)\n", p6.first, c6);
+	}
+
+	getchar();
+	return 0;*/

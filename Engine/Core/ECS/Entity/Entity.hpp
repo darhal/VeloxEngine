@@ -39,6 +39,8 @@ public:
 	template<typename Component>
 	FORCEINLINE Component* GetComponent();
 
+	template<typename Component>
+	bool HasComponent();
 protected:
 	EntityManager* m_Manager;
 	ArchetypeChunk* m_Chunk;
@@ -85,6 +87,12 @@ FORCEINLINE Archetype* Entity::GetArchetype() const
 		return &m_Chunk->GetArchetype();
 
 	return NULL;
+}
+
+template<typename Component>
+bool Entity::HasComponent()
+{
+	return m_Manager->GetComponent<Component>(*this);
 }
 
 TRE_NS_END

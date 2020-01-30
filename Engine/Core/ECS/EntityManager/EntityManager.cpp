@@ -144,6 +144,18 @@ bool EntityManager::RemoveComponentInternal(Entity& entity, uint32 component_id)
 	return false;
 }
 
+bool EntityManager::HasComponent(EntityID id, ComponentID comp_id)
+{
+	Entity* ent = LookupEntity(id);
+
+	if (ent && ent->m_Chunk) {
+		Archetype& arch = ent->m_Chunk->GetArchetype();
+		return arch.HasComponentType(comp_id);
+	}
+
+	return false;
+}
+
 BaseComponent* EntityManager::GetComponentInternal(const Entity& entity, uint32 component_id)
 {
 	ArchetypeChunk* chunk = entity.GetChunk();

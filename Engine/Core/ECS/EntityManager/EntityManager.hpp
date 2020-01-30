@@ -35,6 +35,11 @@ public:
 
 	void DeleteEntity(EntityID id);
 
+	bool HasComponent(EntityID id, ComponentID comp_id);
+
+	template<typename Component>
+	bool HasComponent(EntityID id);
+
 	// Components : 
 	template<typename Component>
 	FORCEINLINE Component* AddComponent(Entity& entity, Component* component);
@@ -128,6 +133,12 @@ template<typename Component>
 Vector<Component*> EntityManager::GetAllComponents(ComponentTypeID id) const
 {
 	return this->GetAllComponents(Component::ID);
+}
+
+template<typename Component>
+bool EntityManager::HasComponent(EntityID id)
+{
+	return this->HasComponent(id, Component::ID);
 }
 
 TRE_NS_END
