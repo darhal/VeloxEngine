@@ -13,7 +13,8 @@ class ForwardRenderer : public IRenderer
 {
 public:
 	enum {
-		MAIN_PASS = 0
+		MAIN_PASS = 0,
+		SHADOW_PASS = 1,
 	};
 public:
 	ForwardRenderer();
@@ -24,7 +25,7 @@ public:
 
 	void SetupLightsBuffer();
 
-	// void Draw(IPrimitiveMesh& mesh);
+	void Draw(IPrimitiveMesh& mesh);
 
 	void Render();
 
@@ -33,6 +34,9 @@ public:
 	LightSystem& GetLightSystem() { return m_LightSystem; }
 private:
 	CommandBuffer m_CommandQueue;
+	FboID m_DepthFbo;
+	TextureID m_DepthMap;
+
 	MeshSystem m_MeshSystem;
 	LightSystem m_LightSystem;
 	VboID m_LightBuffer;

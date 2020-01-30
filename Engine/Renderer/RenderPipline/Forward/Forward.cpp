@@ -22,8 +22,31 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 	CommandBucket& bucket = m_CommandQueue.CreateBucket();
 	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)scr_width / (float)scr_height, NEAR_PLANE, FAR_PLANE);
 
-	m_MeshSystem.SetCommandBucket(&bucket);
-	ResourcesManager::Instance().GetRenderWorld().GetSystsemList(SystemList::ACTIVE).AddSystem(&m_MeshSystem);
+	ResourcesManager& manager = ResourcesManager::Instance();
+	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
+	CommandBucket& shadow_bucket = m_CommandQueue.CreateBucket();
+
+	m_DepthMap = manager.CreateResource<Texture>(ResourcesTypes::TEXTURE);
+	Commands::CreateTextureCmd* cmd_tex = op_queue.SubmitCommand<Commands::CreateTextureCmd>();
+	cmd_tex->texture = &manager.Get<Texture>(ResourcesTypes::TEXTURE, m_DepthMap);
+	cmd_tex->settings = TextureSettings(
+		TexTarget::TEX2D, scr_width, scr_height, NULL,
+		{
+			{TexParam::TEX_MIN_FILTER, TexFilter::NEAREST}, {TexParam::TEX_MAG_FILTER, TexFilter::NEAREST},
+			{TexParam::TEX_WRAP_S, TexWrapping::CLAMP_BORDER}, {TexParam::TEX_WRAP_T, TexWrapping::CLAMP_BORDER}
+		}, DataType::FLOAT, 0, TexInternalFormat::DepthComponent, TexFormat::DepthComponent, vec4(1.f, 1.f, 1.f, 1.f)
+	);
+
+	m_DepthFbo = manager.CreateResource<FBO>(ResourcesTypes::FBO);
+	Commands::CreateFrameBufferCmd* cmd_fbo = op_queue.SubmitCommand<Commands::CreateFrameBufferCmd>();
+	cmd_fbo->fbo = &manager.Get<FBO>(ResourcesTypes::FBO, m_DepthFbo);
+	cmd_fbo->settings = FramebufferSettings(
+		{ { cmd_tex->texture, FBOAttachement::DEPTH_ATTACH } },
+		FBOTarget::FBO, NULL, FBOAttachement::DEPTH_ATTACH, {}, GL_NONE
+	);
+
+	// m_MeshSystem.SetCommandBucket(&bucket);
+	// ResourcesManager::Instance().GetRenderWorld().GetSystsemList(SystemList::ACTIVE).AddSystem(&m_MeshSystem);
 }
 
 void ForwardRenderer::SetupLightsBuffer()
@@ -44,11 +67,11 @@ void ForwardRenderer::SetupLightsBuffer()
 	m_LightSystem.m_MaxLight = MAX_LIGHTS;
 }
 
-/*void ForwardRenderer::Draw(IPrimitiveMesh& mesh)
+void ForwardRenderer::Draw(IPrimitiveMesh& mesh)
 {
 	// Main Pass:
-	// mesh.Submit(m_CommandQueue.GetCommandBucker(MAIN_PASS));
-}*/
+	mesh.Submit(m_CommandQueue.GetCommandBucker(MAIN_PASS));
+}
 
 void ForwardRenderer::Render()
 {

@@ -191,27 +191,11 @@ int main()
 	data.vertices = vertices;
 	data.vertexSize = ARRAY_SIZE(vertices);
 	Model model(data);
-	StaticMeshComponent mesh = model.LoadMeshComponent(shader_id);
-	Entity& ent1 = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent>(mesh, TransformComponent());
-	// MeshInstance mesh = model.LoadInstancedMesh(1'000, shader_id3);
+	StaticMesh mesh = model.LoadMesh(shader_id);
 
 	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
 	Model carrot = loader.LoadAsOneObject();
-	// MeshInstance carrot_mesh = carrot.LoadInstancedMesh(2'000, shader_id3);
-	StaticMeshComponent carrot_mesh = carrot.LoadMeshComponent(shader_id2);
-
-	srand(static_cast <unsigned> (time(0)));
-	for (int i = 0; i < 10; i++) {
-		TransformComponent trans;
-		float X = 10.f;
-		float r1 = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
-		float r2 = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
-		float r3 = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
-		trans.transform_matrix.translate(vec3(r1, r2, r3));
-		Entity& ent2 = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent>(carrot_mesh, trans);
-	}
-
-	Entity& ent2 = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent>(carrot_mesh, TransformComponent());
+	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
 
 	/*DirectionalLightComponent comp;
 	comp.SetDirection(vec3(0, -1.2, 0));
@@ -225,8 +209,8 @@ int main()
 	pointlight.SetQuadratic(0.032f);
 	pointlight.SetConstant(0.5f);
 	renderer.GetLightSystem().AddLight((Mat4f*)&pointlight);
-	ent1.GetComponent<TransformComponent>()->transform_matrix.translate(light_pos);
-	ent1.GetComponent<TransformComponent>()->transform_matrix.scale(vec3(0.2, 0.2, 0.2));
+	// ent1.GetComponent<TransformComponent>()->transform_matrix.translate(light_pos);
+	// ent1.GetComponent<TransformComponent>()->transform_matrix.scale(vec3(0.2, 0.2, 0.2));
 
 	Event ev;
 	Enable(Capability::DEPTH_TEST);
@@ -247,7 +231,10 @@ int main()
 
 		op_queue.Flush();
 
-		ResourcesManager::Instance().GetRenderWorld().UpdateSystems(0);
+		//ResourcesManager::Instance().GetRenderWorld().UpdateSystems(0);
+		//renderer.Render();
+		renderer.Draw(mesh);
+		renderer.Draw(carrot_mesh);
 		renderer.Render();
 
 		window.Present();
