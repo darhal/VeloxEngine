@@ -22,6 +22,8 @@ public:
 
 	template<typename... Components>
 	static Bitset GetSignature();
+
+	FORCEINLINE static Bitset GetEmptySignature();
 private:
 	CONSTEXPR static uint32 MAX_WORLDS = 5;
 
@@ -30,7 +32,7 @@ private:
 };
 
 template<typename... Components>
-static Bitset ECS::GetSignature()
+Bitset ECS::GetSignature()
 {
 	Bitset sig(BaseComponent::GetComponentsCount());
 	CONSTEXPR usize numComponents = sizeof...(Components);
@@ -41,6 +43,11 @@ static Bitset ECS::GetSignature()
 	}
 
 	return sig;
+}
+
+FORCEINLINE Bitset ECS::GetEmptySignature()
+{
+	return Bitset(BaseComponent::GetComponentsCount());;
 }
 
 TRE_NS_END

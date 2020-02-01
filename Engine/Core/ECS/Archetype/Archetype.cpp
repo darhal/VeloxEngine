@@ -13,14 +13,8 @@ Archetype::Archetype(EntityManager* manager, const Bitset& bitset, const Vector<
 {
 	// Calculate size for all the components
 	for (const ComponentTypeID& id : ids) {
-		/*if (BaseComponent::GetCategory(id) & BaseComponent::SHARED_COMPONENT) {
-			m_SharedComponents = Pair<uint32, Vector<uint8>>(id, Vector<uint8>());
-		} else {
-			m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
-		}*/
-
-		m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
 		m_TypesToBuffer.Emplace(id, m_ComponentsArraySize);
+		m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
 	}
 }
 
@@ -31,14 +25,8 @@ Archetype::Archetype(EntityManager* manager, const Vector<ComponentTypeID>& ids)
 {
 	// Calculate size for all the components
 	for (const ComponentTypeID& id : ids) {
-		/*if (BaseComponent::GetCategory(id) & BaseComponent::SHARED_COMPONENT) {
-			m_SharedComponents = Pair<uint32, Vector<uint8>>(id, Vector<uint8>());
-		} else {
-			m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
-		}*/
-
-		m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
 		m_TypesToBuffer.Emplace(id, m_ComponentsArraySize);
+		m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
 		m_Signature.Set(id, true);
 	}
 }
@@ -52,14 +40,8 @@ Archetype::Archetype(EntityManager* manager, const Bitset& bitset) :
 	String str = Utils::ToString(m_Signature);
 	for (uint32 id = 0; id < m_Signature.Length(); id++) {
 		if (m_Signature.Get(id)) {
-			/*if (BaseComponent::GetCategory(id) & BaseComponent::SHARED_COMPONENT) {
-				m_SharedComponents = Pair<uint32, Vector<uint8>>(id, Vector<uint8>());
-			} else {
-				m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
-			}*/
-
-			m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
 			m_TypesToBuffer.Emplace(id, m_ComponentsArraySize);
+			m_ComponentsArraySize += BaseComponent::GetTypeSize(id) * ArchetypeChunk::CAPACITY;
 			m_TypesCount++;
 		}
 	}
@@ -83,9 +65,9 @@ Archetype::~Archetype()
 	}
 }
 
-EntityManager& Archetype::GetEntityManager() const
-{
-	return *m_Manager;
+EntityManager& Archetype::GetEntityManager() const 
+{ 
+	return *m_Manager; 
 }
 
 void Archetype::AddComponentType(ComponentTypeID id)
@@ -97,7 +79,6 @@ ArchetypeChunk* Archetype::GenerateChunk()
 {
 	usize total_chunk_size = sizeof(ArchetypeChunk) + sizeof(EntityID) * ArchetypeChunk::CAPACITY + m_ComponentsArraySize;
 
-	printf("Signature : %s | Size: %u\n", Utils::ToString(m_Signature), total_chunk_size);
 	// Allocate
 	uint8* total_buffer = Allocate<uint8>(total_chunk_size);
 	uint8* comp_buffer_off = total_buffer + sizeof(ArchetypeChunk);
@@ -154,13 +135,5 @@ bool Archetype::HasComponentType(ComponentTypeID id) const
 {
 	return m_Signature.Get(id);
 }
-
-/*uint8* Archetype::GetSharedComponent(uint32 shared_internal_id)
-{
-	uint32 index = shared_internal_id * BaseComponent::GetTypeSize(m_SharedComponents.first);
-	ASSERTF(index >= m_SharedComponents.second.Size(), "Invalid SharedComponent internal ID supplied to the archetype GetSharedComponent() function.");
-
-	return (uint8*)(&m_SharedComponents.second[index]);
-}*/
 
 TRE_NS_END

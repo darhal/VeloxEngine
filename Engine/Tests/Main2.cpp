@@ -140,9 +140,9 @@ public:
 			ComponentGroup(
 				ArchetypeQuerry
 				{
-					Bitset(),
 					ECS::GetSignature<TestComponent2, TestComponent>(),
-					Bitset()
+					ECS::GetEmptySignature(),
+					ECS::GetEmptySignature()
 				}
 		);
 	}
@@ -151,10 +151,6 @@ public:
 	{
 		//printf("System A [ComponentType : %d]\n", comp_type);
 		//LOG::Write("Updating the componenet : %p", components);
-
-		/*for (const TestComponent2& comp : chunk.Iterator<TestComponent2>()) {
-			// LOG::Write("[System A] Updating the componenet : %s", comp.test.Buffer());
-		}*/
 
 		for (const Archetype* arch : m_ComponentGroup.GetArchetypes()) {
 			const Archetype& archetype = *arch;
@@ -182,8 +178,6 @@ public:
 				}
 			}
 		}
-
-		printf("Archetype: OnUpdate()\n");
 	}
 };
 
@@ -308,10 +302,10 @@ int main()
 			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 2) {
 			// ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent(vec3())).GetEntityID();
-			//ent[i] = world.GetEntityManager().CreateEntityWithComponents(TagComponent1(), TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
+			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TagComponent1(), TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 0) {
 			// ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2("Hey")).GetEntityID();
-			//ent[i] = world.GetEntityManager().CreateEntityWithComponents(TagComponent2(), TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
+			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TagComponent2(), TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
 		}
 	}
 
