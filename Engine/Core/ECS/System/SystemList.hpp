@@ -33,6 +33,8 @@ public:
 private:
 	Vector<BaseSystem*> m_Systems;
 	World* m_World;
+
+	friend class BaseSystem;
 };
 
 template<typename... Systems>

@@ -19,15 +19,12 @@ void World::UpdateSystems(float delta)
 {
 	SystemList& list = m_SystemList[SystemList::ACTIVE];
 	usize systems_sz = list.GetSize();
+	printf("System Size: %d\n", systems_sz);
 
 	for (uint32 i = 0; i < systems_sz; i++) {
 		BaseSystem& system = *list[i];
-		// const Bitset& sig = system.GetSignature();
-		Archetype* arche = system.GetArchetype();
 		
-		if (arche && !arche->IsEmpty()) {
-			system.UpdateComponents(delta, *arche);
-		}
+		system.OnUpdate(delta);
 	}
 }
 

@@ -64,9 +64,9 @@ public:
 
 	Archetype* GetArchetype(const Bitset& sig);
 
-	Vector<const Archetype*> GetAllArchetypesThatInclude(const Bitset& signature) const;
+	Vector<Archetype*> GetAllArchetypesThatInclude(const Bitset& signature);
 
-	Vector<const Archetype*> GettAllArchetypeThatMatch(const ArchetypeQuerry& querry) const;
+	Vector<Archetype*> GettAllArchetypeThatMatch(const ArchetypeQuerry& querry);
 
 	// World :
 	World& GetWorld();
@@ -75,6 +75,7 @@ private:
 	BaseComponent* AddComponentInternal(Entity& entity, uint32 component_id, BaseComponent* component);
 	bool RemoveComponentInternal(Entity& entity, uint32 component_id);
 	BaseComponent* GetComponentInternal(const Entity& entity, uint32 component_id);
+	void UpdateSystemsQuerrys(Archetype& arch);
 
 private:
 	EntityContainer m_Entities;

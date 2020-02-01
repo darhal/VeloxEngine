@@ -1,4 +1,4 @@
-// #ifdef bougabouga
+#ifdef bougabouga
 
 #include <iostream>
 #include <chrono>
@@ -302,4 +302,4 @@ void HandleEvent(float dt, Mat4f& projecton, Camera& camera, const Event& e)
 	}
 }
 
-// #endif
+#endif

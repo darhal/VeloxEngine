@@ -9,12 +9,12 @@ TRE_NS_START
 
 class CommandBucket;
 
-class MeshSystem : public System<StaticMeshComponent, TransformComponent>
+class MeshSystem
 {
 public:
 	MeshSystem(CommandBucket* cmd_buffer = NULL);
 
-	void UpdateComponents(float dt, Archetype& arche) final;
+	void UpdateComponents(float dt, Archetype& arche);
 
 	void SetCommandBucket(CommandBucket* bucket) { m_CommandBucket = bucket; }
 private:

@@ -1,4 +1,4 @@
-#ifdef BLABLA
+// #ifdef BLABLA
 
 #include <iostream>
 #include <chrono>
@@ -131,61 +131,98 @@ struct TagComponent1 : public Component<TagComponent1>
 {
 };
 
-class TestSystemA : public System<TestComponent, TestComponent2>
+class TestSystemA : BaseSystem
 {
 public:
 	TestSystemA()
-	{}
+	{
+		m_ComponentGroup = 
+			ComponentGroup(
+				ArchetypeQuerry
+				{
+					Bitset(),
+					ECS::GetSignature<TestComponent2, TestComponent>(),
+					Bitset()
+				}
+		);
+	}
 
-	void UpdateComponents(float delta, Archetype& archetype) final
+	void OnUpdate(float delta) final
 	{
 		//printf("System A [ComponentType : %d]\n", comp_type);
 		//LOG::Write("Updating the componenet : %p", components);
-		for (ArchetypeChunk& chunk : archetype) {
-			for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
-				comp.smthg += vec3(1.f, 2.f, 3.f);
-				LOG::Write("[System A] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
-			}
 
-			for (const TestComponent2& comp : chunk.Iterator<TestComponent2>()) {
-				// LOG::Write("[System A] Updating the componenet : %s", comp.test.Buffer());
+		/*for (const TestComponent2& comp : chunk.Iterator<TestComponent2>()) {
+			// LOG::Write("[System A] Updating the componenet : %s", comp.test.Buffer());
+		}*/
+
+		for (const Archetype* arch : m_ComponentGroup.GetArchetypes()) {
+			const Archetype& archetype = *arch;
+
+			if (archetype.HasComponentType<TagComponent1>()) {
+				for (ArchetypeChunk& chunk : archetype) {
+					for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
+						comp.smthg += vec3(0.f, 1.f, 2.f);
+						LOG::Write("[System TAG 1] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
+					}
+				}
+			} else if (archetype.HasComponentType<TagComponent2>()) {
+				for (ArchetypeChunk& chunk : archetype) {
+					for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
+						comp.smthg += vec3(0.f, 1.f, 2.f);
+						LOG::Write("[System TAG 2] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
+					}
+				}
+			} else {
+				for (ArchetypeChunk& chunk : archetype) {
+					for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
+						comp.smthg += vec3(0.f, 1.f, 2.f);
+						LOG::Write("[System A1] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
+					}
+				}
 			}
 		}
+
+		printf("Archetype: OnUpdate()\n");
 	}
 };
 
-class TestSystemA1 : public System<TagComponent1, TestComponent, TestComponent2>
+/*
+class TestSystemA1 : BaseSystem
 {
 public:
 	TestSystemA1()
-	{
-	}
+	{}
 
-	void UpdateComponents(float delta, Archetype& archetype) final
+	void OnUpdate(float delta) final
 	{
 		//printf("System A [ComponentType : %d]\n", comp_type);
 		//LOG::Write("Updating the componenet : %p", components);
-		for (ArchetypeChunk& chunk : archetype) {
-			for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
-				comp.smthg += vec3(1.f, 2.f, 3.f);
-				LOG::Write("[System A1] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
-			}
+		for (const Archetype* arch : m_ComponentGroup.GetArchetypes()) {
+			const Archetype& archetype = *arch;
 
-			for (const TestComponent2& comp : chunk.Iterator<TestComponent2>()) {
-				// LOG::Write("[System A] Updating the componenet : %s", comp.test.Buffer());
+			for (ArchetypeChunk& chunk : archetype) {
+				for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
+					comp.smthg += vec3(1.f, 2.f, 3.f);
+					LOG::Write("[System A1] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
+				}
+
+				for (const TestComponent2& comp : chunk.Iterator<TestComponent2>()) {
+					// LOG::Write("[System A] Updating the componenet : %s", comp.test.Buffer());
+				}
 			}
 		}
 	}
 };
 
-class TestSystemA2 : public System<TagComponent2, TestComponent, TestComponent2>
+class TestSystemA2 : BaseSystem
 {
 public:
 	TestSystemA2()
 	{
 	}
 
-	void UpdateComponents(float delta, Archetype& archetype) final
+	void OnUpdate(float delta) final
 	{
 		//printf("System A [ComponentType : %d]\n", comp_type);
 		//LOG::Write("Updating the componenet : %p", components);
@@ -202,14 +239,14 @@ public:
 	}
 };
 
-class TestSystemB : public System<TestComponent>
+class TestSystemB : BaseSystem
 {
 public:
 	TestSystemB()
 	{
 	}
 
-	void UpdateComponents(float delta, Archetype& archetype) final
+	void OnUpdate(float delta) final
 	{
 		for (const ArchetypeChunk& chunk : archetype) {
 			for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
@@ -220,13 +257,13 @@ public:
 	}
 };
 
-class TestSystemC : public System<TestComponent2>
+class TestSystemC : BaseSystem
 {
 public:
 	TestSystemC()
 	{}
 
-	void UpdateComponents(float delta, Archetype& archetype) final
+	void OnUpdate(float delta) final
 	{
 		//LOG::Write("Updating the componenet : %p", components);
 		for (const ArchetypeChunk& chunk : archetype) {
@@ -236,7 +273,7 @@ public:
 			}
 		}
 	}
-};
+};*/
 
 class EntityA : public Entity
 {
@@ -256,9 +293,13 @@ int main()
 {
 	LOG::Write("- Hardware Threads 	: %d", std::thread::hardware_concurrency());
 	World& world = ECS::CreateWorld();
-	TestSystemA test_systemA; TestSystemB test_systemB; TestSystemC test_systemC;
-	TestSystemA1 test_systemA1; TestSystemA2 test_systemA2;
-	world.GetSystsemList(SystemList::ACTIVE).AddSystems(&test_systemA, &test_systemA1, &test_systemA2, &test_systemB, &test_systemC);
+	TestSystemA test_systemA; /*TestSystemB test_systemB; TestSystemC test_systemC;
+	TestSystemA1 test_systemA1; TestSystemA2 test_systemA2;*/
+	world.GetSystsemList(SystemList::ACTIVE).AddSystems(&test_systemA);
+
+	printf("Size of Tag Component : %llu|%llu\n", sizeof(TagComponent1), sizeof(TagComponent2));
+	printf("TagComponent1: %d | TagComponent2: %d | TestComponent: %d | TestComponent2: %d\n", 
+		TagComponent1::ID, TagComponent2::ID, TestComponent::ID, TestComponent2::ID);
 
 	EntityID* ent = (EntityID*) Allocate<EntityID>(50);
 	for (int i = 0; i < 50; i++) {
@@ -267,10 +308,10 @@ int main()
 			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 2) {
 			// ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent(vec3())).GetEntityID();
-			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TagComponent1(), TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
+			//ent[i] = world.GetEntityManager().CreateEntityWithComponents(TagComponent1(), TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
 		} else if (i % 3 == 0) {
 			// ent[i] = world.GetEntityManager().CreateEntityWithComponents(TestComponent2("Hey")).GetEntityID();
-			ent[i] = world.GetEntityManager().CreateEntityWithComponents(TagComponent2(), TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
+			//ent[i] = world.GetEntityManager().CreateEntityWithComponents(TagComponent2(), TestComponent2("Hello"), TestComponent(vec3())).GetEntityID();
 		}
 	}
 
@@ -347,12 +388,11 @@ int main()
 			);
 		}
 	}while(c !=  0);
-	
-	// RenderThread();
+
 	getchar();
 }
 
-#endif
+// #endif
 
 
 

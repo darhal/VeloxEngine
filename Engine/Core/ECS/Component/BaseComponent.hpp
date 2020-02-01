@@ -26,7 +26,7 @@ private:
 	friend class EntityManager;
 	friend class BaseSystem;
 
-	typedef Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32, uint8> ComponentMetaData;
+	typedef Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32> ComponentMetaData;
 
 	static Vector<ComponentMetaData>* s_ComponentsTypes;
 protected:	
@@ -47,10 +47,10 @@ protected:
 		return (*s_ComponentsTypes)[id].Get<2>();
 	}
 
-	FORCEINLINE static Category GetCategory(uint32 id)
+	/*FORCEINLINE static Category GetCategory(uint32 id)
 	{
 		return (Category)((*s_ComponentsTypes)[id].Get<3>());
-	}
+	}*/
 
 	FORCEINLINE static bool IsValidTypeID(uint32 id)
 	{
@@ -95,7 +95,7 @@ const usize Component<T>::SIZE = sizeof(T);
 
 /******************************************* SHARED COMPONENT *******************************************/
 
-template<typename T>
+/*template<typename T>
 struct SharedComponent : public BaseComponent
 {
 public:
@@ -112,7 +112,7 @@ template<typename T>
 const ComponentTypeID SharedComponent<T>::ID = BaseComponent::RegisterComponentType(BaseComponent::CreateComponent<T>, BaseComponent::DeleteComponent<T>, sizeof(T), BaseComponent::SHARED_COMPONENT);
 
 template<typename T>
-const usize SharedComponent<T>::SIZE = sizeof(T);
+const usize SharedComponent<T>::SIZE = sizeof(T);*/
 
 
 TRE_NS_END

@@ -20,6 +20,7 @@ Archetype& EntityManager::CreateArchetype(const Bitset& signature)
 	Archetype& archetype = archetype_pair.second;
 	archetype.SetID(archetype_pair.first);
 	m_SigToArchetypes.Emplace(signature, archetype_pair.first);
+	this->UpdateSystemsQuerrys(archetype);
 	return archetype;
 }
 
@@ -213,11 +214,11 @@ Map<ComponentTypeID, Vector<BaseComponent*>> EntityManager::GetAllComponentsMatc
 	return res;
 }
 
-Vector<const Archetype*> EntityManager::GetAllArchetypesThatInclude(const Bitset& signature) const
+Vector<Archetype*> EntityManager::GetAllArchetypesThatInclude(const Bitset& signature) 
 {
-	Vector<const Archetype*> res;
+	Vector<Archetype*> res;
 
-	for (const Archetype& arche : m_Archetypes) {
+	for (Archetype& arche : m_Archetypes) {
 
 		if ((arche.GetSignature() & signature)) {
 			res.EmplaceBack(&arche);
@@ -227,11 +228,11 @@ Vector<const Archetype*> EntityManager::GetAllArchetypesThatInclude(const Bitset
 	return res;
 }
 
-Vector<const Archetype*> EntityManager::GettAllArchetypeThatMatch(const ArchetypeQuerry& querry) const
+Vector<Archetype*> EntityManager::GettAllArchetypeThatMatch(const ArchetypeQuerry& querry)
 {
-	Vector<const Archetype*> res;
+	Vector<Archetype*> res;
 
-	for (const Archetype& arche : m_Archetypes) {
+	for (Archetype& arche : m_Archetypes) {
 		const Bitset& sig = arche.GetSignature();
 
 		if (!(sig & querry.None) && ((sig & querry.Any) || ((sig & querry.All) == querry.All))) {
@@ -240,6 +241,15 @@ Vector<const Archetype*> EntityManager::GettAllArchetypeThatMatch(const Archetyp
 	}
 
 	return res;
+}
+
+void EntityManager::UpdateSystemsQuerrys(Archetype& arch)
+{
+	SystemList& list = m_World->GetSystsemList(SystemList::ACTIVE);
+
+	for (uint32 i = 0; i < list.GetSize(); i++) {
+		list[i]->GetComponentGroup().AddArchetypeIfMatch(arch);
+	}
 }
 
 TRE_NS_END

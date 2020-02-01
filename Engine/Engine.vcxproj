@@ -164,6 +164,7 @@
   <ItemGroup>
     <ClCompile Include="Core\ECS\ComponentGroup\ComponentGroup.cpp" />
     <ClCompile Include="Core\ECS\EntityContainer\EntityContainer.cpp" />
+    <ClCompile Include="Core\ECS\System\BaseSystem.cpp" />
     <ClCompile Include="Renderer\Systems\LightSystems\LightSystem.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward\Forward.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward+\ForwardPlus.cpp" />
@@ -354,7 +355,6 @@
     <ClInclude Include="Core\ECS\Component\BaseComponent.hpp" />
     <ClInclude Include="Core\ECS\ECS\ECS.hpp" />
     <ClInclude Include="Core\ECS\World\World.hpp" />
-    <ClInclude Include="Core\ECS\Listener\Listener.hpp" />
     <ClInclude Include="Core\ECS\System\BaseSystem.hpp" />
     <ClInclude Include="Core\ECS\System\SystemList.hpp" />
     <ClInclude Include="Core\Event\Event.hpp" />

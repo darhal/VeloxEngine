@@ -57,7 +57,7 @@ public:
 	bool HasComponentType(ComponentTypeID id) const;
 
 	template<typename Component>
-	bool HasComponentType() const { return Has(Component::ID); }
+	bool HasComponentType() const { return HasComponentType(Component::ID); }
 
 	Iterator begin() { return Iterator(m_OccupiedChunks); }
 	Iterator end() { return Iterator(NULL); }
@@ -68,16 +68,16 @@ public:
 	const CIterator cbegin() const { return CIterator(m_OccupiedChunks); }
 	const CIterator cend() const { return CIterator(NULL); }
 
-	uint8* GetSharedComponent(uint32 shared_internal_id);
+	/*uint8* GetSharedComponent(uint32 shared_internal_id);
 
 	template<typename SharedComponent>
 	SharedComponent* GetSharedComponent(uint32 shared_internal_id);
 
 	template<typename ShrdComp>
-	uint32 CreateSharedComponent(const ShrdComp& component);
+	uint32 CreateSharedComponent(const ShrdComp& component);*/
 private:
 	Map<ComponentTypeID, uint32> m_TypesToBuffer;
-	Pair<ComponentTypeID, Vector<uint8>> m_SharedComponents;
+	// Pair<ComponentTypeID, Vector<uint8>> m_SharedComponents;
 	Bitset m_Signature;
 	EntityManager* m_Manager;
 	ArchetypeChunk* m_OccupiedChunks;
@@ -132,7 +132,7 @@ private:
 	};
 };
 
-template<typename SharedComponent>
+/*template<typename SharedComponent>
 SharedComponent* Archetype::GetSharedComponent(uint32 shared_internal_id)
 {
 	ASSERTF(SharedComponent::ID != m_SharedComponents.first, "Invalid SharedComponent ID supplied to the archetype.");
@@ -154,7 +154,7 @@ uint32 Archetype::CreateSharedComponent(const ShrdComp& component)
 	}
 
 	return  -1;
-}
+}*/
 
 
 TRE_NS_END

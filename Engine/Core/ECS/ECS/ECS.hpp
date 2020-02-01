@@ -34,7 +34,7 @@ static Bitset ECS::GetSignature()
 {
 	Bitset sig(BaseComponent::GetComponentsCount());
 	CONSTEXPR usize numComponents = sizeof...(Components);
-	CONSTEXPR ComponentTypeID component_ids[numComponents] = { Components::ID... };
+	ComponentTypeID component_ids[numComponents] = { Components::ID... };
 
 	for (ComponentTypeID id : component_ids) {
 		sig.Set(id, true);

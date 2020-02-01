@@ -6,60 +6,37 @@
 #include <Core/ECS/Component/BaseComponent.hpp>
 #include <Core/DataStructure/Tuple/Pair.hpp>
 #include <Core/DataStructure/Bitset/Bitset.hpp>
+#include <Core/ECS/ComponentGroup/ComponentGroup.hpp>
 
 TRE_NS_START
 
 class Archetype;
+class SystemList;
 
 class BaseSystem
 {
 public:
-	virtual void UpdateComponents(float delta, Archetype& archetype) = 0;
+	virtual void OnUpdate(float delta) = 0;
 
-	virtual const ComponentTypeID* const GetComponentsTypes() const = 0;
-
-	virtual const Bitset& GetSignature() const = 0;
-
-	virtual uint32 GetComponentsCount() const = 0;
-
-	Archetype* GetArchetype() { return m_Archetype; }
-
-	void SetArchetype(Archetype* archetype) { m_Archetype = archetype; }
+	const ComponentGroup& GetComponentGroup() const { return m_ComponentGroup; }
 
 	virtual ~BaseSystem() = default;
 protected:
-	BaseSystem() : m_Archetype(NULL)
-	{};
+	BaseSystem() {};
 
-	Archetype* m_Archetype;
-	friend class ECS;
-};
-
-template<typename... Components>
-class System : public BaseSystem
-{
-protected:
-	CONSTEXPR static uint32 COMPONENTS_COUNT = sizeof...(Components);
-
-	System() : 
-		m_ComponentsTypes{ static_cast<ComponentTypeID>(Components::ID)... },
-		m_Signature(BaseComponent::GetComponentsCount())
-	{
-		uint32 size = COMPONENTS_COUNT;
-
-		while (size--) {
-			m_Signature.Set(m_ComponentsTypes[size], true);
-		}
-	}
-
-	FORCEINLINE const ComponentTypeID* const GetComponentsTypes() const final { return m_ComponentsTypes;  };
-
-	FORCEINLINE const Bitset& GetSignature() const final { return m_Signature; };
-
-	FORCEINLINE uint32 GetComponentsCount() const final { return COMPONENTS_COUNT; };
+	ComponentGroup m_ComponentGroup;
+	SystemList* m_SystemList;
 private:
-	ComponentTypeID m_ComponentsTypes[COMPONENTS_COUNT];
-	Bitset m_Signature;
+	void AddToList(SystemList* list);
+
+	void QuerryComponents(EntityManager& manager) { m_ComponentGroup.QuerryArchetypes(manager); }
+
+	ComponentGroup& GetComponentGroup() { return m_ComponentGroup; }
+
+	friend class ECS;
+	friend class SystemList;
+	friend class EntityManager;
 };
+
 
 TRE_NS_END

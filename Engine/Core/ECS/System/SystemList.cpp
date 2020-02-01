@@ -24,7 +24,7 @@ bool SystemList::RemoveSystem(BaseSystem& system)
 
 bool SystemList::AddSystem(BaseSystem* system)
 {
-	system->SetArchetype(&m_World->GetEntityManager().GetOrCreateArchetype(system->GetSignature()));
+	system->AddToList(this);
 	m_Systems.EmplaceBack(system);
 
 	return true;
