@@ -7,8 +7,9 @@
 
 TRE_NS_START
 
-ArchetypeChunk::ArchetypeChunk(Archetype* archetype, uint8* comp_buffer) :
-	m_Archetype(archetype), m_NextChunk(NULL), m_ComponentBuffer(comp_buffer), m_EntitiesCount(0)
+ArchetypeChunk::ArchetypeChunk(Archetype* archetype, uint8* comp_buffer, uint32 shared_comp_index) :
+	m_Archetype(archetype), m_NextChunk(NULL), m_ComponentBuffer(comp_buffer), 
+	m_EntitiesCount(0), m_SharedComponentIndex(shared_comp_index)
 {
 }
 
@@ -78,6 +79,7 @@ ArchetypeChunk* ArchetypeChunk::SwapEntityWithLastOne(uint32 entity_internal_id)
 	}
 
 	if (!--last_chunk->m_EntitiesCount) {
+		last_chunk->m_SharedComponentIndex = -1;
 		m_Archetype->PushFreeChunk(last_chunk);
 	}
 

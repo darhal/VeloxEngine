@@ -306,6 +306,7 @@
     <ClInclude Include="Core\ECS\ComponentGroup\ComponentGroup.hpp" />
     <ClInclude Include="Core\DataStructure\PackedArray\PackedArray.hpp" />
     <ClInclude Include="Core\ECS\EntityContainer\EntityContainer.hpp" />
+    <ClInclude Include="Renderer\Components\MeshComponents\MeshInstanceComponent.hpp" />
     <ClInclude Include="Renderer\Systems\LightSystems\LightSystem.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\ICommandBucket.hpp" />
     <ClInclude Include="Renderer\Components\LightComponents\DirectionalLightComponent\DirectionalLight.hpp" />

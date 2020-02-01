@@ -2,17 +2,17 @@
 
 TRE_NS_START
 
-Vector<Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32>>* BaseComponent::s_ComponentsTypes;
+Vector<typename BaseComponent::ComponentMetaData>* BaseComponent::s_ComponentsTypes;
 
-ComponentTypeID BaseComponent::RegisterComponentType(ComponentCreateFunction createfn, ComponentDeleteFunction freefn, uint32 size)
+ComponentTypeID BaseComponent::RegisterComponentType(ComponentCreateFunction createfn, ComponentDeleteFunction freefn, uint32 size, Category category)
 {
 	if (s_ComponentsTypes == NULL) {
-		s_ComponentsTypes = new Vector<Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32>>();
+		s_ComponentsTypes = new Vector<Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32, uint8>>();
 	}
 
 	ComponentID componentID = (ComponentID) s_ComponentsTypes->Size();
-	s_ComponentsTypes->EmplaceBack(Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32>(
-		createfn, freefn, size)
+	s_ComponentsTypes->EmplaceBack(ComponentMetaData(
+		createfn, freefn, size, (uint8)category)
 	);
 
 	return componentID;

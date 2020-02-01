@@ -12,8 +12,13 @@ TRE_NS_START
 struct BaseComponent
 {
 public:
-	FORCEINLINE static usize GetComponentsCount() { return s_ComponentsTypes->Size(); }
+	enum Category {
+		DATA_COMPONENT = 0x0,
+		TAG_COMPONENT = 0x1,
+		SHARED_COMPONENT = 0x2,
+	};
 
+	FORCEINLINE static usize GetComponentsCount() { return s_ComponentsTypes->Size(); }
 private:
 	friend class ECS;
 	friend class Archetype;
@@ -21,9 +26,11 @@ private:
 	friend class EntityManager;
 	friend class BaseSystem;
 
-	static Vector<Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32>>* s_ComponentsTypes;
+	typedef Tuple<ComponentCreateFunction, ComponentDeleteFunction, uint32, uint8> ComponentMetaData;
+
+	static Vector<ComponentMetaData>* s_ComponentsTypes;
 protected:	
-	static uint32 RegisterComponentType(ComponentCreateFunction createfn, ComponentDeleteFunction freefn, uint32 size);
+	static uint32 RegisterComponentType(ComponentCreateFunction createfn, ComponentDeleteFunction freefn, uint32 size, Category category);
 
 	FORCEINLINE static ComponentCreateFunction GetTypeCreateFunction(uint32 id)
 	{
@@ -38,6 +45,11 @@ protected:
 	FORCEINLINE static uint32 GetTypeSize(uint32 id)
 	{
 		return (*s_ComponentsTypes)[id].Get<2>();
+	}
+
+	FORCEINLINE static Category GetCategory(uint32 id)
+	{
+		return (Category)((*s_ComponentsTypes)[id].Get<3>());
 	}
 
 	FORCEINLINE static bool IsValidTypeID(uint32 id)
@@ -60,6 +72,8 @@ protected:
 	}
 };
 
+/******************************************* DATA COMPONENT *******************************************/
+
 template<typename T>
 struct Component : public BaseComponent
 {
@@ -71,13 +85,34 @@ public:
 private:
 	static const ComponentCreateFunction CREATE_FUNCTION;
 	static const ComponentDeleteFunction FREE_FUNCTION;
-	// static CONSTEXPR ComponentTypeID _ID = Utils::NextID();
 };
 
 template<typename T>
-const ComponentTypeID Component<T>::ID = BaseComponent::RegisterComponentType(BaseComponent::CreateComponent<T>, BaseComponent::DeleteComponent<T>,  sizeof(T));
+const ComponentTypeID Component<T>::ID = BaseComponent::RegisterComponentType(BaseComponent::CreateComponent<T>, BaseComponent::DeleteComponent<T>,  sizeof(T), BaseComponent::DATA_COMPONENT);
 
 template<typename T>
 const usize Component<T>::SIZE = sizeof(T);
+
+/******************************************* SHARED COMPONENT *******************************************/
+
+template<typename T>
+struct SharedComponent : public BaseComponent
+{
+public:
+	static const usize SIZE;
+	static const ComponentTypeID ID;
+
+	FORCEINLINE static usize GetTypeID() { return ID; }
+private:
+	static const ComponentCreateFunction CREATE_FUNCTION;
+	static const ComponentDeleteFunction FREE_FUNCTION;
+};
+
+template<typename T>
+const ComponentTypeID SharedComponent<T>::ID = BaseComponent::RegisterComponentType(BaseComponent::CreateComponent<T>, BaseComponent::DeleteComponent<T>, sizeof(T), BaseComponent::SHARED_COMPONENT);
+
+template<typename T>
+const usize SharedComponent<T>::SIZE = sizeof(T);
+
 
 TRE_NS_END

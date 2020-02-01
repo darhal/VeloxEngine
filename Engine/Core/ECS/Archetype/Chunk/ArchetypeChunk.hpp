@@ -15,7 +15,7 @@ public:
 	CONSTEXPR static uint32 CAPACITY = 64; // How much components per type can store
 
 public:
-	ArchetypeChunk(Archetype* archetype, uint8* comp_buffer);
+	ArchetypeChunk(Archetype* archetype, uint8* comp_buffer, uint32 shared_comp_index = -1);
 
 	~ArchetypeChunk();
 
@@ -33,6 +33,9 @@ public:
 
 	void AddEntityComponents(Entity& entity, BaseComponent** components, const ComponentTypeID* componentIDs, usize numComponents);
 
+	template<typename SharedComp>
+	SharedComp* GetSharedComponent() const;
+	
 	BaseComponent* GetComponent(const Entity& entity, ComponentTypeID id) const;
 
 	BaseComponent* GetComponent(EntityID internal_id, uint8* buffer, ComponentTypeID component_id) const;
@@ -77,6 +80,7 @@ private:
 	ArchetypeChunk* m_NextChunk;
 	uint8* m_ComponentBuffer;
 	uint32 m_EntitiesCount;
+	uint32 m_SharedComponentIndex;
 
 	void DestroyComponentInternal(ArchetypeChunk* last_chunk, ComponentTypeID type_id, uint8* components_buffer, EntityID internal_id);
 
@@ -137,6 +141,14 @@ FORCEINLINE Component& ArchetypeChunk::GetComponentByInternalID(uint32 id) const
 {
 	ASSERTF(id >= m_EntitiesCount, "Invalid internal ID supplied to the chunk.");
 	return *(Component*)(this->GetComponentBuffer(Component::ID) + BaseComponent::GetTypeSize(Component::ID) * id);
+}
+
+template<typename SharedComp>
+SharedComp* ArchetypeChunk::GetSharedComponent() const
+{
+	if (m_SharedComponentIndex != uint32(-1)) {
+		return m_Archetype->template GetSharedComponent<SharedComp>(m_SharedComponentIndex);
+	}
 }
 
 TRE_NS_END

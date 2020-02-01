@@ -1,7 +1,7 @@
 #pragma once
 
+#include <Core/ECS/Component/BaseComponent.hpp>
 #include <Renderer/Common/Common.hpp>
-#include <Renderer/Mesh/IPrimitiveMesh/IPrimitiveMesh.hpp>
 #include <Renderer/Mesh/SubMesh/SubMesh.hpp>
 
 TRE_NS_START

@@ -234,7 +234,7 @@ Vector<const Archetype*> EntityManager::GettAllArchetypeThatMatch(const Archetyp
 	for (const Archetype& arche : m_Archetypes) {
 		const Bitset& sig = arche.GetSignature();
 
-		if ((((sig & querry.All) == querry.All) || (sig & querry.Any)) && !(sig & querry.None)) {
+		if (!(sig & querry.None) && ((sig & querry.Any) || ((sig & querry.All) == querry.All))) {
 			res.EmplaceBack(&arche);
 		}
 	}
