@@ -138,11 +138,10 @@ public:
 	{
 		m_ComponentGroup = 
 			ComponentGroup(
-				ArchetypeQuerry
-				{
+				ArchetypeQuerry {
 					ECS::GetSignature<TestComponent2, TestComponent>(),
 					ECS::GetEmptySignature(),
-					ECS::GetEmptySignature()
+					ECS::GetSignature<TagComponent1>(),
 				}
 		);
 	}
@@ -173,7 +172,7 @@ public:
 				for (ArchetypeChunk& chunk : archetype) {
 					for (TestComponent& comp : chunk.Iterator<TestComponent>()) {
 						comp.smthg += vec3(0.f, 1.f, 2.f);
-						LOG::Write("[System A1] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
+						LOG::Write("[System A] Updating the componenet : (%f, %f, %f)", comp.smthg.x, comp.smthg.y, comp.smthg.z);
 					}
 				}
 			}
@@ -290,10 +289,6 @@ int main()
 	TestSystemA test_systemA; /*TestSystemB test_systemB; TestSystemC test_systemC;
 	TestSystemA1 test_systemA1; TestSystemA2 test_systemA2;*/
 	world.GetSystsemList(SystemList::ACTIVE).AddSystems(&test_systemA);
-
-	printf("Size of Tag Component : %llu|%llu\n", sizeof(TagComponent1), sizeof(TagComponent2));
-	printf("TagComponent1: %d | TagComponent2: %d | TestComponent: %d | TestComponent2: %d\n", 
-		TagComponent1::ID, TagComponent2::ID, TestComponent::ID, TestComponent2::ID);
 
 	EntityID* ent = (EntityID*) Allocate<EntityID>(50);
 	for (int i = 0; i < 50; i++) {
