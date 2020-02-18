@@ -25,7 +25,7 @@ Model::Model(const ModelData& data, uint32 processing)
 		m_HaveIndexBuffer = false;
 	}
 
-	m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
+	m_Materials.EmplaceBack(new AbstractMaterial(), m_VertexCount); // default material
 }
 
 Model::Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_vec, Vector<uint32>* indices, uint32 processing)
@@ -43,15 +43,15 @@ Model::Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_
 		// m_VboIDs.EmplaceBack(indexVboID);
 		create_index_cmd->vao = m_CreateVaoCmd->vao;
 		create_index_cmd->settings = VertexSettings::VertexBufferData(*indices, &manager.Get<VBO>(ResourcesTypes::VBO, indexVboID));
-		
-		m_Materials = mat_vec;
+
+		m_Materials = std::move(mat_vec);
 	} else {
 		m_VertexCount = (uint32)ver_data.Size() / 8LLU; // Get the vertex Count!
 		m_HaveIndexBuffer = false;
 	}
 
 	if (m_Materials.IsEmpty()) {
-		m_Materials.EmplaceBack(*(new AbstractMaterial()), m_VertexCount); // default material
+		m_Materials.EmplaceBack(new AbstractMaterial(), m_VertexCount); // default material
 	}
 }
 
@@ -145,14 +145,14 @@ StaticMesh Model::LoadMesh(ShaderID shader_id)
 	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
-			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, mat.material, shader_id);
+			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, *mat.material, shader_id);
 			mesh.AddSubMesh(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}
 	} else {
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
-			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, mat.material, shader_id);
+			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, *mat.material, shader_id);
 			mesh.AddSubMesh(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}
@@ -170,14 +170,14 @@ StaticMeshComponent Model::LoadMeshComponent(ShaderID shader_id)
 	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
-			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, mat.material, shader_id);
+			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, *mat.material, shader_id);
 			mesh.submeshs.EmplaceBack(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}
 	} else {
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
-			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, mat.material, shader_id);
+			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, *mat.material, shader_id);
 			mesh.submeshs.EmplaceBack(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}
@@ -207,14 +207,14 @@ MeshInstance Model::LoadInstancedMesh(uint32 instance_count, ShaderID shader_id)
 	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
-			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, mat.material, shader_id);
+			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, *mat.material, shader_id);
 			mesh.AddSubMesh(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}
 	} else {
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
-			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, mat.material, shader_id);
+			MaterialID matID = manager.CreateResource<Material>(ResourcesTypes::MATERIAL, *mat.material, shader_id);
 			mesh.AddSubMesh(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}

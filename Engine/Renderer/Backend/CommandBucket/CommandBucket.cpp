@@ -78,10 +78,10 @@ void CommandBucket::OnKeyChangeCallback(ResourcesManager& manager, const BucketK
 void CommandBucket::OnBucketFlushCallback(ResourcesManager& manager, const RenderTarget& rt)
 {
 	// Apply framer buffer here!
-	if (rt.m_FboID != 0) {
-		FBO& fbo = manager.Get<FBO>(ResourcesTypes::FBO, rt.m_FboID);
-		fbo.Bind();
-	}
+	//if (rt.m_FboID != 0) {
+	FBO& fbo = manager.Get<FBO>(ResourcesTypes::FBO, rt.m_FboID);
+	fbo.Bind();
+	//}
 
 	// TODO: Maybe set viewport width and height
 }

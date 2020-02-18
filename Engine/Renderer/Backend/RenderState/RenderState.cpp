@@ -86,6 +86,14 @@ BucketKey RenderState::ToKey(uint32 shader_id) const
 
 void RenderState::ApplyStates() const
 {
+	if (blend_enabled) {
+		Enable(Capability::BLENDING);
+		BlendFuncSeparate(blending.blend_srcRGB, blending.blend_dstRGB, blending.blend_srcAlpha, blending.blend_dstAlpha);
+		BlendEquation(blending.blend_equation);
+	} else {
+		Disable(Capability::BLENDING);
+	}
+
 	/*if (depth_enabled) {
 		Enable(Capability::DEPTH_TEST);
 		glDepthFunc(depth_func);

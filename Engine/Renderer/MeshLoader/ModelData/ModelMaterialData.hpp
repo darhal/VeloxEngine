@@ -7,10 +7,10 @@ TRE_NS_START
 
 struct ModelMaterialData
 {
-	const AbstractMaterial& material;
+	AbstractMaterial* material;
 	uint32 vcount;
 
-	ModelMaterialData(const AbstractMaterial& material, uint32 vcount) : material(material), vcount(vcount)
+	ModelMaterialData(AbstractMaterial* material, uint32 vcount) : material(material), vcount(vcount)
 	{}
 
 	ModelMaterialData(const ModelMaterialData& other) : material(other.material), vcount(other.vcount)

@@ -243,6 +243,7 @@ namespace Blending
 	CONSTEXPR uint8 OFFSET_FUNC = 29;
 
 	enum blend_equation_t {
+		NONE = -1,
 		ADD = 0,
 		MIN = 1,
 		MAX = 2,
@@ -405,6 +406,26 @@ FORCEINLINE static void DrawElementsInstanced(Primitive::primitive_t mode, DataT
 FORCEINLINE static void ActivateTexture(uint8 i)
 {
 	glActiveTexture(GL_TEXTURE0 + i);
+}
+
+FORCEINLINE static void BlendFuncSeparate(
+	Blending::blend_func_t blend_srcRGB, 
+	Blending::blend_func_t blend_dstRGB, 
+	Blending::blend_func_t blend_srcAlpha, 
+	Blending::blend_func_t blend_dstAlpha)
+{
+	Call_GL(glBlendFuncSeparate(
+		Blending::DecodeToGL(blend_srcRGB),
+		Blending::DecodeToGL(blend_dstRGB),
+		Blending::DecodeToGL(blend_srcAlpha),
+		Blending::DecodeToGL(blend_dstAlpha)
+	));
+}
+
+FORCEINLINE static void BlendEquation(Blending::blend_equation_t blend_equation)
+{
+	if (blend_equation != Blending::blend_equation_t::NONE)
+		Call_GL(glBlendEquation(Blending::DecodeToGL(blend_equation)));
 }
 
 TRE_NS_END

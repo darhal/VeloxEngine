@@ -16,7 +16,7 @@ public:
 
 	void LoadFileMTL(const char* mtrl_path, const char* obj_path);
 
-	AbstractMaterial& GetMaterialFromName(const char* name);
+	AbstractMaterial* GetMaterialFromName(const char* name);
 
 	Map<String, AbstractMaterial>& GetMaterials();
 	

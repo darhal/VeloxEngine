@@ -34,7 +34,9 @@ void BackendDispatch::Draw(const void* data)
 {
     const Commands::DrawCmd* real_data = reinterpret_cast<const Commands::DrawCmd*>(data);
 
-	real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
+	if (real_data->material)
+		real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
+
     DrawArrays(real_data->mode, real_data->start, real_data->end);
 }
 
@@ -42,7 +44,9 @@ void BackendDispatch::DrawIndexed(const void* data)
 {
     const Commands::DrawIndexedCmd* real_data = reinterpret_cast<const Commands::DrawIndexedCmd*>(data);
 
-	real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
+	if (real_data->material)
+		real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
+
     DrawElements(real_data->mode, real_data->type, real_data->count, real_data->offset);
 }
 
@@ -70,7 +74,9 @@ void BackendDispatch::InstancedDraw(const void* data)
 {
 	const Commands::InstancedDrawCmd* real_data = reinterpret_cast<const Commands::InstancedDrawCmd*>(data);
 
-	real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
+	if (real_data->material)
+		real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
+
 	DrawArraysInstanced(real_data->mode, real_data->start, real_data->end, real_data->instance_count);
 }
 
@@ -78,7 +84,9 @@ void BackendDispatch::InstancedDrawIndexed(const void* data)
 {
 	const Commands::InstancedDrawIndexedCmd* real_data = reinterpret_cast<const Commands::InstancedDrawIndexedCmd*>(data);
 
-	real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
+	if (real_data->material)
+		real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
+
 	DrawElementsInstanced(real_data->mode, real_data->type, real_data->count, real_data->offset, real_data->instance_count);
 }
 

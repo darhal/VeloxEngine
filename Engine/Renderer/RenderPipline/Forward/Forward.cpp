@@ -19,12 +19,15 @@ void ForwardRenderer::Initialize(uint32 scr_width, uint32 scr_height)
 
 void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 {
-	CommandBucket& bucket = m_CommandQueue.CreateBucket();
-	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)scr_width / (float)scr_height, NEAR_PLANE, FAR_PLANE);
-
 	ResourcesManager& manager = ResourcesManager::Instance();
 	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
+
+	FboID main_fbo = manager.CreateResource<FBO>(ResourcesTypes::FBO);
+	manager.Get<FBO>(ResourcesTypes::FBO, m_DepthFbo).Invalidate(); // Set it to zero
+
+	CommandBucket& bucket = m_CommandQueue.CreateBucket();
 	CommandBucket& shadow_bucket = m_CommandQueue.CreateBucket();
+	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)scr_width / (float)scr_height, NEAR_PLANE, FAR_PLANE);
 
 	m_DepthMap = manager.CreateResource<Texture>(ResourcesTypes::TEXTURE);
 	Commands::CreateTextureCmd* cmd_tex = op_queue.SubmitCommand<Commands::CreateTextureCmd>();

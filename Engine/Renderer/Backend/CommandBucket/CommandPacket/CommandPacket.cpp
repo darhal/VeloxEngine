@@ -46,8 +46,8 @@ void CommandPacket::SwapBuffer()
 
 void CommandPacket::SortCommands()
 {
-	std::bitset<64> b(m_Key);
-	printf("Sorting packt with key : %llu | Bitset : ", m_Key); std::cout << b << std::endl;
+	/*std::bitset<64> b(m_Key);
+	printf("Sorting packt with key : %llu | Bitset : ", m_Key); std::cout << b << std::endl;*/
 
 	const uint32 start = m_BufferMarker * DEFAULT_MAX_ELEMENTS;
 	const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;

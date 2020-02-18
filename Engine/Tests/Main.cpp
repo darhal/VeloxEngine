@@ -1,4 +1,4 @@
-#ifdef bougabouga
+// #ifdef bougabouga
 
 #include <iostream>
 #include <chrono>
@@ -140,6 +140,11 @@ int main()
 		Shader("res/Shader/Forward/generic.vs", ShaderType::VERTEX),
 		Shader("res/Shader/Forward/generic.fs", ShaderType::FRAGMENT)
 	);
+	ShaderValidator("res/Shader/Forward/generic_tex.vs", "res/Shader/Forward/generic_tex.fs");
+	ShaderID shader_id3 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+		Shader("res/Shader/Forward/generic_tex.vs", ShaderType::VERTEX),
+		Shader("res/Shader/Forward/generic_tex.fs", ShaderType::FRAGMENT)
+		);
 	/*ShaderValidator("res/Shader/cam_instanced.vs", "res/Shader/cam_instanced.fs");
 	ShaderID shader_id3 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
 		Shader("res/Shader/cam_instanced.vs", ShaderType::VERTEX),
@@ -156,7 +161,7 @@ int main()
 	}
 
 	{
-		for (uint32 i = shader_id; i < 2; i++) {
+		for (uint32 i = shader_id; i < 3; i++) {
 			ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, i);
 			shader.LinkProgram();
 			shader.Use();
@@ -197,6 +202,14 @@ int main()
 	Model carrot = loader.LoadAsOneObject();
 	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
 
+	MeshLoader loader2("res/obj/lowpoly/deagle.obj");
+	RenderState& state  = loader2.GetMaterialLoader().GetMaterialFromName("Fire.001")->GetRenderStates();
+	state.blend_enabled = true;
+	state.blending = RenderState::BlendingOptions();
+	Model gun = loader2.LoadAsOneObject();
+	StaticMesh gun_mesh = gun.LoadMesh(shader_id3);
+	gun_mesh.GetTransformationMatrix().translate(vec3(5.0, 0.0, 0.f));
+
 	/*DirectionalLightComponent comp;
 	comp.SetDirection(vec3(0, -1.2, 0));
 	comp.SetLightColor(vec3(0.1f, 0.5f, 0.2f));
@@ -235,6 +248,7 @@ int main()
 		//renderer.Render();
 		renderer.Draw(mesh);
 		renderer.Draw(carrot_mesh);
+		renderer.Draw(gun_mesh);
 		renderer.Render();
 
 		window.Present();
@@ -302,4 +316,4 @@ void HandleEvent(float dt, Mat4f& projecton, Camera& camera, const Event& e)
 	}
 }
 
-#endif
+// #endif

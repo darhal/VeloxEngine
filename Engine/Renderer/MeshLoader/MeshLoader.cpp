@@ -193,13 +193,14 @@ void MeshLoader::LoadFile(const char* path)
 		//printf("\n");
 		current_line++;
 	}
+
 	if (m_MaterialName[0] != '\0') {
 		m_Materials[m_ObjectCount].EmplaceBack(m_MaterialLoader.GetMaterialFromName(m_MaterialName), int32(m_DataIndex[m_ObjectCount].Size() - lastVertexCount));
 		lastVertexCount = m_DataIndex[m_ObjectCount].Size();
 	}
+
 	m_ObjectCount++;
 	fclose(file);
-
 	printf("Loading OBJ is done successfully.\n");
 }
 

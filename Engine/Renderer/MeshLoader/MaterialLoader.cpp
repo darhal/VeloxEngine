@@ -22,13 +22,14 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 	usize current_line = 1;
 	String current_name;
 	AbstractMaterial* last_material =  NULL;
+
 	while ((line_len = ReadLine(file, buffer, 255)) != EOF) {
 		if (IsEqual(buffer, "newmtl")) {
 			char m_Name[25];
 			sscanf(buffer, "newmtl %s", m_Name);
 			printf("Adding new material: %s\n", m_Name);
 			current_name = m_Name;
-			last_material = &m_NameToMaterial.Emplace(std::move(String(m_Name)), m_Name); //m_NameToMaterial[m_Name] = Material(m_Name);
+			last_material = &m_NameToMaterial.Emplace(m_Name, m_Name); //m_NameToMaterial[m_Name] = Material(m_Name);
 		}else if (IsEqual(buffer, "Ka")) {
 			vec3 ambient;
 			int32 res = sscanf(buffer, "Ka %f %f %f", &ambient.x, &ambient.y, &ambient.z);
@@ -91,9 +92,9 @@ void MaterialLoader::LoadFileMTL(const char* mtrl_path, const char* obj_path)
 	fclose(file);
 }
 
-AbstractMaterial& MaterialLoader::GetMaterialFromName(const char* name)
+AbstractMaterial* MaterialLoader::GetMaterialFromName(const char* name)
 {
-	return m_NameToMaterial[name];
+	return m_NameToMaterial.Get(name);
 }
 
 Map<String, AbstractMaterial>& MaterialLoader::GetMaterials()

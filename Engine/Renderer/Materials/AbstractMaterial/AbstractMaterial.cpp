@@ -1,17 +1,19 @@
 #include "AbstractMaterial.hpp"
 #include <Core/Misc/Utils/Image.hpp>
-// #include "Renderer/Managers/RenderManager/RenderManager.hpp"
+#include <Renderer/Backend/ResourcesManager/ResourcesManager.hpp>
+#include <Renderer/Backend/Commands/Commands.hpp>
 
 TRE_NS_START
 
 TextureID AbstractMaterial::AddTexture(const String& path)
 {
-    /*auto& res_buffer = RenderManager::GetRRC().GetResourcesCommandBuffer();
     Image img(path.Buffer());
-    TextureID tex_id = 0;
+	ResourcesManager& manager = ResourcesManager::Instance();
+	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
+    TextureID tex_id = manager.CreateResource<Texture>(ResourcesTypes::TEXTURE);
 
-    Commands::CreateTexture* tex_cmd = res_buffer.AddCommand<Commands::CreateTexture>(0);
-    tex_cmd->texture = ResourcesManager::GetGRM().Create<Texture>(tex_id);
+    Commands::CreateTextureCmd* tex_cmd = op_queue.SubmitCommand<Commands::CreateTextureCmd>();
+    tex_cmd->texture = &manager.Get<Texture>(ResourcesTypes::TEXTURE, tex_id);
     tex_cmd->settings = TextureSettings(TexTarget::TEX2D, img.GetWidth(), img.GetHeight(), img.StealPtr(), 
       	Vector<TexParamConfig>{
 			{TexParam::TEX_WRAP_S , TexWrapping::REPEAT},
@@ -21,8 +23,7 @@ TextureID AbstractMaterial::AddTexture(const String& path)
 		}
     );
    
-    return tex_id;*/
-	return 0;
+    return tex_id;
 }
 
 TRE_NS_END

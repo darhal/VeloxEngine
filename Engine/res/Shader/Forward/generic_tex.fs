@@ -26,6 +26,7 @@ layout (std140) uniform LightUBO
 in vec3 FragPos;
 in vec3 ViewPos;
 in vec3 Normal;
+in vec2 TexCoords;
 
 vec3 CalculateLight(mat4 light, vec3 normal, vec3 viewDir, vec3 fragPos, mat3 material_color);
 vec3 CalculateDirectionalLight(mat4 light, vec3 normal, vec3 viewDir, mat3 material_color);
@@ -51,15 +52,15 @@ void main()
 mat3 GetMaterialColor()
 {
 	return mat3(
-		material.ambient, 
-		material.diffuse, 
-		material.specular
+		texture(material.diffuse_tex, TexCoords).rgb, 
+		texture(material.diffuse_tex, TexCoords).rgb, 
+		texture(material.specular_tex, TexCoords).rgb
 	);
 }
 
 float GetAlpha()
 {
-	return material.alpha;
+	return texture(material.diffuse_tex, TexCoords).a;
 }
 
 // Calculate light depending on the light type
