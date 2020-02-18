@@ -233,6 +233,16 @@ namespace CullMode
 		frontface = (real_code >> 1) ? front_face_t::CCW : front_face_t::CW;
 		cullmode = (real_code & 0x1) ? cull_mode_t::FRONT : cull_mode_t::BACK;
 	}
+
+	FORCEINLINE uint32 DecodeToGL(front_face_t frontface)
+	{
+		return g_GL_STATE_PARAMS[frontface + OFFSET_BITS];
+	}
+
+	FORCEINLINE uint32 DecodeToGL(cull_mode_t cullmode)
+	{
+		return g_GL_STATE_PARAMS[cullmode + OFFSET_BITS];
+	}
 }
 
 namespace Blending
@@ -243,12 +253,12 @@ namespace Blending
 	CONSTEXPR uint8 OFFSET_FUNC = 29;
 
 	enum blend_equation_t {
-		NONE = -1,
 		ADD = 0,
 		MIN = 1,
 		MAX = 2,
 		SUBTRACT  = 3,
 		REVERSE_SUBTRACT = 4,
+		NONE = 5,
 	};
 
 	enum blend_func_t {
@@ -358,27 +368,27 @@ FORCEINLINE static void ClearBuffers(Buffer::buffer_t buffers = Buffer::COLOR | 
 	Call_GL(glClear(buffers));
 }
 
-FORCEINLINE static void DepthMask(bool writeEnabled)
+FORCEINLINE static void SetDepthMask(bool writeEnabled)
 {
 	Call_GL(glDepthMask(writeEnabled ? GL_TRUE : GL_FALSE));
 }
 
-FORCEINLINE static void StencilMask(bool writeEnabled)
+FORCEINLINE static void SetStencilMask(bool writeEnabled)
 {
 	Call_GL(glStencilMask(writeEnabled ? ~0 : 0));
 }
 
-FORCEINLINE static void StencilMask(Stencil::StencilMask::stencil_mask_t mask)
+FORCEINLINE static void SetStencilMask(Stencil::StencilMask::stencil_mask_t mask)
 {
 	Call_GL(glStencilMask(Stencil::StencilMask::DecodeToGL(mask)));
 }
 
-FORCEINLINE static void StencilFunc(TestFunction::test_function_t function, int32 reference, uint32 mask = ~0)
+FORCEINLINE static void SetStencilFunc(TestFunction::test_function_t function, int32 reference, uint32 mask = ~0)
 {
 	Call_GL(glStencilFunc(TestFunction::DecodeToGL(function), reference, mask));
 }
 
-FORCEINLINE static void StencilOp(Stencil::stencil_action_t fail, Stencil::stencil_action_t zfail, Stencil::stencil_action_t pass)
+FORCEINLINE static void SetStencilOp(Stencil::stencil_action_t fail, Stencil::stencil_action_t zfail, Stencil::stencil_action_t pass)
 {
 	Call_GL(glStencilOp(Stencil::DecodeToGL(fail), Stencil::DecodeToGL(zfail), Stencil::DecodeToGL(pass)));
 }
@@ -408,7 +418,7 @@ FORCEINLINE static void ActivateTexture(uint8 i)
 	glActiveTexture(GL_TEXTURE0 + i);
 }
 
-FORCEINLINE static void BlendFuncSeparate(
+FORCEINLINE static void SetBlendFuncSeparate(
 	Blending::blend_func_t blend_srcRGB, 
 	Blending::blend_func_t blend_dstRGB, 
 	Blending::blend_func_t blend_srcAlpha, 
@@ -422,10 +432,30 @@ FORCEINLINE static void BlendFuncSeparate(
 	));
 }
 
-FORCEINLINE static void BlendEquation(Blending::blend_equation_t blend_equation)
+FORCEINLINE static void SetBlendEquation(Blending::blend_equation_t blend_equation)
 {
 	if (blend_equation != Blending::blend_equation_t::NONE)
 		Call_GL(glBlendEquation(Blending::DecodeToGL(blend_equation)));
+}
+
+FORCEINLINE static void SetFrontFace(CullMode::front_face_t frontface)
+{
+	Call_GL(glFrontFace(CullMode::DecodeToGL(frontface)));
+}
+
+FORCEINLINE static void SetCullFace(CullMode::cull_mode_t cullmode)
+{
+	Call_GL(glCullFace(CullMode::DecodeToGL(cullmode)));
+}
+
+FORCEINLINE static void SetDepthFunction(TestFunction::test_function_t func)
+{
+	Call_GL(glDepthFunc(TestFunction::DecodeToGL(func)));
+}
+
+FORCEINLINE static void SetPolygonMode(PolygonMode::polygon_mode_t polygon)
+{
+	Call_GL(glPolygonMode(GL_FRONT_AND_BACK, g_GL_STATE_PARAMS[polygon]));
 }
 
 TRE_NS_END

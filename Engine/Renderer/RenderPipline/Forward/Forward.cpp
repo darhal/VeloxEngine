@@ -25,8 +25,8 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 	FboID main_fbo = manager.CreateResource<FBO>(ResourcesTypes::FBO);
 	manager.Get<FBO>(ResourcesTypes::FBO, m_DepthFbo).Invalidate(); // Set it to zero
 
-	CommandBucket& bucket = m_CommandQueue.CreateBucket();
 	CommandBucket& shadow_bucket = m_CommandQueue.CreateBucket();
+	CommandBucket& bucket = m_CommandQueue.CreateBucket();
 	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)scr_width / (float)scr_height, NEAR_PLANE, FAR_PLANE);
 
 	m_DepthMap = manager.CreateResource<Texture>(ResourcesTypes::TEXTURE);
@@ -47,6 +47,17 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 		{ { cmd_tex->texture, FBOAttachement::DEPTH_ATTACH } },
 		FBOTarget::FBO, NULL, FBOAttachement::DEPTH_ATTACH, {}, GL_NONE
 	);
+
+	// Setup shadow bucket
+	Mat4f lightProjection = mat4::ortho(-10.f, 10.f, -10.f, 10.f, 1.f, 7.5f);
+	Mat4f lightView = mat4::look_at(vec3(0, 3, 0), vec3(0.f, 0.f, 0.f), vec3(0.0, 1.0, 0.0));
+	shadow_bucket.GetProjectionMatrix() = lightProjection * lightView;
+	shadow_bucket.GetRenderTarget().m_FboID = m_DepthFbo;
+	shadow_bucket.SetOnBucketFlushCallback([] (ResourcesManager& m, const RenderTarget& rt){
+		FBO& fbo = m.Get<FBO>(ResourcesTypes::FBO, rt.m_FboID);
+		fbo.Bind();
+		ClearBuffers(Buffer::DEPTH);
+	});
 
 	// m_MeshSystem.SetCommandBucket(&bucket);
 	// ResourcesManager::Instance().GetRenderWorld().GetSystsemList(SystemList::ACTIVE).AddSystem(&m_MeshSystem);
@@ -74,6 +85,7 @@ void ForwardRenderer::Draw(IPrimitiveMesh& mesh)
 {
 	// Main Pass:
 	mesh.Submit(m_CommandQueue.GetCommandBucker(MAIN_PASS));
+	// mesh.Submit(m_CommandQueue.GetCommandBucker(SHADOW_PASS));
 }
 
 void ForwardRenderer::Render()

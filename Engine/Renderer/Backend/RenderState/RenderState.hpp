@@ -22,7 +22,7 @@ struct RenderState
 	bool stencil_enabled = false;
 	struct BlendingOptions
 	{
-		Blending::blend_equation_t blend_equation = Blending::blend_equation_t::ADD;
+		Blending::blend_equation_t blend_equation = Blending::blend_equation_t::NONE;
 		Blending::blend_func_t blend_srcRGB = Blending::blend_func_t::SRC_ALPHA;
 		Blending::blend_func_t blend_srcAlpha = Blending::blend_func_t::ONE;
 		Blending::blend_func_t blend_dstRGB = Blending::blend_func_t::ONE_MINUS_SRC_ALPHA;

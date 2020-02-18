@@ -13,9 +13,10 @@ class ForwardRenderer : public IRenderer
 {
 public:
 	enum {
-		MAIN_PASS = 0,
-		SHADOW_PASS = 1,
+		SHADOW_PASS = 0,
+		MAIN_PASS = 1,
 	};
+
 public:
 	ForwardRenderer();
 

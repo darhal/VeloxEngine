@@ -88,45 +88,37 @@ void RenderState::ApplyStates() const
 {
 	if (blend_enabled) {
 		Enable(Capability::BLENDING);
-		BlendFuncSeparate(blending.blend_srcRGB, blending.blend_dstRGB, blending.blend_srcAlpha, blending.blend_dstAlpha);
-		BlendEquation(blending.blend_equation);
+		SetBlendFuncSeparate(blending.blend_srcRGB, blending.blend_dstRGB, blending.blend_srcAlpha, blending.blend_dstAlpha);
+		SetBlendEquation(blending.blend_equation);
 	} else {
 		Disable(Capability::BLENDING);
 	}
 
-	/*if (depth_enabled) {
+	if (depth_enabled) {
 		Enable(Capability::DEPTH_TEST);
-		glDepthFunc(depth_func);
+		SetDepthFunction(depth_func);
 	} else {
 		Disable(Capability::DEPTH_TEST);
 	}
 
 	if (cull_enabled) {
 		Enable(Capability::CULL_FACE);
-		Call_GL(glFrontFace(frontface));
-		Call_GL(glCullFace(cullmode));
+		SetFrontFace(frontface);
+		SetCullFace(cullmode);
 	} else {
 		Disable(Capability::CULL_FACE);
 	}
 
-	if (blend_enabled) {
-		Enable(Capability::BLENDING);
-		glBlendFuncSeparate(blend_srcRGB, blend_dstRGB, blend_srcAlpha, blend_dstAlpha);
-		glBlendEquation(blend_equation);
-	} else {
-		Disable(Capability::BLENDING);
-	}
-
 	if (stencil_enabled) {
 		Enable(Capability::STENCIL_TEST);
-		StencilOp(stencil_sfail, stencil_dpfail, stencil_dppass);
-		StencilFunc(stencil_func, stencil_func_ref, (uint32)stencil_mask);
-		StencilMask((uint32)stencil_mask);
+		SetStencilOp(stencil.stencil_sfail, stencil.stencil_dpfail, stencil.stencil_dppass);
+		SetStencilFunc(stencil.stencil_func, stencil.stencil_func_ref, (uint32)stencil.stencil_mask);
+		SetStencilMask((uint32)stencil.stencil_mask);
 	} else {
 		Disable(Capability::STENCIL_TEST);
 	}
 
-	Call_GL(glPolygonMode(GL_FRONT_AND_BACK, poly_mode));*/
+	SetPolygonMode(poly_mode);
 }
 
 TRE_NS_END
