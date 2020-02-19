@@ -33,10 +33,14 @@ public:
 	CommandBuffer& GetCommandQueue() { return m_CommandQueue; }
 
 	LightSystem& GetLightSystem() { return m_LightSystem; }
+
+	TextureID GetDepthMap() { return m_DepthMap; }
 private:
 	CommandBuffer m_CommandQueue;
 	FboID m_DepthFbo;
 	TextureID m_DepthMap;
+	ShaderID m_ShadowMappingShader;
+	MaterialID m_ShadowMaterial;
 
 	MeshSystem m_MeshSystem;
 	LightSystem m_LightSystem;

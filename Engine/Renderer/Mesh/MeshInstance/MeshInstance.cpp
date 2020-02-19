@@ -11,7 +11,7 @@ MeshInstance::MeshInstance(uint32 instance_count, VaoID vao_id, VboID vbo_id, Ma
 {
 }
 
-void MeshInstance::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
+void MeshInstance::Submit(CommandBucket& CmdBucket, ShaderID shader_id, MaterialID material_id)
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
 	ModelRenderParams params = { 0, m_VaoID, (uint16)0 };
@@ -21,7 +21,7 @@ void MeshInstance::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
 	BucketKey last_key = -1;
 
 	for (SubMesh& obj : m_Meshs) {
-		const Material& material = manager.Get<Material>(ResourcesTypes::MATERIAL, obj.m_MaterialID);
+		const Material& material = manager.Get<Material>(ResourcesTypes::MATERIAL, material_id == -1 ? obj.m_MaterialID : material_id);
 		const RenderState& state = material.GetRenderStates();
 		uint32 blend_dist = 0;
 		ShaderID shaderID = shader_id == ShaderID(-1) ? material.GetTechnique().GetShaderID() : shader_id;

@@ -63,49 +63,36 @@ using namespace TRE;
 
 void HandleEvent(float dt, Mat4f& projecton, Camera& camera, const Event& e);
 
-float vertices[] = {
-	-0.5f, -0.5f, -0.5f, 
-	 0.5f, -0.5f, -0.5f,  
-	 0.5f,  0.5f, -0.5f,  
-	 0.5f,  0.5f, -0.5f, 
-	-0.5f,  0.5f, -0.5f,  
-	-0.5f, -0.5f, -0.5f,  
+float vertices[] = {      
+   25.0f, -0.5f,  25.0f,
+   -25.0f, -0.5f,  25.0f,
+   -25.0f, -0.5f, -25.0f,
 
-	-0.5f, -0.5f,  0.5f,  
-	 0.5f, -0.5f,  0.5f,  
-	 0.5f,  0.5f,  0.5f, 
-	 0.5f,  0.5f,  0.5f,  
-	-0.5f,  0.5f,  0.5f,  
-	-0.5f, -0.5f,  0.5f, 
-
-	-0.5f,  0.5f,  0.5f,  
-	-0.5f,  0.5f, -0.5f,  
-	-0.5f, -0.5f, -0.5f,  
-	-0.5f, -0.5f, -0.5f,  
-	-0.5f, -0.5f,  0.5f,  
-	-0.5f,  0.5f,  0.5f,  
-
-	 0.5f,  0.5f,  0.5f,  
-	 0.5f,  0.5f, -0.5f,  
-	 0.5f, -0.5f, -0.5f,  
-	 0.5f, -0.5f, -0.5f,  
-	 0.5f, -0.5f,  0.5f,  
-	 0.5f,  0.5f,  0.5f,  
-
-	-0.5f, -0.5f, -0.5f,  
-	 0.5f, -0.5f, -0.5f,  
-	 0.5f, -0.5f,  0.5f,  
-	 0.5f, -0.5f,  0.5f,  
-	-0.5f, -0.5f,  0.5f,  
-	-0.5f, -0.5f, -0.5f,  
-
-	-0.5f,  0.5f, -0.5f,  
-	 0.5f,  0.5f, -0.5f,  
-	 0.5f,  0.5f,  0.5f,  
-	 0.5f,  0.5f,  0.5f,  
-	-0.5f,  0.5f,  0.5f,  
-	-0.5f,  0.5f, -0.5f,  
+	25.0f, -0.5f,  25.0f,
+	-25.0f, -0.5f, -25.0f,
+	25.0f, -0.5f, -25.0f,
 };
+
+float textures[] = {
+	25.0f,  0.0f,
+	0.0f,  0.0f,
+	0.0f, 25.0f,
+
+	25.0f,  0.0f,
+	0.0f, 25.0f,
+	25.0f, 25.0f
+};
+
+float normals[] = {
+	0.0f, 1.0f, 0.0f, 
+	0.0f, 1.0f, 0.0f, 
+	0.0f, 1.0f, 0.0f,  
+
+	0.0f, 1.0f, 0.0f, 
+	0.f, 1.0f, 0.0f,  
+    0.0f, 1.0f, 0.0f, 
+};
+
 
 float deltaTime = 0.5f;
 double  frameRate = 30;
@@ -117,6 +104,8 @@ const unsigned int SCR_HEIGHT = 1080 / 2;
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
+ShaderProgram& debugQuad(TextureID depthMap);
+void RenderDebugQuad();
 
 int main()
 {
@@ -144,13 +133,23 @@ int main()
 	ShaderID shader_id3 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
 		Shader("res/Shader/Forward/generic_tex.vs", ShaderType::VERTEX),
 		Shader("res/Shader/Forward/generic_tex.fs", ShaderType::FRAGMENT)
-		);
+	);
+	ShaderValidator("res/Shader/Forward/shadow_mapping.vs", "res/Shader/Forward/shadow_mapping.fs");
+	ShaderID shader_id4 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+		Shader("res/Shader/Forward/shadow_mapping_tex.vs", ShaderType::VERTEX),
+		Shader("res/Shader/Forward/shadow_mapping_tex.fs", ShaderType::FRAGMENT)
+	);
+	ShaderValidator("res/Shader/Forward/shadow_mapping.vs", "res/Shader/Forward/shadow_mapping.fs");
+	ShaderID shader_id5 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+		Shader("res/Shader/Forward/shadow_mapping.vs", ShaderType::VERTEX),
+		Shader("res/Shader/Forward/shadow_mapping.fs", ShaderType::FRAGMENT)
+	);
 	/*ShaderValidator("res/Shader/cam_instanced.vs", "res/Shader/cam_instanced.fs");
 	ShaderID shader_id3 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
 		Shader("res/Shader/cam_instanced.vs", ShaderType::VERTEX),
 		Shader("res/Shader/cam_instanced.fs", ShaderType::FRAGMENT)
 	);*/
-	{
+	/*{
 		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
 		shader.LinkProgram();
 		shader.Use();
@@ -158,10 +157,10 @@ int main()
 		shader.AddUniform("u_ProjView");
 		shader.AddUniform("u_Model");
 		shader.AddUniform("u_ViewPosition");
-	}
+	}*/
 
 	{
-		for (uint32 i = shader_id; i < 3; i++) {
+		for (uint32 i = shader_id2; i <= shader_id5; i++) {
 			ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, i);
 			shader.LinkProgram();
 			shader.Use();
@@ -172,6 +171,7 @@ int main()
 			shader.AddUniform("u_ViewPosition");
 			shader.AddUniform("u_ProjView");
 			shader.AddUniform("u_Model");
+			shader.AddUniform("u_LightSpaceMatrix");
 
 			shader.AddUniform("material.ambient");
 			shader.AddUniform("material.diffuse");
@@ -181,6 +181,7 @@ int main()
 
 			shader.AddSamplerSlot("material.specular_tex");
 			shader.AddSamplerSlot("material.diffuse_tex");
+			shader.AddSamplerSlot("u_ShadowMap");
 
 			shader.SetFloat("material.alpha", 1.f);
 			shader.SetFloat("material.shininess", 1.0f);
@@ -195,29 +196,39 @@ int main()
 	ModelData data;
 	data.vertices = vertices;
 	data.vertexSize = ARRAY_SIZE(vertices);
+	data.textures = textures;
+	data.textureSize = ARRAY_SIZE(textures);
+	data.normals = normals;
+	data.normalSize = ARRAY_SIZE(normals);
 	Model model(data);
-	StaticMesh mesh = model.LoadMesh(shader_id);
-
-	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
+	AbstractMaterial* mat = model.GetMaterials().At(0).material;
+	mat->GetRenderStates().cull_enabled = false;
+	mat->GetParametres().AddParameter<TextureID>("material.diffuse_tex", mat->AddTexture("res/img/wood_texture.png"));
+	mat->GetParametres().AddParameter<TextureID>("material.specular_tex", mat->AddTexture("res/img/wood_texture.png"));
+	StaticMesh plane_mesh = model.LoadMesh(shader_id4);
+	plane_mesh.GetTransformationMatrix().scale(vec3(1.0, 1.0, 1.0) * 2.f);
+	//plane_mesh.GetTransformationMatrix().rotate(vec3(1.f, 0.f, 0.f), Math::ToRad(90.0));
+	
+	/*MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
 	Model carrot = loader.LoadAsOneObject();
-	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
+	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);*/
 
 	MeshLoader loader2("res/obj/lowpoly/deagle.obj");
 	RenderState& state  = loader2.GetMaterialLoader().GetMaterialFromName("Fire.001")->GetRenderStates();
 	state.blend_enabled = true;
 	state.blending = RenderState::BlendingOptions();
 	Model gun = loader2.LoadAsOneObject();
-	StaticMesh gun_mesh = gun.LoadMesh(shader_id3);
-	gun_mesh.GetTransformationMatrix().translate(vec3(5.0, 0.0, 0.f));
+	StaticMesh gun_mesh = gun.LoadMesh(shader_id4);
+	gun_mesh.GetTransformationMatrix().translate(vec3(0.0, 2.0, 0.f));
 
 	/*DirectionalLightComponent comp;
 	comp.SetDirection(vec3(0, -1.2, 0));
 	comp.SetLightColor(vec3(0.1f, 0.5f, 0.2f));
 	renderer.GetLightSystem().AddLight((Mat4f*)&comp);*/
-	vec3 light_pos = vec3(0, 3, 0);
+	vec3 light_pos = vec3(0, 4, 0);
 	PointLightComponent pointlight;
 	pointlight.SetPosition(light_pos);
-	pointlight.SetLightColor(vec3(1,1,1));
+	pointlight.SetLightColor(vec3(0,1,0));
 	pointlight.SetLinear(0.09f);
 	pointlight.SetQuadratic(0.032f);
 	pointlight.SetConstant(0.5f);
@@ -232,6 +243,28 @@ int main()
 	// ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
 
+
+	ShaderProgram& debugShader = debugQuad(renderer.GetDepthMap());
+	/*CommandBucket& debugBucket = renderer.GetCommandQueue().CreateBucket();
+	uint8* extra_data = debugBucket.GetExtraBuffer();
+	new (extra_data) uint32(renderer.GetDepthMap());
+	debugBucket.SetOnKeyChangeCallback(
+		[](ResourcesManager& manager, const BucketKey& key,
+			const Mat4f& proj_view, const Mat4f& proj,
+			const Camera& camera, const uint8* extra_data) -> ShaderProgram& {
+		uint32 shader_id;
+		RenderState state = RenderState::FromKey(key, &shader_id);
+		state.ApplyStates();
+
+		// Set Shader
+		ShaderProgram& shader = manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
+		shader.Bind();
+		const uint32& depth_map_id = *reinterpret_cast<const uint32*>(extra_data);
+		Texture& shadow_map = manager.Get<Texture>(ResourcesTypes::TEXTURE, depth_map_id);
+		ActivateTexture(0);
+		shadow_map.Bind();
+		return shader;
+	});*/
 	INIT_BENCHMARK;
 	while (true) {
 		//BENCHMARK("Render Thread",
@@ -240,16 +273,22 @@ int main()
 			HandleEvent(deltaTime, bucket.GetProjectionMatrix(), bucket.GetCamera(), ev);
 		}
 
-		Clear(Buffer::COLOR | Buffer::DEPTH);
-
 		op_queue.Flush();
 
 		//ResourcesManager::Instance().GetRenderWorld().UpdateSystems(0);
 		//renderer.Render();
-		renderer.Draw(mesh);
-		renderer.Draw(carrot_mesh);
+		//renderer.Draw(mesh);
+		//renderer.Draw(carrot_mesh);
+		renderer.Draw(plane_mesh);
 		renderer.Draw(gun_mesh);
+		// debugScreen.Submit(debugBucket, -1, 0);
 		renderer.Render();
+
+		debugShader.Bind();
+		ActivateTexture(0);
+		Texture& texture = ResourcesManager::Instance().Get<Texture>(ResourcesTypes::TEXTURE, renderer.GetDepthMap());
+		texture.Bind();
+		RenderDebugQuad();
 
 		window.Present();
 
@@ -314,6 +353,88 @@ void HandleEvent(float dt, Mat4f& projecton, Camera& camera, const Event& e)
 
 		camera.ProcessMouseMovement(xoffset, yoffset);
 	}
+}
+
+ShaderProgram& debugQuad(TextureID depthMap)
+{
+	ShaderValidator("res/Shader/Forward/Debug/debug_quad.vs", "res/Shader/Forward/Debug/debug_quad.fs");
+	ShaderID shader = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+		Shader("res/Shader/Forward/Debug/debug_quad.vs", ShaderType::VERTEX),
+		Shader("res/Shader/Forward/Debug/debug_quad.fs", ShaderType::FRAGMENT)
+	);
+	{
+		ShaderProgram& s = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader);
+		s.LinkProgram();
+		s.Use();
+
+		s.AddUniform("u_near_plane");
+		s.AddUniform("u_far_plane");
+		s.AddUniform("u_Model");
+		s.AddSamplerSlot("u_DepthMap");
+
+		s.SetInt("u_DepthMap", 0);
+		s.SetFloat("u_near_plane", 1.f);
+		s.SetFloat("u_far_plane", 25.0f);
+		return s;
+	}
+
+	/*float quadVertices[] = {
+		// positions
+		-1.0f,  1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		 1.0f,  1.0f, 0.0f,
+		 1.0f, -1.0f, 0.0f,
+	};
+
+	float quadTextures[] = {
+		// texture Coords
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+	};
+
+	ModelData data;
+	data.vertices = quadVertices;
+	data.vertexSize = ARRAY_SIZE(quadVertices);
+	data.textures = quadTextures;
+	data.textureSize = ARRAY_SIZE(quadTextures);
+	Model model(data);
+	AbstractMaterial* mat = model.GetMaterials().At(0).material;
+	mat->GetRenderStates().cull_enabled = false;
+	mat->GetParametres().AddParameter<float>("u_near_plane", 1.f);
+	mat->GetParametres().AddParameter<float>("u_far_plane", 7.5f);
+	mat->GetParametres().AddParameter<TextureID>("u_DepthMap", depthMap);
+	StaticMesh screen = model.LoadMesh(shader);
+	return screen;*/
+}
+
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void RenderDebugQuad()
+{
+	if (quadVAO == 0) {
+		float quadVertices[] = {
+			// positions        // texture Coords
+			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		};
+		// setup plane VAO
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	}
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
 }
 
 // #endif

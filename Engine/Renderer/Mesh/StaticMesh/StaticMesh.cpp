@@ -10,7 +10,7 @@ StaticMesh::StaticMesh(VaoID vao) : m_VaoID(vao)
 {
 }
 
-void StaticMesh::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
+void StaticMesh::Submit(CommandBucket& CmdBucket, ShaderID shader_id, MaterialID material_id)
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
 	ModelRenderParams params = { 0, m_VaoID, (uint16)0 };
@@ -57,7 +57,7 @@ void StaticMesh::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
 			draw_cmd->count = obj.m_Geometry.m_Count;
 			draw_cmd->offset = obj.m_Geometry.m_Offset;
 
-			draw_cmd->material = &material;
+			draw_cmd->material = material_id == MaterialID(-1) ? NULL : &material;
 			draw_cmd->prepare_cmd = prepare_cmd;
 			draw_cmd->next_cmd = NULL;
 
@@ -69,7 +69,7 @@ void StaticMesh::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
 			draw_cmd->start = obj.m_Geometry.m_Start;
 			draw_cmd->end = obj.m_Geometry.m_End;
 
-			draw_cmd->material = &material;
+			draw_cmd->material = material_id == MaterialID(-1) ? NULL : &material;
 			draw_cmd->prepare_cmd = prepare_cmd;
 			draw_cmd->next_cmd = NULL;
 

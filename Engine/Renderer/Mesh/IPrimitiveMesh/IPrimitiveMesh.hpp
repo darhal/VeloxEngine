@@ -8,7 +8,7 @@ TRE_NS_START
 class IPrimitiveMesh
 {
 public:
-	virtual void Submit(CommandBucket&, ShaderID = -1) = 0;
+	virtual void Submit(CommandBucket&, ShaderID = -1, MaterialID = 0) = 0;
 private:
 };
 

@@ -45,6 +45,8 @@ public:
 	MeshInstance LoadInstancedMesh(uint32 instance_count, ShaderID shader_id = 0);
 
 	Vector<NormalVertexData> ProcessModel(uint32 processing, const Vector<VertexData>& vertices, Vector<uint32>* indices = NULL);
+
+	Vector<ModelMaterialData>& GetMaterials() { return m_Materials; }
 private:
 	Commands::CreateVAOCmd* LoadFromSettings(const ModelData& data);
 	Commands::CreateVAOCmd* LoadFromVertexData(uint32 processing, Vector<VertexData>& ver_data, Vector<uint32>* indices);

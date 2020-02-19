@@ -18,6 +18,8 @@
 #else
 	#include <Core/Misc/Utils/Logging.hpp>
 
+    #define DEBUG
+
 	#if defined(OS_WINDOWS) && (CPU_ARCH == CPU_ARCH_x86_64 || CPU_ARCH == CPU_ARCH_x86)
         #include <intrin.h>
 		#define DEBUG_BREAK() __debugbreak() 

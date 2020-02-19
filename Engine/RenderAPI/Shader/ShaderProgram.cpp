@@ -206,7 +206,7 @@ ShaderProgram::~ShaderProgram()
 
 void ShaderProgram::CheckCompileErrors(uint32 shader, const char* type)
 {
-#if defined(_DEBUG)
+#if defined(DEBUG)
 	int32 success;
 	char infoLog[1024];
 

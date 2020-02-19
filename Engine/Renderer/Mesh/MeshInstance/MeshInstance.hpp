@@ -16,7 +16,7 @@ public:
 
 	MeshInstance(MeshInstance&& other);
 
-	void Submit(CommandBucket& CmdBucket, ShaderID shader_id) final;
+	void Submit(CommandBucket& CmdBucket, ShaderID shader_id, MaterialID material_id) final;
 
 	FORCEINLINE void AddSubMesh(PrimitiveGeometry& geo, MaterialID mat);
 
