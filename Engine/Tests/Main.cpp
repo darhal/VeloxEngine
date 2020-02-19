@@ -209,9 +209,10 @@ int main()
 	plane_mesh.GetTransformationMatrix().scale(vec3(1.0, 1.0, 1.0) * 2.f);
 	//plane_mesh.GetTransformationMatrix().rotate(vec3(1.f, 0.f, 0.f), Math::ToRad(90.0));
 	
-	/*MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
+	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
 	Model carrot = loader.LoadAsOneObject();
-	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);*/
+	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
+	carrot_mesh.GetTransformationMatrix().translate(vec3(-1.f, 3.f, 2.f));
 
 	MeshLoader loader2("res/obj/lowpoly/deagle.obj");
 	RenderState& state  = loader2.GetMaterialLoader().GetMaterialFromName("Fire.001")->GetRenderStates();
@@ -219,16 +220,16 @@ int main()
 	state.blending = RenderState::BlendingOptions();
 	Model gun = loader2.LoadAsOneObject();
 	StaticMesh gun_mesh = gun.LoadMesh(shader_id4);
-	gun_mesh.GetTransformationMatrix().translate(vec3(0.0, 2.0, 0.f));
+	gun_mesh.GetTransformationMatrix().translate(vec3(0.0, 1.0, 0.f));
 
 	/*DirectionalLightComponent comp;
 	comp.SetDirection(vec3(0, -1.2, 0));
 	comp.SetLightColor(vec3(0.1f, 0.5f, 0.2f));
 	renderer.GetLightSystem().AddLight((Mat4f*)&comp);*/
-	vec3 light_pos = vec3(0, 4, 0);
+	vec3 light_pos = vec3(-2.0, 8.0, -1.0);
 	PointLightComponent pointlight;
 	pointlight.SetPosition(light_pos);
-	pointlight.SetLightColor(vec3(0,1,0));
+	pointlight.SetLightColor(vec3(1,1,1));
 	pointlight.SetLinear(0.09f);
 	pointlight.SetQuadratic(0.032f);
 	pointlight.SetConstant(0.5f);
@@ -278,17 +279,17 @@ int main()
 		//ResourcesManager::Instance().GetRenderWorld().UpdateSystems(0);
 		//renderer.Render();
 		//renderer.Draw(mesh);
-		//renderer.Draw(carrot_mesh);
+		renderer.Draw(carrot_mesh);
 		renderer.Draw(plane_mesh);
 		renderer.Draw(gun_mesh);
 		// debugScreen.Submit(debugBucket, -1, 0);
 		renderer.Render();
 
-		debugShader.Bind();
+		/*debugShader.Bind();
 		ActivateTexture(0);
 		Texture& texture = ResourcesManager::Instance().Get<Texture>(ResourcesTypes::TEXTURE, renderer.GetDepthMap());
 		texture.Bind();
-		RenderDebugQuad();
+		RenderDebugQuad();*/
 
 		window.Present();
 
@@ -374,7 +375,7 @@ ShaderProgram& debugQuad(TextureID depthMap)
 
 		s.SetInt("u_DepthMap", 0);
 		s.SetFloat("u_near_plane", 1.f);
-		s.SetFloat("u_far_plane", 25.0f);
+		s.SetFloat("u_far_plane", 50.f);
 		return s;
 	}
 

@@ -62,8 +62,8 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 	);
 
 	// Setup shadow bucket
-	Mat4f lightProjection = mat4::ortho(-10.f, 10.f, -10.f, 10.f, 1.f, 25.0f);
-	Mat4f lightView = mat4::look_at(vec3(0, 4, 0), vec3(0.f, 0.f, 0.f), vec3(0.0, 1.0, 0.0));
+	Mat4f lightProjection = mat4::ortho(-10.f, 10.f, -10.f, 10.f, 1.f, 50.0f);
+	Mat4f lightView = mat4::look_at(vec3(-2.0, 8.0, -1.0), vec3(0.f, 0.f, 0.f), vec3(0.0, 1.0, 0.0));
 	shadow_bucket.GetProjectionMatrix() = lightProjection * lightView;
 	shadow_bucket.GetRenderTarget().m_FboID = m_DepthFbo;
 	shadow_bucket.SetOnBucketFlushCallback([](ResourcesManager& m, const RenderTarget& rt, const uint8* data) -> FBO& {
