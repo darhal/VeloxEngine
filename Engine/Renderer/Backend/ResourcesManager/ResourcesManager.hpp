@@ -20,7 +20,13 @@ public:
 	}
 
 	template<typename T, typename... Args>
-	uint32 CreateResource(Args&&... args);
+	uint32 AllocateResource(Args&&... args);
+
+	template<typename T, typename... Args>
+	T& CreateResource(uint32& res_id, Args&&... args);
+
+	template<typename T, typename... Args>
+	Commands::CreateResourceCmd<T>* Create(uint32& res_id, Args&&... args);
 
 	template<typename T>
 	T& Get(uint32 id);
@@ -30,6 +36,7 @@ public:
 	ContextOperationQueue& GetContextOperationsQueue(){ return m_OperationQueue; }
 
 	World& GetRenderWorld() { return m_RenderWorld; }
+
 private:
 	Vector<uint8> m_MemoryPool[RESOURCES_COUNT];
 	ContextOperationQueue m_OperationQueue;
@@ -37,7 +44,7 @@ private:
 };
 
 template<typename T, typename... Args>
-uint32 ResourcesManager::CreateResource(Args&&... args)
+uint32 ResourcesManager::AllocateResource(Args&&... args)
 {
 	uint32 type_index = (uint32)ResourcesInfo<T>::RESOURCE_TYPE;
 	uint32 id = (uint32) m_MemoryPool[type_index].Size();
@@ -56,5 +63,23 @@ FORCEINLINE uint8* ResourcesManager::GetRawMemory(ResourcesTypes type, uint32 id
 {
 	return &(m_MemoryPool[(uint32)type][id * size]);
 }
+
+
+template<typename T, typename... Args>
+Commands::CreateResourceCmd<T>* ResourcesManager::Create(uint32& res_id, Args&&... args)
+{
+	res_id = this->AllocateResource<T>(std::forward<Args>(args)...);
+	Commands::CreateResourceCmd<T>* cmd = m_OperationQueue.SubmitCommand<Commands::CreateResourceCmd<T>>();
+	cmd->resource = &this->Get<T>(res_id);
+	return cmd;
+}
+
+template<typename T, typename... Args>
+T& ResourcesManager::CreateResource(uint32& res_id, Args&&... args)
+{
+	res_id = this->AllocateResource<T>(std::forward<Args>(args)...);
+	return this->Get<T>(res_id);;
+}
+
 
 TRE_NS_END

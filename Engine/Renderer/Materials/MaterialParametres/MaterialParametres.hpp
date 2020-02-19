@@ -97,10 +97,10 @@ void MaterialParametres<int32>::UploadUnfiroms(const ShaderProgram& program) con
 		program.SetFloat(uniform_data.first, uniform_data.second);
 	}
 
-	ResourcesManager& manaeger = ResourcesManager::Instance();
+	ResourcesManager& manager = ResourcesManager::Instance();
 
 	for (const auto& uniform_data : this->GetContainer<TextureID>()) {
-		Texture& active_tex = manaeger.Get<Texture>(uniform_data.second);
+		Texture& active_tex = manager.Get<Texture>(uniform_data.second);
 		glActiveTexture(GL_TEXTURE0 + uniform_data.first);
 		active_tex.Bind();
 	}

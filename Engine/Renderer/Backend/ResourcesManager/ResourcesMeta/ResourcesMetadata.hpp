@@ -9,6 +9,7 @@ template<typename T>
 struct ResourcesInfo
 {
 	CONSTEXPR static ResourcesTypes RESOURCE_TYPE;
+	typedef uint32 CreationCmdType;
 };
 
 

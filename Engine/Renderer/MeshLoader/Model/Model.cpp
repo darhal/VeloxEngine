@@ -14,7 +14,7 @@ Model::Model(const ModelData& data, uint32 processing)
 		m_VertexCount = data.indexSize; // Get the vertex Count!
 		m_HaveIndexBuffer = true;
 
-		VboID indexVboID = manager.CreateResource<VBO>();
+		VboID indexVboID = manager.AllocateResource<VBO>();
 		Commands::CreateIndexBufferCmd* create_index_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateIndexBufferCmd>();
 		// m_VboIDs.EmplaceBack(indexVboID);
 		create_index_cmd->vao = m_CreateVaoCmd->vao;
@@ -38,7 +38,7 @@ Model::Model(Vector<VertexData>& ver_data, const Vector<ModelMaterialData>& mat_
 		m_VertexCount = (uint32)indices->Size(); // Get the vertex Count!
 		m_HaveIndexBuffer = true;
 
-		VboID indexVboID = manager.CreateResource<VBO>();
+		VboID indexVboID = manager.AllocateResource<VBO>();
 		Commands::CreateIndexBufferCmd* create_index_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateIndexBufferCmd>();
 		// m_VboIDs.EmplaceBack(indexVboID);
 		create_index_cmd->vao = m_CreateVaoCmd->vao;
@@ -59,21 +59,19 @@ Commands::CreateVAOCmd* Model::LoadFromSettings(const ModelData& data)
 {
 	ASSERTF((data.vertexSize == 0 || data.vertices == NULL), "Attempt to create a ModelLoader with empty vertecies!");
 	ResourcesManager& manager = ResourcesManager::Instance();
-	Commands::CreateVAOCmd* createVaoCmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVAOCmd>();
 
-	m_VaoID = manager.CreateResource<VAO>();
-	createVaoCmd->vao = &manager.Get<VAO>(m_VaoID);
+	Commands::CreateVAOCmd* createVaoCmd = manager.Create<VAO>(m_VaoID);
 	createVaoCmd->settings = VertexSettings();
 	uint8 layout = 0;
 	
 	// Fill vertex:
-	VboID vboID = manager.CreateResource<VBO>();
+	VboID vboID = manager.AllocateResource<VBO>();
 	// m_VboIDs.EmplaceBack(vboID);
 	createVaoCmd->settings.vertices_data.EmplaceBack(data.vertices, data.vertexSize, &manager.Get<VBO>(vboID));
 	createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, layout, 3, 0, 0);
 
 	if (data.normalSize != 0 && data.normals != NULL) { // Fill normals if availble
-		vboID = manager.CreateResource<VBO>();
+		vboID = manager.AllocateResource<VBO>();
 		// m_VboIDs.EmplaceBack(vboID);
 
 		// Fill normals:
@@ -82,7 +80,7 @@ Commands::CreateVAOCmd* Model::LoadFromSettings(const ModelData& data)
 	}
 
 	if (data.textureSize != 0 && data.textures != NULL) { // Fill Texture if availble
-		vboID = manager.CreateResource<VBO>();
+		vboID = manager.AllocateResource<VBO>();
 		// m_VboIDs.EmplaceBack(vboID);
 
 		// Fill textures:
@@ -99,11 +97,10 @@ Commands::CreateVAOCmd* Model::LoadFromVertexData(uint32 processing, Vector<Vert
 	Vector<NormalVertexData> tangents = ProcessModel(processing, ver_data, indices);
 
 	ResourcesManager& manager = ResourcesManager::Instance();
-	Commands::CreateVAOCmd* createVaoCmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVAOCmd>();
-	m_VaoID = manager.CreateResource<VAO>();
+	Commands::CreateVAOCmd* createVaoCmd = manager.Create<VAO>(m_VaoID);
 
-	VboID vboID = manager.CreateResource<VBO>();
-	VBO* vbo = &manager.Get<VBO>(vboID);
+	VboID vboID;
+	VBO* vbo = &manager.CreateResource<VBO>(vboID);
 
 	createVaoCmd->vao = &manager.Get<VAO>(m_VaoID);
 	createVaoCmd->settings = VertexSettings();
@@ -120,8 +117,7 @@ Commands::CreateVAOCmd* Model::LoadFromVertexData(uint32 processing, Vector<Vert
 	}
 
 	if (processing) {
-		VboID vboID = manager.CreateResource<VBO>();
-		VBO* vbo = &manager.Get<VBO>(vboID);
+		VBO* vbo = &manager.CreateResource<VBO>(vboID);
 		createVaoCmd->settings.vertices_data.EmplaceBack(tangents, vbo);
 
 		if (processing & CALC_TANGET) {
@@ -145,14 +141,14 @@ StaticMesh Model::LoadMesh(ShaderID shader_id)
 	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
-			MaterialID matID = manager.CreateResource<Material>(*mat.material, shader_id);
+			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
 			mesh.AddSubMesh(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}
 	} else {
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
-			MaterialID matID = manager.CreateResource<Material>(*mat.material, shader_id);
+			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
 			mesh.AddSubMesh(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}
@@ -170,14 +166,14 @@ StaticMeshComponent Model::LoadMeshComponent(ShaderID shader_id)
 	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
-			MaterialID matID = manager.CreateResource<Material>(*mat.material, shader_id);
+			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
 			mesh.submeshs.EmplaceBack(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}
 	} else {
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
-			MaterialID matID = manager.CreateResource<Material>(*mat.material, shader_id);
+			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
 			mesh.submeshs.EmplaceBack(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}
@@ -189,7 +185,7 @@ StaticMeshComponent Model::LoadMeshComponent(ShaderID shader_id)
 MeshInstance Model::LoadInstancedMesh(uint32 instance_count, ShaderID shader_id)
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
-	VboID vboID = manager.CreateResource<VBO>();
+	VboID vboID = manager.AllocateResource<VBO>();
 
 	uint32 vbo_index = m_CreateVaoCmd->settings.vertices_data.Size();
 	uint32 layout_id = m_CreateVaoCmd->settings.attributes.Size();
@@ -207,14 +203,14 @@ MeshInstance Model::LoadInstancedMesh(uint32 instance_count, ShaderID shader_id)
 	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
-			MaterialID matID = manager.CreateResource<Material>(*mat.material, shader_id);
+			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
 			mesh.AddSubMesh(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}
 	} else {
 		for (const ModelMaterialData& mat : m_Materials) {
 			PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
-			MaterialID matID = manager.CreateResource<Material>(*mat.material, shader_id);
+			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
 			mesh.AddSubMesh(model_geo, matID);
 			lastVertexCount += mat.vcount;
 		}

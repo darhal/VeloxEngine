@@ -10,10 +10,9 @@ TextureID AbstractMaterial::AddTexture(const String& path)
     Image img(path.Buffer());
 	ResourcesManager& manager = ResourcesManager::Instance();
 	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
-    TextureID tex_id = manager.CreateResource<Texture>();
+    TextureID tex_id;
+	Commands::CreateTextureCmd* tex_cmd = manager.Create<Texture>(tex_id);
 
-    Commands::CreateTextureCmd* tex_cmd = op_queue.SubmitCommand<Commands::CreateTextureCmd>();
-    tex_cmd->texture = &manager.Get<Texture>(tex_id);
     tex_cmd->settings = TextureSettings(TexTarget::TEX2D, img.GetWidth(), img.GetHeight(), img.StealPtr(), 
       	Vector<TexParamConfig>{
 			{TexParam::TEX_WRAP_S , TexWrapping::REPEAT},

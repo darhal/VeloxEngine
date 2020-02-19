@@ -309,6 +309,7 @@
     <ClInclude Include="Core\DataStructure\PackedArray\PackedArray.hpp" />
     <ClInclude Include="Core\ECS\EntityContainer\EntityContainer.hpp" />
     <ClInclude Include="Core\Memory\Allocators\LinearAlloc\GenericAlloc\LinearGenericAlloc.hpp" />
+    <ClInclude Include="Renderer\Backend\ResourcesManager\ResourcesManagerHelper.hpp" />
     <ClInclude Include="Renderer\Backend\ResourcesManager\ResourcesMeta\ResourcesMetadata.hpp" />
     <ClInclude Include="Renderer\Components\MeshComponents\MeshInstanceComponent.hpp" />
     <ClInclude Include="Renderer\Systems\LightSystems\LightSystem.hpp" />
