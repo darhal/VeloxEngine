@@ -120,37 +120,37 @@ int main()
 	printf("- Hardware Threads..: %d\n", std::thread::hardware_concurrency());
 
 	ShaderValidator("res/Shader/SimpleShader.vs", "res/Shader/SimpleShader.fs");
-	ShaderID shader_id = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER, 
+	ShaderID shader_id = ResourcesManager::Instance().CreateResource<ShaderProgram>(
 		Shader("res/Shader/SimpleShader.vs", ShaderType::VERTEX), 
 		Shader("res/Shader/SimpleShader.fs", ShaderType::FRAGMENT)
 	);
 	ShaderValidator("res/Shader/Forward/generic.vs", "res/Shader/Forward/generic.fs");
-	ShaderID shader_id2 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+	ShaderID shader_id2 = ResourcesManager::Instance().CreateResource<ShaderProgram>(
 		Shader("res/Shader/Forward/generic.vs", ShaderType::VERTEX),
 		Shader("res/Shader/Forward/generic.fs", ShaderType::FRAGMENT)
 	);
 	ShaderValidator("res/Shader/Forward/generic_tex.vs", "res/Shader/Forward/generic_tex.fs");
-	ShaderID shader_id3 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+	ShaderID shader_id3 = ResourcesManager::Instance().CreateResource<ShaderProgram>(
 		Shader("res/Shader/Forward/generic_tex.vs", ShaderType::VERTEX),
 		Shader("res/Shader/Forward/generic_tex.fs", ShaderType::FRAGMENT)
 	);
 	ShaderValidator("res/Shader/Forward/shadow_mapping.vs", "res/Shader/Forward/shadow_mapping.fs");
-	ShaderID shader_id4 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+	ShaderID shader_id4 = ResourcesManager::Instance().CreateResource<ShaderProgram>(
 		Shader("res/Shader/Forward/shadow_mapping_tex.vs", ShaderType::VERTEX),
 		Shader("res/Shader/Forward/shadow_mapping_tex.fs", ShaderType::FRAGMENT)
 	);
 	ShaderValidator("res/Shader/Forward/shadow_mapping.vs", "res/Shader/Forward/shadow_mapping.fs");
-	ShaderID shader_id5 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+	ShaderID shader_id5 = ResourcesManager::Instance().CreateResource<ShaderProgram>(
 		Shader("res/Shader/Forward/shadow_mapping.vs", ShaderType::VERTEX),
 		Shader("res/Shader/Forward/shadow_mapping.fs", ShaderType::FRAGMENT)
 	);
 	/*ShaderValidator("res/Shader/cam_instanced.vs", "res/Shader/cam_instanced.fs");
-	ShaderID shader_id3 = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+	ShaderID shader_id3 = ResourcesManager::Instance().CreateResource<ShaderProgram>(
 		Shader("res/Shader/cam_instanced.vs", ShaderType::VERTEX),
 		Shader("res/Shader/cam_instanced.fs", ShaderType::FRAGMENT)
 	);*/
 	/*{
-		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
+		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(shader_id);
 		shader.LinkProgram();
 		shader.Use();
 		//shader.AddUniform("MVP");
@@ -161,7 +161,7 @@ int main()
 
 	{
 		for (uint32 i = shader_id2; i <= shader_id5; i++) {
-			ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, i);
+			ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(i);
 			shader.LinkProgram();
 			shader.Use();
 
@@ -359,12 +359,12 @@ void HandleEvent(float dt, Mat4f& projecton, Camera& camera, const Event& e)
 ShaderProgram& debugQuad(TextureID depthMap)
 {
 	ShaderValidator("res/Shader/Forward/Debug/debug_quad.vs", "res/Shader/Forward/Debug/debug_quad.fs");
-	ShaderID shader = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+	ShaderID shader = ResourcesManager::Instance().CreateResource<ShaderProgram>(
 		Shader("res/Shader/Forward/Debug/debug_quad.vs", ShaderType::VERTEX),
 		Shader("res/Shader/Forward/Debug/debug_quad.fs", ShaderType::FRAGMENT)
 	);
 	{
-		ShaderProgram& s = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, shader);
+		ShaderProgram& s = ResourcesManager::Instance().Get<ShaderProgram>(shader);
 		s.LinkProgram();
 		s.Use();
 

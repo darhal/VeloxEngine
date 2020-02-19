@@ -35,7 +35,7 @@ void MeshSystem::Submit(const StaticMeshComponent& mesh, const TransformComponen
 	ShaderID shader_id = ShaderID(-1);
 
 	for (SubMesh& obj : mesh.submeshs) {
-		const Material& material = manager.Get<Material>(ResourcesTypes::MATERIAL, obj.m_MaterialID);
+		const Material& material = manager.Get<Material>(obj.m_MaterialID);
 		const RenderState& state = material.GetRenderStates();
 		ShaderID shaderID = shader_id == ShaderID(-1) ? material.GetTechnique().GetShaderID() : shader_id;
 		BucketKey key = state.ToKey(shaderID);
@@ -54,7 +54,7 @@ void MeshSystem::Submit(const StaticMeshComponent& mesh, const TransformComponen
 			packet = m_CommandBucket->SubmitCommand<Commands::PreDrawCallCmd>(&prepare_cmd, key, params.ToKey());
 			link_cmd = prepare_cmd;
 			prepare_cmd->vao_id = mesh.vao_id;
-			prepare_cmd->shader = &manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shaderID);
+			prepare_cmd->shader = &manager.Get<ShaderProgram>(shaderID);
 			prepare_cmd->model = transform.transform_matrix;
 			last_key = key;
 		}
