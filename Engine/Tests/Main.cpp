@@ -50,6 +50,7 @@
 #include <Renderer/Components/LightComponents/SpotLightComponent/SpotLight.hpp>
 #include "ShaderValidator.hpp"
 #include <Renderer/Backend/ResourcesManager/ResourcesManagerHelper.hpp>
+#include <Renderer/ShaderParser/ShaderParser.hpp>
 
 using namespace TRE;
 
@@ -110,6 +111,8 @@ void RenderDebugQuad();
 
 int main()
 {
+	ShaderParser parser("res/Shader/SimpleShader.fs");
+
 	// settings
 	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 4.3)", WindowStyle::Resize);
 	window.initContext(4, 3);

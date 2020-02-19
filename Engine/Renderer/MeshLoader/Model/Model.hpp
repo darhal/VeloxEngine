@@ -44,6 +44,8 @@ public:
 
 	MeshInstance LoadInstancedMesh(uint32 instance_count, ShaderID shader_id = 0);
 
+	Vector<SubMesh> LoadSubmeshs(ShaderID shader_id);
+
 	Vector<NormalVertexData> ProcessModel(uint32 processing, const Vector<VertexData>& vertices, Vector<uint32>* indices = NULL);
 
 	Vector<ModelMaterialData>& GetMaterials() { return m_Materials; }

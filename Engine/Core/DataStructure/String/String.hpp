@@ -53,7 +53,7 @@ public:
 
 	BasicString();
 
-	BasicString(usize capacity);
+	BasicString(usize capacity, usize len = 0);
 
 	template<usize S>
 	BasicString(const T(&str)[S], bool nop);

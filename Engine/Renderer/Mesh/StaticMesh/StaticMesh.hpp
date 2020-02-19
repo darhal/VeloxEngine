@@ -22,7 +22,7 @@ public:
 
 	void Submit(CommandBucket& CmdBucket, ShaderID shader_id, MaterialID material_id) final;
 
-	FORCEINLINE const Vector<SubMesh>& GetSubMeshes() const;
+	FORCEINLINE Vector<SubMesh>& GetSubMeshes();
 
 	FORCEINLINE VaoID GetVaoID() const { return m_VaoID; }
 
@@ -58,7 +58,7 @@ FORCEINLINE void StaticMesh::SetVaoID(VaoID vao)
 	m_VaoID = vao;
 }
 
-FORCEINLINE const Vector<SubMesh>& StaticMesh::GetSubMeshes() const
+FORCEINLINE Vector<SubMesh>& StaticMesh::GetSubMeshes()
 {
 	return m_Meshs;
 }

@@ -132,53 +132,21 @@ Commands::CreateVAOCmd* Model::LoadFromVertexData(uint32 processing, Vector<Vert
 	return createVaoCmd;
 }
 
-StaticMesh Model::LoadMesh(ShaderID shader_id)
-{
-	StaticMesh mesh(m_VaoID);
-	int32 lastVertexCount = 0;
-	ResourcesManager& manager = ResourcesManager::Instance();
-
-	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
-		for (const ModelMaterialData& mat : m_Materials) {
-			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
-			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
-			mesh.AddSubMesh(model_geo, matID);
-			lastVertexCount += mat.vcount;
-		}
-	} else {
-		for (const ModelMaterialData& mat : m_Materials) {
-			PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
-			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
-			mesh.AddSubMesh(model_geo, matID);
-			lastVertexCount += mat.vcount;
-		}
-	}
-
-	return mesh;
-}
-
 StaticMeshComponent Model::LoadMeshComponent(ShaderID shader_id)
 {
 	StaticMeshComponent mesh(m_VaoID);
 	int32 lastVertexCount = 0;
 	ResourcesManager& manager = ResourcesManager::Instance();
+	mesh.submeshs = std::move(this->LoadSubmeshs(shader_id));
+	return mesh;
+}
 
-	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
-		for (const ModelMaterialData& mat : m_Materials) {
-			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
-			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
-			mesh.submeshs.EmplaceBack(model_geo, matID);
-			lastVertexCount += mat.vcount;
-		}
-	} else {
-		for (const ModelMaterialData& mat : m_Materials) {
-			PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
-			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
-			mesh.submeshs.EmplaceBack(model_geo, matID);
-			lastVertexCount += mat.vcount;
-		}
-	}
-
+StaticMesh Model::LoadMesh(ShaderID shader_id)
+{
+	StaticMesh mesh(m_VaoID);
+	int32 lastVertexCount = 0;
+	ResourcesManager& manager = ResourcesManager::Instance();
+	mesh.GetSubMeshes() = std::move(this->LoadSubmeshs(shader_id));
 	return mesh;
 }
 
@@ -199,25 +167,31 @@ MeshInstance Model::LoadInstancedMesh(uint32 instance_count, ShaderID shader_id)
 
 	MeshInstance mesh(instance_count, m_VaoID, vboID, transforms);
 	int32 lastVertexCount = 0;
-	
-	if (m_HaveIndexBuffer) { // Not = to 0 means that its indexed.
-		for (const ModelMaterialData& mat : m_Materials) {
-			PrimitiveGeometry model_geo(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
-			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
-			mesh.AddSubMesh(model_geo, matID);
-			lastVertexCount += mat.vcount;
-		}
-	} else {
-		for (const ModelMaterialData& mat : m_Materials) {
-			PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
-			MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
-			mesh.AddSubMesh(model_geo, matID);
-			lastVertexCount += mat.vcount;
-		}
-	}
-
+	mesh.GetSubMeshes() = std::move(this->LoadSubmeshs(shader_id));
 	return mesh;
 }
+
+Vector<SubMesh> Model::LoadSubmeshs(ShaderID shader_id)
+{
+	ResourcesManager& manager = ResourcesManager::Instance();
+	int32 lastVertexCount = 0;
+	Vector<SubMesh> submesh(m_Materials.Size());
+
+	for (const ModelMaterialData& mat : m_Materials) {
+		PrimitiveGeometry model_geo(lastVertexCount, mat.vcount);
+
+		if (m_HaveIndexBuffer) {
+			model_geo = PrimitiveGeometry(DataType::UINT, mat.vcount, lastVertexCount * sizeof(uint32));
+		}
+
+		MaterialID matID = manager.AllocateResource<Material>(*mat.material, shader_id);
+		submesh.EmplaceBack(model_geo, matID);
+		lastVertexCount += mat.vcount;
+	}
+
+	return submesh;
+}
+
 
 Vector<NormalVertexData> Model::ProcessModel(uint32 processing, const Vector<VertexData>& vertices, Vector<uint32>* indices)
 {

@@ -165,7 +165,9 @@
     <ClCompile Include="Core\ECS\ComponentGroup\ComponentGroup.cpp" />
     <ClCompile Include="Core\ECS\EntityContainer\EntityContainer.cpp" />
     <ClCompile Include="Core\ECS\System\BaseSystem.cpp" />
+    <ClCompile Include="Core\FileSystem\Utils\Utility.cpp" />
     <ClCompile Include="Core\Memory\Allocators\LinearAlloc\GenericAlloc\LinearGenericAlloc.cpp" />
+    <ClCompile Include="Renderer\ShaderParser\ShaderParser.cpp" />
     <ClCompile Include="Renderer\Systems\LightSystems\LightSystem.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward\Forward.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward+\ForwardPlus.cpp" />
@@ -308,10 +310,12 @@
     <ClInclude Include="Core\ECS\ComponentGroup\ComponentGroup.hpp" />
     <ClInclude Include="Core\DataStructure\PackedArray\PackedArray.hpp" />
     <ClInclude Include="Core\ECS\EntityContainer\EntityContainer.hpp" />
+    <ClInclude Include="Core\FileSystem\Utils\Utility.hpp" />
     <ClInclude Include="Core\Memory\Allocators\LinearAlloc\GenericAlloc\LinearGenericAlloc.hpp" />
     <ClInclude Include="Renderer\Backend\ResourcesManager\ResourcesManagerHelper.hpp" />
     <ClInclude Include="Renderer\Backend\ResourcesManager\ResourcesMeta\ResourcesMetadata.hpp" />
     <ClInclude Include="Renderer\Components\MeshComponents\MeshInstanceComponent.hpp" />
+    <ClInclude Include="Renderer\ShaderParser\ShaderParser.hpp" />
     <ClInclude Include="Renderer\Systems\LightSystems\LightSystem.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\ICommandBucket.hpp" />
     <ClInclude Include="Renderer\Components\LightComponents\DirectionalLightComponent\DirectionalLight.hpp" />
