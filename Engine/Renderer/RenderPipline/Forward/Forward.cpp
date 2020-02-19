@@ -19,12 +19,12 @@ void ForwardRenderer::Initialize(uint32 scr_width, uint32 scr_height)
 
 void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 {
-	m_ShadowMappingShader = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
+	m_ShadowMappingShader = ResourcesManager::Instance().CreateResource<ShaderProgram>(
 		Shader("res/Shader/Forward/shadow_depth_mapping.vs", ShaderType::VERTEX),
 		Shader("res/Shader/Forward/shadow_depth_mapping.fs", ShaderType::FRAGMENT)
 	);
 	{
-		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, m_ShadowMappingShader);
+		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(m_ShadowMappingShader);
 		shader.LinkProgram();
 		shader.Use();
 		shader.AddUniform("u_ProjView");
@@ -35,16 +35,16 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 	ResourcesManager& manager = ResourcesManager::Instance();
 	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
 
-	FboID main_fbo = manager.CreateResource<FBO>(ResourcesTypes::FBO);
-	manager.Get<FBO>(ResourcesTypes::FBO, m_DepthFbo).Invalidate(); // Set it to zero
+	FboID main_fbo = manager.CreateResource<FBO>();
+	manager.Get<FBO>(m_DepthFbo).Invalidate(); // Set it to zero
 
 	CommandBucket& shadow_bucket = m_CommandQueue.CreateBucket();
 	CommandBucket& bucket = m_CommandQueue.CreateBucket();
 	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)scr_width / (float)scr_height, NEAR_PLANE, FAR_PLANE);
 
-	m_DepthMap = manager.CreateResource<Texture>(ResourcesTypes::TEXTURE);
+	m_DepthMap = manager.CreateResource<Texture>();
 	Commands::CreateTextureCmd* cmd_tex = op_queue.SubmitCommand<Commands::CreateTextureCmd>();
-	cmd_tex->texture = &manager.Get<Texture>(ResourcesTypes::TEXTURE, m_DepthMap);
+	cmd_tex->texture = &manager.Get<Texture>(m_DepthMap);
 	cmd_tex->settings = TextureSettings(
 		TexTarget::TEX2D, scr_width, scr_height, NULL,
 		{
@@ -53,9 +53,9 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 		}, DataType::FLOAT, 0, TexInternalFormat::DepthComponent, TexFormat::DepthComponent, vec4(1.f, 1.f, 1.f, 1.f)
 	);
 
-	m_DepthFbo = manager.CreateResource<FBO>(ResourcesTypes::FBO);
+	m_DepthFbo = manager.CreateResource<FBO>();
 	Commands::CreateFrameBufferCmd* cmd_fbo = op_queue.SubmitCommand<Commands::CreateFrameBufferCmd>();
-	cmd_fbo->fbo = &manager.Get<FBO>(ResourcesTypes::FBO, m_DepthFbo);
+	cmd_fbo->fbo = &manager.Get<FBO>(m_DepthFbo);
 	cmd_fbo->settings = FramebufferSettings(
 		{ { cmd_tex->texture, FBOAttachement::DEPTH_ATTACH } },
 		FBOTarget::FBO, NULL, FBOAttachement::DEPTH_ATTACH, {}, GL_NONE
@@ -82,7 +82,7 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 
 		// Set shadow depth map:
 		const uint32& depth_map_id = *reinterpret_cast<const uint32*>(extra_data + sizeof(Mat4f));
-		Texture& shadow_map = m.Get<Texture>(ResourcesTypes::TEXTURE, depth_map_id);
+		Texture& shadow_map = m.Get<Texture>(depth_map_id);
 		ActivateTexture(5);
 		shadow_map.Bind();
 		return shader;
@@ -95,9 +95,9 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 void ForwardRenderer::SetupLightsBuffer()
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
-	m_LightBuffer = manager.CreateResource<VBO>(ResourcesTypes::VBO);
+	m_LightBuffer = manager.CreateResource<VBO>();
 	Commands::CreateVBOCmd* cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVBOCmd>();
-	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_LightBuffer);
+	cmd->vbo = &manager.Get<VBO>(m_LightBuffer);
 	cmd->settings = VertexBufferSettings(sizeof(ILight) * MAX_LIGHTS + sizeof(uint32), BufferTarget::UNIFORM_BUFFER, BufferUsage::STATIC_DRAW);
 
 	Commands::BindBufferRangeCmd* bind_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::BindBufferRangeCmd>();

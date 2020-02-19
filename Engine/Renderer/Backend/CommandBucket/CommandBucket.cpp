@@ -71,7 +71,7 @@ ShaderProgram& CommandBucket::OnKeyChangeCallback(ResourcesManager& manager, con
 	state.ApplyStates();
 
 	// Set Shader
-	ShaderProgram& shader = manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
+	ShaderProgram& shader = manager.Get<ShaderProgram>(shader_id);
 	shader.Bind();
 	shader.SetMat4("u_ProjView", proj_view);
 	shader.SetVec3("u_ViewPosition", camera.Position);
@@ -82,7 +82,7 @@ FBO& CommandBucket::OnBucketFlushCallback(ResourcesManager& manager, const Rende
 {
 	// Apply framer buffer here!
 	//if (rt.m_FboID != 0) {
-	FBO& fbo = manager.Get<FBO>(ResourcesTypes::FBO, rt.m_FboID);
+	FBO& fbo = manager.Get<FBO>(rt.m_FboID);
 	fbo.Bind();
 	Clear(Buffer::COLOR | Buffer::DEPTH);
 	//}

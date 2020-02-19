@@ -100,7 +100,7 @@ void MaterialParametres<int32>::UploadUnfiroms(const ShaderProgram& program) con
 	ResourcesManager& manaeger = ResourcesManager::Instance();
 
 	for (const auto& uniform_data : this->GetContainer<TextureID>()) {
-		Texture& active_tex = manaeger.Get<Texture>(ResourcesTypes::TEXTURE, uniform_data.second);
+		Texture& active_tex = manaeger.Get<Texture>(uniform_data.second);
 		glActiveTexture(GL_TEXTURE0 + uniform_data.first);
 		active_tex.Bind();
 	}

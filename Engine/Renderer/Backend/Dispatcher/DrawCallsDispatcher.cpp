@@ -15,7 +15,7 @@ void BackendDispatch::PreDrawCall(const void* data)
 {
 	const Commands::PreDrawCallCmd* real_data = reinterpret_cast<const Commands::PreDrawCallCmd*>(data);
 
-	VAO& vao = ResourcesManager::Instance().Get<VAO>(ResourcesTypes::VAO, real_data->vao_id);
+	VAO& vao = ResourcesManager::Instance().Get<VAO>(real_data->vao_id);
 	vao.Bind();
 	real_data->shader->SetMat4("u_Model", real_data->model);
 
@@ -56,7 +56,7 @@ void BackendDispatch::InstancedPreDrawCall(const void* data)
 {
 	const Commands::PreInstancedDrawCallCmd* real_data = reinterpret_cast<const Commands::PreInstancedDrawCallCmd*>(data);
 
-	VAO& vao = ResourcesManager::Instance().Get<VAO>(ResourcesTypes::VAO, real_data->vao_id);
+	VAO& vao = ResourcesManager::Instance().Get<VAO>(real_data->vao_id);
 	vao.Bind();
 
 	Cmd next_cmd = real_data->next_cmd;
