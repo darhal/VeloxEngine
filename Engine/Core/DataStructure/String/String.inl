@@ -285,24 +285,32 @@ void BasicString<T>::Copy(const BasicString<T>& str, usize pos, usize offset)
 	const T* buffer_ptr = str.Buffer();
 	usize end = pos + offset;
 	if (end >= slen) end = slen;
-	if (offset < SSO_SIZE) {
+	if (offset + 1 < SSO_SIZE) {
 		SetSmallLength(end - pos + 1);
-		for (usize i = pos, j = 0; i < end; i++, j++) {
+		usize i, j;
+
+		for (i = pos, j = 0; i < end; i++, j++) {
 			m_Data[j] = buffer_ptr[i];
 		}
+
+		m_Data[j] = '\0';
 	}else{
 		this->Reserve(offset);
 		SetNormalLength(end - pos + 1);
-		for (usize i = pos, j = 0; i < end; i++, j++) {
+
+		usize i, j;
+		for (i = pos, j = 0; i < end; i++, j++) {
 			m_Buffer[j] = buffer_ptr[i];
 		}
+
+		m_Buffer[j] = '\0';
 	}
 }
 
 template<typename T>
 INLINE BasicString<T> BasicString<T>::SubString(usize pos, usize off) const
 {
-	BasicString<T> temp_str(off);
+	BasicString<T> temp_str(off + 1);
 	temp_str.Copy(*this, pos, off);
 	return temp_str;
 }
@@ -330,7 +338,7 @@ INLINE Vector<BasicString<T>> BasicString<T>::Split(T delimter)
 			pch = this->FindFirstHelper(pch + 1, delimter);
 		}
 
-		fragments.EmplaceBack(std::move(this->SubString(start_off, this->Length() + str_buffer - str_buffer)));
+		fragments.EmplaceBack(std::move(this->SubString(start_off, this->Length())));
 	}
 
 	return fragments;
@@ -395,6 +403,7 @@ template<typename T>
 INLINE T* BasicString<T>::FindFirstHelper(T* buffer, T delimter) 
 {
 	usize len = this->Length();
+
 	for (usize i = 0; i < len; i++) {
 		if (buffer[i] == delimter) {
 			return buffer + i;

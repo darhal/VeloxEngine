@@ -196,7 +196,7 @@ FORCEINLINE bool File::SetCursor(usize cur, CursorOrigin cur_position) const
 FORCEINLINE String File::ReadAll()
 {
 	usize sz = this->Size();
-	String data(sz);
+	String data(sz, sz);
 	char byte;
 	uint64 index = 0;
 
