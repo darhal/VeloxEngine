@@ -268,12 +268,15 @@ void BasicString<T>::Insert(usize pos, const BasicString<T>& str)
 	T* this_buffer = this->EditableBuffer();
 	const T* temp_buffer = temp_str.Buffer();
 	const T* str_buffer = str.Buffer();
-	for (usize i = pos, j = 0; j < slen; i++, j++) {
+
+	for (usize i = pos, j = 0; j < slen - 1; i++, j++) {
 		this_buffer[i] = str_buffer[j];
 	}
-	for (usize i = pos + slen, j = 0; j < temp_len; i++, j++) {
+
+	for (usize i = pos + slen - 1, j = 0; j < temp_len; i++, j++) {
 		this_buffer[i] = temp_buffer[j];
 	}
+
 	this->SetLength(tlen + slen);
 }
 
@@ -316,9 +319,9 @@ INLINE BasicString<T> BasicString<T>::SubString(usize pos, usize off) const
 }
 
 template<typename T>
-INLINE ssize BasicString<T>::Find(const BasicString<T>& pattren) const
+INLINE ssize BasicString<T>::Find(const BasicString<T>& pattren, uint32 start) const
 {
-	return SearchBoyerMoore(*this, pattren);
+	return SearchBoyerMoore(*this, pattren, start);
 }
 
 template<typename T>

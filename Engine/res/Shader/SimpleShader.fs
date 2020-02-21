@@ -1,5 +1,7 @@
 #version 330 core
 
+#include "res/Shader/shader_atoms.glsl"
+
 out vec4 FragColor;
 
 void main()

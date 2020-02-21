@@ -109,9 +109,16 @@ bool firstMouse = true;
 ShaderProgram& debugQuad(TextureID depthMap);
 void RenderDebugQuad();
 
+void main2()
+{
+	ShaderParser parser("res/Shader/SimpleShader.fs");	
+}
+
 int main()
 {
-	ShaderParser parser("res/Shader/SimpleShader.fs");
+	main2();
+	getchar();
+	return 0;
 
 	// settings
 	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 4.3)", WindowStyle::Resize);

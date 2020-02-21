@@ -12,6 +12,8 @@ public:
 
 private:
 	String m_ShaderCode;
+
+	CONSTEXPR static char INCLUDE_KEYWORD[] = "#include";
 };
 
 TRE_NS_END
