@@ -10,6 +10,7 @@ class ShaderParser
 public:
 	ShaderParser(const String& filename);
 
+	String& GetCode() { return m_ShaderCode; };
 private:
 	String m_ShaderCode;
 

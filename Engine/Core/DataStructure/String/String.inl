@@ -258,22 +258,21 @@ void BasicString<T>::Erase(usize pos, usize offset)
 template<typename T>
 void BasicString<T>::Insert(usize pos, const BasicString<T>& str)
 {
-	usize tlen = this->Length() - 1; // remove the trailing null
-	usize slen = str.Length();
-	this->Resize(tlen + slen - 1);
+	usize tlen = this->Length(); // remove the trailing null
+	usize slen = str.Length() - 1;
+	this->Resize(tlen + slen);
 	//Shift the last part to the end
-	BasicString<T> temp_str(tlen + 1);
-	temp_str.Copy(*this, pos, tlen + 1);
-	usize temp_len = temp_str.Length();
+	BasicString<T> temp_str(tlen - pos);
+	temp_str.Copy(*this, pos, tlen);
 	T* this_buffer = this->EditableBuffer();
 	const T* temp_buffer = temp_str.Buffer();
 	const T* str_buffer = str.Buffer();
 
-	for (usize i = pos, j = 0; j < slen - 1; i++, j++) {
+	for (usize i = pos, j = 0; j < slen; i++, j++) {
 		this_buffer[i] = str_buffer[j];
 	}
 
-	for (usize i = pos + slen - 1, j = 0; j < temp_len; i++, j++) {
+	for (usize i = pos + slen, j = 0; j < tlen - pos; i++, j++) {
 		this_buffer[i] = temp_buffer[j];
 	}
 
@@ -287,9 +286,9 @@ void BasicString<T>::Copy(const BasicString<T>& str, usize pos, usize offset)
 	//ASSERTF((offset > slen), "Bad usage of String::Copy() pos or offset is out of bound.");
 	const T* buffer_ptr = str.Buffer();
 	usize end = pos + offset;
-	if (end >= slen) end = slen;
+	if (end >= slen) end = slen - 1;
 	if (offset + 1 < SSO_SIZE) {
-		SetSmallLength(end - pos + 1);
+		SetSmallLength(offset + 1);
 		usize i, j;
 
 		for (i = pos, j = 0; i < end; i++, j++) {
@@ -298,8 +297,8 @@ void BasicString<T>::Copy(const BasicString<T>& str, usize pos, usize offset)
 
 		m_Data[j] = '\0';
 	}else{
-		this->Reserve(offset);
-		SetNormalLength(end - pos + 1);
+		this->Reserve(offset + 1);
+		SetNormalLength(offset + 1);
 
 		usize i, j;
 		for (i = pos, j = 0; i < end; i++, j++) {

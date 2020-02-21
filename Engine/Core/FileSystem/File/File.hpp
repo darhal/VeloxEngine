@@ -196,16 +196,18 @@ FORCEINLINE bool File::SetCursor(usize cur, CursorOrigin cur_position) const
 FORCEINLINE String File::ReadAll()
 {
 	usize sz = this->Size();
-	String data(sz, sz);
+	String data(sz);
 	char byte;
 	uint64 index = 0;
 
 	while ((byte = fgetc(m_File)) != EOF) {
-		data[index] = byte;
+		// data[index] = byte;
+		data.PushBack(byte);
 		index++;
 	}
 
-	data[index] = 0;
+	// data[index] = 0;
+	data.PushBack(0);
 	return data;
 }
 

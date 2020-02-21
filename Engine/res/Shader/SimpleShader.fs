@@ -1,7 +1,12 @@
 #version 330 core
 
-#include "res/Shader/shader_atoms.glsl"
+// Simple Shader:
+#include "res/Shader/SimpleShader.vs"
 
+// Screen Shader:
+#include "res/Shader/screen.vs"
+
+// Main Shader:
 out vec4 FragColor;
 
 void main()
