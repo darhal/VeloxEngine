@@ -7,7 +7,8 @@ const String ShaderParser::SHADERS_PATH = "res/Shader/";
 
 ShaderParser::ShaderParser(const String& filename)
 {
-	File file(SHADERS_PATH+filename, File::OPEN_READ);
+	String full_filename = SHADERS_PATH + filename;
+	File file(full_filename, File::OPEN_READ);
 	m_ShaderCode = file.ReadAll();
 	ssize_t include_index = m_ShaderCode.Find(INCLUDE_KEYWORD);
 
@@ -39,12 +40,26 @@ void ShaderParser::AutoDetectUniforms(const String& code)
 	}
 }
 
-void ShaderParser::AddDefines(const String& identifier, const String& value = "")
+void ShaderParser::AddDefines(const String& identifier, const String& value)
 {
-	String define_str = String(DEFINE_KEYWORD) + " " + identifier + " " + value;
+	String define_str = String(DEFINE_KEYWORD) + " " + identifier + " " + value + "\n\n";
 	m_ShaderCode = define_str + m_ShaderCode;
 }
 
+String ShaderParser::Define(const Vector<String>& identifiers)
+{
+	String code(m_ShaderCode);
+	String defines("\n\n");//(1024 * 2);
+	String define(DEFINE_KEYWORD);
+
+	for (const String& idf : identifiers) {
+		defines += define + " " + idf + "\n";
+	}
+
+	ssize_t include_index = code.Find("\n");
+	code.Insert(include_index, defines);
+	return code;
+}
 
 ShaderParser::ShaderParser(const ShaderParser& other) 
 	: m_ShaderCode(other.m_ShaderCode), m_Uniforms(), m_Samplers()

@@ -27,19 +27,21 @@ in vec3 FragPos;
 in vec3 ViewPos;
 in vec3 Normal;
 
-#define TEXTURED
+#ifdef TEXTURED
 	in vec2 TexCoords;
 #endif
 
-#include "Forward/Lights/Generic.glsl"
+#ifdef SHADOWS
+	uniform sampler2D u_ShadowMap;
+	in vec4 FragPosLightSpace;
+	#include "Forward/Shadows/Shadows.glsl"
+#endif
+
+#include "Forward/Misc/Misc.glsl"
 #include "Forward/Lights/DirectionalLight.glsl"
 #include "Forward/Lights/PointLight.glsl"
 #include "Forward/Lights/SpotLight.glsl"
-#include "Forward/Misc/Misc.glsl"
-
-#define SHADOWS
-	#include "Forward/Shadows/Shadows.glsl"
-#endif
+#include "Forward/Lights/Generic.glsl"
 
 void main()
 {

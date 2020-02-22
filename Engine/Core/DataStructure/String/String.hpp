@@ -117,6 +117,8 @@ public:
 
 	INLINE BasicString<T>& operator+=(const BasicString<T>& other);
 	INLINE BasicString<T>& operator+=(const char* other);
+
+	INLINE bool IsSmall() const;
 public:
 	CONSTEXPR static usize SPARE_RATE = 2;
 private:
@@ -139,7 +141,6 @@ private:
 		};
 	};
 
-	INLINE bool IsSmall() const;
 	INLINE void SetLength(usize nlen);
 	INLINE void SetSmallLength(usize nlen);
 	INLINE void SetNormalLength(usize nlen);

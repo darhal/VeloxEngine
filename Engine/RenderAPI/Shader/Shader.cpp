@@ -9,31 +9,23 @@
 
 TRE_NS_START
 
-Shader::Shader(const char* path, ShaderType::shader_type_t t) : type(t)
+Shader::Shader(const File& file, ShaderType::shader_type_t t) : type(t)
 {
-	FILE* file = fopen(path, "r");
+	String content = file.ReadAll();
+	const char* buffer = content.Buffer();
+	ID = glCreateShader((uint32)t);
+	glShaderSource(ID, 1, &buffer, NULL);
+	glCompileShader(ID);
+	ShaderProgram::CheckCompileErrors(ID, ShaderType::ToString(t));
+}
 
-	if (file != NULL) {
-		fseek(file, 0, SEEK_END);
-		const long size = ftell(file);
-		char* buffer = new char[size];
-		fseek(file, 0, SEEK_SET);
-		char byte;
-		uint64 index = 0;
-
-		while ((byte = fgetc(file)) != EOF) {
-			buffer[index] = byte;
-			index++;
-		}
-
-		buffer[index] = '\0';
-		fclose(file);
-		ID = glCreateShader((uint32)t);
-		glShaderSource(ID, 1, &buffer, NULL);
-		glCompileShader(ID);
-		ShaderProgram::CheckCompileErrors(ID, ShaderType::ToString(t));
-		delete[] buffer;
-	}
+Shader::Shader(const String& code, ShaderType::shader_type_t t) : type(t)
+{
+	const char* code_str = code.Buffer();
+	ID = glCreateShader((uint32)t);
+	glShaderSource(ID, 1, &code_str, NULL);
+	glCompileShader(ID);
+	ShaderProgram::CheckCompileErrors(ID, ShaderType::ToString(t));
 }
 
 TRE_NS_END

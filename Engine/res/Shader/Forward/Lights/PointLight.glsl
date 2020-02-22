@@ -25,6 +25,11 @@ vec3 CalculatePointLight(mat4 light, vec3 normal, vec3 viewDir, vec3 fragPos, ma
     // vec3 ambient = material_color[0];
     vec3 diffuse = l_color * diff * material_color[1];
     vec3 specular = l_color * spec * material_color[2];
-	
+
+#ifdef SHADOWS	
+    float shadow  = ShadowCalculation(l_position, FragPosLightSpace);
+    return (diffuse + specular) * attenuation * (1.0 - shadow);
+#else
     return (diffuse + specular) * attenuation;
+#endif
 }

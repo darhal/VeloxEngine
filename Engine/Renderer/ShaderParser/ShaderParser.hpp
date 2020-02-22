@@ -19,6 +19,8 @@ public:
 	void AutoDetectUniforms(const String& code);
 
 	void AddDefines(const String& identifier, const String& value = "");
+
+	String Define(const Vector<String>& identifiers);
 private:
 	String m_ShaderCode;
 	Vector<String> m_Uniforms;

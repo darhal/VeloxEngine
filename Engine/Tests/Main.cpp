@@ -111,15 +111,31 @@ void RenderDebugQuad();
 
 void main2()
 {
-	ShaderParser parser("SimpleShader.fs");	
-	printf("After Insert: \n%s\n", parser.GetCode().Buffer());
+	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 4.3)", WindowStyle::Resize);
+	window.initContext(4, 3);
+	ShaderParser generic_vs("Forward/generic.vs");
+	ShaderParser generic_fs("Forward/generic.fs");
+
+	ShaderID shader_id2 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
+		Shader(generic_vs.GetCode(), ShaderType::VERTEX),
+		Shader(generic_fs.GetCode(), ShaderType::FRAGMENT)
+	);
+
+	ShaderID shader_id3 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
+		Shader(generic_vs.Define({ "TEXTURED" }), ShaderType::VERTEX),
+		Shader(generic_fs.Define({ "TEXTURED" }), ShaderType::FRAGMENT)
+	);
+	ShaderID shader_id4 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
+		Shader(generic_vs.Define({ "TEXTURED", "SHADOWS" }), ShaderType::VERTEX),
+		Shader(generic_fs.Define({ "TEXTURED", "SHADOWS" }), ShaderType::FRAGMENT)
+	);
 }
 
 int main()
 {
-	main2();
+	/*main2();
 	getchar();
-	return 0;
+	return 0;*/
 
 	// settings
 	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 4.3)", WindowStyle::Resize);
@@ -131,48 +147,23 @@ int main()
 	printf("- GLSL Version......: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 	printf("- Hardware Threads..: %d\n", std::thread::hardware_concurrency());
 
-	ShaderValidator("res/Shader/SimpleShader.vs", "res/Shader/SimpleShader.fs");
-	ShaderID shader_id = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
-		Shader("res/Shader/SimpleShader.vs", ShaderType::VERTEX), 
-		Shader("res/Shader/SimpleShader.fs", ShaderType::FRAGMENT)
-	);
-	ShaderValidator("res/Shader/Forward/generic.vs", "res/Shader/Forward/generic.fs");
-	ShaderID shader_id2 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
-		Shader("res/Shader/Forward/generic.vs", ShaderType::VERTEX),
-		Shader("res/Shader/Forward/generic.fs", ShaderType::FRAGMENT)
-	);
-	ShaderValidator("res/Shader/Forward/generic_tex.vs", "res/Shader/Forward/generic_tex.fs");
-	ShaderID shader_id3 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
-		Shader("res/Shader/Forward/generic_tex.vs", ShaderType::VERTEX),
-		Shader("res/Shader/Forward/generic_tex.fs", ShaderType::FRAGMENT)
-	);
-	ShaderValidator("res/Shader/Forward/shadow_mapping.vs", "res/Shader/Forward/shadow_mapping.fs");
-	ShaderID shader_id4 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
-		Shader("res/Shader/Forward/shadow_mapping_tex.vs", ShaderType::VERTEX),
-		Shader("res/Shader/Forward/shadow_mapping_tex.fs", ShaderType::FRAGMENT)
-	);
-	ShaderValidator("res/Shader/Forward/shadow_mapping.vs", "res/Shader/Forward/shadow_mapping.fs");
-	ShaderID shader_id5 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
-		Shader("res/Shader/Forward/shadow_mapping.vs", ShaderType::VERTEX),
-		Shader("res/Shader/Forward/shadow_mapping.fs", ShaderType::FRAGMENT)
-	);
-	/*ShaderValidator("res/Shader/cam_instanced.vs", "res/Shader/cam_instanced.fs");
-	ShaderID shader_id3 = ResourcesManager::Instance().CreateResource<ShaderProgram>(
-		Shader("res/Shader/cam_instanced.vs", ShaderType::VERTEX),
-		Shader("res/Shader/cam_instanced.fs", ShaderType::FRAGMENT)
-	);*/
-	/*{
-		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(shader_id);
-		shader.LinkProgram();
-		shader.Use();
-		//shader.AddUniform("MVP");
-		shader.AddUniform("u_ProjView");
-		shader.AddUniform("u_Model");
-		shader.AddUniform("u_ViewPosition");
-	}*/
+	ShaderParser generic_vs("Forward/generic.vs");
+	ShaderParser generic_fs("Forward/generic.fs");
 
+	ShaderID shader_id2 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
+		Shader(generic_vs.GetCode(), ShaderType::VERTEX), 
+		Shader(generic_fs.GetCode(), ShaderType::FRAGMENT)
+	);
+	ShaderID shader_id3 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
+		Shader(generic_vs.Define({ "TEXTURED" }), ShaderType::VERTEX), 
+		Shader(generic_fs.Define({ "TEXTURED" }), ShaderType::FRAGMENT)
+	);
+	ShaderID shader_id4 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
+		Shader(generic_vs.Define({ "TEXTURED", "SHADOWS" }), ShaderType::VERTEX), 
+		Shader(generic_fs.Define({ "TEXTURED", "SHADOWS" }), ShaderType::FRAGMENT)
+	);
 	{
-		for (uint32 i = shader_id2; i <= shader_id5; i++) {
+		for (uint32 i = shader_id2; i <= shader_id4; i++) {
 			ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(i);
 			shader.LinkProgram();
 			shader.Use();
@@ -370,10 +361,9 @@ void HandleEvent(float dt, Mat4f& projecton, Camera& camera, const Event& e)
 
 ShaderProgram& debugQuad(TextureID depthMap)
 {
-	ShaderValidator("res/Shader/Forward/Debug/debug_quad.vs", "res/Shader/Forward/Debug/debug_quad.fs");
 	ShaderID shader = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
-		Shader("res/Shader/Forward/Debug/debug_quad.vs", ShaderType::VERTEX),
-		Shader("res/Shader/Forward/Debug/debug_quad.fs", ShaderType::FRAGMENT)
+		Shader(File("res/Shader/Forward/Debug/debug_quad.vs"), ShaderType::VERTEX),
+		Shader(File("res/Shader/Forward/Debug/debug_quad.fs"), ShaderType::FRAGMENT)
 	);
 	{
 		ShaderProgram& s = ResourcesManager::Instance().Get<ShaderProgram>(shader);

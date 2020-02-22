@@ -401,7 +401,7 @@ namespace ShaderType {
 	};
 
 	static FORCEINLINE const char* ToString(shader_type_t v) {
-		static const char* shadertype2str[] = { "VERTEX SHADER", " FRAGMENT SHADER", "GEOMETRY SHADER", "COMPUTE SHADER" };
+		static const char* shadertype2str[] = { "VERTEX SHADER", "FRAGMENT SHADER", "GEOMETRY SHADER", "COMPUTE SHADER" };
 		switch (v) {
 		case shader_type_t::VERTEX:
 			return shadertype2str[0];

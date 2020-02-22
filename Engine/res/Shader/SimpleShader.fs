@@ -1,6 +1,5 @@
 #version 330 core
 
-// Main Shader:
 out vec4 FragColor;
 
 void main()

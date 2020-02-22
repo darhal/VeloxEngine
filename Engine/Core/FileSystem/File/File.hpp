@@ -30,7 +30,7 @@ public:
 
     FORCEINLINE bool LoadFile(String& path, Options options);
 
-    File(const String& path, Options foptions);
+    File(const String& path, Options foptions = Options::OPEN_READ);
 
     virtual ~File();
 
@@ -71,7 +71,7 @@ public:
 
     FORCEINLINE bool Rename(const String& newName);
 
-	FORCEINLINE String ReadAll();
+	FORCEINLINE String ReadAll() const;
 
     bool Delete();
 private:
@@ -193,7 +193,7 @@ FORCEINLINE bool File::SetCursor(usize cur, CursorOrigin cur_position) const
     return !fseek(m_File, (long) cur, SEEK_POSITIONS[cur_position]);
 }
 
-FORCEINLINE String File::ReadAll()
+FORCEINLINE String File::ReadAll() const
 {
 	usize sz = this->Size();
 	String data(sz);

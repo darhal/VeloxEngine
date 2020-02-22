@@ -22,8 +22,8 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 	ResourcesManager& rm = ResourcesManager::Instance();
 	{
 		ShaderProgram& shader = rm.CreateResource<ShaderProgram>(m_ShadowMappingShader,
-			Shader("res/Shader/Forward/shadow_depth_mapping.vs", ShaderType::VERTEX),
-			Shader("res/Shader/Forward/shadow_depth_mapping.fs", ShaderType::FRAGMENT)
+			Shader(File("res/Shader/Forward/shadow_depth_mapping.vs"), ShaderType::VERTEX),
+			Shader(File("res/Shader/Forward/shadow_depth_mapping.fs"), ShaderType::FRAGMENT)
 		);
 		shader.LinkProgram();
 		shader.Use();
