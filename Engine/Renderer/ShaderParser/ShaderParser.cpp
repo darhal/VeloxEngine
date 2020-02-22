@@ -3,11 +3,12 @@
 
 TRE_NS_START
 
+const String ShaderParser::SHADERS_PATH = "res/Shader/";
+
 ShaderParser::ShaderParser(const String& filename)
 {
-	File file(filename, File::OPEN_READ);
+	File file(SHADERS_PATH+filename, File::OPEN_READ);
 	m_ShaderCode = file.ReadAll();
-
 	ssize_t include_index = m_ShaderCode.Find(INCLUDE_KEYWORD);
 
 	while (include_index != -1) {
@@ -27,6 +28,34 @@ ShaderParser::ShaderParser(const String& filename)
 		m_ShaderCode.Insert(include_index, parser.GetCode());
 		include_index = m_ShaderCode.Find(INCLUDE_KEYWORD);
 	}
+}
+
+void ShaderParser::AutoDetectUniforms(const String& code)
+{
+	ssize_t include_index = m_ShaderCode.Find(UNIFORM_KEYWORD);
+
+	while (include_index != -1) {
+
+	}
+}
+
+void ShaderParser::AddDefines(const String& identifier, const String& value = "")
+{
+	String define_str = String(DEFINE_KEYWORD) + " " + identifier + " " + value;
+	m_ShaderCode = define_str + m_ShaderCode;
+}
+
+
+ShaderParser::ShaderParser(const ShaderParser& other) 
+	: m_ShaderCode(other.m_ShaderCode), m_Uniforms(), m_Samplers()
+{
+}
+
+ShaderParser::ShaderParser(ShaderParser&& other) 
+	: m_ShaderCode(std::move(other.m_ShaderCode)), 
+	m_Uniforms(std::move(other.m_Uniforms)),
+	m_Samplers(std::move(other.m_Samplers))
+{
 }
 
 

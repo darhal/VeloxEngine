@@ -111,26 +111,8 @@ void RenderDebugQuad();
 
 void main2()
 {
-	ShaderParser parser("res/Shader/SimpleShader.fs");	
+	ShaderParser parser("SimpleShader.fs");	
 	printf("After Insert: \n%s\n", parser.GetCode().Buffer());
-	/*String test("#version 330 core\n\n"
-		"out vec4 FragColor;\n\n"
-		"void main()\n"
-		"{\n"
-			"FragColor = vec4(0.0, 1.0, 1.0, 1.0);\n"
-		"}\n");
-	String name = 
-		"#version 330 core\n\n"
-		"layout(location = 0) in vec3 aPos;\n\n"
-		"uniform mat4 u_ProjView;\n"
-		"uniform mat4 u_Model;\n\n"
-		"void main()\n"
-		"{\n"
-			"gl_Position = u_ProjView * u_Model * vec4(aPos, 1.0f);\n"
-		"}\n";
-
-	test.Insert(19, name);
-	printf("%s\n", test.Buffer());*/
 }
 
 int main()

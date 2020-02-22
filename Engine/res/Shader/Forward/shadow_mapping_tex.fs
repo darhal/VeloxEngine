@@ -7,11 +7,11 @@ const int MAX_LIGHTS = 32;
 struct Material {
     vec3 ambient;
     vec3 diffuse;
-    vec3 specular;    
+    vec3 specular;
     float shininess;
-	float alpha;
-	sampler2D diffuse_tex;
-    sampler2D specular_tex;  
+    float alpha;
+    sampler2D diffuse_tex;
+    sampler2D specular_tex;
 };
 
 uniform Material material;
