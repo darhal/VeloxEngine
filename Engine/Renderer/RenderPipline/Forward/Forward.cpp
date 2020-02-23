@@ -105,7 +105,7 @@ void ForwardRenderer::Draw(IPrimitiveMesh& mesh)
 {
 	// Main Pass:
 	mesh.Submit(m_CommandQueue.GetCommandBucker(MAIN_PASS));
-	mesh.Submit(m_CommandQueue.GetCommandBucker(SHADOW_PASS), m_ShadowMappingShader, -1);
+	// mesh.Submit(m_CommandQueue.GetCommandBucker(SHADOW_PASS), m_ShadowMappingShader, -1);
 }
 
 void ForwardRenderer::Render()

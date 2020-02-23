@@ -14,7 +14,6 @@ TRE_NS_START
 void BackendDispatch::PreDrawCall(const void* data)
 {
 	const Commands::PreDrawCallCmd* real_data = reinterpret_cast<const Commands::PreDrawCallCmd*>(data);
-
 	VAO& vao = ResourcesManager::Instance().Get<VAO>(real_data->vao_id);
 	vao.Bind();
 	real_data->shader->SetMat4("u_Model", real_data->model);
@@ -43,7 +42,6 @@ void BackendDispatch::Draw(const void* data)
 void BackendDispatch::DrawIndexed(const void* data)
 {
     const Commands::DrawIndexedCmd* real_data = reinterpret_cast<const Commands::DrawIndexedCmd*>(data);
-
 	if (real_data->material)
 		real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
 

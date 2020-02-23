@@ -21,11 +21,13 @@ void CommandPacket::Flush()
 	const uint32 start = m_BufferMarker * DEFAULT_MAX_ELEMENTS;
 	const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;
 
+	printf("\t----- [PACKET:%d] -----\n", m_Key);
 	for (uint32 i = start; i < end; i++) {
 		const uint64& internal_key = m_Commands[i].first;
 		Cmd cmd = m_Commands[i].second;
 
 		// Issue the draw call
+		printf("\tCommand pointer: %p | Index : %d | CMD CONTAINER PTR: %p | Internal Key : %d\n", cmd, i, &m_Commands[i], m_Commands[i].first);
 		const BackendDispatchFunction CommandFunction = Command::LoadBackendDispatchFunction(cmd);
 		const void* command = Command::LoadCommand(cmd);
 		CommandFunction(command);
@@ -39,6 +41,7 @@ void CommandPacket::SetKey(const BucketKey& key)
 
 void CommandPacket::SwapBuffer()
 {
+	printf("\t----- [PACKET BUFFER SWAP] -----\n");
 	m_CmdsCount = 0;
 	m_BufferMarker = !m_BufferMarker;
 	m_CmdsAllocator.SetOffset(DEFAULT_MAX_ELEMENTS * COMMAND_PTR * MULTIPLIER + DEFAULT_MAX_ELEMENTS * COMMAND_SIZE * m_BufferMarker);

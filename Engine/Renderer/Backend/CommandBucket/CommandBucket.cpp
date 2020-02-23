@@ -101,6 +101,7 @@ void CommandBucket::Flush() const
 	const Mat4f projView = m_Projection * m_Camera.GetViewMatrix();
 	const vec3& camera_position = m_Camera.Position;
 
+	printf("************* [BUCKET] *************\n");
 	for (const auto& key_packet_pair : m_Packets) {
 		// Decode the key,  and apply render states and shader
 		if (m_OnKeyChangeCallback)
@@ -109,6 +110,7 @@ void CommandBucket::Flush() const
 		key_packet_pair.second->Flush();
 		key_packet_pair.second->SwapBuffer();
 	}
+	printf("************* [END OF BUCKET] *************\n");
 }
 
 void CommandBucket::Finalize()

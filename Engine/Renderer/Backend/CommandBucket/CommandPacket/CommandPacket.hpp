@@ -55,7 +55,10 @@ U* CommandPacket::SubmitCommand(const uint64& internal_key)
 {
 	Cmd cmd = Command::CreateCommand<U>(m_CmdsAllocator);
 	Command::StoreBackendDispatchFunction(cmd, U::DISPATCH_FUNCTION);
-	new (&m_Commands[m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount++]) Pair<uint64, Cmd>(internal_key, cmd);
+	uint32 index = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount++;
+	new (&m_Commands[index]) Pair<uint64, Cmd>(internal_key, cmd);
+	printf("** [KEY:%d][Index:%d] Submit new Cmd | CMD PTR: %p | CMD CONTAINER PTR: %p | Internal key : %d\n", 
+		m_Key, index, m_Commands[index].second, &m_Commands[index], m_Commands[index].first);
 	return Command::GetCommand<U>(cmd);
 }
 

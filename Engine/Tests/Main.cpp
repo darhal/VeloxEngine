@@ -246,29 +246,8 @@ int main()
 	Enable(GL_MULTISAMPLE);
 	// ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
-
-
 	ShaderProgram& debugShader = debugQuad(renderer.GetDepthMap());
-	/*CommandBucket& debugBucket = renderer.GetCommandQueue().CreateBucket();
-	uint8* extra_data = debugBucket.GetExtraBuffer();
-	new (extra_data) uint32(renderer.GetDepthMap());
-	debugBucket.SetOnKeyChangeCallback(
-		[](ResourcesManager& manager, const BucketKey& key,
-			const Mat4f& proj_view, const Mat4f& proj,
-			const Camera& camera, const uint8* extra_data) -> ShaderProgram& {
-		uint32 shader_id;
-		RenderState state = RenderState::FromKey(key, &shader_id);
-		state.ApplyStates();
 
-		// Set Shader
-		ShaderProgram& shader = manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
-		shader.Bind();
-		const uint32& depth_map_id = *reinterpret_cast<const uint32*>(extra_data);
-		Texture& shadow_map = manager.Get<Texture>(ResourcesTypes::TEXTURE, depth_map_id);
-		ActivateTexture(0);
-		shadow_map.Bind();
-		return shader;
-	});*/
 	INIT_BENCHMARK;
 	while (true) {
 		//BENCHMARK("Render Thread",
@@ -282,10 +261,9 @@ int main()
 		//ResourcesManager::Instance().GetRenderWorld().UpdateSystems(0);
 		//renderer.Render();
 		//renderer.Draw(mesh);
-		renderer.Draw(carrot_mesh);
-		renderer.Draw(plane_mesh);
+		//renderer.Draw(carrot_mesh);
+		//renderer.Draw(plane_mesh);
 		renderer.Draw(gun_mesh);
-		// debugScreen.Submit(debugBucket, -1, 0);
 		renderer.Render();
 
 		/*debugShader.Bind();
