@@ -21,13 +21,11 @@ void CommandPacket::Flush()
 	const uint32 start = m_BufferMarker * DEFAULT_MAX_ELEMENTS;
 	const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;
 
-	printf("\t----- [PACKET:%d] -----\n", m_Key);
 	for (uint32 i = start; i < end; i++) {
 		const uint64& internal_key = m_Commands[i].first;
 		Cmd cmd = m_Commands[i].second;
 
 		// Issue the draw call
-		printf("\tCommand pointer: %p | Index : %d | CMD CONTAINER PTR: %p | Internal Key : %d\n", cmd, i, &m_Commands[i], m_Commands[i].first);
 		const BackendDispatchFunction CommandFunction = Command::LoadBackendDispatchFunction(cmd);
 		const void* command = Command::LoadCommand(cmd);
 		CommandFunction(command);
@@ -41,7 +39,6 @@ void CommandPacket::SetKey(const BucketKey& key)
 
 void CommandPacket::SwapBuffer()
 {
-	printf("\t----- [PACKET BUFFER SWAP] -----\n");
 	m_CmdsCount = 0;
 	m_BufferMarker = !m_BufferMarker;
 	m_CmdsAllocator.SetOffset(DEFAULT_MAX_ELEMENTS * COMMAND_PTR * MULTIPLIER + DEFAULT_MAX_ELEMENTS * COMMAND_SIZE * m_BufferMarker);
@@ -51,11 +48,10 @@ void CommandPacket::SortCommands()
 {
 	/*std::bitset<64> b(m_Key);
 	printf("Sorting packt with key : %llu | Bitset : ", m_Key); std::cout << b << std::endl;*/
-
 	const uint32 start = m_BufferMarker * DEFAULT_MAX_ELEMENTS;
-	const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;
+	// const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;
 
-	std::qsort(m_Commands + start, end, sizeof(Pair<BucketKey, Cmd>), [](const void* a, const void* b) {
+	std::qsort(m_Commands + start, m_CmdsCount, sizeof(Pair<BucketKey, Cmd>), [](const void* a, const void* b) {
 		const Pair<BucketKey, Cmd>& arg1 = *static_cast<const Pair<BucketKey, Cmd>*>(a);
 		const Pair<BucketKey, Cmd>& arg2 = *static_cast<const Pair<BucketKey, Cmd>*>(b);
 

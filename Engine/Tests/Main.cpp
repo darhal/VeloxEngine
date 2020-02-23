@@ -261,8 +261,8 @@ int main()
 		//ResourcesManager::Instance().GetRenderWorld().UpdateSystems(0);
 		//renderer.Render();
 		//renderer.Draw(mesh);
-		//renderer.Draw(carrot_mesh);
-		//renderer.Draw(plane_mesh);
+		renderer.Draw(carrot_mesh);
+		renderer.Draw(plane_mesh);
 		renderer.Draw(gun_mesh);
 		renderer.Render();
 
