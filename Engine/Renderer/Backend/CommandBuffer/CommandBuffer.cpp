@@ -1,4 +1,5 @@
 #include "CommandBuffer.hpp"
+#include <Core/Profiler/Profiler.hpp>
 
 TRE_NS_START
 
@@ -8,6 +9,8 @@ CommandBuffer::CommandBuffer()
 
 void CommandBuffer::DispatchCommands() const
 {
+	TRE_PROFILE_FUNCTION();
+
 	for (const CommandBucket& bucket : m_Buckets) {
 		bucket.Flush();
 	}

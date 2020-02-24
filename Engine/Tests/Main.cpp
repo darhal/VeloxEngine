@@ -51,6 +51,7 @@
 #include "ShaderValidator.hpp"
 #include <Renderer/Backend/ResourcesManager/ResourcesManagerHelper.hpp>
 #include <Renderer/ShaderParser/ShaderParser.hpp>
+#include <Core/Profiler/Profiler.hpp>
 
 using namespace TRE;
 
@@ -109,34 +110,9 @@ bool firstMouse = true;
 ShaderProgram& debugQuad(TextureID depthMap);
 void RenderDebugQuad();
 
-void main2()
-{
-	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 4.3)", WindowStyle::Resize);
-	window.initContext(4, 3);
-	ShaderParser generic_vs("Forward/generic.vs");
-	ShaderParser generic_fs("Forward/generic.fs");
-
-	ShaderID shader_id2 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
-		Shader(generic_vs.GetCode(), ShaderType::VERTEX),
-		Shader(generic_fs.GetCode(), ShaderType::FRAGMENT)
-	);
-
-	ShaderID shader_id3 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
-		Shader(generic_vs.Define({ "TEXTURED" }), ShaderType::VERTEX),
-		Shader(generic_fs.Define({ "TEXTURED" }), ShaderType::FRAGMENT)
-	);
-	ShaderID shader_id4 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
-		Shader(generic_vs.Define({ "TEXTURED", "SHADOWS" }), ShaderType::VERTEX),
-		Shader(generic_fs.Define({ "TEXTURED", "SHADOWS" }), ShaderType::FRAGMENT)
-	);
-}
-
 int main()
 {
-	/*main2();
-	getchar();
-	return 0;*/
-
+	TRE_PROFILE_BEGIN_SESSION("Engine", "benchmark.json");
 	// settings
 	TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (OpenGL 4.3)", WindowStyle::Resize);
 	window.initContext(4, 3);
@@ -223,7 +199,7 @@ int main()
 	state.blending = RenderState::BlendingOptions();
 	Model gun = loader2.LoadAsOneObject();
 	StaticMesh gun_mesh = gun.LoadMesh(shader_id4);
-	gun_mesh.GetTransformationMatrix().translate(vec3(0.0, 1.0, 0.f));
+	// gun_mesh.GetTransformationMatrix().translate(vec3(0.0, 1.0, 0.f));
 
 	/*DirectionalLightComponent comp;
 	comp.SetDirection(vec3(0, -1.2, 0));
@@ -247,10 +223,12 @@ int main()
 	// ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	ContextOperationQueue& op_queue = ResourcesManager::Instance().GetContextOperationsQueue();
 	ShaderProgram& debugShader = debugQuad(renderer.GetDepthMap());
+	float X = 50.f;
 
 	INIT_BENCHMARK;
-	while (true) {
+	while (window.isOpen()) {
 		//BENCHMARK("Render Thread",
+		
 
 		if (window.getEvent(ev)) {
 			HandleEvent(deltaTime, bucket.GetProjectionMatrix(), bucket.GetCamera(), ev);
@@ -261,9 +239,20 @@ int main()
 		//ResourcesManager::Instance().GetRenderWorld().UpdateSystems(0);
 		//renderer.Render();
 		//renderer.Draw(mesh);
-		renderer.Draw(carrot_mesh);
+
+		srand(time(NULL));
+		for (uint32 i = 0; i < 2'500; i++) {
+			carrot_mesh.GetTransformationMatrix() = Mat4f();
+			float x = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
+			float y = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
+			float z = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
+			carrot_mesh.GetTransformationMatrix().translate(vec3(x, y, z));
+			renderer.Draw(carrot_mesh);
+		}
+
 		renderer.Draw(plane_mesh);
 		renderer.Draw(gun_mesh);
+		
 		renderer.Render();
 
 		/*debugShader.Bind();
@@ -273,10 +262,10 @@ int main()
 		RenderDebugQuad();*/
 
 		window.Present();
-
 		//);
 	}
-
+	
+	TRE_PROFILE_END_SESSION();
 	getchar();
 	return 0;
 }

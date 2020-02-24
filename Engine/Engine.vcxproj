@@ -312,6 +312,7 @@
     <ClInclude Include="Core\ECS\EntityContainer\EntityContainer.hpp" />
     <ClInclude Include="Core\FileSystem\Utils\Utility.hpp" />
     <ClInclude Include="Core\Memory\Allocators\LinearAlloc\GenericAlloc\LinearGenericAlloc.hpp" />
+    <ClInclude Include="Core\Profiler\Profiler.hpp" />
     <ClInclude Include="Renderer\Backend\ResourcesManager\ResourcesManagerHelper.hpp" />
     <ClInclude Include="Renderer\Backend\ResourcesManager\ResourcesMeta\ResourcesMetadata.hpp" />
     <ClInclude Include="Renderer\Components\MeshComponents\MeshInstanceComponent.hpp" />
