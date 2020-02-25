@@ -9,24 +9,26 @@ TRE_NS_START
 struct InstancedMeshComponent : public Component<InstancedMeshComponent>
 {
 	FORCEINLINE InstancedMeshComponent(const InstancedMeshComponent& other) :
-		Submeshs(std::move(other.Submeshs)), InstanceCount(other.InstanceCount),
-		VaoID(other.VaoID), DataVboID(other.DataVboID)
+		Submeshs(std::move(other.Submeshs)), VaoID(other.VaoID), 
+		InstanceCount(other.InstanceCount), DataVboID(other.DataVboID)
 	{
 	}
 
-	FORCEINLINE InstancedMeshComponent(uint32 instance_count, VaoID vao_id, VboID vbo_id)
+	FORCEINLINE InstancedMeshComponent(uint32 instance_count, VaoID vao_id, VboID vbo_id) : 
+		Submeshs(), VaoID(vao_id), InstanceCount(instance_count), DataVboID(vbo_id)
 	{
 	}
 
 	Vector<SubMesh> Submeshs;
-	uint32 InstanceCount;
 	VaoID VaoID;
+	uint32 InstanceCount;
 	VboID DataVboID;
 };
 
 struct MeshInstanceComponent : public Component<MeshInstanceComponent>
 {
 	EntityID InstanceModel;
+	uint32 InstanceID;
 };
 
 TRE_NS_END

@@ -167,6 +167,7 @@
     <ClCompile Include="Core\ECS\System\BaseSystem.cpp" />
     <ClCompile Include="Core\FileSystem\Utils\Utility.cpp" />
     <ClCompile Include="Core\Memory\Allocators\LinearAlloc\GenericAlloc\LinearGenericAlloc.cpp" />
+    <ClCompile Include="Renderer\Systems\InstancedTransformSystem\InstancedTransformSystem.cpp" />
     <ClCompile Include="Renderer\ShaderParser\ShaderParser.cpp" />
     <ClCompile Include="Renderer\Systems\LightSystems\LightSystem.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward\Forward.cpp" />
@@ -301,7 +302,7 @@
     <ClCompile Include="Renderer\MeshLoader\Model\Model.cpp" />
     <ClCompile Include="Renderer\Mesh\MeshInstance\MeshInstance.cpp" />
     <ClCompile Include="Renderer\Mesh\StaticMesh\StaticMesh.cpp" />
-    <ClCompile Include="Renderer\Systems\MeshSystems\MeshSystem.cpp" />
+    <ClCompile Include="Renderer\Systems\RenderSystems\MeshRenderSystem.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
     <ClCompile Include="Tests\Main2.cpp" />
     <ClCompile Include="Tests\TestingString.cpp" />
@@ -313,9 +314,12 @@
     <ClInclude Include="Core\FileSystem\Utils\Utility.hpp" />
     <ClInclude Include="Core\Memory\Allocators\LinearAlloc\GenericAlloc\LinearGenericAlloc.hpp" />
     <ClInclude Include="Core\Profiler\Profiler.hpp" />
+    <ClInclude Include="Renderer\Components\Misc\UpdateTagComponent.hpp" />
+    <ClInclude Include="Renderer\Systems\InstancedTransformSystem\InstancedTransformSystem.hpp" />
     <ClInclude Include="Renderer\Backend\ResourcesManager\ResourcesManagerHelper.hpp" />
     <ClInclude Include="Renderer\Backend\ResourcesManager\ResourcesMeta\ResourcesMetadata.hpp" />
     <ClInclude Include="Renderer\Components\MeshComponents\MeshInstanceComponent.hpp" />
+    <ClInclude Include="Renderer\Components\Misc\SceneTagComponent.hpp" />
     <ClInclude Include="Renderer\ShaderParser\ShaderParser.hpp" />
     <ClInclude Include="Renderer\Systems\LightSystems\LightSystem.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\ICommandBucket.hpp" />
@@ -480,7 +484,7 @@
     <ClInclude Include="Renderer\Mesh\StaticMesh\StaticMesh.hpp" />
     <ClInclude Include="Renderer\Mesh\SubMesh\SubMesh.hpp" />
     <ClInclude Include="Renderer\RenderPipline\Renderer\IRenderer.hpp" />
-    <ClInclude Include="Renderer\Systems\MeshSystems\MeshSystem.hpp" />
+    <ClInclude Include="Renderer\Systems\RenderSystems\MeshRenderSystem.hpp" />
     <ClInclude Include="Tests\ShaderValidator.hpp" />
     <ClInclude Include="Tests\ThreadBarrier.hpp" />
   </ItemGroup>

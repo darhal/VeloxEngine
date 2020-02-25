@@ -25,7 +25,7 @@ public:
 
 	void AddEntity(Entity& entity);
 
-	Entity* GetEntity(uint32 index);
+	Entity* GetEntity(uint32 index) const;
 
 	uint32 RemoveEntityComponents(uint32 entity_internal_id);
 
@@ -55,7 +55,7 @@ public:
 
 	FORCEINLINE uint32 GetEntitiesCount() const { return m_EntitiesCount; }
 
-	EntityID& GetEntityID(uint32 internal_id);
+	EntityID& GetEntityID(uint32 internal_id) const;
 
 	template<typename Component>
 	ArchetypeChunkIterator<Component> Iterator();

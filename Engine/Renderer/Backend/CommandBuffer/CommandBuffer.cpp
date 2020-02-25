@@ -9,7 +9,7 @@ CommandBuffer::CommandBuffer()
 
 void CommandBuffer::DispatchCommands() const
 {
-	TRE_PROFILE_FUNCTION();
+	// TRE_PROFILE_FUNCTION();
 
 	for (const CommandBucket& bucket : m_Buckets) {
 		bucket.Flush();
@@ -21,7 +21,7 @@ CommandBucket& CommandBuffer::CreateBucket()
 	return m_Buckets.EmplaceBack();
 }
 
-CommandBucket& CommandBuffer::GetCommandBucker(uint32 i)
+CommandBucket& CommandBuffer::GetCommandBucket(uint32 i)
 {
 	return m_Buckets[i];
 }

@@ -52,6 +52,7 @@
 #include <Renderer/Backend/ResourcesManager/ResourcesManagerHelper.hpp>
 #include <Renderer/ShaderParser/ShaderParser.hpp>
 #include <Core/Profiler/Profiler.hpp>
+#include <Renderer/Components/Misc/SceneTagComponent.hpp>
 
 using namespace TRE;
 
@@ -169,7 +170,7 @@ int main()
 
 	ForwardRenderer renderer;
 	renderer.Initialize(SCR_WIDTH, SCR_HEIGHT);
-	CommandBucket& bucket = renderer.GetCommandQueue().GetCommandBucker(ForwardRenderer::MAIN_PASS);
+	CommandBucket& bucket = renderer.GetCommandQueue().GetCommandBucket(ForwardRenderer::MAIN_PASS);
 	EntityManager& ent_manager = ResourcesManager::Instance().GetRenderWorld().GetEntityManager();
 
 	ModelData data;
@@ -184,22 +185,27 @@ int main()
 	mat->GetRenderStates().cull_enabled = false;
 	mat->GetParametres().AddParameter<TextureID>("material.diffuse_tex", mat->AddTexture("res/img/wood_texture.png"));
 	mat->GetParametres().AddParameter<TextureID>("material.specular_tex", mat->AddTexture("res/img/wood_texture.png"));
-	StaticMesh plane_mesh = model.LoadMesh(shader_id4);
-	plane_mesh.GetTransformationMatrix().scale(vec3(1.0, 1.0, 1.0) * 2.f);
+	StaticMeshComponent plane_mesh = model.LoadMeshComponent(shader_id4);
+	TransformComponent plane_trans; plane_trans.transform_matrix.scale(vec3(1.0, 1.0, 1.0) * 2.f);
+	Entity& plane = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent, SceneTag>(plane_mesh, plane_trans, SceneTag());
 	//plane_mesh.GetTransformationMatrix().rotate(vec3(1.f, 0.f, 0.f), Math::ToRad(90.0));
 	
 	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
-	Model carrot = loader.LoadAsOneObject();
-	StaticMesh carrot_mesh = carrot.LoadMesh(shader_id2);
-	carrot_mesh.GetTransformationMatrix().translate(vec3(-1.f, 3.f, 2.f));
+	Model carrot_model = loader.LoadAsOneObject();
+	StaticMeshComponent carrot_mesh = carrot_model.LoadMeshComponent(shader_id2);
+	// carrot_mesh.GetTransformationMatrix().translate(vec3(-1.f, 3.f, 2.f));
+	TransformComponent carrot_trans; carrot_trans.transform_matrix.translate(vec3(-1.f, 3.f, 2.f));
+	Entity& carrot = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent, SceneTag>(carrot_mesh, carrot_trans, SceneTag());
 
 	MeshLoader loader2("res/obj/lowpoly/deagle.obj");
 	RenderState& state  = loader2.GetMaterialLoader().GetMaterialFromName("Fire.001")->GetRenderStates();
 	state.blend_enabled = true;
 	state.blending = RenderState::BlendingOptions();
-	Model gun = loader2.LoadAsOneObject();
-	StaticMesh gun_mesh = gun.LoadMesh(shader_id4);
+	Model gun_model = loader2.LoadAsOneObject();
+	StaticMeshComponent gun_mesh = gun_model.LoadMeshComponent(shader_id4);
 	// gun_mesh.GetTransformationMatrix().translate(vec3(0.0, 1.0, 0.f));
+	TransformComponent gun_trans; gun_trans.transform_matrix.translate(vec3(0.0, 1.0, 0.f));
+	Entity& gun = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent, SceneTag>(gun_mesh, gun_trans, SceneTag());
 
 	/*DirectionalLightComponent comp;
 	comp.SetDirection(vec3(0, -1.2, 0));
@@ -240,7 +246,7 @@ int main()
 		//renderer.Render();
 		//renderer.Draw(mesh);
 
-		srand(time(NULL));
+		/*srand(time(NULL));
 		for (uint32 i = 0; i < 2'500; i++) {
 			carrot_mesh.GetTransformationMatrix() = Mat4f();
 			float x = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
@@ -251,8 +257,8 @@ int main()
 		}
 
 		renderer.Draw(plane_mesh);
-		renderer.Draw(gun_mesh);
-		
+		renderer.Draw(gun_mesh);*/
+		ResourcesManager::Instance().GetRenderWorld().UpdateSystems(0.f);
 		renderer.Render();
 
 		/*debugShader.Bind();

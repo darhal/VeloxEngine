@@ -81,8 +81,13 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 		return shader;
 	});
 
-	// m_MeshSystem.SetCommandBucket(&bucket);
-	// ResourcesManager::Instance().GetRenderWorld().GetSystsemList(SystemList::ACTIVE).AddSystem(&m_MeshSystem);
+	m_MeshSystem[SHADOW_PASS].m_CommandBucket = &shadow_bucket;
+	m_MeshSystem[SHADOW_PASS].m_ShaderID = m_ShadowMappingShader;
+	m_MeshSystem[SHADOW_PASS].m_MaterialID = -1;
+
+	m_MeshSystem[MAIN_PASS].m_CommandBucket = &bucket;
+	rm.GetRenderWorld().GetSystsemList(SystemList::ACTIVE).AddSystem(&m_MeshSystem[SHADOW_PASS]);
+	rm.GetRenderWorld().GetSystsemList(SystemList::ACTIVE).AddSystem(&m_MeshSystem[MAIN_PASS]);
 }
 
 void ForwardRenderer::SetupLightsBuffer()
@@ -104,13 +109,13 @@ void ForwardRenderer::SetupLightsBuffer()
 void ForwardRenderer::Draw(IPrimitiveMesh& mesh)
 {
 	// Main Pass:
-	mesh.Submit(m_CommandQueue.GetCommandBucker(MAIN_PASS));
-	mesh.Submit(m_CommandQueue.GetCommandBucker(SHADOW_PASS), m_ShadowMappingShader, -1);
+	mesh.Submit(m_CommandQueue.GetCommandBucket(MAIN_PASS));
+	mesh.Submit(m_CommandQueue.GetCommandBucket(SHADOW_PASS), m_ShadowMappingShader, -1);
 }
 
 void ForwardRenderer::Render()
 {
-	m_CommandQueue.GetCommandBucker(MAIN_PASS).Finalize();
+	m_CommandQueue.GetCommandBucket(MAIN_PASS).Finalize();
 	m_CommandQueue.DispatchCommands();
 }
 

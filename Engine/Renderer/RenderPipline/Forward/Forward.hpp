@@ -4,7 +4,7 @@
 #include <Renderer/Backend/CommandBuffer/CommandBuffer.hpp>
 #include <Renderer/RenderPipline/Renderer/IRenderer.hpp>
 #include <Renderer/Mesh/IPrimitiveMesh/IPrimitiveMesh.hpp>
-#include <Renderer/Systems/MeshSystems/MeshSystem.hpp>
+#include <Renderer/Systems/RenderSystems/MeshRenderSystem.hpp>
 #include <Renderer/Systems/LightSystems/LightSystem.hpp>
 
 TRE_NS_START
@@ -42,7 +42,7 @@ private:
 	ShaderID m_ShadowMappingShader;
 	MaterialID m_ShadowMaterial;
 
-	MeshSystem m_MeshSystem;
+	MeshRenderSystem m_MeshSystem[2];
 	LightSystem m_LightSystem;
 	VboID m_LightBuffer;
 

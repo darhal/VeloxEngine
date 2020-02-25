@@ -99,7 +99,6 @@ void CommandBucket::Flush() const
 		m_OnBucketFlushCallback(manager, m_RenderTarget, m_ExtraBuffer);
 
 	const Mat4f projView = m_Projection * m_Camera.GetViewMatrix();
-	const vec3& camera_position = m_Camera.Position;
 
 	for (const auto& key_packet_pair : m_Packets) {
 		// Decode the key,  and apply render states and shader

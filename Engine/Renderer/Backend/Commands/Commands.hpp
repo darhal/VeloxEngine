@@ -180,17 +180,6 @@ namespace Commands
 	};
 
 	/*************************************** MISC COMMANDS ***************************************/
-
-	struct EditSubBufferCmd
-	{
-		VBO* vbo;
-		const void* data;
-		GLintptr offset;
-		uint32 size;
-
-		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::EditSubBuffer;
-	};
-
 	struct DispatchComputeCmd : public LinkCmd
 	{
 		uint32 workGroupX, workGroupY, workGroupZ;
@@ -243,6 +232,33 @@ namespace Commands
 		void* data;
 
 		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::CallFunctionCmd;
+	};
+
+	struct BindVBO
+	{
+		VBO* vbo;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::BindVBO;
+	};
+
+	struct EditSubBoundBufferCmd
+	{
+		VBO* vbo;
+		const void* data;
+		GLintptr offset;
+		uint32 size;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::EditSubBoundBuffer;
+	};
+
+	struct EditSubBufferCmd
+	{
+		VBO* vbo;
+		const void* data;
+		GLintptr offset;
+		uint32 size;
+
+		CONSTEXPR static BackendDispatchFunction DISPATCH_FUNCTION = &BackendDispatch::EditSubBuffer;
 	};
 };
 

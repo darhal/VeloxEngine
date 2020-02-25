@@ -52,7 +52,7 @@ BaseComponent* ArchetypeChunk::GetComponent(EntityID internal_id, uint8* buffer,
 	return (BaseComponent*)(buffer + BaseComponent::GetTypeSize(component_id) * internal_id);
 }
 
-Entity* ArchetypeChunk::GetEntity(uint32 index)
+Entity* ArchetypeChunk::GetEntity(uint32 index) const
 {
 	if (index >= m_EntitiesCount)
 		return NULL;
@@ -193,7 +193,7 @@ uint32 ArchetypeChunk::DestroyEntityComponents(Entity& entity)
 	return DestroyEntityComponents(entity.m_InternalId);
 }
 
-EntityID& ArchetypeChunk::GetEntityID(uint32 internal_id) 
+EntityID& ArchetypeChunk::GetEntityID(uint32 internal_id)  const
 { 
 	return ((EntityID*)m_ComponentBuffer)[internal_id];
 }

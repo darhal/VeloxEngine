@@ -12,6 +12,7 @@
 #include <Renderer/MeshLoader/ModelData/ModelMaterialData.hpp>
 
 #include <Renderer/Components/MeshComponents/StaticMeshComponent.hpp>
+#include <Renderer/Components/MeshComponents/MeshInstanceComponent.hpp>
 
 TRE_NS_START
 
@@ -42,7 +43,9 @@ public:
 
 	StaticMeshComponent LoadMeshComponent(ShaderID shader_id = 0);
 
-	MeshInstance LoadInstancedMesh(uint32 instance_count, ShaderID shader_id = 0);
+	MeshInstance LoadInstancedMesh(uint32 instance_count, ShaderID shader_id = 0, Mat4f* transforms = NULL);
+
+	EntityID LoadInstancedMeshComponent(uint32 instance_count, ShaderID shader_id = 0, Mat4f* transforms = NULL);
 
 	Vector<SubMesh> LoadSubmeshs(ShaderID shader_id);
 

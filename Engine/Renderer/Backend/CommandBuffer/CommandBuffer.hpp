@@ -15,7 +15,7 @@ public:
 
 	CommandBucket& CreateBucket();
 
-	CommandBucket& GetCommandBucker(uint32 i);
+	CommandBucket& GetCommandBucket(uint32 i);
 
 	uint32 GetBucketsCount() const;
 private:

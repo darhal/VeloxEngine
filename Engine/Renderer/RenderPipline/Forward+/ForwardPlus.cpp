@@ -126,7 +126,7 @@ void ForwardPlusRenderer::CullLights()
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
     // Get our main and only packet
-	CommandPacket& packet = m_CommandQueue.GetCommandBucker(LIGHT_CULLING_PASS).GetOrCreateCommandPacket(0);
+	CommandPacket& packet = m_CommandQueue.GetCommandBucket(LIGHT_CULLING_PASS).GetOrCreateCommandPacket(0);
 
 	// Set Uniforms (projection, set view, set depthMap), bind bufferbase for light buffers, then finally dispatch compute
 	// Submit commands in this orderer.
@@ -157,12 +157,12 @@ void ForwardPlusRenderer::CullLights()
 void ForwardPlusRenderer::Draw(IPrimitiveMesh& mesh)
 {
 	// Depth Pass:
-	mesh.Submit(m_CommandQueue.GetCommandBucker(DPETH_PASS), m_DepthShader);
+	mesh.Submit(m_CommandQueue.GetCommandBucket(DPETH_PASS), m_DepthShader);
 
 	// Compute shader phase here (It's automatic)
 
 	// Light Accumlation Pass:
-	mesh.Submit(m_CommandQueue.GetCommandBucker(LIGHT_ACCUM), m_LightAccum);
+	mesh.Submit(m_CommandQueue.GetCommandBucket(LIGHT_ACCUM), m_LightAccum);
 }
 
 void ForwardPlusRenderer::Render()

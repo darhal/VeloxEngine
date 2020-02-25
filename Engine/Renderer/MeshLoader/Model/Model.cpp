@@ -137,7 +137,7 @@ StaticMeshComponent Model::LoadMeshComponent(ShaderID shader_id)
 	StaticMeshComponent mesh(m_VaoID);
 	int32 lastVertexCount = 0;
 	ResourcesManager& manager = ResourcesManager::Instance();
-	mesh.submeshs = std::move(this->LoadSubmeshs(shader_id));
+	mesh.Submeshs = std::move(this->LoadSubmeshs(shader_id));
 	return mesh;
 }
 
@@ -150,25 +150,52 @@ StaticMesh Model::LoadMesh(ShaderID shader_id)
 	return mesh;
 }
 
-MeshInstance Model::LoadInstancedMesh(uint32 instance_count, ShaderID shader_id)
+MeshInstance Model::LoadInstancedMesh(uint32 instance_count, ShaderID shader_id, Mat4f* transforms)
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
 	VboID vboID = manager.AllocateResource<VBO>();
 
 	uint32 vbo_index = m_CreateVaoCmd->settings.vertices_data.Size();
 	uint32 layout_id = m_CreateVaoCmd->settings.attributes.Size();
-	Mat4f* transforms = new Mat4f[instance_count];
-	m_CreateVaoCmd->settings.vertices_data.EmplaceBack(transforms, instance_count, &manager.Get<VBO>(vboID));
+
+	if (!transforms)
+		transforms = new Mat4f[instance_count];
+
 	// Size: 4 floats (for the layout) | Stide : 16 -> 16 floats (Mat4f) | Offset: 4 means (4 floats) | Divisor: 1 per instance
+	m_CreateVaoCmd->settings.vertices_data.EmplaceBack(transforms, instance_count, &manager.Get<VBO>(vboID));
 	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id    , 4, 16,     0, DataType::FLOAT, 1);
 	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 1, 4, 16,     4, DataType::FLOAT, 1);
 	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 2, 4, 16, 2 * 4, DataType::FLOAT, 1);
 	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 3, 4, 16, 3 * 4, DataType::FLOAT, 1);
 
 	MeshInstance mesh(instance_count, m_VaoID, vboID, transforms);
-	int32 lastVertexCount = 0;
 	mesh.GetSubMeshes() = std::move(this->LoadSubmeshs(shader_id));
 	return mesh;
+}
+
+EntityID Model::LoadInstancedMeshComponent(uint32 instance_count, ShaderID shader_id, Mat4f* transforms)
+{
+	ResourcesManager& manager = ResourcesManager::Instance();
+	VboID vboID = manager.AllocateResource<VBO>();
+
+	uint32 vbo_index = m_CreateVaoCmd->settings.vertices_data.Size();
+	uint32 layout_id = m_CreateVaoCmd->settings.attributes.Size();
+
+	if (!transforms)
+		transforms = new Mat4f[instance_count];
+
+	// Size: 4 floats (for the layout) | Stide : 16 -> 16 floats (Mat4f) | Offset: 4 means (4 floats) | Divisor: 1 per instance
+	m_CreateVaoCmd->settings.vertices_data.EmplaceBack(transforms, instance_count, &manager.Get<VBO>(vboID));
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id, 4, 16, 0, DataType::FLOAT, 1);
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 1, 4, 16, 4, DataType::FLOAT, 1);
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 2, 4, 16, 2 * 4, DataType::FLOAT, 1);
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 3, 4, 16, 3 * 4, DataType::FLOAT, 1);
+
+	InstancedMeshComponent mesh(instance_count, m_VaoID, vboID);
+	mesh.Submeshs = std::move(this->LoadSubmeshs(shader_id));
+	EntityID id = manager.GetRenderWorld().GetEntityManager().CreateEntityWithComponents<InstancedMeshComponent>(mesh).GetEntityID();
+
+	return id;
 }
 
 Vector<SubMesh> Model::LoadSubmeshs(ShaderID shader_id)
