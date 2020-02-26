@@ -29,7 +29,6 @@ public:
 	SystemList m_SystemList[SystemList::NUM_LIST];
 
 private:
-	
 	uint32 m_WorldId;
 
 	friend class ECS;

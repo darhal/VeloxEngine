@@ -162,6 +162,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Core\ECS\CommandFunctions\CommandFunctions.cpp" />
+    <ClCompile Include="Core\ECS\CommandRecord\CommandRecord.cpp" />
     <ClCompile Include="Core\ECS\ComponentGroup\ComponentGroup.cpp" />
     <ClCompile Include="Core\ECS\EntityContainer\EntityContainer.cpp" />
     <ClCompile Include="Core\ECS\System\BaseSystem.cpp" />
@@ -308,6 +310,9 @@
     <ClCompile Include="Tests\TestingString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Core\ECS\CommandFunctions\CommandFunctions.hpp" />
+    <ClInclude Include="Core\ECS\CommandRecord\CommandRecord.hpp" />
+    <ClInclude Include="Core\ECS\Commands\Commands.hpp" />
     <ClInclude Include="Core\ECS\ComponentGroup\ComponentGroup.hpp" />
     <ClInclude Include="Core\DataStructure\PackedArray\PackedArray.hpp" />
     <ClInclude Include="Core\ECS\EntityContainer\EntityContainer.hpp" />

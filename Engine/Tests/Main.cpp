@@ -53,6 +53,8 @@
 #include <Renderer/ShaderParser/ShaderParser.hpp>
 #include <Core/Profiler/Profiler.hpp>
 #include <Renderer/Components/Misc/SceneTagComponent.hpp>
+#include <Renderer/Components/Misc/UpdateTagComponent.hpp>
+#include <Renderer/Systems/InstancedTransformSystem/InstancedTransformSystem.hpp>
 
 using namespace TRE;
 
@@ -127,6 +129,9 @@ int main()
 	ShaderParser generic_vs("Forward/generic.vs");
 	ShaderParser generic_fs("Forward/generic.fs");
 
+	ShaderParser instanced_vs("Forward/Instanced/instanced.vs");
+	ShaderParser instanced_fs("Forward/Instanced/instanced.fs");
+
 	ShaderID shader_id2 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
 		Shader(generic_vs.GetCode(), ShaderType::VERTEX), 
 		Shader(generic_fs.GetCode(), ShaderType::FRAGMENT)
@@ -139,8 +144,12 @@ int main()
 		Shader(generic_vs.Define({ "TEXTURED", "SHADOWS" }), ShaderType::VERTEX), 
 		Shader(generic_fs.Define({ "TEXTURED", "SHADOWS" }), ShaderType::FRAGMENT)
 	);
+	ShaderID shader_id5 = ResourcesManager::Instance().AllocateResource<ShaderProgram>(
+		Shader(instanced_vs.Define({ "SHADOWS" }), ShaderType::VERTEX),
+		Shader(instanced_fs.Define({ "SHADOWS" }), ShaderType::FRAGMENT)
+	);
 	{
-		for (uint32 i = shader_id2; i <= shader_id4; i++) {
+		for (uint32 i = shader_id2; i <= shader_id5; i++) {
 			ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(i);
 			shader.LinkProgram();
 			shader.Use();
@@ -172,6 +181,8 @@ int main()
 	renderer.Initialize(SCR_WIDTH, SCR_HEIGHT);
 	CommandBucket& bucket = renderer.GetCommandQueue().GetCommandBucket(ForwardRenderer::MAIN_PASS);
 	EntityManager& ent_manager = ResourcesManager::Instance().GetRenderWorld().GetEntityManager();
+	InstancedTransformSystem inst_system;
+	ResourcesManager::Instance().GetRenderWorld().GetSystsemList(SystemList::ACTIVE).AddSystem(&inst_system);
 
 	ModelData data;
 	data.vertices = vertices;
@@ -192,10 +203,16 @@ int main()
 	
 	MeshLoader loader("res/obj/lowpoly/carrot_box.obj");
 	Model carrot_model = loader.LoadAsOneObject();
-	StaticMeshComponent carrot_mesh = carrot_model.LoadMeshComponent(shader_id2);
-	// carrot_mesh.GetTransformationMatrix().translate(vec3(-1.f, 3.f, 2.f));
-	TransformComponent carrot_trans; carrot_trans.transform_matrix.translate(vec3(-1.f, 3.f, 2.f));
-	Entity& carrot = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent, SceneTag>(carrot_mesh, carrot_trans, SceneTag());
+	/*EntityID carrot_mesh_inst_id = carrot_model.LoadInstancedMeshComponent(1'000, shader_id5);
+	for (uint32 i = 0; i < 1'000; i++) {
+		Mat4f transform;
+		transform.translate(vec3(i, 0, 0));
+		ent_manager.CreateEntityWithComponents<MeshInstanceComponent, TransformComponent, SceneTag, UpdateTag>
+			({ carrot_mesh_inst_id, i}, { transform }, {}, {});
+	}*/
+	//StaticMeshComponent carrot_mesh = carrot_model.LoadMeshComponent(shader_id2);
+	//TransformComponent carrot_trans; carrot_trans.transform_matrix.translate(vec3(-1.f, 3.f, 2.f));
+	//Entity& carrot = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent, SceneTag>(carrot_mesh, carrot_trans, SceneTag());
 
 	MeshLoader loader2("res/obj/lowpoly/deagle.obj");
 	RenderState& state  = loader2.GetMaterialLoader().GetMaterialFromName("Fire.001")->GetRenderStates();
@@ -258,6 +275,8 @@ int main()
 
 		renderer.Draw(plane_mesh);
 		renderer.Draw(gun_mesh);*/
+		// renderer.Draw(instance);
+
 		ResourcesManager::Instance().GetRenderWorld().UpdateSystems(0.f);
 		renderer.Render();
 

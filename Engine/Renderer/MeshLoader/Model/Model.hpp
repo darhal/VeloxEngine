@@ -21,11 +21,12 @@ class Model
 public:
 	enum VertexAttributes
 	{
-		POSITION, 
-		NORMAL, 
-		TEXTURE_COORDINATES,
-		TANGENT,
-		BITANGET,
+		POSITION = 0, 
+		NORMAL = 1, 
+		TEXTURE_COORDINATES = 2,
+		TANGENT = 3,
+		BITANGET = 4,
+		TRANSFORM = 5
 	};
 
 	enum Processing

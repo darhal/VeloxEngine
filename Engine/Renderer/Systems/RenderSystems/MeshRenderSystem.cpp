@@ -26,7 +26,9 @@ void MeshRenderSystem::OnUpdate(float dt)
 	for (const Archetype* arch : m_ComponentGroup.GetArchetypes()) {
 		const Archetype& archetype = *arch;
 
-		if (archetype.HasComponentType<StaticMeshComponent>() && archetype.HasComponentType<TransformComponent>()) {
+		if (archetype.IsEmpty()) {
+			continue;
+		}else if (archetype.HasComponentType<StaticMeshComponent>() && archetype.HasComponentType<TransformComponent>()) {
 			for (const ArchetypeChunk& chunk : archetype) {
 				for (uint32 i = 0; i < chunk.GetEntitiesCount(); i++) {
 					const TransformComponent& transform = chunk.GetComponentByInternalID<TransformComponent>(i);
@@ -39,7 +41,6 @@ void MeshRenderSystem::OnUpdate(float dt)
 			for (const ArchetypeChunk& chunk : archetype) {
 				for (uint32 i = 0; i < chunk.GetEntitiesCount(); i++) {
 					const InstancedMeshComponent& instanced_mesh = chunk.GetComponentByInternalID<InstancedMeshComponent>(i);
-
 					this->SubmitInstanced(instanced_mesh);
 				}
 			}

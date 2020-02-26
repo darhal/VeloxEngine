@@ -16,9 +16,8 @@ public:
 
 	void OnUpdate(float dt) final;
 private:
-	void UpdateInstanceTransform(
-		ResourcesManager& manager, ContextOperationQueue& op_queue, const InstancedMeshComponent& instance,
-		const MeshInstanceComponent& mesh, const Mat4f& transform);
+	void UpdateInstanceTransform(ResourcesManager& manager, ContextOperationQueue& op_queue, 
+		VBO* vbo, uint32 instance_id, const Mat4f& transform);
 };
 
 TRE_NS_END

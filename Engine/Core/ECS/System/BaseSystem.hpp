@@ -7,6 +7,7 @@
 #include <Core/DataStructure/Tuple/Pair.hpp>
 #include <Core/DataStructure/Bitset/Bitset.hpp>
 #include <Core/ECS/ComponentGroup/ComponentGroup.hpp>
+#include <Core/ECS/CommandRecord/CommandRecord.hpp>
 
 TRE_NS_START
 
@@ -21,10 +22,14 @@ public:
 	const ComponentGroup& GetComponentGroup() const { return m_ComponentGroup; }
 
 	virtual ~BaseSystem() = default;
+
 protected:
 	BaseSystem() {};
 
+	void FlushCommandsRecord() { m_CommandRecord.Flush(); }
+
 	ComponentGroup m_ComponentGroup;
+	CommandRecord m_CommandRecord;
 	SystemList* m_SystemList;
 private:
 	void AddToList(SystemList* list);
@@ -36,6 +41,7 @@ private:
 	friend class ECS;
 	friend class SystemList;
 	friend class EntityManager;
+	friend class World;
 };
 
 

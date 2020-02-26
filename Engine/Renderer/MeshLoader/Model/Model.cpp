@@ -155,8 +155,8 @@ MeshInstance Model::LoadInstancedMesh(uint32 instance_count, ShaderID shader_id,
 	ResourcesManager& manager = ResourcesManager::Instance();
 	VboID vboID = manager.AllocateResource<VBO>();
 
-	uint32 vbo_index = m_CreateVaoCmd->settings.vertices_data.Size();
-	uint32 layout_id = m_CreateVaoCmd->settings.attributes.Size();
+	uint32 vbo_index = (uint32) m_CreateVaoCmd->settings.vertices_data.Size();
+	uint32 layout_id = (uint32) m_CreateVaoCmd->settings.attributes.Size();
 
 	if (!transforms)
 		transforms = new Mat4f[instance_count];
@@ -194,7 +194,6 @@ EntityID Model::LoadInstancedMeshComponent(uint32 instance_count, ShaderID shade
 	InstancedMeshComponent mesh(instance_count, m_VaoID, vboID);
 	mesh.Submeshs = std::move(this->LoadSubmeshs(shader_id));
 	EntityID id = manager.GetRenderWorld().GetEntityManager().CreateEntityWithComponents<InstancedMeshComponent>(mesh).GetEntityID();
-
 	return id;
 }
 

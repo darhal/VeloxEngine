@@ -27,6 +27,10 @@ struct InstancedMeshComponent : public Component<InstancedMeshComponent>
 
 struct MeshInstanceComponent : public Component<MeshInstanceComponent>
 {
+	MeshInstanceComponent(EntityID ent_id, uint32 inst_id) :
+		InstanceModel(ent_id), InstanceID(inst_id)
+	{}
+
 	EntityID InstanceModel;
 	uint32 InstanceID;
 };
