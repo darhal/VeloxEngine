@@ -214,6 +214,12 @@ int main()
 	//TransformComponent carrot_trans; carrot_trans.transform_matrix.translate(vec3(-1.f, 3.f, 2.f));
 	//Entity& carrot = ent_manager.CreateEntityWithComponents<StaticMeshComponent, TransformComponent, SceneTag>(carrot_mesh, carrot_trans, SceneTag());
 
+	MeshInstance instance = carrot_model.LoadInstancedMesh(250, shader_id5);
+	for (uint32 i = 0; i < 250; i++) {
+		instance.GetTransformationMatrix(i).translate(vec3(i, 0, 0));
+		instance.UpdateTransforms(i);
+	}
+
 	MeshLoader loader2("res/obj/lowpoly/deagle.obj");
 	RenderState& state  = loader2.GetMaterialLoader().GetMaterialFromName("Fire.001")->GetRenderStates();
 	state.blend_enabled = true;
@@ -275,8 +281,8 @@ int main()
 
 		renderer.Draw(plane_mesh);
 		renderer.Draw(gun_mesh);*/
-		// renderer.Draw(instance);
 
+		renderer.Draw(instance);
 		ResourcesManager::Instance().GetRenderWorld().UpdateSystems(0.f);
 		renderer.Render();
 

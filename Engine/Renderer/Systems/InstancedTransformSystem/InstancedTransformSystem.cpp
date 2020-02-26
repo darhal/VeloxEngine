@@ -40,19 +40,21 @@ void InstancedTransformSystem::OnUpdate(float dt)
 					const TransformComponent& transform = chunk.GetComponentByInternalID<TransformComponent>(i);
 					Entity& instance_ent = ent_manager.GetEntityByID(static_mesh.InstanceModel);
 					const InstancedMeshComponent* instance = instance_ent.GetComponent<InstancedMeshComponent>();
-					VboID vbo_id = instance->DataVboID;
-
-					if (last_vbo_id != vbo_id || !cmd) {
-						cmd = op_queue.SubmitCommand<Commands::BindVBO>();
-						cmd->vbo = &manager.Get<VBO>(vbo_id);
-						last_vbo_id = vbo_id;
-					}
-
+					
 					if (instance) {
+						VboID vbo_id = instance->DataVboID;
+
+						if (last_vbo_id != vbo_id || !cmd) {
+							cmd = op_queue.SubmitCommand<Commands::BindVBO>();
+							cmd->vbo = &manager.Get<VBO>(vbo_id);
+							last_vbo_id = vbo_id;
+						}
+
 						this->UpdateInstanceTransform(manager, op_queue, cmd->vbo, static_mesh.InstanceID, transform.transform_matrix);
 					}
 					
 					// Submit command on the system command buffer to remove the UpdateTag
+					// TODO: Potential bug here this will be moved out of the archetype and its gonna change adress when the command will be executed
 					auto* rm_comp_cmd = m_CommandRecord.SubmitCommand<ECSCommands::RemoveComponentCmd>();
 					rm_comp_cmd->word = world;
 					rm_comp_cmd->entity_id = ent_id;

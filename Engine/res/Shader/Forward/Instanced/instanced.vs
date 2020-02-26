@@ -2,10 +2,10 @@
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormals;
-//#ifdef TEXTURED 
+#ifdef TEXTURED 
 	layout (location = 2) in vec2 aTexCoord;
-//#endif
-layout (location = 3) in mat4 aModel;
+#endif
+layout (location = 5) in mat4 aModel;
 
 uniform mat4 u_ProjView;
 uniform vec3 u_ViewPosition;

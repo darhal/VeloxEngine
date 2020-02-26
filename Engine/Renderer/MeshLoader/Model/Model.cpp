@@ -68,7 +68,7 @@ Commands::CreateVAOCmd* Model::LoadFromSettings(const ModelData& data)
 	VboID vboID = manager.AllocateResource<VBO>();
 	// m_VboIDs.EmplaceBack(vboID);
 	createVaoCmd->settings.vertices_data.EmplaceBack(data.vertices, data.vertexSize, &manager.Get<VBO>(vboID));
-	createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, layout, 3, 0, 0);
+	createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, VertexAttributes::POSITION, 3, 0, 0);
 
 	if (data.normalSize != 0 && data.normals != NULL) { // Fill normals if availble
 		vboID = manager.AllocateResource<VBO>();
@@ -76,7 +76,7 @@ Commands::CreateVAOCmd* Model::LoadFromSettings(const ModelData& data)
 
 		// Fill normals:
 		createVaoCmd->settings.vertices_data.EmplaceBack(data.normals, data.normalSize, &manager.Get<VBO>(vboID));
-		createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, ++layout, 3, 0, 0);
+		createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, VertexAttributes::NORMAL, 3, 0, 0);
 	}
 
 	if (data.textureSize != 0 && data.textures != NULL) { // Fill Texture if availble
@@ -85,7 +85,7 @@ Commands::CreateVAOCmd* Model::LoadFromSettings(const ModelData& data)
 
 		// Fill textures:
 		createVaoCmd->settings.vertices_data.EmplaceBack(data.textures, data.textureSize, &manager.Get<VBO>(vboID));
-		createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, ++layout, 2, 0, 0);
+		createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, VertexAttributes::TEXTURE_COORDINATES, 2, 0, 0);
 	}
 
 	return createVaoCmd;
@@ -108,7 +108,7 @@ Commands::CreateVAOCmd* Model::LoadFromVertexData(uint32 processing, Vector<Vert
 
 	uint32 attrib_data_sizes[] = { 3, 3, 2 };
 	uint32 offset = 0;
-	uint8 attrib_index = 0;
+	uint8 attrib_index = VertexAttributes::POSITION;
 
 	for (const uint32 size : attrib_data_sizes) {
 		createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, attrib_index, size, 8, offset);
@@ -121,11 +121,11 @@ Commands::CreateVAOCmd* Model::LoadFromVertexData(uint32 processing, Vector<Vert
 		createVaoCmd->settings.vertices_data.EmplaceBack(tangents, vbo);
 
 		if (processing & CALC_TANGET) {
-			createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, attrib_index++, 3, 6, 0);
+			createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, VertexAttributes::TANGENT, 3, 6, 0);
 		}
 
 		if (processing & CALC_BITANGET) {;
-			createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, attrib_index++, 3, 6, 3);
+			createVaoCmd->settings.attributes.EmplaceBack(createVaoCmd->settings.vertices_data.Size() - 1, VertexAttributes::BITANGET, 3, 6, 3);
 		}
 	}
 
@@ -156,15 +156,15 @@ MeshInstance Model::LoadInstancedMesh(uint32 instance_count, ShaderID shader_id,
 	VboID vboID = manager.AllocateResource<VBO>();
 
 	uint32 vbo_index = (uint32) m_CreateVaoCmd->settings.vertices_data.Size();
-	uint32 layout_id = (uint32) m_CreateVaoCmd->settings.attributes.Size();
+	uint32 layout_id = VertexAttributes::TRANSFORM; // (uint32) m_CreateVaoCmd->settings.attributes.Size();
 
 	if (!transforms)
 		transforms = new Mat4f[instance_count];
 
 	// Size: 4 floats (for the layout) | Stide : 16 -> 16 floats (Mat4f) | Offset: 4 means (4 floats) | Divisor: 1 per instance
 	m_CreateVaoCmd->settings.vertices_data.EmplaceBack(transforms, instance_count, &manager.Get<VBO>(vboID));
-	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id    , 4, 16,     0, DataType::FLOAT, 1);
-	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 1, 4, 16,     4, DataType::FLOAT, 1);
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 0, 4, 16, 0 * 0, DataType::FLOAT, 1);
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 1, 4, 16, 1 * 4, DataType::FLOAT, 1);
 	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 2, 4, 16, 2 * 4, DataType::FLOAT, 1);
 	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 3, 4, 16, 3 * 4, DataType::FLOAT, 1);
 
@@ -179,15 +179,15 @@ EntityID Model::LoadInstancedMeshComponent(uint32 instance_count, ShaderID shade
 	VboID vboID = manager.AllocateResource<VBO>();
 
 	uint32 vbo_index = m_CreateVaoCmd->settings.vertices_data.Size();
-	uint32 layout_id = m_CreateVaoCmd->settings.attributes.Size();
+	uint32 layout_id = VertexAttributes::TRANSFORM;// m_CreateVaoCmd->settings.attributes.Size();
 
 	if (!transforms)
 		transforms = new Mat4f[instance_count];
 
 	// Size: 4 floats (for the layout) | Stide : 16 -> 16 floats (Mat4f) | Offset: 4 means (4 floats) | Divisor: 1 per instance
 	m_CreateVaoCmd->settings.vertices_data.EmplaceBack(transforms, instance_count, &manager.Get<VBO>(vboID));
-	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id, 4, 16, 0, DataType::FLOAT, 1);
-	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 1, 4, 16, 4, DataType::FLOAT, 1);
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 0, 4, 16, 0 * 0, DataType::FLOAT, 1);
+	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 1, 4, 16, 1 * 4, DataType::FLOAT, 1);
 	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 2, 4, 16, 2 * 4, DataType::FLOAT, 1);
 	m_CreateVaoCmd->settings.attributes.EmplaceBack(vbo_index, layout_id + 3, 4, 16, 3 * 4, DataType::FLOAT, 1);
 
