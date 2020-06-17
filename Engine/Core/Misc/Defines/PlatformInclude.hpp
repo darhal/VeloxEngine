@@ -2,6 +2,9 @@
 #include "Platform.hpp"
 
 #if defined(OS_WINDOWS)
+	#if not defined(WIN32_LEAN_AND_MEAN)
+		#define WIN32_LEAN_AND_MEAN
+	#endif
 	#include <Windows.h>
 	#include <WindowsX.h>
 	#include <GL/GL.h>
