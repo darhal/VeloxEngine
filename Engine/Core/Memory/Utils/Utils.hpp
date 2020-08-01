@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/Misc/Defines/Types.hpp>
+#include <Engine/Core/Misc/Defines/Common.hpp>
+#include <Engine/Core/Misc/Defines/Types.hpp>
 #include <utility>
 #include <cstring>
 

@@ -16,7 +16,7 @@
 	#define ASSERTF(condition, ...) ;
 	#define ASSERT(condition) ;
 #else
-	#include <Core/Misc/Utils/Logging.hpp>
+	#include <Engine/Core/Misc/Utils/Logging.hpp>
 
     #define DEBUG
 
