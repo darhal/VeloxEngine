@@ -1,15 +1,21 @@
 #include "Renderer.hpp"
 #include <Renderer/Core/Instance/Instance.hpp>
 #include <Renderer/Core/Common/Globals.hpp>
+#include <Renderer/Core/Context/Context.hpp>
+#include <Renderer/Core/PhysicalDevice/PhysicalDevice.hpp>
 
-Renderer::RenderContext* Renderer::Init()
+TRE_NS_START
+
+int32 Renderer::Init(Renderer::RenderContext& p_ctx)
 {
-    RenderContext* ctx = new RenderContext{0};
+    p_ctx.instance = new RenderInstance();
 
-    if (CreateRenderContext(ctx) != 0) {
-        delete ctx;
-        return NULL;
+    if (CreateRenderInstance(p_ctx.instance) != 0) {
+        return -1;
     }
 
-    return ctx;
+    Renderer::InitContext(p_ctx);
+    return 0;
 }
+
+TRE_NS_END

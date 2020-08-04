@@ -1,6 +1,8 @@
 #pragma once
 
-#include <Engine/Core/Misc/Defines/Common.hpp>
+#include <Renderer/Common.hpp>
+
+TRE_NS_START
 
 namespace MouseButton
 {
@@ -53,8 +55,8 @@ struct WindowEvent
 	union { int Y; uint32 Height; };
 };
 
-struct Event{
-	enum event_t{
+struct Event {
+	enum event_t {
 		TE_UNKNOWN,
 		TE_CLOSE,
 		TE_RESIZE,
@@ -71,9 +73,11 @@ struct Event{
 
 	event_t Type;
 
-	union{
+	union {
 		MouseEvent Mouse;
 		KeyEvent Key;
 		WindowEvent Window;
 	};
 };
+
+TRE_NS_END

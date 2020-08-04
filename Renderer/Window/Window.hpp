@@ -2,9 +2,9 @@
 
 #include <string>
 #include <queue>
-#include <Engine/Core/Misc/Defines/PlatformInclude.hpp>
-#include <Engine/Core/Misc/Defines/Common.hpp>
-#include <Engine/Core/Event/Event.hpp>
+
+#include <Renderer/Common.hpp>
+#include <Renderer/Window/Event.hpp>
 #include <Engine/Core/Misc/Maths/Vec.hpp>
 #include <Engine/Core/Misc/Maths/Vec2.hpp>
 
@@ -26,8 +26,6 @@ namespace WindowStyle
 }
 
 TRE_NS_START
-
-class Context;
 
 class Window
 {
@@ -52,10 +50,9 @@ public:
 	bool isMouseButtonDown(MouseButton::mouse_button_t button) const;
 	bool isKeyDown(Key::key_t key) const;
 
-	Context& getContext();
-	Context& initContext(uint8 vmajor, uint8 vminor, uint8 color = 32, uint8 depth = 24, uint8 stencil = 8, uint8 antialias = 1);
-
 	void Present();
+
+	void* GetNativeHandle();
 public:
 	Vec2<uint32> windowSize;
 	Vec2<int32> windowPosition;
@@ -65,7 +62,6 @@ public:
 	std::queue<Event> events;
 	bool mouse[3];
 	bool keys[100];
-	Context* context;
 
 #if defined( OS_WINDOWS )
 	HWND window;

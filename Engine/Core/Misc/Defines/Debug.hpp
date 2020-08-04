@@ -49,13 +49,13 @@
 		if ((bool)(condition)){ \
 			char assert_msg[215]; \
 			snprintf(assert_msg, 215, ##__VA_ARGS__); \
-			LOG::Write(LOG::ASSERT, "[%s::%d::%s] %s.", __FILENAME__, __LINE__, __FUNCTION__, assert_msg); \
+			TRE::Log::Write(TRE::Log::ASSERT, "[%s::%d::%s] %s.", __FILENAME__, __LINE__, __FUNCTION__, assert_msg); \
 			DEBUG_BREAK(); \
 		}\
 
 	#define ASSERT(condition) \
 		if ((bool)(condition)){ \
-			LOG::Write(LOG::ASSERT, "[%s::%d::%s] Assert occured.", __FILENAME__, __LINE__, __FUNCTION__); \
+			TRE::Log::Write(TRE::Log::ASSERT, "[%s::%d::%s] Assert occured (Condition: %s).", __FILENAME__, __LINE__, __FUNCTION__, #condition); \
 			DEBUG_BREAK(); \
 		} \
 

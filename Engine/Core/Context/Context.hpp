@@ -1,11 +1,10 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/Misc/Defines/PlatformInclude.hpp>
+#include <Engine/Core/Misc/Defines/Common.hpp>
+#include <Engine/Core/Misc/Defines/PlatformInclude.hpp>
 
 namespace TRE
 {
-class Window;
 class Context
 {
 public:

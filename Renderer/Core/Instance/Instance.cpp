@@ -1,14 +1,18 @@
 #include "Instance.hpp"
 
-int32 Renderer::CreateRenderContext(Renderer::RenderContext* p_ctx)
+TRE_NS_START
+
+int32 Renderer::CreateRenderInstance(Renderer::RenderInstance* p_ctx)
 {
+    ASSERT(p_ctx == NULL);
+
     int32 err_code; 
     err_code = CreateInstance(&p_ctx->instance);
     err_code |= SetupDebugMessenger(p_ctx->instance, &p_ctx->debugMessenger);
     return err_code;
 }
 
-void Renderer::DestroyRenderContext(const Renderer::RenderContext& p_ctx)
+void Renderer::DestroyRenderInstance(const Renderer::RenderInstance& p_ctx)
 {
     DestroyDebugUtilsMessengerEXT(p_ctx.instance, p_ctx.debugMessenger, NULL);
     DestroyInstance(p_ctx.instance);
@@ -16,15 +20,13 @@ void Renderer::DestroyRenderContext(const Renderer::RenderContext& p_ctx)
 
 int32 Renderer::CreateInstance(VkInstance* p_instance)
 {
-    if (p_instance == NULL) {
-        return -1;
-    }
+    ASSERT(p_instance == NULL);
 
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "TRE Renderer";
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "TRE";
+    appInfo.pEngineName = "Trikyta Engine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_VERSION_1_2;
 
@@ -33,11 +35,11 @@ int32 Renderer::CreateInstance(VkInstance* p_instance)
     createInfo.pApplicationInfo = &appInfo;
 
     // Extensions:
-    createInfo.enabledExtensionCount = VK_REQ_EXTENSIONS.size();
-    createInfo.ppEnabledExtensionNames = VK_REQ_EXTENSIONS.begin();
+    createInfo.enabledExtensionCount = (uint32)VK_REQ_EXT.size();
+    createInfo.ppEnabledExtensionNames = VK_REQ_EXT.begin();
 
     // Layers:
-    createInfo.enabledLayerCount = VK_REQ_LAYERS.size();
+    createInfo.enabledLayerCount = (uint32)VK_REQ_LAYERS.size();
     createInfo.ppEnabledLayerNames = VK_REQ_LAYERS.begin();
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
@@ -57,9 +59,7 @@ int32 Renderer::CreateInstance(VkInstance* p_instance)
 
 void Renderer::DestroyInstance(VkInstance p_instance)
 {
-    if (p_instance == NULL) {
-        return;
-    }
+    ASSERT(p_instance == VK_NULL_HANDLE);
 
     vkDestroyInstance(p_instance, NULL);
 }
@@ -69,8 +69,7 @@ void Renderer::DestroyInstance(VkInstance p_instance)
 int32 Renderer::SetupDebugMessenger(VkInstance p_instance, VkDebugUtilsMessengerEXT* p_debugMessenger)
 {
 #if defined(DEBUG)
-    if (!p_debugMessenger)
-        return -1;
+    ASSERT(p_debugMessenger == VK_NULL_HANDLE);
 
     VkDebugUtilsMessengerCreateInfoEXT createInfo{};
     Renderer::InitDebugMessengerCreateInfo(createInfo);
@@ -127,3 +126,5 @@ VkBool32 Renderer::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageS
     fprintf(stderr, "[VALIDATION LAYER]: %s\n", pCallbackData->pMessage);
     return VK_FALSE;
 }
+
+TRE_NS_END

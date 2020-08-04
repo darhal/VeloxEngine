@@ -1,9 +1,8 @@
-#include <Engine/Core/Misc/Defines/Platform.hpp>
+#include <Renderer/Common.hpp>
 
 #if defined(OS_WINDOWS)
 
-#include <Engine/Core/Context/Context.hpp>
-#include <Engine/Core/Window/Window.hpp>
+#include "Window.hpp"
 
 TRE::Window::Window(uint width, uint height, const std::string& title, WindowStyle::window_style_t style)
 {
@@ -14,11 +13,12 @@ TRE::Window::Window(uint width, uint height, const std::string& title, WindowSty
 	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	wc.lpszClassName = "OGLWINDOW";
+	wc.lpszClassName = "TRE_WINDOW";
 
 	if (style & WindowStyle::Borderless) {
 		wc.style = CS_HREDRAW | CS_VREDRAW;
-	}else {
+	}
+	else {
 		wc.style = CS_OWNDC;
 	}
 
@@ -49,8 +49,8 @@ TRE::Window::Window(uint width, uint height, const std::string& title, WindowSty
 	}
 
 	// Create window
-	HWND window = CreateWindow("OGLWINDOW", title.c_str(), (DWORD)windowStyle, x, y, width, height, NULL, NULL, GetModuleHandle(NULL), this);
-	
+	HWND window = CreateWindow("TRE_WINDOW", title.c_str(), (DWORD)windowStyle, x, y, width, height, NULL, NULL, GetModuleHandle(NULL), this);
+
 	// Initialize fullscreen mode
 	if (style & WindowStyle::Fullscreen)
 	{
@@ -87,16 +87,19 @@ TRE::Window::Window(uint width, uint height, const std::string& title, WindowSty
 	mousePosition.y = 0;
 	memset(this->mouse, 0, sizeof(this->mouse));
 	memset(this->keys, 0, sizeof(this->keys));
-	this->context = 0;
 }
 
 TRE::Window::~Window()
 {
-	if (context) delete context;
-
 	DestroyWindow(window);
 
-	UnregisterClass("OGLWINDOW", GetModuleHandle(NULL));
+	UnregisterClass("TRE_WINDOW", GetModuleHandle(NULL));
+}
+
+
+void* TRE::Window::GetNativeHandle()
+{
+	return window;
 }
 
 void TRE::Window::setWindowPosition(int x, int y)
@@ -150,32 +153,13 @@ bool TRE::Window::getEvent(Event& ev)
 	return true;
 }
 
-TRE::Context& TRE::Window::getContext()
-{
-	return *context;
-}
-
-TRE::Context& TRE::Window::initContext(uint8 vmajor, uint8 vminor, uint8 color, uint8 depth, uint8 stencil, uint8 antialias)
-{
-	return *(context = new Context(vmajor, vminor, color, depth, stencil, antialias, GetDC(window)));
-}
-
-void TRE::Window::Present()
-{
-	if (!context) 
-		return;
-	
-	context->Activate();
-	SwapBuffers(GetDC(window));
-}
-
 LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	Event ev;
 	ev.Type = Event::TE_UNKNOWN;
 
 	// Translate message to Event
-	switch (msg){
+	switch (msg) {
 	case WM_CLOSE:
 		Close();
 		ev.Type = Event::TE_CLOSE;
@@ -187,7 +171,8 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 			ev.Type = Event::TE_RESIZE;
 			ev.Window.Width = windowSize.x;
 			ev.Window.Height = windowSize.y;
-		}else if (events.back().Type == Event::TE_RESIZE) {
+		}
+		else if (events.back().Type == Event::TE_RESIZE) {
 			events.back().Window.Width = windowSize.x;
 			events.back().Window.Height = windowSize.y;
 		}
@@ -202,7 +187,8 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 			ev.Type = Event::TE_MOVE;
 			ev.Window.X = windowPosition.x;
 			ev.Window.Y = windowPosition.y;
-		}else if (events.back().Type == Event::TE_MOVE) {
+		}
+		else if (events.back().Type == Event::TE_MOVE) {
 			events.back().Window.X = windowPosition.x;
 			events.back().Window.Y = windowPosition.y;
 		}
@@ -211,7 +197,8 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 		if (wParam == WA_INACTIVE) {
 			ev.Type = Event::TE_BLUR;
 			focus = false;
-		}else{
+		}
+		else {
 			ev.Type = Event::TE_FOCUS;
 			focus = true;
 		}
@@ -219,7 +206,7 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
 		ev.Type = Event::TE_KEY_DOWN;
-		ev.Key.Code = TranslateKey((uint)wParam);
+		ev.Key.Code = TranslateKey(wParam);
 		ev.Key.Alt = HIWORD(GetAsyncKeyState(VK_MENU)) != 0;
 		ev.Key.Control = HIWORD(GetAsyncKeyState(VK_CONTROL)) != 0;
 		ev.Key.Shift = HIWORD(GetAsyncKeyState(VK_SHIFT)) != 0;
@@ -228,7 +215,7 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
 		ev.Type = Event::TE_KEY_UP;
-		ev.Key.Code = TranslateKey((uint)wParam);
+		ev.Key.Code = TranslateKey(wParam);
 		ev.Key.Alt = HIWORD(GetAsyncKeyState(VK_MENU)) != 0;
 		ev.Key.Control = HIWORD(GetAsyncKeyState(VK_CONTROL)) != 0;
 		ev.Key.Shift = HIWORD(GetAsyncKeyState(VK_SHIFT)) != 0;
@@ -289,7 +276,7 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 LRESULT CALLBACK TRE::Window::WindowEventHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	TRE::Window* window;
-	if (msg == WM_NCCREATE){
+	if (msg == WM_NCCREATE) {
 		// Store pointer to associated Window class as userdata in Win32 window
 		window = reinterpret_cast<Window*>(((LPCREATESTRUCT)lParam)->lpCreateParams);
 		window->window = hwnd;
@@ -301,7 +288,8 @@ LRESULT CALLBACK TRE::Window::WindowEventHandler(HWND hwnd, UINT msg, WPARAM wPa
 #endif
 
 		return DefWindowProc(hwnd, msg, wParam, lParam);
-	}else{
+	}
+	else {
 
 #if (CPU_ARCH == CPU_ARCH_x86)
 		window = reinterpret_cast<Window*>(GetWindowLong(hwnd, GWL_USERDATA));
@@ -316,7 +304,7 @@ LRESULT CALLBACK TRE::Window::WindowEventHandler(HWND hwnd, UINT msg, WPARAM wPa
 	}
 }
 
-FORCEINLINE Key::key_t TRE::Window::TranslateKey(uint code)
+FORCEINLINE TRE::Key::key_t TRE::Window::TranslateKey(uint code)
 {
 	switch (code)
 	{

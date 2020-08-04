@@ -1,4 +1,4 @@
-#include <Engine/Core/Window/Window.hpp>
+#include "Window.hpp"
 
 bool TRE::Window::isOpen() const
 {
@@ -16,7 +16,7 @@ bool TRE::Window::isMouseButtonDown(MouseButton::mouse_button_t button) const
 	return mouse[button];
 }
 
-bool TRE::Window::isKeyDown(Key::key_t key) const 
+bool TRE::Window::isKeyDown(Key::key_t key) const
 {
 	if (key >= sizeof(keys) / sizeof(bool)) return false;
 	return keys[key];

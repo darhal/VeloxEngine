@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include <time.h>
 #include <Engine/Core/Misc/Defines/Common.hpp>
 
@@ -9,17 +10,9 @@
 #	pragma warning(disable:4996)
 #endif
 
-#if defined(OS_WINDOWS)
-#	include <Windows.h>
-#	include <processenv.h>
-#	include <ConsoleApi2.h>
-#	undef min
-#	undef max
-#endif
-
 TRE_NS_START
 
-typedef class Log
+class Log
 {
 public:
 	enum LogType {
@@ -28,7 +21,7 @@ public:
 		ERR = 2,
 		FATAL = 3,
 		ASSERT = 4,
-		DEBUG = 5,
+		DEBUG_INFO = 5,
 		DISPLAY = 6,
 		OTHER = 7,
 	};
@@ -93,10 +86,10 @@ private:
 	FORCEINLINE static void ResetColors()
 	{
 #if defined(OS_WINDOWS)
-		const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-		SetConsoleTextAttribute(hConsole, 15);
+		// const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		// SetConsoleTextAttribute(hConsole, 15);
 #endif
 	}
-} LOG;
+};
 
 TRE_NS_END

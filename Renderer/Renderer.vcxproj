@@ -180,18 +180,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Common.hpp" />
     <ClInclude Include="Core\Common\Globals.hpp" />
+    <ClInclude Include="Core\Common\Utils.hpp" />
+    <ClInclude Include="Core\Context\Context.hpp" />
+    <ClInclude Include="Core\PhysicalDevice\PhysicalDevice.hpp" />
+    <ClInclude Include="Core\SwapChain\SwapChain.hpp" />
+    <ClInclude Include="Core\WindowSurface\WindowSurface.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="Core\Instance\Instance.hpp" />
     <ClInclude Include="Core\Renderer.hpp" />
+    <ClInclude Include="Window\Event.hpp" />
+    <ClInclude Include="Window\Window.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Context\Context.cpp" />
+    <ClCompile Include="Core\PhysicalDevice\PhysicalDevice.cpp" />
+    <ClCompile Include="Core\SwapChain\SwapChain.cpp" />
+    <ClCompile Include="Core\WindowSurface\WindowSurface.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Core\Instance\Instance.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Window\Window.cpp" />
+    <ClCompile Include="Window\Window_Win32.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

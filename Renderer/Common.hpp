@@ -8,8 +8,9 @@
 #define RENDERER_API __declspec(dllimport)
 #endif
 
+#undef UNICODE 
 #include <Engine/Core/Misc/Defines/Common.hpp>
-#include <Engine/Core/Misc/Defines/Debug.hpp>
 #include <Engine/Core/Misc/Defines/PlatformInclude.hpp>
+#include <Engine/Core/Misc/Defines/Debug.hpp>
 
 #include <vulkan/vulkan.h>

@@ -5,23 +5,13 @@
 #include <Engine/Core/DataStructure/Array/Array.hpp>
 #include <initializer_list>
 
+TRE_NS_START
+
 namespace Renderer
 {
-	const std::initializer_list<const char*> VK_REQ_EXTENSIONS = {
-	"VK_KHR_surface",
-	"VK_KHR_win32_surface",
-	"VK_EXT_debug_utils",
-	"VK_EXT_debug_report"
-	};
+	int32 CreateRenderInstance(Renderer::RenderInstance* p_ctx);
 
-	const std::initializer_list<const char*> VK_REQ_LAYERS = {
-		"VK_LAYER_KHRONOS_validation",
-		"VK_LAYER_LUNARG_standard_validation"
-	};
-
-	int32 CreateRenderContext(Renderer::RenderContext* p_ctx);
-
-	void DestroyRenderContext(const RenderContext& p_ctx);
+	void DestroyRenderInstance(const RenderInstance& p_ctx);
 
 	int32 CreateInstance(VkInstance* p_instance);
 
@@ -39,3 +29,5 @@ namespace Renderer
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 };
+
+TRE_NS_END
