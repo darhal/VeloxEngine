@@ -108,6 +108,7 @@ VkResult Renderer::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDeb
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 #endif
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
 }
 
 void Renderer::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)

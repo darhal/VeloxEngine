@@ -13,4 +13,6 @@
 #include <Engine/Core/Misc/Defines/PlatformInclude.hpp>
 #include <Engine/Core/Misc/Defines/Debug.hpp>
 
+// #undef DEBUG
+
 #include <vulkan/vulkan.h>

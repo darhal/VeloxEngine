@@ -3,6 +3,7 @@
 #include <Renderer/Common.hpp>
 #include <initializer_list>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
+#include <vector>
 
 TRE_NS_START
 
@@ -37,22 +38,47 @@ namespace Renderer
 		QFT_MAX = 5
 	};
 
+	struct QueueFamilyIndices
+	{
+		uint32 queueFamilies[QFT_MAX] = { uint32(-1) };
+
+		bool IsComplete() const
+		{
+			for (uint32 queueFamily : queueFamilies) {
+				if (queueFamily != uint32(-1)) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+	};
+
 	struct SwapChain
 	{
-		CONSTEXPR static uint32		MAX_FRAMES_IN_FLIGHT = 2;
+		CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT = 2;
 
-		TRE::Vector<VkSemaphore>	imageAvailableSemaphores;
-		TRE::Vector<VkSemaphore>	renderFinishedSemaphores;
-		TRE::Vector<VkFence>		inFlightFences;
-		TRE::Vector<VkFence>		imagesInFlight;
+		VkCommandPool					commandPool;
+		TRE::Vector<VkCommandBuffer>	commandBuffers;
 
-		TRE::Vector<VkImage>		swapChainImages;
-		TRE::Vector<VkImageView>    swapChainImageViews;
-		VkSwapchainKHR				swapChain;
-		VkFormat					swapChainImageFormat;
-		VkExtent2D					swapChainExtent;
+		std::vector<VkSemaphore>		imageAvailableSemaphores;
+		std::vector<VkSemaphore>		renderFinishedSemaphores;
+		std::vector<VkFence>			inFlightFences;
+		std::vector<VkFence>			imagesInFlight;
 
-		uint32						currentFrame;
+		std::vector<VkImage>			swapChainImages;
+		TRE::Vector<VkImageView>		swapChainImageViews;
+		VkSwapchainKHR					swapChain;
+		VkFormat						swapChainImageFormat;
+		VkExtent2D						swapChainExtent;
+
+		uint32							currentFrame;
+
+		std::vector<VkFramebuffer>		swapChainFramebuffers;
+
+		VkPipelineLayout				pipelineLayout;
+		VkRenderPass					renderPass;
+		VkPipeline						graphicsPipeline;
 	};
 
 	struct RenderInstance {
@@ -60,6 +86,11 @@ namespace Renderer
 
 		// Debugging
 		VkDebugUtilsMessengerEXT	debugMessenger;
+	};
+
+	struct RenderDevice {
+		VkPhysicalDevice	gpu;
+		VkDevice			device;
 	};
 
 	struct RenderContext
@@ -73,6 +104,7 @@ namespace Renderer
 
 		SwapChain			swapChain;
 
+		QueueFamilyIndices	queueFamilyIndices;
 		VkQueue				queues[QFT_MAX];
 	};
 };

@@ -8,22 +8,6 @@ TRE_NS_START
 
 namespace Renderer
 {
-	struct QueueFamilyIndices 
-	{
-		uint32 queueFamilies[QFT_MAX] = { uint32(-1) };
-
-		bool IsComplete() const
-		{
-			for (uint32 queueFamily : queueFamilies) {
-				if (queueFamily != uint32(-1)) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-	};
-
 	typedef bool(*FPN_RankGPU)(VkPhysicalDevice, VkSurfaceKHR);
 
 	bool IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR surface);

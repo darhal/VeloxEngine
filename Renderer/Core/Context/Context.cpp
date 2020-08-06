@@ -14,6 +14,7 @@ void Renderer::InitContext(RenderContext& p_ctx)
 
     CreateWindowSurface(p_ctx);
 	p_ctx.gpu = PickGPU(p_ctx);
+    p_ctx.queueFamilyIndices = FindQueueFamilies(p_ctx.gpu, p_ctx.surface);
 
     if (p_ctx.gpu == VK_NULL_HANDLE) {
         fprintf(stderr, "Couldn't pick a GPU!\n");
@@ -42,8 +43,7 @@ int32 Renderer::CreateDevice(RenderContext& p_ctx)
 
     VkDevice device = VK_NULL_HANDLE;
     float queuePriority = 1.0f;
-
-    QueueFamilyIndices indices = FindQueueFamilies(p_ctx.gpu, p_ctx.surface);
+    const QueueFamilyIndices& indices = p_ctx.queueFamilyIndices;
 
     TRE::Vector<VkDeviceQueueCreateInfo> queueCreateInfos(QFT_MAX);
     std::unordered_set<uint32> uniqueQueueFamilies(std::begin(indices.queueFamilies), std::end(indices.queueFamilies));

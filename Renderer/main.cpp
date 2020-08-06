@@ -55,7 +55,11 @@ int main()
 
     TRE::Event ev;
 
-    while (window.getEvent(ev)) {
+
+    while (true) {
+
+
+        window.getEvent(ev);
         TRE::Renderer::Present(ctx, {});
     }
     

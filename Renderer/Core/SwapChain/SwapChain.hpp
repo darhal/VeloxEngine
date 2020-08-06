@@ -17,13 +17,21 @@ namespace Renderer
 
     SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 
-    void CreateSwapChain(SwapChain& swapChain, const RenderContext& ctx);
+    void CreateSwapChain(SwapChain& swapChain, RenderContext& ctx);
     void DestroySwapChain(VkDevice device, SwapChain& swapChain);
 
     void Present(RenderContext& ctx, const TRE::Vector<VkCommandBuffer>& cmdbuff);
 
     void CreateImageViews(VkDevice device, SwapChain& swapChain);
     void CreateSyncObjects(VkDevice device, SwapChain& swapChain);
+    void CreateCommandPool(RenderContext& ctx);
+    void CreateCommandBuffers(RenderContext& ctx);
+
+    void createGraphicsPipeline(RenderContext& ctx);
+    void createRenderPass(RenderContext& ctx);
+    void createFrameBuffers(RenderContext& ctx);
+
+    VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code);
 
     VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const TRE::Vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR ChooseSwapPresentMode(const TRE::Vector<VkPresentModeKHR>& availablePresentModes);
