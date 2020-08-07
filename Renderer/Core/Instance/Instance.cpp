@@ -23,23 +23,23 @@ int32 Renderer::CreateInstance(VkInstance* p_instance)
     ASSERT(p_instance == NULL);
 
     VkApplicationInfo appInfo{};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "TRE Renderer";
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "Trikyta Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_VERSION_1_2;
+    appInfo.sType               = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName    = "TRE Renderer";
+    appInfo.applicationVersion  = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.pEngineName         = "Trikyta Engine";
+    appInfo.engineVersion       = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.apiVersion          = VK_VERSION_1_2;
 
     VkInstanceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.sType            = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
 
     // Extensions:
-    createInfo.enabledExtensionCount = (uint32)VK_REQ_EXT.size();
-    createInfo.ppEnabledExtensionNames = VK_REQ_EXT.begin();
+    createInfo.enabledExtensionCount    = (uint32)VK_REQ_EXT.size();
+    createInfo.ppEnabledExtensionNames  = VK_REQ_EXT.begin();
 
     // Layers:
-    createInfo.enabledLayerCount = (uint32)VK_REQ_LAYERS.size();
+    createInfo.enabledLayerCount    = (uint32)VK_REQ_LAYERS.size();
     createInfo.ppEnabledLayerNames = VK_REQ_LAYERS.begin();
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};

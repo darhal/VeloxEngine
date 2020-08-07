@@ -4,13 +4,12 @@
 
 TRE_NS_START
 
-int32 Renderer::CreateWindowSurface(RenderContext& p_ctx, const VkAllocationCallbacks* allocator)
+int32 Renderer::CreateWindowSurface(const RenderInstance& renderInstance, RenderContext& ctx, const VkAllocationCallbacks* allocator)
 {
-	ASSERT(p_ctx.window == NULL);
-	ASSERT(p_ctx.instance == NULL);
+	ASSERT(ctx.window == NULL);
+	ASSERT(renderInstance.instance == NULL);
 
-    VkInstance instance = p_ctx.instance->instance;
-    ASSERT(instance == NULL);
+    VkInstance instance = renderInstance.instance;
 
     VkResult err;
     VkWin32SurfaceCreateInfoKHR sci{};
@@ -25,9 +24,9 @@ int32 Renderer::CreateWindowSurface(RenderContext& p_ctx, const VkAllocationCall
 
     sci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     sci.hinstance = GetModuleHandle(NULL);
-    sci.hwnd = (HWND)p_ctx.window->GetNativeHandle();
+    sci.hwnd = (HWND)ctx.window->GetNativeHandle();
 
-    err = vkCreateWin32SurfaceKHR(instance, &sci, allocator, &p_ctx.surface);
+    err = vkCreateWin32SurfaceKHR(instance, &sci, allocator, &ctx.surface);
 
     if (err) {
         ASSERTF(true, "Win32: Failed to create Vulkan surface: %s", GetVulkanResultString(err));

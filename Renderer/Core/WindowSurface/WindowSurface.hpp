@@ -7,9 +7,9 @@ TRE_NS_START
 
 namespace Renderer
 {
-    int32 CreateWindowSurface(RenderContext& p_ctx, const VkAllocationCallbacks* allocator = NULL);
+    int32 CreateWindowSurface(const RenderInstance& instance, RenderContext& ctx, const VkAllocationCallbacks* allocator = NULL);
 
-    void DestroryWindowSurface(VkInstance instance, VkSurfaceKHR surface);
+    void DestroryWindowSurface(VkInstance renderInstance, VkSurfaceKHR surface);
 
     typedef VkFlags VkWin32SurfaceCreateFlagsKHR;
 

@@ -54,7 +54,7 @@ namespace Renderer
 		}
 	};
 
-	struct SwapChain
+	struct SwapChainData
 	{
 		CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -68,44 +68,48 @@ namespace Renderer
 
 		std::vector<VkImage>			swapChainImages;
 		TRE::Vector<VkImageView>		swapChainImageViews;
-		VkSwapchainKHR					swapChain;
 		VkFormat						swapChainImageFormat;
 		VkExtent2D						swapChainExtent;
 
 		uint32							currentFrame;
 
 		std::vector<VkFramebuffer>		swapChainFramebuffers;
-
 		VkPipelineLayout				pipelineLayout;
 		VkRenderPass					renderPass;
 		VkPipeline						graphicsPipeline;
 	};
 
-	struct RenderInstance {
-		VkInstance					instance;
+	struct RenderInstance 
+	{
+		VkInstance						instance;
 
 		// Debugging
-		VkDebugUtilsMessengerEXT	debugMessenger;
+		VkDebugUtilsMessengerEXT		debugMessenger;
 	};
 
-	struct RenderDevice {
-		VkPhysicalDevice	gpu;
-		VkDevice			device;
-	};
-
-	struct RenderContext
+	struct RenderDevice
 	{
-		RenderInstance*		instance;
+		VkPhysicalDevice				gpu;
+		VkDevice						device;
 
-		VkPhysicalDevice	gpu;
-		VkDevice			device;
-		::TRE::Window*		window;
-		VkSurfaceKHR		surface;
+		QueueFamilyIndices				queueFamilyIndices;
+		VkQueue							queues[QFT_MAX];
+	};
 
-		SwapChain			swapChain;
+	struct RenderContext 
+	{
+		::TRE::Window*					window;
+		VkSurfaceKHR					surface;
 
-		QueueFamilyIndices	queueFamilyIndices;
-		VkQueue				queues[QFT_MAX];
+		VkSwapchainKHR					swapChain;
+		SwapChainData					swapChainData;
+	};
+
+	struct RenderEngine
+	{
+		RenderInstance*					renderInstance;
+		RenderDevice*					renderDevice;
+		RenderContext*					renderContext;
 	};
 };
 

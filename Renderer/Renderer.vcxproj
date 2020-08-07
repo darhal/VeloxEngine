@@ -184,7 +184,7 @@
     <ClInclude Include="Core\Common\Globals.hpp" />
     <ClInclude Include="Core\Common\Utils.hpp" />
     <ClInclude Include="Core\Context\Context.hpp" />
-    <ClInclude Include="Core\PhysicalDevice\PhysicalDevice.hpp" />
+    <ClInclude Include="Core\RenderDevice\RenderDevice.hpp" />
     <ClInclude Include="Core\SwapChain\SwapChain.hpp" />
     <ClInclude Include="Core\WindowSurface\WindowSurface.hpp" />
     <ClInclude Include="pch.hpp" />
@@ -195,7 +195,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Context\Context.cpp" />
-    <ClCompile Include="Core\PhysicalDevice\PhysicalDevice.cpp" />
+    <ClCompile Include="Core\RenderDevice\RenderDevice.cpp" />
     <ClCompile Include="Core\SwapChain\SwapChain.cpp" />
     <ClCompile Include="Core\WindowSurface\WindowSurface.cpp" />
     <ClCompile Include="pch.cpp">

@@ -1,6 +1,5 @@
 #include "SwapChain.hpp"
 #include <Renderer/Core/Common/Utils.hpp>
-#include <Renderer/Core/PhysicalDevice/PhysicalDevice.hpp>
 #include <Engine/Core/Misc/Maths/Maths.hpp>
 
 TRE_NS_START
@@ -30,16 +29,16 @@ Renderer::SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevi
     return details;
 }
 
-void Renderer::CreateSwapChain(SwapChain& swapChain, RenderContext& ctx)
+void Renderer::CreateSwapChain(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice)
 {
-    ASSERT(ctx.gpu == VK_NULL_HANDLE);
+    ASSERT(renderDevice.gpu == VK_NULL_HANDLE);
     ASSERT(ctx.surface == VK_NULL_HANDLE);
  
-    SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(ctx.gpu, ctx.surface);
+    SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(renderDevice.gpu, ctx.surface);
 
     VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode     = ChooseSwapPresentMode(swapChainSupport.presentModes);
-    VkExtent2D extent                = ChooseSwapExtent(swapChainSupport.capabilities, swapChain.swapChainExtent);
+    VkExtent2D extent                = ChooseSwapExtent(swapChainSupport.capabilities, ctx.swapChainData.swapChainExtent);
 
     uint32 imageCount                = swapChainSupport.capabilities.minImageCount;
 
@@ -57,7 +56,7 @@ void Renderer::CreateSwapChain(SwapChain& swapChain, RenderContext& ctx)
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
-    const QueueFamilyIndices& indices = ctx.queueFamilyIndices;
+    const QueueFamilyIndices& indices = renderDevice.queueFamilyIndices;
     uint32 queueFamilyIndices[]       = { indices.queueFamilies[QFT_GRAPHICS], indices.queueFamilies[QFT_PRESENT] };
 
     if (indices.queueFamilies[QFT_GRAPHICS] != indices.queueFamilies[QFT_PRESENT]) {
@@ -74,78 +73,81 @@ void Renderer::CreateSwapChain(SwapChain& swapChain, RenderContext& ctx)
     createInfo.clipped          = VK_TRUE;
     createInfo.oldSwapchain     = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(ctx.device, &createInfo, NULL, &swapChain.swapChain) != VK_SUCCESS) {
+    if (vkCreateSwapchainKHR(renderDevice.device, &createInfo, NULL, &ctx.swapChain) != VK_SUCCESS) {
         ASSERTF(true, "Failed to create swap chain!");
     }
 
-    vkGetSwapchainImagesKHR(ctx.device, swapChain.swapChain, &imageCount, NULL);
-    swapChain.swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(ctx.device, swapChain.swapChain, &imageCount, swapChain.swapChainImages.data());
+    vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &imageCount, NULL);
+    ctx.swapChainData.swapChainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &imageCount, ctx.swapChainData.swapChainImages.data());
 
-    swapChain.swapChainImageFormat = surfaceFormat.format;
-    swapChain.swapChainExtent = extent;
+    ctx.swapChainData.swapChainImageFormat = surfaceFormat.format;
+    ctx.swapChainData.swapChainExtent = extent;
 
-    CreateImageViews(ctx.device, swapChain);
-    createRenderPass(ctx);
-    createGraphicsPipeline(ctx);
-    createFrameBuffers(ctx);
+    CreateImageViews(renderDevice, ctx);
 
-    CreateSyncObjects(ctx.device, swapChain);
-    CreateCommandPool(ctx);
-    CreateCommandBuffers(ctx);
+    createRenderPass(renderDevice, ctx);
+    createGraphicsPipeline(renderDevice, ctx);
+    createFrameBuffers(renderDevice, ctx);
+
+    CreateSyncObjects(renderDevice, ctx);
+    CreateCommandPool(renderDevice, ctx);
+    CreateCommandBuffers(renderDevice, ctx);
 }
 
-void Renderer::DestroySwapChain(const VkDevice device, SwapChain& swapChain)
+void Renderer::DestroySwapChain(const RenderDevice& renderDevice, RenderContext& ctx)
 {
-    for (size_t i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroySemaphore(device, swapChain.renderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(device, swapChain.imageAvailableSemaphores[i], nullptr);
-        vkDestroyFence(device, swapChain.inFlightFences[i], nullptr);
+    for (size_t i = 0; i < SwapChainData::MAX_FRAMES_IN_FLIGHT; i++) {
+        vkDestroySemaphore(renderDevice.device, ctx.swapChainData.renderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(renderDevice.device, ctx.swapChainData.imageAvailableSemaphores[i], nullptr);
+        vkDestroyFence(renderDevice.device, ctx.swapChainData.inFlightFences[i], nullptr);
     }
 
-    for (auto imageView : swapChain.swapChainImageViews) {
-        vkDestroyImageView(device, imageView, NULL);
+    for (auto imageView : ctx.swapChainData.swapChainImageViews) {
+        vkDestroyImageView(renderDevice.device, imageView, NULL);
     }
 
-    vkDestroySwapchainKHR(device, swapChain.swapChain, NULL);
+    vkDestroySwapchainKHR(renderDevice.device, ctx.swapChain, NULL);
 }
 
-void Renderer::Present(RenderContext& ctx, const TRE::Vector<VkCommandBuffer>& cmdbuff)
+void Renderer::Present(RenderEngine& engine, const TRE::Vector<VkCommandBuffer>& cmdbuff)
 {
-    VkDevice device = ctx.device;
-    SwapChain& swapChain = ctx.swapChain;
-    uint32 currentFrame = swapChain.currentFrame;
+    RenderContext& ctx = *engine.renderContext;
+    RenderDevice& renderDevice = *engine.renderDevice;
+    SwapChainData& swapChainData = engine.renderContext->swapChainData;
+    VkDevice device = renderDevice.device;
+    uint32 currentFrame = swapChainData.currentFrame;
 
-    vkWaitForFences(device, 1, &swapChain.inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(device, 1, &engine.renderContext->swapChainData.inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex = 0;
-    vkAcquireNextImageKHR(device, swapChain.swapChain, UINT64_MAX, swapChain.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+    vkAcquireNextImageKHR(device, ctx.swapChain, UINT64_MAX, swapChainData.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-    if (swapChain.imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
-        vkWaitForFences(device, 1, &swapChain.imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+    if (swapChainData.imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+        vkWaitForFences(device, 1, &swapChainData.imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
     }
 
-    swapChain.imagesInFlight[imageIndex] = swapChain.inFlightFences[currentFrame];
+    swapChainData.imagesInFlight[imageIndex] = swapChainData.inFlightFences[currentFrame];
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = { swapChain.imageAvailableSemaphores[currentFrame] };
+    VkSemaphore waitSemaphores[] = { swapChainData.imageAvailableSemaphores[currentFrame] };
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
 
     submitInfo.commandBufferCount = 1; // (uint32)cmdbuff.Size();
-    submitInfo.pCommandBuffers = &swapChain.commandBuffers[currentFrame]; // cmdbuff.Data();
+    submitInfo.pCommandBuffers = &swapChainData.commandBuffers[currentFrame]; // cmdbuff.Data();
 
-    VkSemaphore signalSemaphores[] = { swapChain.renderFinishedSemaphores[currentFrame] };
+    VkSemaphore signalSemaphores[] = { swapChainData.renderFinishedSemaphores[currentFrame] };
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    vkResetFences(device, 1, &swapChain.inFlightFences[currentFrame]);
+    vkResetFences(device, 1, &swapChainData.inFlightFences[currentFrame]);
 
-    if (vkQueueSubmit(ctx.queues[QFT_GRAPHICS], 1, &submitInfo, swapChain.inFlightFences[currentFrame]) != VK_SUCCESS) {
+    if (vkQueueSubmit(renderDevice.queues[QFT_GRAPHICS], 1, &submitInfo, swapChainData.inFlightFences[currentFrame]) != VK_SUCCESS) {
         throw std::runtime_error("failed to submit draw command buffer!");
     }
 
@@ -155,27 +157,27 @@ void Renderer::Present(RenderContext& ctx, const TRE::Vector<VkCommandBuffer>& c
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
-    VkSwapchainKHR swapChains[] = { swapChain.swapChain };
+    VkSwapchainKHR swapChains[] = { ctx.swapChain };
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
 
-    vkQueuePresentKHR(ctx.queues[QFT_PRESENT], &presentInfo);
+    vkQueuePresentKHR(renderDevice.queues[QFT_PRESENT], &presentInfo);
 
-    swapChain.currentFrame = (currentFrame + 1) % SwapChain::MAX_FRAMES_IN_FLIGHT;
+    swapChainData.currentFrame = (currentFrame + 1) % SwapChainData::MAX_FRAMES_IN_FLIGHT;
     // printf("Present! %d\n", imageIndex);
 }
 
-void Renderer::CreateImageViews(VkDevice device, SwapChain& swapChain)
+void Renderer::CreateImageViews(const RenderDevice& renderDevice, RenderContext& ctx)
 {
-    swapChain.swapChainImageViews.Resize(swapChain.swapChainImages.size());
+    ctx.swapChainData.swapChainImageViews.Resize(ctx.swapChainData.swapChainImages.size());
 
-    for (size_t i = 0; i < swapChain.swapChainImages.size(); i++) {
+    for (size_t i = 0; i < ctx.swapChainData.swapChainImages.size(); i++) {
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        createInfo.image = swapChain.swapChainImages[i];
+        createInfo.image = ctx.swapChainData.swapChainImages[i];
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = swapChain.swapChainImageFormat;
+        createInfo.format = ctx.swapChainData.swapChainImageFormat;
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -186,20 +188,20 @@ void Renderer::CreateImageViews(VkDevice device, SwapChain& swapChain)
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView(device, &createInfo, NULL, &swapChain.swapChainImageViews[i]) != VK_SUCCESS) {
+        if (vkCreateImageView(renderDevice.device, &createInfo, NULL, &ctx.swapChainData.swapChainImageViews[i]) != VK_SUCCESS) {
             ASSERTF(true, "Failed to create image views!");
         }
     }
 }
 
-void Renderer::CreateSyncObjects(VkDevice device, SwapChain& swapChain)
+void Renderer::CreateSyncObjects(const RenderDevice& renderDevice, RenderContext& ctx)
 {
-    swapChain.currentFrame = 0;
+    ctx.swapChainData.currentFrame = 0;
 
-    swapChain.imageAvailableSemaphores.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-    swapChain.renderFinishedSemaphores.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-    swapChain.inFlightFences.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-    swapChain.imagesInFlight.resize(swapChain.swapChainImages.size(), VK_NULL_HANDLE);
+    ctx.swapChainData.imageAvailableSemaphores.resize(SwapChainData::MAX_FRAMES_IN_FLIGHT);
+    ctx.swapChainData.renderFinishedSemaphores.resize(SwapChainData::MAX_FRAMES_IN_FLIGHT);
+    ctx.swapChainData.inFlightFences.resize(SwapChainData::MAX_FRAMES_IN_FLIGHT);
+    ctx.swapChainData.imagesInFlight.resize(ctx.swapChainData.swapChainImages.size(), VK_NULL_HANDLE);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -208,44 +210,44 @@ void Renderer::CreateSyncObjects(VkDevice device, SwapChain& swapChain)
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (size_t i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
-        if (vkCreateSemaphore(device, &semaphoreInfo, NULL, &swapChain.imageAvailableSemaphores[i]) != VK_SUCCESS ||
-            vkCreateSemaphore(device, &semaphoreInfo, NULL, &swapChain.renderFinishedSemaphores[i]) != VK_SUCCESS ||
-            vkCreateFence(device, &fenceInfo, NULL, &swapChain.inFlightFences[i]) != VK_SUCCESS) {
+    for (size_t i = 0; i < SwapChainData::MAX_FRAMES_IN_FLIGHT; i++) {
+        if (vkCreateSemaphore(renderDevice.device, &semaphoreInfo, NULL, &ctx.swapChainData.imageAvailableSemaphores[i]) != VK_SUCCESS ||
+            vkCreateSemaphore(renderDevice.device, &semaphoreInfo, NULL, &ctx.swapChainData.renderFinishedSemaphores[i]) != VK_SUCCESS ||
+            vkCreateFence(renderDevice.device, &fenceInfo, NULL, &ctx.swapChainData.inFlightFences[i]) != VK_SUCCESS) {
             
             ASSERTF(true, "failed to create synchronization objects for a frame!");
         }
     }
 }
 
-void Renderer::CreateCommandPool(RenderContext& ctx)
+void Renderer::CreateCommandPool(const RenderDevice& renderDevice, RenderContext& ctx)
 {
-    const QueueFamilyIndices& queueFamilyIndices = ctx.queueFamilyIndices;
+    const QueueFamilyIndices& queueFamilyIndices = renderDevice.queueFamilyIndices;
 
     {
         VkCommandPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.queueFamilyIndex = queueFamilyIndices.queueFamilies[QFT_GRAPHICS];
 
-        if (vkCreateCommandPool(ctx.device, &poolInfo, NULL, &ctx.swapChain.commandPool) != VK_SUCCESS) {
+        if (vkCreateCommandPool(renderDevice.device, &poolInfo, NULL, &ctx.swapChainData.commandPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create command pool!");
         }
     }
 }
 
-void Renderer::CreateCommandBuffers(RenderContext& ctx)
+void Renderer::CreateCommandBuffers(const RenderDevice& renderDevice, RenderContext& ctx)
 {
-    SwapChain& swapChain = ctx.swapChain;
+    SwapChainData& swapChainData = ctx.swapChainData;
 
-    swapChain.commandBuffers.Resize(swapChain.MAX_FRAMES_IN_FLIGHT);
+    swapChainData.commandBuffers.Resize(swapChainData.MAX_FRAMES_IN_FLIGHT);
 
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = swapChain.commandPool;
+    allocInfo.commandPool = swapChainData.commandPool;
     allocInfo.level       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = (uint32_t)swapChain.commandBuffers.Size();
+    allocInfo.commandBufferCount = (uint32_t)swapChainData.commandBuffers.Size();
 
-    if (vkAllocateCommandBuffers(ctx.device, &allocInfo, swapChain.commandBuffers.Data()) != VK_SUCCESS) {
+    if (vkAllocateCommandBuffers(renderDevice.device, &allocInfo, swapChainData.commandBuffers.Data()) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
@@ -258,44 +260,44 @@ void Renderer::CreateCommandBuffers(RenderContext& ctx)
     imageRange.levelCount = 1;
     imageRange.layerCount = 1;
 
-    for (size_t i = 0; i < swapChain.commandBuffers.Size(); i++) {
+    for (size_t i = 0; i < swapChainData.commandBuffers.Size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-        if (vkBeginCommandBuffer(swapChain.commandBuffers[i], &beginInfo) != VK_SUCCESS) {
+        if (vkBeginCommandBuffer(swapChainData.commandBuffers[i], &beginInfo) != VK_SUCCESS) {
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass        = swapChain.renderPass;
-        renderPassInfo.framebuffer       = swapChain.swapChainFramebuffers[i];
+        renderPassInfo.renderPass        = swapChainData.renderPass;
+        renderPassInfo.framebuffer       = swapChainData.swapChainFramebuffers[i];
         renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = swapChain.swapChainExtent;
+        renderPassInfo.renderArea.extent = swapChainData.swapChainExtent;
         renderPassInfo.clearValueCount   = 1;
         renderPassInfo.pClearValues      = &clearValue;
 
-        vkCmdBeginRenderPass(swapChain.commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(swapChain.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, swapChain.graphicsPipeline);
-        vkCmdDraw(swapChain.commandBuffers[i], 3, 1, 0, 0);
-        vkCmdEndRenderPass(swapChain.commandBuffers[i]);
+        vkCmdBeginRenderPass(swapChainData.commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(swapChainData.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, swapChainData.graphicsPipeline);
+        vkCmdDraw(swapChainData.commandBuffers[i], 3, 1, 0, 0);
+        vkCmdEndRenderPass(swapChainData.commandBuffers[i]);
 
         // vkCmdClearColorImage(swapChain.commandBuffers[i], swapChain.swapChainImages[i], VK_IMAGE_LAYOUT_GENERAL, &clearColor, 1, &imageRange);
 
-        if (vkEndCommandBuffer(swapChain.commandBuffers[i]) != VK_SUCCESS) {
+        if (vkEndCommandBuffer(swapChainData.commandBuffers[i]) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");
         }
     }
 }
 
-void Renderer::createGraphicsPipeline(RenderContext& ctx)
+void Renderer::createGraphicsPipeline(const RenderDevice& renderDevice, RenderContext& ctx)
 {
     auto vertShaderCode = ReadShaderFile("Shaders/vert.spv");
     auto fragShaderCode = ReadShaderFile("Shaders/frag.spv");
 
-    VkShaderModule vertShaderModule = createShaderModule(ctx.device, vertShaderCode);
-    VkShaderModule fragShaderModule = createShaderModule(ctx.device, fragShaderCode);
+    VkShaderModule vertShaderModule = createShaderModule(renderDevice.device, vertShaderCode);
+    VkShaderModule fragShaderModule = createShaderModule(renderDevice.device, fragShaderCode);
 
     VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
     vertShaderStageInfo.sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -326,14 +328,14 @@ void Renderer::createGraphicsPipeline(RenderContext& ctx)
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = (float)ctx.swapChain.swapChainExtent.width;
-    viewport.height = (float)ctx.swapChain.swapChainExtent.height;
+    viewport.width = (float)ctx.swapChainData.swapChainExtent.width;
+    viewport.height = (float)ctx.swapChainData.swapChainExtent.height;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor{};
     scissor.offset = { 0, 0 };
-    scissor.extent = ctx.swapChain.swapChainExtent;
+    scissor.extent = ctx.swapChainData.swapChainExtent;
 
     VkPipelineViewportStateCreateInfo viewportState{};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -409,7 +411,7 @@ void Renderer::createGraphicsPipeline(RenderContext& ctx)
     pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
     pipelineLayoutInfo.pPushConstantRanges  = nullptr; // Optional
 
-    if (vkCreatePipelineLayout(ctx.device, &pipelineLayoutInfo, nullptr, &ctx.swapChain.pipelineLayout) != VK_SUCCESS) {
+    if (vkCreatePipelineLayout(renderDevice.device, &pipelineLayoutInfo, nullptr, &ctx.swapChainData.pipelineLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create pipeline layout!");
     }
 
@@ -425,24 +427,24 @@ void Renderer::createGraphicsPipeline(RenderContext& ctx)
     pipelineInfo.pDepthStencilState = NULL; // Optional
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = NULL; // Optional
-    pipelineInfo.layout = ctx.swapChain.pipelineLayout;
-    pipelineInfo.renderPass = ctx.swapChain.renderPass;
+    pipelineInfo.layout = ctx.swapChainData.pipelineLayout;
+    pipelineInfo.renderPass = ctx.swapChainData.renderPass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
     pipelineInfo.basePipelineIndex = -1; // Optional
 
-    if (vkCreateGraphicsPipelines(ctx.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &ctx.swapChain.graphicsPipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(renderDevice.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &ctx.swapChainData.graphicsPipeline) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline!");
     }
 
-    vkDestroyShaderModule(ctx.device, fragShaderModule, nullptr);
-    vkDestroyShaderModule(ctx.device, vertShaderModule, nullptr);
+    vkDestroyShaderModule(renderDevice.device, fragShaderModule, nullptr);
+    vkDestroyShaderModule(renderDevice.device, vertShaderModule, nullptr);
 }
 
-void Renderer::createRenderPass(RenderContext& ctx)
+void Renderer::createRenderPass(const RenderDevice& renderDevice, RenderContext& ctx)
 {
     VkAttachmentDescription colorAttachment{};
-    colorAttachment.format          = ctx.swapChain.swapChainImageFormat;
+    colorAttachment.format          = ctx.swapChainData.swapChainImageFormat;
     colorAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
     colorAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
@@ -468,30 +470,30 @@ void Renderer::createRenderPass(RenderContext& ctx)
     renderPassInfo.subpassCount    = 1;
     renderPassInfo.pSubpasses      = &subpass;
 
-    if (vkCreateRenderPass(ctx.device, &renderPassInfo, nullptr, &ctx.swapChain.renderPass) != VK_SUCCESS) {
+    if (vkCreateRenderPass(renderDevice.device, &renderPassInfo, nullptr, &ctx.swapChainData.renderPass) != VK_SUCCESS) {
         throw std::runtime_error("failed to create render pass!");
     }
 }
 
-void Renderer::createFrameBuffers(RenderContext& ctx)
+void Renderer::createFrameBuffers(const RenderDevice& renderDevice, RenderContext& ctx)
 {
-    ctx.swapChain.swapChainFramebuffers.resize(ctx.swapChain.swapChainImageViews.Size());
+    ctx.swapChainData.swapChainFramebuffers.resize(ctx.swapChainData.swapChainImageViews.Size());
 
-    for (size_t i = 0; i < ctx.swapChain.swapChainImageViews.Size(); i++) {
+    for (size_t i = 0; i < ctx.swapChainData.swapChainImageViews.Size(); i++) {
         VkImageView attachments[] = {
-            ctx.swapChain.swapChainImageViews[i]
+            ctx.swapChainData.swapChainImageViews[i]
         };
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = ctx.swapChain.renderPass;
+        framebufferInfo.renderPass = ctx.swapChainData.renderPass;
         framebufferInfo.attachmentCount = 1;
         framebufferInfo.pAttachments = attachments;
-        framebufferInfo.width = ctx.swapChain.swapChainExtent.width;
-        framebufferInfo.height = ctx.swapChain.swapChainExtent.height;
+        framebufferInfo.width = ctx.swapChainData.swapChainExtent.width;
+        framebufferInfo.height = ctx.swapChainData.swapChainExtent.height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(ctx.device, &framebufferInfo, nullptr, &ctx.swapChain.swapChainFramebuffers[i]) != VK_SUCCESS) {
+        if (vkCreateFramebuffer(renderDevice.device, &framebufferInfo, nullptr, &ctx.swapChainData.swapChainFramebuffers[i]) != VK_SUCCESS) {
             throw std::runtime_error("failed to create framebuffer!");
         }
     }

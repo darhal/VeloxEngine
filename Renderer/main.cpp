@@ -46,19 +46,15 @@ int main()
     const unsigned int SCR_HEIGHT = 1080 / 2;
 
     TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
-    TRE::Renderer::RenderContext ctx{0};
-    ctx.window = &window;
+    TRE::Renderer::RenderEngine ctx{0};
 
-    if (TRE::Renderer::Init(ctx) == 0) {
+    if (TRE::Renderer::Init(ctx, &window) == 0) {
         puts("Creation with sucesss !");
     }
 
     TRE::Event ev;
 
-
     while (true) {
-
-
         window.getEvent(ev);
         TRE::Renderer::Present(ctx, {});
     }

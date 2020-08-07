@@ -7,9 +7,9 @@ TRE_NS_START
 
 namespace Renderer
 {
-	void InitContext(RenderContext& p_ctx);
+	void CreateRenderContext(RenderContext& ctx, const RenderInstance& instance);
 
-	int32 CreateDevice(RenderContext& p_ctx);
+	void InitRenderContext(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice);
 
 	void DestroyContext(RenderContext& p_ctx);
 }

@@ -10,9 +10,13 @@ namespace Renderer
 {
 	typedef bool(*FPN_RankGPU)(VkPhysicalDevice, VkSurfaceKHR);
 
+	int32 CreateRenderDevice(RenderDevice& renderDevice, const RenderInstance& renderInstance, const RenderContext& ctx);
+
+	int32 CreateLogicalDevice(RenderDevice& renderDevice, const RenderInstance& renderInstance, const RenderContext& ctx);
+
 	bool IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR surface);
 
-	VkPhysicalDevice PickGPU(const RenderContext& p_ctx, FPN_RankGPU p_pick_func = IsDeviceSuitable);
+	VkPhysicalDevice PickGPU(const RenderInstance& renderInstance, const RenderContext& ctx, FPN_RankGPU p_pick_func = IsDeviceSuitable);
 
 	Renderer::QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice p_gpu, VkSurfaceKHR p_surface = NULL);
 };
