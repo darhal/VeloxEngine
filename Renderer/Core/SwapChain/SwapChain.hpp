@@ -10,15 +10,20 @@ namespace Renderer
 {
     struct SwapChainSupportDetails 
     {
-        VkSurfaceCapabilitiesKHR        capabilities;
-        TRE::Vector<VkSurfaceFormatKHR> formats;
-        TRE::Vector<VkPresentModeKHR>   presentModes;
+        VkSurfaceCapabilitiesKHR            capabilities;
+        TRE::Vector<VkSurfaceFormatKHR>     formats;
+        TRE::Vector<VkPresentModeKHR>       presentModes;
     };
 
     SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 
     void CreateSwapChain(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice);
     void DestroySwapChain(const RenderDevice& renderDevice, RenderContext& ctx);
+    void CleanupSwapChain(RenderContext& ctx, const RenderDevice& renderDevice);
+
+    void UpdateSwapChain(RenderEngine& engine);
+
+    void RecreateSwapChainInternal(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice);
 
     void Present(RenderEngine& engine, const TRE::Vector<VkCommandBuffer>& cmdbuff);
 

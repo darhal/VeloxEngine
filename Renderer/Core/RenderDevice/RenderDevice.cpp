@@ -14,6 +14,11 @@ int32 Renderer::CreateRenderDevice(RenderDevice& renderDevice, const RenderInsta
     return CreateLogicalDevice(renderDevice, renderInstance, ctx);
 }
 
+void Renderer::DestroryRenderDevice(RenderDevice& renderDevice)
+{
+    vkDestroyDevice(renderDevice.device, NULL);
+}
+
 int32 Renderer::CreateLogicalDevice(RenderDevice& renderDevice, const RenderInstance& renderInstance, const RenderContext& ctx)
 {
     ASSERT(renderInstance.instance == VK_NULL_HANDLE);

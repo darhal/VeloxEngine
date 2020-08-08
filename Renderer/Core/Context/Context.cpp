@@ -7,30 +7,26 @@
 
 TRE_NS_START
 
-void Renderer::CreateRenderContext(RenderContext& ctx, const RenderInstance& instance)
+void Renderer::CreateRenderContext(RenderContext& ctx, TRE::Window* wnd, const RenderInstance& instance)
 {
     ASSERT(instance.instance == VK_NULL_HANDLE);
+    ctx.window = wnd;
+    ctx.swapChainData.swapChainExtent = VkExtent2D{ ctx.window->getSize().x, ctx.window->getSize().y };
+
     CreateWindowSurface(instance, ctx);
-
-
-
 }
 
 void Renderer::InitRenderContext(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice)
 {
-    ctx.swapChainData.swapChainExtent = VkExtent2D{ ctx.window->getSize().x, ctx.window->getSize().y };
     CreateSwapChain(ctx, renderInstance, renderDevice);
 }
 
-void Renderer::DestroyContext(RenderContext& p_ctx)
+void Renderer::DestroyRenderContext(const RenderEngine& engine)
 {
-    //DestroySwapChain(p_ctx.device, p_ctx.swapChain);
-    //vkDestroyDevice(p_ctx.device, NULL);
-    //DestroryWindowSurface(p_ctx.instance->instance, p_ctx.surface);
+    DestroySwapChain(*engine.renderDevice, *engine.renderContext);
+    DestroryWindowSurface(engine.renderInstance->instance, engine.renderContext->surface);
 
-    //if (p_ctx.instance) {
-    //    DestroyRenderInstance(*p_ctx.instance);
-    //}
+    // TODO: free window as well maybe ?? (probably not its stack allocated !)
 }
 
 

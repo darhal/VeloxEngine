@@ -103,6 +103,8 @@ namespace Renderer
 
 		VkSwapchainKHR					swapChain;
 		SwapChainData					swapChainData;
+
+		bool							framebufferResized;
 	};
 
 	struct RenderEngine

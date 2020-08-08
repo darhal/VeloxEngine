@@ -12,6 +12,8 @@ namespace Renderer
 
 	int32 CreateRenderDevice(RenderDevice& renderDevice, const RenderInstance& renderInstance, const RenderContext& ctx);
 
+	void DestroryRenderDevice(RenderDevice& renderDevice);
+
 	int32 CreateLogicalDevice(RenderDevice& renderDevice, const RenderInstance& renderInstance, const RenderContext& ctx);
 
 	bool IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR surface);

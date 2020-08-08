@@ -1,6 +1,7 @@
 #include "SwapChain.hpp"
 #include <Renderer/Core/Common/Utils.hpp>
 #include <Engine/Core/Misc/Maths/Maths.hpp>
+#include <Renderer/Window/Window.hpp>
 
 TRE_NS_START
 
@@ -33,14 +34,17 @@ void Renderer::CreateSwapChain(RenderContext& ctx, const RenderInstance& renderI
 {
     ASSERT(renderDevice.gpu == VK_NULL_HANDLE);
     ASSERT(ctx.surface == VK_NULL_HANDLE);
- 
+
+    uint32 width = ctx.window->getSize().x;
+    uint32 height = ctx.window->getSize().y;
+
+    ctx.swapChainData.swapChainExtent        = VkExtent2D{ width, height };
+    
     SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(renderDevice.gpu, ctx.surface);
-
-    VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
-    VkPresentModeKHR presentMode     = ChooseSwapPresentMode(swapChainSupport.presentModes);
-    VkExtent2D extent                = ChooseSwapExtent(swapChainSupport.capabilities, ctx.swapChainData.swapChainExtent);
-
-    uint32 imageCount                = swapChainSupport.capabilities.minImageCount;
+    VkSurfaceFormatKHR surfaceFormat         = ChooseSwapSurfaceFormat(swapChainSupport.formats);
+    VkPresentModeKHR presentMode             = ChooseSwapPresentMode(swapChainSupport.presentModes);
+    VkExtent2D extent                        = ChooseSwapExtent(swapChainSupport.capabilities, ctx.swapChainData.swapChainExtent);
+    uint32 imageCount                        = swapChainSupport.capabilities.minImageCount;
 
     if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
         imageCount = swapChainSupport.capabilities.maxImageCount;
@@ -71,7 +75,12 @@ void Renderer::CreateSwapChain(RenderContext& ctx, const RenderInstance& renderI
     createInfo.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode      = presentMode;
     createInfo.clipped          = VK_TRUE;
-    createInfo.oldSwapchain     = VK_NULL_HANDLE;
+
+    if (ctx.swapChain != VK_NULL_HANDLE) {
+        createInfo.oldSwapchain = ctx.swapChain;
+    }else {
+        createInfo.oldSwapchain = VK_NULL_HANDLE;
+    }
 
     if (vkCreateSwapchainKHR(renderDevice.device, &createInfo, NULL, &ctx.swapChain) != VK_SUCCESS) {
         ASSERTF(true, "Failed to create swap chain!");
@@ -97,17 +106,62 @@ void Renderer::CreateSwapChain(RenderContext& ctx, const RenderInstance& renderI
 
 void Renderer::DestroySwapChain(const RenderDevice& renderDevice, RenderContext& ctx)
 {
+    CleanupSwapChain(ctx, renderDevice);
+
     for (size_t i = 0; i < SwapChainData::MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroySemaphore(renderDevice.device, ctx.swapChainData.renderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(renderDevice.device, ctx.swapChainData.imageAvailableSemaphores[i], nullptr);
-        vkDestroyFence(renderDevice.device, ctx.swapChainData.inFlightFences[i], nullptr);
+        vkDestroySemaphore(renderDevice.device, ctx.swapChainData.renderFinishedSemaphores[i], NULL);
+        vkDestroySemaphore(renderDevice.device, ctx.swapChainData.imageAvailableSemaphores[i], NULL);
+        vkDestroyFence(renderDevice.device, ctx.swapChainData.inFlightFences[i], NULL);
     }
 
-    for (auto imageView : ctx.swapChainData.swapChainImageViews) {
-        vkDestroyImageView(renderDevice.device, imageView, NULL);
+    vkDestroyCommandPool(renderDevice.device, ctx.swapChainData.commandPool, NULL);
+}
+
+void Renderer::CleanupSwapChain(RenderContext& ctx, const RenderDevice& renderDevice)
+{
+    SwapChainData& swapChainData = ctx.swapChainData;
+    VkDevice device              = renderDevice.device;
+
+    for (size_t i = 0; i < swapChainData.swapChainFramebuffers.size(); i++) {
+        vkDestroyFramebuffer(device, swapChainData.swapChainFramebuffers[i], NULL);
     }
 
-    vkDestroySwapchainKHR(renderDevice.device, ctx.swapChain, NULL);
+    vkFreeCommandBuffers(device, swapChainData.commandPool, static_cast<uint32_t>(swapChainData.commandBuffers.Size()), swapChainData.commandBuffers.Data());
+
+    vkDestroyPipeline(device, swapChainData.graphicsPipeline, NULL);
+    vkDestroyPipelineLayout(device, swapChainData.pipelineLayout, NULL);
+    vkDestroyRenderPass(device, swapChainData.renderPass, NULL);
+
+    for (size_t i = 0; i < swapChainData.swapChainImageViews.Size(); i++) {
+        vkDestroyImageView(device, swapChainData.swapChainImageViews[i], NULL);
+    }
+
+    vkDestroySwapchainKHR(device, ctx.swapChain, NULL);
+    ctx.swapChain = VK_NULL_HANDLE;
+}
+
+void Renderer::RecreateSwapChainInternal(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice)
+{
+    vkDeviceWaitIdle(renderDevice.device);
+
+    CleanupSwapChain(ctx, renderDevice);
+
+    uint32 width = ctx.window->getSize().x;
+    uint32 height = ctx.window->getSize().y;
+
+    while (width == 0 || height == 0) {
+        ctx.window->WaitEvents();
+
+        width = ctx.window->getSize().x;
+        height = ctx.window->getSize().y;
+    }
+
+    CreateSwapChain(ctx, renderInstance, renderDevice);
+}
+
+void Renderer::UpdateSwapChain(RenderEngine& engine)
+{
+    RecreateSwapChainInternal(*engine.renderContext, *engine.renderInstance, *engine.renderDevice);
 }
 
 void Renderer::Present(RenderEngine& engine, const TRE::Vector<VkCommandBuffer>& cmdbuff)
@@ -121,7 +175,14 @@ void Renderer::Present(RenderEngine& engine, const TRE::Vector<VkCommandBuffer>&
     vkWaitForFences(device, 1, &engine.renderContext->swapChainData.inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex = 0;
-    vkAcquireNextImageKHR(device, ctx.swapChain, UINT64_MAX, swapChainData.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(device, ctx.swapChain, UINT64_MAX, swapChainData.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+        RecreateSwapChainInternal(*engine.renderContext, *engine.renderInstance, *engine.renderDevice);
+        return;
+    } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        ASSERTF(true, "Failed to acquire swap chain image!");
+    }
 
     if (swapChainData.imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
         vkWaitForFences(device, 1, &swapChainData.imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
@@ -162,7 +223,14 @@ void Renderer::Present(RenderEngine& engine, const TRE::Vector<VkCommandBuffer>&
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
 
-    vkQueuePresentKHR(renderDevice.queues[QFT_PRESENT], &presentInfo);
+    result = vkQueuePresentKHR(renderDevice.queues[QFT_PRESENT], &presentInfo);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || ctx.framebufferResized) {
+        ctx.framebufferResized = false;
+        RecreateSwapChainInternal(*engine.renderContext, *engine.renderInstance, *engine.renderDevice);
+    } else if (result != VK_SUCCESS) {
+        ASSERTF(true, "Failed to present swap chain image!");
+    }
 
     swapChainData.currentFrame = (currentFrame + 1) % SwapChainData::MAX_FRAMES_IN_FLIGHT;
     // printf("Present! %d\n", imageIndex);

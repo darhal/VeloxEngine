@@ -50,6 +50,10 @@ public:
 	bool isMouseButtonDown(MouseButton::mouse_button_t button) const;
 	bool isKeyDown(Key::key_t key) const;
 
+	void PollEvents();
+
+	void WaitEvents();
+
 	void Present();
 
 	void* GetNativeHandle();

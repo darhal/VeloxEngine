@@ -137,20 +137,35 @@ void TRE::Window::Close()
 bool TRE::Window::getEvent(Event& ev)
 {
 	// Fetch new events
-	MSG msg;
-	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
+	this->PollEvents();
 
 	// Return oldest event - if available
 	if (events.empty()) return false;
 
 	ev = events.front();
 	events.pop();
-
 	return true;
+}
+
+void TRE::Window::PollEvents()
+{
+	// Fetch new events
+	MSG msg;
+	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+}
+
+void TRE::Window::WaitEvents()
+{
+	this->PollEvents();
+	uint32 old_size = events.size();
+
+	while (events.size() == old_size) {
+		this->PollEvents();
+	}
 }
 
 LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
@@ -167,15 +182,16 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_SIZE:
 		windowSize.x = GET_X_LPARAM(lParam);
 		windowSize.y = GET_Y_LPARAM(lParam);
+
 		if (events.empty()) {
 			ev.Type = Event::TE_RESIZE;
 			ev.Window.Width = windowSize.x;
 			ev.Window.Height = windowSize.y;
-		}
-		else if (events.back().Type == Event::TE_RESIZE) {
+		}else if (events.back().Type == Event::TE_RESIZE) {
 			events.back().Window.Width = windowSize.x;
 			events.back().Window.Height = windowSize.y;
 		}
+
 		break;
 	case WM_MOVE:
 		RECT rect;
@@ -270,6 +286,7 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 	// Add event to internal queue
 	if (ev.Type != Event::TE_UNKNOWN)
 		events.push(ev);
+
 	return 0;
 }
 
