@@ -3,7 +3,9 @@
 #include <Renderer/Common.hpp>
 #include <initializer_list>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
+#include <Engine/Core/Misc/Maths/Common.hpp>
 #include <vector>
+#include <array>
 
 TRE_NS_START
 
@@ -14,18 +16,21 @@ namespace Renderer
 	const std::initializer_list<const char*> VK_REQ_EXT = {
 		"VK_KHR_surface",
 		"VK_KHR_win32_surface",
+
+#if defined(DEBUG)
 		"VK_EXT_debug_utils",
 		"VK_EXT_debug_report"
+#endif
 	};
 
 	const std::initializer_list<const char*> VK_REQ_LAYERS = {
-		"VK_LAYER_KHRONOS_validation",
-		"VK_LAYER_LUNARG_standard_validation"
+#if defined(DEBUG)
+		"VK_LAYER_KHRONOS_validation"
+#endif
 	};
 
-
 	const std::initializer_list<const char*> VK_REQ_DEVICE_EXT = {
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	};
 
 	enum QueueFamilyTypes {
@@ -52,6 +57,43 @@ namespace Renderer
 
 			return false;
 		}
+	};
+
+	struct Vertex 
+	{
+		TRE::vec3 pos;
+		TRE::vec3 color;
+
+		static VkVertexInputBindingDescription getBindingDescription() {
+			VkVertexInputBindingDescription bindingDescription{};
+			bindingDescription.binding = 0;
+			bindingDescription.stride = sizeof(Vertex);
+			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+			return bindingDescription;
+		}
+
+		static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+			std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+
+			attributeDescriptions[0].binding = 0;
+			attributeDescriptions[0].location = 0;
+			attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+			attributeDescriptions[1].binding = 0;
+			attributeDescriptions[1].location = 1;
+			attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+			attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+			return attributeDescriptions;
+		}
+	};
+
+	struct Buffer
+	{
+		VkBuffer		buffer;
+		VkDeviceMemory	bufferMemory;
 	};
 
 	struct SwapChainData
@@ -94,6 +136,8 @@ namespace Renderer
 
 		QueueFamilyIndices				queueFamilyIndices;
 		VkQueue							queues[QFT_MAX];
+
+		VkPhysicalDeviceMemoryProperties memoryProperties;
 	};
 
 	struct RenderContext 

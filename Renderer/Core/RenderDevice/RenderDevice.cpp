@@ -2,6 +2,7 @@
 #include <Renderer/Core/SwapChain/SwapChain.hpp>
 #include <Renderer/Core/Common/Globals.hpp>
 #include <unordered_set>
+#include <Renderer/Core/Common/Utils.hpp>
 
 TRE_NS_START
 
@@ -10,6 +11,7 @@ int32 Renderer::CreateRenderDevice(RenderDevice& renderDevice, const RenderInsta
     renderDevice.gpu = PickGPU(renderInstance, ctx);
     ASSERTF(renderDevice.gpu == VK_NULL_HANDLE, "Couldn't pick a GPU.");
     renderDevice.queueFamilyIndices = FindQueueFamilies(renderDevice.gpu, ctx.surface);
+    vkGetPhysicalDeviceMemoryProperties(renderDevice.gpu, &renderDevice.memoryProperties);
 
     return CreateLogicalDevice(renderDevice, renderInstance, ctx);
 }
@@ -42,21 +44,22 @@ int32 Renderer::CreateLogicalDevice(RenderDevice& renderDevice, const RenderInst
     VkPhysicalDeviceFeatures deviceFeatures{};
 
     VkDeviceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.sType                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-    createInfo.pQueueCreateInfos = queueCreateInfos.Data();
-    createInfo.queueCreateInfoCount = (uint32)queueCreateInfos.Size();
+    createInfo.pQueueCreateInfos        = queueCreateInfos.Data();
+    createInfo.queueCreateInfoCount     = (uint32)queueCreateInfos.Size();
 
-    createInfo.pEnabledFeatures = &deviceFeatures;
+    createInfo.pEnabledFeatures         = &deviceFeatures;
 
-    createInfo.enabledExtensionCount = (uint32)VK_REQ_DEVICE_EXT.size();
-    createInfo.ppEnabledExtensionNames = VK_REQ_DEVICE_EXT.begin();
+    createInfo.enabledExtensionCount    = (uint32)VK_REQ_DEVICE_EXT.size();
+    createInfo.ppEnabledExtensionNames  = VK_REQ_DEVICE_EXT.begin();
 
-    createInfo.enabledLayerCount = (uint32)VK_REQ_LAYERS.size();
-    createInfo.ppEnabledLayerNames = VK_REQ_LAYERS.begin();
+    createInfo.enabledLayerCount        = (uint32)VK_REQ_LAYERS.size();
+    createInfo.ppEnabledLayerNames      = VK_REQ_LAYERS.begin();
 
-    if (vkCreateDevice(renderDevice.gpu, &createInfo, NULL, &renderDevice.device) != VK_SUCCESS) {
-        fprintf(stderr, "Couldn't create a logical device!\n");
+    VkResult res = vkCreateDevice(renderDevice.gpu, &createInfo, NULL, &renderDevice.device);
+    if (res != VK_SUCCESS) {
+        ASSERTF(true, "Couldn't create a logical device (%s)!", GetVulkanResultString(res));
         return -1;
     }
 
@@ -84,8 +87,8 @@ VkPhysicalDevice Renderer::PickGPU(const RenderInstance& renderInstance, const R
         fprintf(stderr, "Failed to find GPUs with Vulkan support!\n");
     }
 
-    TRE::Vector<VkPhysicalDevice> devices(deviceCount, VK_NULL_HANDLE);
-    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.Data());
+    std::vector<VkPhysicalDevice> devices(deviceCount, VK_NULL_HANDLE);
+    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
     for (const VkPhysicalDevice& device : devices) {
         if (p_pick_func(device, ctx.surface)) {

@@ -161,7 +161,7 @@ void TRE::Window::PollEvents()
 void TRE::Window::WaitEvents()
 {
 	this->PollEvents();
-	uint32 old_size = events.size();
+	uint32 old_size = (uint32)events.size();
 
 	while (events.size() == old_size) {
 		this->PollEvents();
@@ -222,7 +222,7 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
 		ev.Type = Event::TE_KEY_DOWN;
-		ev.Key.Code = TranslateKey(wParam);
+		ev.Key.Code = TranslateKey((uint32)wParam);
 		ev.Key.Alt = HIWORD(GetAsyncKeyState(VK_MENU)) != 0;
 		ev.Key.Control = HIWORD(GetAsyncKeyState(VK_CONTROL)) != 0;
 		ev.Key.Shift = HIWORD(GetAsyncKeyState(VK_SHIFT)) != 0;
@@ -231,7 +231,7 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
 		ev.Type = Event::TE_KEY_UP;
-		ev.Key.Code = TranslateKey(wParam);
+		ev.Key.Code = TranslateKey((uint32)wParam);
 		ev.Key.Alt = HIWORD(GetAsyncKeyState(VK_MENU)) != 0;
 		ev.Key.Control = HIWORD(GetAsyncKeyState(VK_CONTROL)) != 0;
 		ev.Key.Shift = HIWORD(GetAsyncKeyState(VK_SHIFT)) != 0;

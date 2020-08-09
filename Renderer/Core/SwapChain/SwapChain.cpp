@@ -37,6 +37,7 @@ void Renderer::CreateSwapChain(RenderContext& ctx, const RenderInstance& renderI
 
     uint32 width = ctx.window->getSize().x;
     uint32 height = ctx.window->getSize().y;
+    VkSwapchainKHR oldSwapChain = ctx.swapChain;
 
     ctx.swapChainData.swapChainExtent        = VkExtent2D{ width, height };
     
@@ -75,12 +76,7 @@ void Renderer::CreateSwapChain(RenderContext& ctx, const RenderInstance& renderI
     createInfo.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode      = presentMode;
     createInfo.clipped          = VK_TRUE;
-
-    if (ctx.swapChain != VK_NULL_HANDLE) {
-        createInfo.oldSwapchain = ctx.swapChain;
-    }else {
-        createInfo.oldSwapchain = VK_NULL_HANDLE;
-    }
+    createInfo.oldSwapchain     = oldSwapChain;
 
     if (vkCreateSwapchainKHR(renderDevice.device, &createInfo, NULL, &ctx.swapChain) != VK_SUCCESS) {
         ASSERTF(true, "Failed to create swap chain!");
@@ -91,7 +87,7 @@ void Renderer::CreateSwapChain(RenderContext& ctx, const RenderInstance& renderI
     vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &imageCount, ctx.swapChainData.swapChainImages.data());
 
     ctx.swapChainData.swapChainImageFormat = surfaceFormat.format;
-    ctx.swapChainData.swapChainExtent = extent;
+    ctx.swapChainData.swapChainExtent      = extent;
 
     CreateImageViews(renderDevice, ctx);
 
@@ -99,14 +95,22 @@ void Renderer::CreateSwapChain(RenderContext& ctx, const RenderInstance& renderI
     createGraphicsPipeline(renderDevice, ctx);
     createFrameBuffers(renderDevice, ctx);
 
-    CreateSyncObjects(renderDevice, ctx);
-    CreateCommandPool(renderDevice, ctx);
+    if (oldSwapChain == VK_NULL_HANDLE) {
+        CreateSyncObjects(renderDevice, ctx);
+        CreateCommandPool(renderDevice, ctx);
+    }else {
+        vkDestroySwapchainKHR(renderDevice.device, oldSwapChain, NULL);
+    }
+
     CreateCommandBuffers(renderDevice, ctx);
 }
 
 void Renderer::DestroySwapChain(const RenderDevice& renderDevice, RenderContext& ctx)
 {
     CleanupSwapChain(ctx, renderDevice);
+
+    vkDestroySwapchainKHR(renderDevice.device, ctx.swapChain, NULL);
+    ctx.swapChain = VK_NULL_HANDLE;
 
     for (size_t i = 0; i < SwapChainData::MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(renderDevice.device, ctx.swapChainData.renderFinishedSemaphores[i], NULL);
@@ -135,9 +139,6 @@ void Renderer::CleanupSwapChain(RenderContext& ctx, const RenderDevice& renderDe
     for (size_t i = 0; i < swapChainData.swapChainImageViews.Size(); i++) {
         vkDestroyImageView(device, swapChainData.swapChainImageViews[i], NULL);
     }
-
-    vkDestroySwapchainKHR(device, ctx.swapChain, NULL);
-    ctx.swapChain = VK_NULL_HANDLE;
 }
 
 void Renderer::RecreateSwapChainInternal(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice)
@@ -161,7 +162,8 @@ void Renderer::RecreateSwapChainInternal(RenderContext& ctx, const RenderInstanc
 
 void Renderer::UpdateSwapChain(RenderEngine& engine)
 {
-    RecreateSwapChainInternal(*engine.renderContext, *engine.renderInstance, *engine.renderDevice);
+    engine.renderContext->framebufferResized = true;
+    // RecreateSwapChainInternal(*engine.renderContext, *engine.renderInstance, *engine.renderDevice);
 }
 
 void Renderer::Present(RenderEngine& engine, const TRE::Vector<VkCommandBuffer>& cmdbuff)
@@ -172,7 +174,7 @@ void Renderer::Present(RenderEngine& engine, const TRE::Vector<VkCommandBuffer>&
     VkDevice device = renderDevice.device;
     uint32 currentFrame = swapChainData.currentFrame;
 
-    vkWaitForFences(device, 1, &engine.renderContext->swapChainData.inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(device, 1, &swapChainData.inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex = 0;
     VkResult result = vkAcquireNextImageKHR(device, ctx.swapChain, UINT64_MAX, swapChainData.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
@@ -196,15 +198,15 @@ void Renderer::Present(RenderEngine& engine, const TRE::Vector<VkCommandBuffer>&
     VkSemaphore waitSemaphores[] = { swapChainData.imageAvailableSemaphores[currentFrame] };
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = waitSemaphores;
-    submitInfo.pWaitDstStageMask = waitStages;
+    submitInfo.pWaitSemaphores    = waitSemaphores;
+    submitInfo.pWaitDstStageMask  = waitStages;
 
     submitInfo.commandBufferCount = 1; // (uint32)cmdbuff.Size();
-    submitInfo.pCommandBuffers = &swapChainData.commandBuffers[currentFrame]; // cmdbuff.Data();
+    submitInfo.pCommandBuffers    = &swapChainData.commandBuffers[currentFrame]; // cmdbuff.Data();
 
-    VkSemaphore signalSemaphores[] = { swapChainData.renderFinishedSemaphores[currentFrame] };
+    VkSemaphore signalSemaphores[]  = { swapChainData.renderFinishedSemaphores[currentFrame] };
     submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = signalSemaphores;
+    submitInfo.pSignalSemaphores    = signalSemaphores;
 
     vkResetFences(device, 1, &swapChainData.inFlightFences[currentFrame]);
 
@@ -214,14 +216,14 @@ void Renderer::Present(RenderEngine& engine, const TRE::Vector<VkCommandBuffer>&
 
     // Presenting:
     VkPresentInfoKHR presentInfo{};
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = signalSemaphores;
+    presentInfo.pWaitSemaphores    = signalSemaphores;
 
     VkSwapchainKHR swapChains[] = { ctx.swapChain };
-    presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = swapChains;
-    presentInfo.pImageIndices = &imageIndex;
+    presentInfo.swapchainCount  = 1;
+    presentInfo.pSwapchains     = swapChains;
+    presentInfo.pImageIndices   = &imageIndex;
 
     result = vkQueuePresentKHR(renderDevice.queues[QFT_PRESENT], &presentInfo);
 
@@ -381,12 +383,15 @@ void Renderer::createGraphicsPipeline(const RenderDevice& renderDevice, RenderCo
 
     VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
+    auto bindingDescription     = Vertex::getBindingDescription();
+    auto attributeDescriptions  = Vertex::getAttributeDescriptions();
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount   = 0;
-    vertexInputInfo.pVertexBindingDescriptions      = NULL; // Optional
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
-    vertexInputInfo.pVertexAttributeDescriptions    = NULL; // Optional
+    vertexInputInfo.vertexBindingDescriptionCount   = 1;
+    vertexInputInfo.pVertexBindingDescriptions      = &bindingDescription; // Optional
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.pVertexAttributeDescriptions    = attributeDescriptions.data(); // Optional
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

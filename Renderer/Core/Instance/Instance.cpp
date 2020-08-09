@@ -31,16 +31,16 @@ int32 Renderer::CreateInstance(VkInstance* p_instance)
     appInfo.apiVersion          = VK_VERSION_1_2;
 
     VkInstanceCreateInfo createInfo{};
-    createInfo.sType            = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
+    createInfo.sType                    = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.pApplicationInfo         = &appInfo;
 
     // Extensions:
     createInfo.enabledExtensionCount    = (uint32)VK_REQ_EXT.size();
     createInfo.ppEnabledExtensionNames  = VK_REQ_EXT.begin();
 
     // Layers:
-    createInfo.enabledLayerCount    = (uint32)VK_REQ_LAYERS.size();
-    createInfo.ppEnabledLayerNames = VK_REQ_LAYERS.begin();
+    createInfo.enabledLayerCount        = (uint32)VK_REQ_LAYERS.size();
+    createInfo.ppEnabledLayerNames      = VK_REQ_LAYERS.begin();
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 

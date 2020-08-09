@@ -14,5 +14,6 @@
 #include <Engine/Core/Misc/Defines/Debug.hpp>
 
 // #undef DEBUG
+// #define DEBUG
 
 #include <vulkan/vulkan.h>
