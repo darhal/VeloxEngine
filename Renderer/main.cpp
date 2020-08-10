@@ -137,52 +137,63 @@ void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPip
 
     VkDevice device = renderDevice.device;
     //uint32 currentFrame = swapChainData.currentFrame;
-    uint32 imageIndex = (swapChainData.imageIndex + 1) % TRE::Renderer::SwapChainData::MAX_FRAMES_IN_FLIGHT;
+    uint32 currentBuffer = swapChainData.currentBuffer;
+    VkCommandBuffer currentCmdBuff = swapChainData.commandBuffers[currentBuffer];
 
-    // for (uint32 imageIndex = 0; imageIndex < swapChainData.swapChainImages.size(); imageIndex++) {
-        // TRE::Log::Write(TRE::Log::ASSERT, "Reset command buffer %d", imageIndex);
-        vkResetCommandBuffer(swapChainData.commandBuffers[imageIndex], 0);
 
-        VkClearColorValue clearColor = { 164.0f / 256.0f, 30.0f / 256.0f, 34.0f / 256.0f, 0.0f };
-        VkClearValue clearValue = {};
-        clearValue.color = clearColor;
+    vkResetCommandBuffer(currentCmdBuff, 0);
 
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+    VkClearColorValue clearColor = { 164.0f / 256.0f, 30.0f / 256.0f, 34.0f / 256.0f, 0.0f };
+    VkClearValue clearValue = {};
+    clearValue.color = clearColor;
 
-        if (vkBeginCommandBuffer(swapChainData.commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS) {
-            throw std::runtime_error("failed to begin recording command buffer!");
-        }
+    VkViewport viewport{};
+    viewport.width = (float)engine.renderContext->swapChainData.swapChainExtent.width;
+    viewport.height = (float)engine.renderContext->swapChainData.swapChainExtent.height;
+    viewport.maxDepth = 1.0f;
 
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = graphicsPipeline.renderPass;
-        renderPassInfo.framebuffer = swapChainData.swapChainFramebuffers[imageIndex];
-        renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = swapChainData.swapChainExtent;
-        renderPassInfo.clearValueCount = 1;
-        renderPassInfo.pClearValues = &clearValue;
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = engine.renderContext->swapChainData.swapChainExtent;
 
-        vkCmdBeginRenderPass(swapChainData.commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-        // TRE::Log::Write(TRE::Log::ASSERT, "Begin render passs!");
-        // TODO: Bug here on resize, renderpass must be valid
-        vkCmdBindPipeline(swapChainData.commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipeline);
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-        VkBuffer vertexBuffers[] = { vertexBuffer.buffer };
-        VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers(swapChainData.commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
 
-        vkCmdDraw(swapChainData.commandBuffers[imageIndex], 3, 1, 0, 0);
+    if (vkBeginCommandBuffer(currentCmdBuff, &beginInfo) != VK_SUCCESS) {
+        throw std::runtime_error("failed to begin recording command buffer!");
+    }
 
-        vkCmdEndRenderPass(swapChainData.commandBuffers[imageIndex]);
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType                = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass           = graphicsPipeline.renderPass;
+    renderPassInfo.framebuffer          = swapChainData.swapChainFramebuffers[currentBuffer];
+    renderPassInfo.renderArea.offset    = { 0, 0 };
+    renderPassInfo.renderArea.extent    = swapChainData.swapChainExtent;
+    renderPassInfo.clearValueCount      = 1;
+    renderPassInfo.pClearValues         = &clearValue;
 
-        // vkCmdClearColorImage(swapChain.commandBuffers[i], swapChain.swapChainImages[i], VK_IMAGE_LAYOUT_GENERAL, &clearColor, 1, &imageRange);
+    vkCmdBeginRenderPass(currentCmdBuff, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        if (vkEndCommandBuffer(swapChainData.commandBuffers[imageIndex]) != VK_SUCCESS) {
-            throw std::runtime_error("failed to record command buffer!");
-        }
-    // }
+    vkCmdBindPipeline(currentCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipeline);
+
+    vkCmdSetViewport(currentCmdBuff, 0, 1, &viewport);
+    vkCmdSetScissor(currentCmdBuff, 0,  1,  &scissor);
+
+    VkBuffer vertexBuffers[] = { vertexBuffer.buffer };
+    VkDeviceSize offsets[] = { 0 };
+    vkCmdBindVertexBuffers(currentCmdBuff, 0, 1, vertexBuffers, offsets);
+
+    vkCmdDraw(currentCmdBuff, 3, 1, 0, 0);
+
+    vkCmdEndRenderPass(currentCmdBuff);
+
+    // vkCmdClearColorImage(swapChain.commandBuffers[i], swapChain.swapChainImages[i], VK_IMAGE_LAYOUT_GENERAL, &clearColor, 1, &imageRange);
+
+    if (vkEndCommandBuffer(currentCmdBuff) != VK_SUCCESS) {
+        throw std::runtime_error("failed to record command buffer!");
+    }
 }
 
 int main()
@@ -243,8 +254,9 @@ int main()
             continue;
         }
 
+        TRE::Renderer::PrepareFrame(engine);
         RenderFrame(engine, graphicsPipeline, vertexBuffer);
-        TRE::Renderer::Present(engine, {});
+        TRE::Renderer::Present(engine);
     }
     
     TRE::Renderer::Destrory(engine);

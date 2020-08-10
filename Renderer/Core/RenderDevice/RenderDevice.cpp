@@ -10,7 +10,11 @@ int32 Renderer::CreateRenderDevice(RenderDevice& renderDevice, const RenderInsta
 {
     renderDevice.gpu = PickGPU(renderInstance, ctx);
     ASSERTF(renderDevice.gpu == VK_NULL_HANDLE, "Couldn't pick a GPU.");
-    renderDevice.queueFamilyIndices = FindQueueFamilies(renderDevice.gpu, ctx.surface);
+
+    renderDevice.queueFamilyIndices     = FindQueueFamilies(renderDevice.gpu, ctx.surface);
+    renderDevice.isPresentQueueSeprate  = renderDevice.queueFamilyIndices.queueFamilies[QFT_GRAPHICS] != 
+                                            renderDevice.queueFamilyIndices.queueFamilies[QFT_PRESENT];
+
     vkGetPhysicalDeviceMemoryProperties(renderDevice.gpu, &renderDevice.memoryProperties);
 
     return CreateLogicalDevice(renderDevice, renderInstance, ctx);

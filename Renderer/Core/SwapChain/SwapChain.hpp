@@ -25,7 +25,9 @@ namespace Renderer
 
     void RecreateSwapChainInternal(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice);
 
-    void Present(RenderEngine& engine, const TRE::Vector<VkCommandBuffer>& cmdbuff);
+
+    void PrepareFrame(RenderEngine& engine);
+    void Present(RenderEngine& engine);
 
     void CreateImageViews(const RenderDevice& renderDevice, RenderContext& ctx);
     void CreateSyncObjects(const RenderDevice& renderDevice, RenderContext& ctx);
@@ -34,6 +36,8 @@ namespace Renderer
 
     void CreateSwapChainRenderPass(const RenderDevice& renderDevice, RenderContext& ctx);
     void CreateFrameBuffers(const RenderDevice& renderDevice, RenderContext& ctx);
+
+    void BuildImageOwnershipCmd(const RenderDevice& renderDevice, RenderContext& ctx, uint32 imageIndex);
 
     VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const TRE::Vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR ChooseSwapPresentMode(const TRE::Vector<VkPresentModeKHR>& availablePresentModes);

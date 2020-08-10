@@ -196,12 +196,17 @@ namespace Renderer
 		CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT = 2;
 
 		VkCommandPool					commandPool;
-		TRE::Vector<VkCommandBuffer>	commandBuffers;
+		VkCommandPool					presentCommandPool;
 
-		std::vector<VkSemaphore>		imageAvailableSemaphores;
-		std::vector<VkSemaphore>		renderFinishedSemaphores;
-		std::vector<VkFence>			inFlightFences;
-		std::vector<VkFence>			imagesInFlight;
+		TRE::Vector<VkCommandBuffer>	commandBuffers;
+		TRE::Vector<VkCommandBuffer>	presentcommandBuffers;
+		
+		VkSemaphore						imageAcquiredSemaphores[MAX_FRAMES_IN_FLIGHT];
+		VkSemaphore						drawCompleteSemaphores[MAX_FRAMES_IN_FLIGHT];
+		VkFence							fences[MAX_FRAMES_IN_FLIGHT];
+
+		// To use when using seprate presentation queue:
+		VkSemaphore						imageOwnershipSemaphores[MAX_FRAMES_IN_FLIGHT];
 
 		std::vector<VkImage>			swapChainImages;
 		TRE::Vector<VkImageView>		swapChainImageViews;
@@ -209,7 +214,7 @@ namespace Renderer
 		VkExtent2D						swapChainExtent;
 
 		uint32							currentFrame;
-		uint32							imageIndex;
+		uint32							currentBuffer;
 
 		std::vector<VkFramebuffer>		swapChainFramebuffers;
 		VkRenderPass					renderPass;
@@ -225,13 +230,15 @@ namespace Renderer
 
 	struct RenderDevice
 	{
-		VkPhysicalDevice				gpu;
-		VkDevice						device;
+		VkPhysicalDevice					gpu;
+		VkDevice							device;
 
-		QueueFamilyIndices				queueFamilyIndices;
-		VkQueue							queues[QFT_MAX];
+		QueueFamilyIndices					queueFamilyIndices;
+		VkQueue								queues[QFT_MAX];
 
-		VkPhysicalDeviceMemoryProperties memoryProperties;
+		VkPhysicalDeviceMemoryProperties	memoryProperties;
+
+		bool								isPresentQueueSeprate;
 	};
 
 	struct RenderContext 
