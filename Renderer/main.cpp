@@ -23,6 +23,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <iostream>
+#include <chrono>
 #include <Renderer/Core/Renderer.hpp>
 #include <Renderer/Core/SwapChain/SwapChain.hpp>
 #include <Renderer/Core/Buffer/Buffer.hpp>
@@ -189,10 +190,24 @@ void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPip
 
     vkCmdEndRenderPass(currentCmdBuff);
 
-    // vkCmdClearColorImage(swapChain.commandBuffers[i], swapChain.swapChainImages[i], VK_IMAGE_LAYOUT_GENERAL, &clearColor, 1, &imageRange);
+    //VkImageSubresourceRange imgRange = VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+    //vkCmdClearColorImage(currentCmdBuff, swapChainData.swapChainImages[currentBuffer], VK_IMAGE_LAYOUT_GENERAL, &clearColor, 1, &imgRange);
 
     if (vkEndCommandBuffer(currentCmdBuff) != VK_SUCCESS) {
         throw std::runtime_error("failed to record command buffer!");
+    }
+}
+
+void printFPS() {
+    static std::chrono::time_point<std::chrono::steady_clock> oldTime = std::chrono::high_resolution_clock::now();
+    static int fps;
+
+    fps++;
+
+    if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - oldTime) >= std::chrono::seconds{ 1 }) {
+        oldTime = std::chrono::high_resolution_clock::now();
+        std::cout << "FPS: " << fps << std::endl;
+        fps = 0;
     }
 }
 
@@ -214,6 +229,7 @@ int main()
     const unsigned int SCR_WIDTH = 1920 / 2;
     const unsigned int SCR_HEIGHT = 1080 / 2;
 
+    TRE::Event ev;
     TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
     TRE::Renderer::RenderEngine engine{0};
 
@@ -224,7 +240,6 @@ int main()
     TRE::Renderer::RenderContext& ctx = *engine.renderContext;
     TRE::Renderer::RenderDevice& renderDevice = *engine.renderDevice;
     TRE::Renderer::SwapChainData& swapChainData = engine.renderContext->swapChainData;
-
 
     const std::vector<TRE::Renderer::Vertex> vertices = {
         {TRE::vec3{0.0f, -0.5f, 0.f}, TRE::vec3{1.0f, 1.0f, 1.0f}},
@@ -242,13 +257,9 @@ int main()
     InitGraphicsPipelineDesc(engine, pipelineDesc);
     TRE::Renderer::CreateGraphicsPipeline(renderDevice, graphicsPipeline, pipelineDesc);
 
-   
-
-    TRE::Event ev;
-
     while (window.isOpen()) {
         window.getEvent(ev);
-
+       
         if (ev.Type == TRE::Event::TE_RESIZE) {
             TRE::Renderer::UpdateSwapChain(engine);
             continue;
@@ -257,6 +268,8 @@ int main()
         TRE::Renderer::PrepareFrame(engine);
         RenderFrame(engine, graphicsPipeline, vertexBuffer);
         TRE::Renderer::Present(engine);
+
+        printFPS();
     }
     
     TRE::Renderer::Destrory(engine);

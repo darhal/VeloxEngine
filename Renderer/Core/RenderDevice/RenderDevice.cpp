@@ -62,6 +62,7 @@ int32 Renderer::CreateLogicalDevice(RenderDevice& renderDevice, const RenderInst
     createInfo.ppEnabledLayerNames      = VK_REQ_LAYERS.begin();
 
     VkResult res = vkCreateDevice(renderDevice.gpu, &createInfo, NULL, &renderDevice.device);
+
     if (res != VK_SUCCESS) {
         ASSERTF(true, "Couldn't create a logical device (%s)!", GetVulkanResultString(res));
         return -1;
