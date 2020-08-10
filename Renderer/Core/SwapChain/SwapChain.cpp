@@ -45,7 +45,7 @@ void Renderer::CreateSwapChain(RenderContext& ctx, const RenderInstance& renderI
     VkSurfaceFormatKHR surfaceFormat         = ChooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode             = ChooseSwapPresentMode(swapChainSupport.presentModes);
     VkExtent2D extent                        = ChooseSwapExtent(swapChainSupport.capabilities, ctx.swapChainData.swapChainExtent);
-    uint32 imageCount                        = swapChainSupport.capabilities.minImageCount;
+    uint32 imageCount                        = swapChainSupport.capabilities.minImageCount + 1;
 
     if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
         imageCount = swapChainSupport.capabilities.maxImageCount;
@@ -339,7 +339,7 @@ void Renderer::CreateCommandBuffers(const RenderDevice& renderDevice, RenderCont
 {
     SwapChainData& swapChainData = ctx.swapChainData;
 
-    swapChainData.commandBuffers.Resize(swapChainData.MAX_FRAMES_IN_FLIGHT);
+    swapChainData.commandBuffers.Resize(swapChainData.swapChainImages.size());
 
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -352,7 +352,7 @@ void Renderer::CreateCommandBuffers(const RenderDevice& renderDevice, RenderCont
     }
 
     if (renderDevice.isPresentQueueSeprate) {
-        swapChainData.presentcommandBuffers.Resize(swapChainData.MAX_FRAMES_IN_FLIGHT);
+        swapChainData.presentcommandBuffers.Resize(swapChainData.swapChainImages.size());
 
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType                 = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -364,12 +364,11 @@ void Renderer::CreateCommandBuffers(const RenderDevice& renderDevice, RenderCont
             ASSERTF(true, "failed to allocate command buffers!");
         }
 
-        for (uint32 i = 0; i < swapChainData.MAX_FRAMES_IN_FLIGHT; i++) {
+        for (uint32 i = 0; i < swapChainData.swapChainImages.size(); i++) {
             BuildImageOwnershipCmd(renderDevice, ctx, i);
         }
     }
 }
-
 
 void Renderer::CreateSwapChainRenderPass(const RenderDevice& renderDevice, RenderContext& ctx)
 {

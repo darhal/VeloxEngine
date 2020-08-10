@@ -268,7 +268,7 @@ int main()
         TRE::Renderer::PrepareFrame(engine);
         RenderFrame(engine, graphicsPipeline, vertexBuffer);
         TRE::Renderer::Present(engine);
-
+        
         printFPS();
     }
     
