@@ -2,7 +2,7 @@
 
 TRE_NS_START
 
-Renderer::Buffer Renderer::CreateBuffer(const RenderDevice& renderDevice, VkDeviceSize size, uint32 usage, VkMemoryPropertyFlags properties)
+Renderer::Buffer Renderer::CreateBuffer(const RenderDevice& renderDevice, VkDeviceSize size, const void* data, uint32 usage, VkMemoryPropertyFlags properties)
 {
 	Buffer buffer;
 
@@ -18,6 +18,14 @@ Renderer::Buffer Renderer::CreateBuffer(const RenderDevice& renderDevice, VkDevi
 	}
 
 	AllocateMemory(renderDevice, buffer, properties);
+
+	if (data) {
+		void* bufferData;
+		vkMapMemory(renderDevice.device, buffer.bufferMemory, 0, size, 0, &bufferData);
+		memcpy(bufferData, data, size);
+		vkUnmapMemory(renderDevice.device, buffer.bufferMemory);
+	}
+
 	return buffer;
 }
 
@@ -55,6 +63,7 @@ uint32 Renderer::FindMemoryType(const RenderDevice& renderDevice, uint32 typeFil
 	}
 
 	ASSERTF(true, "Failed to find suitable memory type!");
+	return 0;
 }
 
 TRE_NS_END

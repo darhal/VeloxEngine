@@ -32,11 +32,8 @@ namespace Renderer
     void CreateCommandPool(const RenderDevice& renderDevice, RenderContext& ctx);
     void CreateCommandBuffers(const RenderDevice& renderDevice, RenderContext& ctx);
 
-    void createGraphicsPipeline(const RenderDevice& renderDevice, RenderContext& ctx);
-    void createRenderPass(const RenderDevice& renderDevice, RenderContext& ctx);
-    void createFrameBuffers(const RenderDevice& renderDevice, RenderContext& ctx);
-
-    VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code);
+    void CreateSwapChainRenderPass(const RenderDevice& renderDevice, RenderContext& ctx);
+    void CreateFrameBuffers(const RenderDevice& renderDevice, RenderContext& ctx);
 
     VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const TRE::Vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR ChooseSwapPresentMode(const TRE::Vector<VkPresentModeKHR>& availablePresentModes);
