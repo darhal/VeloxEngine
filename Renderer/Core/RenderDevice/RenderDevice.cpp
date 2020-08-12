@@ -69,7 +69,7 @@ int32 Renderer::CreateLogicalDevice(RenderDevice& renderDevice, const RenderInst
     }
 
     for (uint32 queueIndex = 0; queueIndex < QFT_MAX; queueIndex++) {
-        if (indices.queueFamilies[queueIndex] != uint32(-1)) {
+        if (indices.queueFamilies[queueIndex] != UINT32_MAX) {
             vkGetDeviceQueue(renderDevice.device, indices.queueFamilies[queueIndex], 0, &renderDevice.queues[queueIndex]);
         }
     }
@@ -133,6 +133,10 @@ Renderer::QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice p_gpu,
             indices.queueFamilies[QFT_GRAPHICS] = i;
         }
 
+        if ((queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) && !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
+            indices.queueFamilies[QFT_TRANSFER] = i;
+        }
+
         VkBool32 presentSupport = false;
 
         if (p_surface) {
@@ -148,6 +152,10 @@ Renderer::QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice p_gpu,
         }
 
         i++;
+    }
+
+    if (indices.queueFamilies[QFT_TRANSFER] == UINT32_MAX) { // falling back to graphics queue
+        indices.queueFamilies[QFT_TRANSFER] = indices.queueFamilies[QFT_GRAPHICS];
     }
 
     return indices;

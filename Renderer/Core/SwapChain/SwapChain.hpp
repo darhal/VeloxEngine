@@ -25,19 +25,24 @@ namespace Renderer
 
     void RecreateSwapChainInternal(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice);
 
+    void TransferMemory(RenderEngine& engine);
 
     void PrepareFrame(RenderEngine& engine);
     void Present(RenderEngine& engine);
 
-    void CreateImageViews(const RenderDevice& renderDevice, RenderContext& ctx);
     void CreateSyncObjects(const RenderDevice& renderDevice, RenderContext& ctx);
     void CreateCommandPool(const RenderDevice& renderDevice, RenderContext& ctx);
     void CreateCommandBuffers(const RenderDevice& renderDevice, RenderContext& ctx);
 
+    void CreateFrameResources(const RenderDevice& renderDevice, RenderContext& ctx, const TRE::Vector<VkImage>& images);
+
     void CreateSwapChainRenderPass(const RenderDevice& renderDevice, RenderContext& ctx);
-    void CreateFrameBuffers(const RenderDevice& renderDevice, RenderContext& ctx);
 
     void BuildImageOwnershipCmd(const RenderDevice& renderDevice, RenderContext& ctx, uint32 imageIndex);
+
+    const ContextFrameResources& GetCurrentFrameResource(const RenderContext& ctx);
+
+    ContextFrameResources& GetCurrentFrameResource(RenderContext& ctx);
 
     VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const TRE::Vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR ChooseSwapPresentMode(const TRE::Vector<VkPresentModeKHR>& availablePresentModes);

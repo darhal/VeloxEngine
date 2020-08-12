@@ -134,13 +134,12 @@ void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPip
 {
     TRE::Renderer::RenderContext& ctx = *engine.renderContext;
     TRE::Renderer::RenderDevice& renderDevice = *engine.renderDevice;
-    TRE::Renderer::SwapChainData& swapChainData = engine.renderContext->swapChainData;
+    TRE::Renderer::SwapChainData& swapChainData = ctx.swapChainData;
+    TRE::Renderer::RenderContextData& ctxData = ctx.contextData;
+    TRE::Renderer::ContextFrameResources& ctxResource = TRE::Renderer::GetCurrentFrameResource(ctx);
 
-    VkDevice device = renderDevice.device;
-    //uint32 currentFrame = swapChainData.currentFrame;
-    uint32 currentBuffer = swapChainData.currentBuffer;
-    VkCommandBuffer currentCmdBuff = swapChainData.commandBuffers[currentBuffer];
-
+    VkDevice device = renderDevice.device;    
+    VkCommandBuffer currentCmdBuff = ctxResource.graphicsCommandBuffer;
 
     vkResetCommandBuffer(currentCmdBuff, 0);
 
@@ -149,9 +148,9 @@ void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPip
     clearValue.color = clearColor;
 
     VkViewport viewport{};
-    viewport.width = (float)engine.renderContext->swapChainData.swapChainExtent.width;
-    viewport.height = (float)engine.renderContext->swapChainData.swapChainExtent.height;
-    viewport.maxDepth = 1.0f;
+    viewport.width      = (float)engine.renderContext->swapChainData.swapChainExtent.width;
+    viewport.height     = (float)engine.renderContext->swapChainData.swapChainExtent.height;
+    viewport.maxDepth   = 1.0f;
 
     VkRect2D scissor{};
     scissor.offset = { 0, 0 };
@@ -169,7 +168,7 @@ void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPip
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType                = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass           = graphicsPipeline.renderPass;
-    renderPassInfo.framebuffer          = swapChainData.swapChainFramebuffers[currentBuffer];
+    renderPassInfo.framebuffer          = ctxResource.swapChainFramebuffer;
     renderPassInfo.renderArea.offset    = { 0, 0 };
     renderPassInfo.renderArea.extent    = swapChainData.swapChainExtent;
     renderPassInfo.clearValueCount      = 1;
@@ -247,13 +246,29 @@ int main()
         {TRE::vec3{-0.5f, 0.5f, 0.f}, TRE::vec3{0.0f, 0.0f, 1.0f}}
     };
 
+    size_t vertexSize = sizeof(vertices[0]) * vertices.size();
+
+    TRE::Renderer::Buffer staginVertexBuffer = TRE::Renderer::CreateStaginBuffer(renderDevice, vertexSize, vertices.data());
+
     TRE::Renderer::Buffer vertexBuffer =
-        TRE::Renderer::CreateBuffer(renderDevice, sizeof(vertices[0]) * vertices.size(), vertices.data(),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        TRE::Renderer::CreateBuffer(renderDevice, sizeof(vertices[0]) * vertices.size(), NULL,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        );
+
+    VkCommandBuffer currentCmdBuff = TRE::Renderer::GetCurrentFrameResource(ctx).memoryCommandBuffer;
+
+    TRE::Renderer::TransferBufferInfo transferInfo;
+    transferInfo.srcBuffer = &staginVertexBuffer;
+    transferInfo.dstBuffer = &vertexBuffer;
+    transferInfo.copyRegions.EmplaceBack(VkBufferCopy{0, 0, vertexSize});
+
+    TRE::Renderer::CopyBuffers(currentCmdBuff, 1, &transferInfo);
+    TRE::Renderer::TransferMemory(engine);
 
     TRE::Renderer::GraphicsPipeline graphicsPipeline;
     TRE::Renderer::GraphicsPiplineDesc pipelineDesc{};
-    graphicsPipeline.renderPass = engine.renderContext->swapChainData.renderPass;
+    graphicsPipeline.renderPass = ctx.contextData.renderPass;
     InitGraphicsPipelineDesc(engine, pipelineDesc);
     TRE::Renderer::CreateGraphicsPipeline(renderDevice, graphicsPipeline, pipelineDesc);
 

@@ -9,7 +9,7 @@ Renderer::Buffer Renderer::CreateBuffer(const RenderDevice& renderDevice, VkDevi
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType		= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size			= size;
-	bufferInfo.usage		= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	bufferInfo.usage		= usage;
 	bufferInfo.sharingMode	= VK_SHARING_MODE_EXCLUSIVE;
 	bufferInfo.flags		= 0;
 
@@ -29,6 +29,11 @@ Renderer::Buffer Renderer::CreateBuffer(const RenderDevice& renderDevice, VkDevi
 	return buffer;
 }
 
+Renderer::Buffer Renderer::CreateStaginBuffer(const RenderDevice& renderDevice, VkDeviceSize size, const void* data)
+{
+	return CreateBuffer(renderDevice, size, data, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+}
+
 void Renderer::DestroyBuffer(const RenderDevice& renderDevice, Buffer& buffer)
 {
 	vkDestroyBuffer(renderDevice.device, buffer.buffer, NULL);
@@ -45,7 +50,7 @@ void Renderer::AllocateMemory(const RenderDevice& renderDevice, Buffer& buffer, 
 	allocInfo.allocationSize	= memRequirements.size;
 	allocInfo.memoryTypeIndex	= FindMemoryType(renderDevice, memRequirements.memoryTypeBits, properties);
 
-	if (vkAllocateMemory(renderDevice.device, &allocInfo, nullptr, &buffer.bufferMemory) != VK_SUCCESS) {
+	if (vkAllocateMemory(renderDevice.device, &allocInfo, NULL, &buffer.bufferMemory) != VK_SUCCESS) {
 		ASSERTF(true, "failed to allocate vertex buffer memory!");
 	}
 
@@ -64,6 +69,24 @@ uint32 Renderer::FindMemoryType(const RenderDevice& renderDevice, uint32 typeFil
 
 	ASSERTF(true, "Failed to find suitable memory type!");
 	return 0;
+}
+
+void Renderer::CopyBuffers(VkCommandBuffer cmdBuffer, uint32 count, TransferBufferInfo* transferBufferInfo)
+{
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(cmdBuffer, &beginInfo);
+
+	for (uint32 i = 0; i < count; i++) {
+		const TransferBufferInfo& transferBuffer = transferBufferInfo[i];
+
+		vkCmdCopyBuffer(cmdBuffer, transferBuffer.srcBuffer->buffer, transferBuffer.dstBuffer->buffer, 
+			(uint32)transferBuffer.copyRegions.Size(), transferBuffer.copyRegions.Data());
+	}
+
+	vkEndCommandBuffer(cmdBuffer);
 }
 
 TRE_NS_END

@@ -45,12 +45,12 @@ namespace Renderer
 
 	struct QueueFamilyIndices
 	{
-		uint32 queueFamilies[QFT_MAX] = { uint32(-1) };
+		uint32 queueFamilies[QFT_MAX] = { UINT32_MAX };
 
 		bool IsComplete() const
 		{
 			for (uint32 queueFamily : queueFamilies) {
-				if (queueFamily != uint32(-1)) {
+				if (queueFamily != UINT32_MAX) {
 					return true;
 				}
 			}
@@ -191,15 +191,16 @@ namespace Renderer
 		VkDeviceMemory	bufferMemory;
 	};
 
+	struct TransferBufferInfo
+	{
+		Buffer*						srcBuffer;
+		Buffer*						dstBuffer; 
+		TRE::Vector<VkBufferCopy>	copyRegions;
+	};
+
 	struct SwapChainData
 	{
 		CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT = 2;
-
-		VkCommandPool					commandPool;
-		VkCommandPool					presentCommandPool;
-
-		TRE::Vector<VkCommandBuffer>	commandBuffers;
-		TRE::Vector<VkCommandBuffer>	presentcommandBuffers;
 		
 		VkSemaphore						imageAcquiredSemaphores[MAX_FRAMES_IN_FLIGHT];
 		VkSemaphore						drawCompleteSemaphores[MAX_FRAMES_IN_FLIGHT];
@@ -208,18 +209,39 @@ namespace Renderer
 		// To use when using seprate presentation queue:
 		VkSemaphore						imageOwnershipSemaphores[MAX_FRAMES_IN_FLIGHT];
 
-		std::vector<VkImage>			swapChainImages;
-		TRE::Vector<VkImageView>		swapChainImageViews;
 		VkFormat						swapChainImageFormat;
 		VkExtent2D						swapChainExtent;
 
-		uint32							currentFrame;
-		uint32							currentBuffer;
 
-		std::vector<VkFramebuffer>		swapChainFramebuffers;
-		VkRenderPass					renderPass;
 	};
 
+	struct ContextFrameResources 
+	{
+		VkCommandBuffer		graphicsCommandBuffer;
+		VkCommandBuffer		memoryCommandBuffer;
+		VkCommandBuffer		presentCommandBuffer;
+
+		VkImage				swapChainImage;
+		VkImageView			swapChainImageView;
+		VkFramebuffer		swapChainFramebuffer;
+	};
+
+	struct RenderContextData
+	{
+		VkCommandPool						commandPool;
+		VkCommandPool						memoryCommandPool;
+		VkCommandPool						presentCommandPool;
+
+		VkRenderPass						renderPass;
+
+		uint32								currentFrame;
+		uint32								currentBuffer;
+		uint32								imagesCount;
+
+		TRE::Vector<ContextFrameResources>	contextFrameResources;
+	};
+
+	
 	struct RenderInstance 
 	{
 		VkInstance						instance;
@@ -248,6 +270,7 @@ namespace Renderer
 
 		VkSwapchainKHR					swapChain;
 		SwapChainData					swapChainData;
+		RenderContextData				contextData;
 
 		bool							framebufferResized;
 	};
