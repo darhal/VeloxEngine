@@ -45,17 +45,19 @@ namespace Renderer
 
 	struct QueueFamilyIndices
 	{
-		uint32 queueFamilies[QFT_MAX] = { UINT32_MAX };
+		CONSTEXPR static uint32 REQUIRED_QUEUES[] = { QFT_GRAPHICS, QFT_TRANSFER };
+
+		uint32 queueFamilies[QFT_MAX] = { UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX };
 
 		bool IsComplete() const
 		{
-			for (uint32 queueFamily : queueFamilies) {
-				if (queueFamily != UINT32_MAX) {
-					return true;
+			for (uint32 queueFamilyIndex : REQUIRED_QUEUES) {
+				if (queueFamilies[queueFamilyIndex] == UINT32_MAX) {
+					return false;
 				}
 			}
 
-			return false;
+			return true;
 		}
 	};
 
@@ -209,6 +211,9 @@ namespace Renderer
 		// To use when using seprate presentation queue:
 		VkSemaphore						imageOwnershipSemaphores[MAX_FRAMES_IN_FLIGHT];
 
+		// To use when using seprate transfer queue:
+		VkSemaphore						transferSemaphores[MAX_FRAMES_IN_FLIGHT];
+
 		VkFormat						swapChainImageFormat;
 		VkExtent2D						swapChainExtent;
 
@@ -218,7 +223,7 @@ namespace Renderer
 	struct ContextFrameResources 
 	{
 		VkCommandBuffer		graphicsCommandBuffer;
-		VkCommandBuffer		memoryCommandBuffer;
+		VkCommandBuffer		transferCommandBuffer;
 		VkCommandBuffer		presentCommandBuffer;
 
 		VkImage				swapChainImage;
@@ -238,7 +243,9 @@ namespace Renderer
 		uint32								currentBuffer;
 		uint32								imagesCount;
 
-		TRE::Vector<ContextFrameResources>	contextFrameResources;
+		uint32								transferRequests;
+
+		std::vector<ContextFrameResources>	contextFrameResources;
 	};
 
 	
@@ -261,6 +268,7 @@ namespace Renderer
 		VkPhysicalDeviceMemoryProperties	memoryProperties;
 
 		bool								isPresentQueueSeprate;
+		bool								isTransferQueueSeprate;
 	};
 
 	struct RenderContext 

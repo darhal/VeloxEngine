@@ -7,7 +7,7 @@ TRE_NS_START
 
 namespace Renderer
 {
-	Buffer CreateBuffer(const RenderDevice& renderDevice, VkDeviceSize size, const void* data, uint32 usage, VkMemoryPropertyFlags properties);
+	Buffer CreateBuffer(const RenderDevice& renderDevice, VkDeviceSize size, const void* data, uint32 usage, VkMemoryPropertyFlags properties, VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE, uint32 queueFamilyIndexCount = 0, uint32* queueFamilyIndices = NULL);
 
 	Buffer CreateStaginBuffer(const RenderDevice& renderDevice, VkDeviceSize size, const void* data);
 
@@ -18,6 +18,10 @@ namespace Renderer
 	uint32 FindMemoryType(const RenderDevice& renderDevice, uint32 typeFilter, VkMemoryPropertyFlags properties);
 
 	void CopyBuffers(VkCommandBuffer cmdBuffer, uint32 count, TransferBufferInfo* transferBufferInfo);
+
+	void TransferBuffers(RenderContext& ctx, uint32 count, TransferBufferInfo* transferBufferInfo);
+
+	void EditBuffer(const RenderDevice& renderDevice, Buffer& buffer, VkDeviceSize size, const void* data);
 }
 
 TRE_NS_END

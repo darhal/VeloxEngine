@@ -108,7 +108,7 @@ void InitGraphicsPipelineDesc(const TRE::Renderer::RenderEngine& engine, TRE::Re
     desc.rasterStateDesc.rasterizerDiscardEnable = VK_FALSE;
     desc.rasterStateDesc.polygonMode = VK_POLYGON_MODE_FILL;
     desc.rasterStateDesc.lineWidth = 1.0f;
-    desc.rasterStateDesc.cullMode = VK_CULL_MODE_BACK_BIT;
+    desc.rasterStateDesc.cullMode = VK_CULL_MODE_NONE;//VK_CULL_MODE_BACK_BIT;
     desc.rasterStateDesc.frontFace = VK_FRONT_FACE_CLOCKWISE;
     desc.rasterStateDesc.depthBiasEnable = VK_FALSE;
 
@@ -130,7 +130,7 @@ void InitGraphicsPipelineDesc(const TRE::Renderer::RenderEngine& engine, TRE::Re
     desc.basePipelineIndex = -1;
 }
 
-void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPipeline& graphicsPipeline, TRE::Renderer::Buffer& vertexBuffer)
+void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPipeline& graphicsPipeline, TRE::Renderer::Buffer& vertexBuffer, TRE::Renderer::Buffer& indexBuffer)
 {
     TRE::Renderer::RenderContext& ctx = *engine.renderContext;
     TRE::Renderer::RenderDevice& renderDevice = *engine.renderDevice;
@@ -148,13 +148,13 @@ void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPip
     clearValue.color = clearColor;
 
     VkViewport viewport{};
-    viewport.width      = (float)engine.renderContext->swapChainData.swapChainExtent.width;
-    viewport.height     = (float)engine.renderContext->swapChainData.swapChainExtent.height;
+    viewport.width      = (float)swapChainData.swapChainExtent.width;
+    viewport.height     = (float)swapChainData.swapChainExtent.height;
     viewport.maxDepth   = 1.0f;
 
     VkRect2D scissor{};
     scissor.offset = { 0, 0 };
-    scissor.extent = engine.renderContext->swapChainData.swapChainExtent;
+    scissor.extent = swapChainData.swapChainExtent;
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -163,6 +163,18 @@ void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPip
 
     if (vkBeginCommandBuffer(currentCmdBuff, &beginInfo) != VK_SUCCESS) {
         throw std::runtime_error("failed to begin recording command buffer!");
+    }
+
+    if (!renderDevice.isTransferQueueSeprate && ctxData.transferRequests) {
+        VkMemoryBarrier memoryBarrier = {};
+        memoryBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+        memoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        memoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+
+        vkCmdPipelineBarrier(currentCmdBuff,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_DEPENDENCY_DEVICE_GROUP_BIT,
+            1, &memoryBarrier, 0, NULL, 0, NULL
+        );
     }
 
     VkRenderPassBeginInfo renderPassInfo{};
@@ -179,13 +191,15 @@ void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPip
     vkCmdBindPipeline(currentCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipeline);
 
     vkCmdSetViewport(currentCmdBuff, 0, 1, &viewport);
-    vkCmdSetScissor(currentCmdBuff, 0,  1,  &scissor);
+    vkCmdSetScissor(currentCmdBuff, 0, 1, &scissor);
 
     VkBuffer vertexBuffers[] = { vertexBuffer.buffer };
     VkDeviceSize offsets[] = { 0 };
     vkCmdBindVertexBuffers(currentCmdBuff, 0, 1, vertexBuffers, offsets);
+    vkCmdBindIndexBuffer(currentCmdBuff, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT16);
 
-    vkCmdDraw(currentCmdBuff, 3, 1, 0, 0);
+    // vkCmdDraw(currentCmdBuff, 3, 1, 0, 0);
+    vkCmdDrawIndexed(currentCmdBuff, 6, 1, 0, 0, 0);
 
     vkCmdEndRenderPass(currentCmdBuff);
 
@@ -240,37 +254,69 @@ int main()
     TRE::Renderer::RenderDevice& renderDevice = *engine.renderDevice;
     TRE::Renderer::SwapChainData& swapChainData = engine.renderContext->swapChainData;
 
-    const std::vector<TRE::Renderer::Vertex> vertices = {
-        {TRE::vec3{0.0f, -0.5f, 0.f}, TRE::vec3{1.0f, 1.0f, 1.0f}},
-        {TRE::vec3{0.5f, 0.5f, 0.f}, TRE::vec3{0.0f, 1.0f, 0.0f}},
-        {TRE::vec3{-0.5f, 0.5f, 0.f}, TRE::vec3{0.0f, 0.0f, 1.0f}}
+    uint32 queuFamilesIndiciesSeprate[] = {
+        renderDevice.queueFamilyIndices.queueFamilies[TRE::Renderer::QFT_GRAPHICS],
+        renderDevice.queueFamilyIndices.queueFamilies[TRE::Renderer::QFT_TRANSFER]
+    };
+
+    std::vector<TRE::Renderer::Vertex> vertices = {
+        {TRE::vec3{-0.5f, -0.5f, 0.f},  TRE::vec3{1.0f, 0.0f, 0.0f}},
+        {TRE::vec3{0.5f, -0.5f, 0.f},   TRE::vec3{0.0f, 1.0f, 0.0f}},
+        {TRE::vec3{0.5f, 0.5f, 0.f},    TRE::vec3{0.0f, 0.0f, 1.0f}},
+        {TRE::vec3{-0.5f, 0.5f, 0.f},   TRE::vec3{1.0f, 1.0f, 1.0f}}
+    };
+
+    const std::vector<uint16_t> indices = {
+        0, 1, 2, 2, 3, 0
     };
 
     size_t vertexSize = sizeof(vertices[0]) * vertices.size();
 
-    TRE::Renderer::Buffer staginVertexBuffer = TRE::Renderer::CreateStaginBuffer(renderDevice, vertexSize, vertices.data());
+    uint32 queuesFamilyCount = 0;
+    uint32* queuesFamilies = NULL;
+    VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
+    if (renderDevice.isTransferQueueSeprate){
+        queuesFamilyCount = 2;
+        queuesFamilies = queuFamilesIndiciesSeprate;
+        sharingMode = VK_SHARING_MODE_CONCURRENT;
+    }
+
+    TRE::Renderer::Buffer staginVertexBuffer = TRE::Renderer::CreateStaginBuffer(renderDevice, vertexSize, vertices.data());
     TRE::Renderer::Buffer vertexBuffer =
         TRE::Renderer::CreateBuffer(renderDevice, sizeof(vertices[0]) * vertices.size(), NULL,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, sharingMode,
+            queuesFamilyCount, queuesFamilies
         );
 
-    VkCommandBuffer currentCmdBuff = TRE::Renderer::GetCurrentFrameResource(ctx).memoryCommandBuffer;
+    TRE::Renderer::Buffer staginIndexBuffer = TRE::Renderer::CreateStaginBuffer(renderDevice, sizeof(indices[0]) * indices.size(), indices.data());
+    TRE::Renderer::Buffer indexBuffer =
+        TRE::Renderer::CreateBuffer(renderDevice, sizeof(indices[0]) * indices.size(), NULL,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, sharingMode,
+            queuesFamilyCount, queuesFamilies
+        );
 
-    TRE::Renderer::TransferBufferInfo transferInfo;
-    transferInfo.srcBuffer = &staginVertexBuffer;
-    transferInfo.dstBuffer = &vertexBuffer;
-    transferInfo.copyRegions.EmplaceBack(VkBufferCopy{0, 0, vertexSize});
+    TRE::Renderer::TransferBufferInfo transferInfo[2];
+    transferInfo[0].srcBuffer = &staginVertexBuffer;
+    transferInfo[0].dstBuffer = &vertexBuffer;
+    transferInfo[0].copyRegions.EmplaceBack(VkBufferCopy{0, 0, vertexSize});
 
-    TRE::Renderer::CopyBuffers(currentCmdBuff, 1, &transferInfo);
-    TRE::Renderer::TransferMemory(engine);
+    transferInfo[1].srcBuffer = &staginIndexBuffer;
+    transferInfo[1].dstBuffer = &indexBuffer;
+    transferInfo[1].copyRegions.EmplaceBack(VkBufferCopy{ 0, 0, sizeof(indices[0]) * indices.size() });
+
+    TRE::Renderer::TransferBuffers(*engine.renderContext, 2, transferInfo);
+
 
     TRE::Renderer::GraphicsPipeline graphicsPipeline;
     TRE::Renderer::GraphicsPiplineDesc pipelineDesc{};
     graphicsPipeline.renderPass = ctx.contextData.renderPass;
     InitGraphicsPipelineDesc(engine, pipelineDesc);
     TRE::Renderer::CreateGraphicsPipeline(renderDevice, graphicsPipeline, pipelineDesc);
+
+    uint32 i = 0;
 
     while (window.isOpen()) {
         window.getEvent(ev);
@@ -281,9 +327,30 @@ int main()
         }
 
         TRE::Renderer::PrepareFrame(engine);
-        RenderFrame(engine, graphicsPipeline, vertexBuffer);
+
+        //if ((rand() % 11) <= 5) {
+            //for (uint32 i = 0; i < 3; i++) {
+                //float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                //float g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                //float b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+
+                //float r = sin(TRE::Math::ToRad((double)i));
+                //float g = cos(TRE::Math::ToRad((double)i));
+                //vertices[0].pos = TRE::vec3{ r, vertices[0].pos.y, 0 };
+                //vertices[1].pos = TRE::vec3{ vertices[1].pos.x, g, 0 };
+            //}
+
+            //TRE::Renderer::EditBuffer(renderDevice, staginVertexBuffer, vertexSize, vertices.data());
+            //TRE::Renderer::TransferBuffers(*engine.renderContext, 1, &transferInfo);
+
+            //srand(static_cast <unsigned> (time(0)));
+        //}
+
+        RenderFrame(engine, graphicsPipeline, vertexBuffer, indexBuffer);
+     
         TRE::Renderer::Present(engine);
-        
+
+        i++;
         printFPS();
     }
     

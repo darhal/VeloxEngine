@@ -14,6 +14,8 @@ int32 Renderer::CreateRenderDevice(RenderDevice& renderDevice, const RenderInsta
     renderDevice.queueFamilyIndices     = FindQueueFamilies(renderDevice.gpu, ctx.surface);
     renderDevice.isPresentQueueSeprate  = renderDevice.queueFamilyIndices.queueFamilies[QFT_GRAPHICS] != 
                                             renderDevice.queueFamilyIndices.queueFamilies[QFT_PRESENT];
+    renderDevice.isTransferQueueSeprate = renderDevice.queueFamilyIndices.queueFamilies[QFT_GRAPHICS] !=
+                                            renderDevice.queueFamilyIndices.queueFamilies[QFT_TRANSFER];
 
     vkGetPhysicalDeviceMemoryProperties(renderDevice.gpu, &renderDevice.memoryProperties);
 
@@ -37,12 +39,14 @@ int32 Renderer::CreateLogicalDevice(RenderDevice& renderDevice, const RenderInst
     std::unordered_set<uint32> uniqueQueueFamilies(std::begin(indices.queueFamilies), std::end(indices.queueFamilies));
 
     for (uint32 queueFamily : uniqueQueueFamilies) {
-        VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = queueFamily;
-        queueCreateInfo.queueCount = 1;
-        queueCreateInfo.pQueuePriorities = &queuePriority;
-        queueCreateInfos.EmplaceBack(queueCreateInfo);
+        if (queueFamily != UINT32_MAX) {
+            VkDeviceQueueCreateInfo queueCreateInfo{};
+            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queueCreateInfo.queueFamilyIndex = queueFamily;
+            queueCreateInfo.queueCount = 1;
+            queueCreateInfo.pQueuePriorities = &queuePriority;
+            queueCreateInfos.EmplaceBack(queueCreateInfo);
+        }
     }
 
     VkPhysicalDeviceFeatures deviceFeatures{};
@@ -142,7 +146,7 @@ Renderer::QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice p_gpu,
         if (p_surface) {
             vkGetPhysicalDeviceSurfaceSupportKHR(p_gpu, i, p_surface, &presentSupport);
 
-            if (presentSupport) {
+            if (presentSupport && indices.queueFamilies[QFT_PRESENT] == UINT32_MAX) {
                 indices.queueFamilies[QFT_PRESENT] = i;
             }
         }
@@ -158,6 +162,7 @@ Renderer::QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice p_gpu,
         indices.queueFamilies[QFT_TRANSFER] = indices.queueFamilies[QFT_GRAPHICS];
     }
 
+    printf("Complete! (Graphics: %d | Transfer: %d)\n", indices.queueFamilies[QFT_GRAPHICS], indices.queueFamilies[QFT_TRANSFER]);
     return indices;
 }
 

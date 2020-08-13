@@ -25,7 +25,7 @@ namespace Renderer
 
     void RecreateSwapChainInternal(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice);
 
-    void TransferMemory(RenderEngine& engine);
+    void ExecuteTransferMemory(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore);
 
     void PrepareFrame(RenderEngine& engine);
     void Present(RenderEngine& engine);
@@ -34,7 +34,7 @@ namespace Renderer
     void CreateCommandPool(const RenderDevice& renderDevice, RenderContext& ctx);
     void CreateCommandBuffers(const RenderDevice& renderDevice, RenderContext& ctx);
 
-    void CreateFrameResources(const RenderDevice& renderDevice, RenderContext& ctx, const TRE::Vector<VkImage>& images);
+    void CreateFrameResources(const RenderDevice& renderDevice, RenderContext& ctx, VkImage* images);
 
     void CreateSwapChainRenderPass(const RenderDevice& renderDevice, RenderContext& ctx);
 
