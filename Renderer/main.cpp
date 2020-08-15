@@ -30,8 +30,46 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #include <Renderer/Window/Window.hpp>
 #include <Renderer/Core/Pipeline/GraphicsPipeline.hpp>
 #include <Renderer/Core/Common/Utils.hpp>
+
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <Engine/Core/Misc/Maths/Maths.hpp>
 #include <Engine/Core/Misc/Utils/Logging.hpp>
+
+struct MVP
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+
+void updateMVP(TRE::Renderer::RenderEngine& engine, TRE::Renderer::Buffer& buffer)
+{
+    static auto startTime = std::chrono::high_resolution_clock::now();
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+    TRE::Renderer::SwapChainData& swapData = engine.renderContext->swapChainData;
+
+    MVP mvp{};
+
+    mvp.model   = glm::rotate(glm::mat4(1.0f), time * TRE::Math::ToRad(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    mvp.view    = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    mvp.proj    = glm::perspective<float>(TRE::Math::ToRad(45.0f), swapData.swapChainExtent.width / (float)swapData.swapChainExtent.height, 0.1, 10.f);
+    mvp.proj[1][1] *= -1;
+    
+    //mvp.model.transpose();
+    //mvp.view.transpose();
+    //mvp.proj.transpose();
+   
+    void* data;
+    vkMapMemory(engine.renderDevice->device, buffer.bufferMemory, 0, sizeof(mvp), 0, &data);
+    memcpy(data, &mvp, sizeof(mvp));
+    vkUnmapMemory(engine.renderDevice->device, buffer.bufferMemory);
+}
 
 void InitRenderPassDesc(const TRE::Renderer::RenderEngine& engine, TRE::Renderer::RenderPassDesc& desc)
 {
@@ -109,11 +147,28 @@ void InitGraphicsPipelineDesc(const TRE::Renderer::RenderEngine& engine, TRE::Re
     desc.rasterStateDesc.polygonMode = VK_POLYGON_MODE_FILL;
     desc.rasterStateDesc.lineWidth = 1.0f;
     desc.rasterStateDesc.cullMode = VK_CULL_MODE_NONE;//VK_CULL_MODE_BACK_BIT;
-    desc.rasterStateDesc.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    desc.rasterStateDesc.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     desc.rasterStateDesc.depthBiasEnable = VK_FALSE;
 
 
-    // desc.piplineLayoutDesc ;
+    VkDescriptorSetLayoutBinding uboLayoutBinding{};
+    uboLayoutBinding.binding                = 0;
+    uboLayoutBinding.descriptorType         = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding.descriptorCount        = 1;
+    uboLayoutBinding.stageFlags             = VK_SHADER_STAGE_VERTEX_BIT;
+    uboLayoutBinding.pImmutableSamplers     = NULL; // Optional
+    
+    VkDescriptorSetLayoutCreateInfo  layoutInfo{};
+    layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings    = &uboLayoutBinding;
+
+    VkDescriptorSetLayout descriptorSetLayout;
+    if (vkCreateDescriptorSetLayout(engine.renderDevice->device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create descriptor set layout!");
+    }
+
+    desc.piplineLayoutDesc.descriptorSetLayout.EmplaceBack(descriptorSetLayout);
 
     desc.viewport.x = 0.0f;
     desc.viewport.y = 0.0f;
@@ -130,7 +185,7 @@ void InitGraphicsPipelineDesc(const TRE::Renderer::RenderEngine& engine, TRE::Re
     desc.basePipelineIndex = -1;
 }
 
-void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPipeline& graphicsPipeline, TRE::Renderer::Buffer& vertexBuffer, TRE::Renderer::Buffer& indexBuffer)
+void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPipeline& graphicsPipeline, TRE::Renderer::Buffer& vertexBuffer, TRE::Renderer::Buffer& indexBuffer, const std::vector<VkDescriptorSet>& descriptorSets)
 {
     TRE::Renderer::RenderContext& ctx = *engine.renderContext;
     TRE::Renderer::RenderDevice& renderDevice = *engine.renderDevice;
@@ -198,6 +253,8 @@ void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPip
     vkCmdBindVertexBuffers(currentCmdBuff, 0, 1, vertexBuffers, offsets);
     vkCmdBindIndexBuffer(currentCmdBuff, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT16);
 
+    vkCmdBindDescriptorSets(currentCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipelineLayout, 0, 1, &descriptorSets[ctxData.currentBuffer], 0, NULL);
+
     // vkCmdDraw(currentCmdBuff, 3, 1, 0, 0);
     vkCmdDrawIndexed(currentCmdBuff, 6, 1, 0, 0, 0);
 
@@ -211,6 +268,8 @@ void RenderFrame(TRE::Renderer::RenderEngine& engine, TRE::Renderer::GraphicsPip
     }
 }
 
+
+
 void printFPS() {
     static std::chrono::time_point<std::chrono::steady_clock> oldTime = std::chrono::high_resolution_clock::now();
     static int fps;
@@ -223,6 +282,8 @@ void printFPS() {
         fps = 0;
     }
 }
+
+
 
 int main()
 {
@@ -301,7 +362,7 @@ int main()
     TRE::Renderer::TransferBufferInfo transferInfo[2];
     transferInfo[0].srcBuffer = &staginVertexBuffer;
     transferInfo[0].dstBuffer = &vertexBuffer;
-    transferInfo[0].copyRegions.EmplaceBack(VkBufferCopy{0, 0, vertexSize});
+    transferInfo[0].copyRegions.EmplaceBack(VkBufferCopy{ 0, 0, vertexSize });
 
     transferInfo[1].srcBuffer = &staginIndexBuffer;
     transferInfo[1].dstBuffer = &indexBuffer;
@@ -316,7 +377,62 @@ int main()
     InitGraphicsPipelineDesc(engine, pipelineDesc);
     TRE::Renderer::CreateGraphicsPipeline(renderDevice, graphicsPipeline, pipelineDesc);
 
-    uint32 i = 0;
+    std::vector<TRE::Renderer::Buffer> uniformBuffers(ctx.contextData.imagesCount);
+
+    for (uint32 i = 0; i < ctx.contextData.imagesCount; i++) {
+        uniformBuffers[i] =
+            TRE::Renderer::CreateBuffer(renderDevice, sizeof(MVP), NULL,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+            );
+    }
+
+    VkDescriptorPoolSize poolSize{};
+    poolSize.type            =  VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSize.descriptorCount = (uint32_t)(ctx.contextData.imagesCount);
+
+    VkDescriptorPoolCreateInfo poolInfo{};
+    poolInfo.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount  = 1;
+    poolInfo.pPoolSizes     = &poolSize;
+    poolInfo.maxSets        = (uint32_t)(ctx.contextData.imagesCount);
+
+    VkDescriptorPool descriptorPool;
+    if (vkCreateDescriptorPool(renderDevice.device, &poolInfo, NULL, &descriptorPool) != VK_SUCCESS) {
+        ASSERTF(true, "failed to create descriptor pool!");
+    }
+
+    std::vector<VkDescriptorSetLayout> layouts(ctx.contextData.imagesCount, pipelineDesc.piplineLayoutDesc.descriptorSetLayout[0]);
+    VkDescriptorSetAllocateInfo allocInfo{};
+    allocInfo.sType                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool        = descriptorPool;
+    allocInfo.descriptorSetCount    = static_cast<uint32_t>(ctx.contextData.imagesCount);
+    allocInfo.pSetLayouts           = layouts.data();
+
+    std::vector<VkDescriptorSet> descriptorSets(ctx.contextData.imagesCount);
+    if (vkAllocateDescriptorSets(renderDevice.device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate descriptor sets!");
+    }
+
+    for (uint32 i = 0; i < ctx.contextData.imagesCount; i++) {
+        VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = uniformBuffers[i].buffer;
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(MVP);
+
+        VkWriteDescriptorSet descriptorWrite{};
+        descriptorWrite.sType       = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet      = descriptorSets[i];
+        descriptorWrite.dstBinding  = 0;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = &bufferInfo;
+        descriptorWrite.pImageInfo  = NULL; // Optional
+        descriptorWrite.pTexelBufferView = NULL; // Optional
+
+        vkUpdateDescriptorSets(renderDevice.device, 1, &descriptorWrite, 0, NULL);
+    }
 
     while (window.isOpen()) {
         window.getEvent(ev);
@@ -345,12 +461,11 @@ int main()
 
             //srand(static_cast <unsigned> (time(0)));
         //}
-
-        RenderFrame(engine, graphicsPipeline, vertexBuffer, indexBuffer);
+        updateMVP(engine, uniformBuffers[ctx.contextData.currentBuffer]);
+        RenderFrame(engine, graphicsPipeline, vertexBuffer, indexBuffer, descriptorSets);
      
         TRE::Renderer::Present(engine);
 
-        i++;
         printFPS();
     }
     

@@ -200,95 +200,98 @@ namespace Renderer
 		TRE::Vector<VkBufferCopy>	copyRegions;
 	};
 
-	struct SwapChainData
-	{
-		CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT = 2;
-		
-		VkSemaphore						imageAcquiredSemaphores[MAX_FRAMES_IN_FLIGHT];
-		VkSemaphore						drawCompleteSemaphores[MAX_FRAMES_IN_FLIGHT];
-		VkFence							fences[MAX_FRAMES_IN_FLIGHT];
+	// namespace Internal {
 
-		// To use when using seprate presentation queue:
-		VkSemaphore						imageOwnershipSemaphores[MAX_FRAMES_IN_FLIGHT];
+		struct SwapChainData
+		{
+			CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT = 2;
 
-		// To use when using seprate transfer queue:
-		VkSemaphore						transferSemaphores[MAX_FRAMES_IN_FLIGHT];
+			VkSemaphore						imageAcquiredSemaphores[MAX_FRAMES_IN_FLIGHT];
+			VkSemaphore						drawCompleteSemaphores[MAX_FRAMES_IN_FLIGHT];
+			VkFence							fences[MAX_FRAMES_IN_FLIGHT];
 
-		VkFormat						swapChainImageFormat;
-		VkExtent2D						swapChainExtent;
+			// To use when using seprate presentation queue:
+			VkSemaphore						imageOwnershipSemaphores[MAX_FRAMES_IN_FLIGHT];
+
+			// To use when using seprate transfer queue:
+			VkSemaphore						transferSemaphores[MAX_FRAMES_IN_FLIGHT];
+
+			VkFormat						swapChainImageFormat;
+			VkExtent2D						swapChainExtent;
+		};
+
+		struct ContextFrameResources
+		{
+			VkCommandBuffer		graphicsCommandBuffer;
+			VkCommandBuffer		transferCommandBuffer;
+			VkCommandBuffer		presentCommandBuffer;
+
+			VkImage				swapChainImage;
+			VkImageView			swapChainImageView;
+			VkFramebuffer		swapChainFramebuffer;
+		};
+
+		struct RenderContextData
+		{
+			VkCommandPool						commandPool;
+			VkCommandPool						memoryCommandPool;
+			VkCommandPool						presentCommandPool;
+
+			VkRenderPass						renderPass;
+
+			uint32								currentFrame;
+			uint32								currentBuffer;
+			uint32								imagesCount;
+
+			uint32								transferRequests;
+
+			std::vector<ContextFrameResources>	contextFrameResources;
+		};
 
 
-	};
+		struct RenderInstance
+		{
+			VkInstance						instance;
 
-	struct ContextFrameResources 
-	{
-		VkCommandBuffer		graphicsCommandBuffer;
-		VkCommandBuffer		transferCommandBuffer;
-		VkCommandBuffer		presentCommandBuffer;
+			// Debugging
+			VkDebugUtilsMessengerEXT		debugMessenger;
+		};
 
-		VkImage				swapChainImage;
-		VkImageView			swapChainImageView;
-		VkFramebuffer		swapChainFramebuffer;
-	};
+		struct RenderDevice
+		{
+			VkPhysicalDevice					gpu;
+			VkDevice							device;
 
-	struct RenderContextData
-	{
-		VkCommandPool						commandPool;
-		VkCommandPool						memoryCommandPool;
-		VkCommandPool						presentCommandPool;
+			QueueFamilyIndices					queueFamilyIndices;
+			VkQueue								queues[QFT_MAX];
 
-		VkRenderPass						renderPass;
+			VkPhysicalDeviceMemoryProperties	memoryProperties;
 
-		uint32								currentFrame;
-		uint32								currentBuffer;
-		uint32								imagesCount;
+			bool								isPresentQueueSeprate;
+			bool								isTransferQueueSeprate;
+		};
 
-		uint32								transferRequests;
+		struct RenderContext
+		{
+			::TRE::Window* window;
+			VkSurfaceKHR					surface;
 
-		std::vector<ContextFrameResources>	contextFrameResources;
-	};
+			VkSwapchainKHR					swapChain;
+			SwapChainData					swapChainData;
+			RenderContextData				contextData;
 
-	
-	struct RenderInstance 
-	{
-		VkInstance						instance;
+			bool							framebufferResized;
+		};
 
-		// Debugging
-		VkDebugUtilsMessengerEXT		debugMessenger;
-	};
 
-	struct RenderDevice
-	{
-		VkPhysicalDevice					gpu;
-		VkDevice							device;
-
-		QueueFamilyIndices					queueFamilyIndices;
-		VkQueue								queues[QFT_MAX];
-
-		VkPhysicalDeviceMemoryProperties	memoryProperties;
-
-		bool								isPresentQueueSeprate;
-		bool								isTransferQueueSeprate;
-	};
-
-	struct RenderContext 
-	{
-		::TRE::Window*					window;
-		VkSurfaceKHR					surface;
-
-		VkSwapchainKHR					swapChain;
-		SwapChainData					swapChainData;
-		RenderContextData				contextData;
-
-		bool							framebufferResized;
-	};
-
-	struct RenderEngine
-	{
-		RenderInstance*					renderInstance;
-		RenderDevice*					renderDevice;
-		RenderContext*					renderContext;
-	};
+	//namespace Internal {
+		struct RenderEngine
+		{
+			RenderInstance* renderInstance;
+			RenderDevice* renderDevice;
+			RenderContext* renderContext;
+		};
+	// }
 };
 
 TRE_NS_END

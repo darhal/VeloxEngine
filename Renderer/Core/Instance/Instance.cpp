@@ -125,7 +125,7 @@ void Renderer::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMe
 VkBool32 Renderer::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
     fprintf(stderr, "[VALIDATION LAYER]: %s\n", pCallbackData->pMessage);
-    ASSERT(true);
+    // ASSERT(true);
     return VK_FALSE;
 }
 
