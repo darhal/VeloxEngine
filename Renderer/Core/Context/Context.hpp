@@ -7,11 +7,22 @@ TRE_NS_START
 
 namespace Renderer
 {
-	void CreateRenderContext(RenderContext& ctx, TRE::Window* wnd, const RenderInstance& instance);
+	class RENDERER_API RenderContext
+	{
+	public:
+		RenderContext();
 
-	void InitRenderContext(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice);
+		void CreateRenderContext(TRE::Window* wnd, const Internal::RenderInstance& instance);
 
-	void DestroyRenderContext(const RenderEngine& engine);
+		void InitRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice);
+
+		void DestroyRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice, Internal::RenderContext& renderContext);
+
+	private:
+		Internal::RenderContext	internal;
+
+		friend class RenderEngine;
+	};
 }
 
 TRE_NS_END

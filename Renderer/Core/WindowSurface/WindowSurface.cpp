@@ -4,7 +4,7 @@
 
 TRE_NS_START
 
-int32 Renderer::CreateWindowSurface(const RenderInstance& renderInstance, RenderContext& ctx, const VkAllocationCallbacks* allocator)
+int32 Renderer::Internal::CreateWindowSurface(const RenderInstance& renderInstance, RenderContext& ctx, const VkAllocationCallbacks* allocator)
 {
 	ASSERT(ctx.window == NULL);
 	ASSERT(renderInstance.instance == NULL);
@@ -35,7 +35,7 @@ int32 Renderer::CreateWindowSurface(const RenderInstance& renderInstance, Render
     return err;
 }
 
-void Renderer::DestroryWindowSurface(VkInstance instance, VkSurfaceKHR surface)
+void Renderer::Internal::DestroryWindowSurface(VkInstance instance, VkSurfaceKHR surface)
 {
     vkDestroySurfaceKHR(instance, surface, NULL);
 }

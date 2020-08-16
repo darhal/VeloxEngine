@@ -7,11 +7,13 @@ TRE_NS_START
 
 namespace Renderer
 {
-	void CreateGraphicsPipeline(const RenderDevice& renderDevice, GraphicsPipeline& pipline, const GraphicsPiplineDesc& desc);
+	namespace Internal {
+		void CreateGraphicsPipeline(const RenderDevice& renderDevice, GraphicsPipeline& pipline, const GraphicsPiplineDesc& desc);
 
-	VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& code);
+		VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& code);
 
-	void CreateRenderPass(const RenderDevice& renderDevice, VkRenderPass* renderPass, const RenderPassDesc& desc);
+		void CreateRenderPass(const RenderDevice& renderDevice, VkRenderPass* renderPass, const RenderPassDesc& desc);
+	}
 }
 
 TRE_NS_END

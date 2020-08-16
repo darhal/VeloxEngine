@@ -2,23 +2,31 @@
 
 TRE_NS_START
 
-int32 Renderer::CreateRenderInstance(Renderer::RenderInstance* p_ctx)
+Renderer::RenderInstance::RenderInstance() : internal{0}
 {
-    ASSERT(p_ctx == NULL);
 
+}
+
+Renderer::RenderInstance::~RenderInstance()
+{
+
+}
+
+int32 Renderer::RenderInstance::CreateRenderInstance()
+{
     int32 err_code; 
-    err_code = CreateInstance(&p_ctx->instance);
-    err_code |= SetupDebugMessenger(p_ctx->instance, &p_ctx->debugMessenger);
+    err_code = CreateInstance(&internal.instance);
+    err_code |= SetupDebugMessenger(internal.instance, &internal.debugMessenger);
     return err_code;
 }
 
-void Renderer::DestroyRenderInstance(const Renderer::RenderInstance& p_ctx)
+void Renderer::RenderInstance::DestroyRenderInstance()
 {
-    DestroyDebugUtilsMessengerEXT(p_ctx.instance, p_ctx.debugMessenger, NULL);
-    DestroyInstance(p_ctx.instance);
+    DestroyDebugUtilsMessengerEXT(internal.instance, internal.debugMessenger, NULL);
+    DestroyInstance(internal.instance);
 }
 
-int32 Renderer::CreateInstance(VkInstance* p_instance)
+int32 Renderer::RenderInstance::CreateInstance(VkInstance* p_instance)
 {
     ASSERT(p_instance == NULL);
 
@@ -44,7 +52,7 @@ int32 Renderer::CreateInstance(VkInstance* p_instance)
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 
-    if (Renderer::InitDebugMessengerCreateInfo(debugCreateInfo) == 0) {
+    if (InitDebugMessengerCreateInfo(debugCreateInfo) == 0) {
         createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugCreateInfo;
     } else {
         createInfo.pNext = NULL;
@@ -57,7 +65,7 @@ int32 Renderer::CreateInstance(VkInstance* p_instance)
     return 0;
 }
 
-void Renderer::DestroyInstance(VkInstance p_instance)
+void Renderer::RenderInstance::DestroyInstance(VkInstance p_instance)
 {
     ASSERT(p_instance == VK_NULL_HANDLE);
 
@@ -66,15 +74,15 @@ void Renderer::DestroyInstance(VkInstance p_instance)
 
 // DEBUGGING SECTION // 
 
-int32 Renderer::SetupDebugMessenger(VkInstance p_instance, VkDebugUtilsMessengerEXT* p_debugMessenger)
+int32 Renderer::RenderInstance::SetupDebugMessenger(VkInstance p_instance, VkDebugUtilsMessengerEXT* p_debugMessenger)
 {
 #if defined(DEBUG)
     ASSERT(p_debugMessenger == VK_NULL_HANDLE);
 
     VkDebugUtilsMessengerCreateInfoEXT createInfo{};
-    Renderer::InitDebugMessengerCreateInfo(createInfo);
+    InitDebugMessengerCreateInfo(createInfo);
 
-    if (Renderer::CreateDebugUtilsMessengerEXT(p_instance, &createInfo, nullptr, p_debugMessenger) != VK_SUCCESS) {
+    if (CreateDebugUtilsMessengerEXT(p_instance, &createInfo, nullptr, p_debugMessenger) != VK_SUCCESS) {
         return -1;
     }
 
@@ -84,20 +92,20 @@ int32 Renderer::SetupDebugMessenger(VkInstance p_instance, VkDebugUtilsMessenger
 #endif
 }
 
-int32 Renderer::InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+int32 Renderer::RenderInstance::InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
 {
 #if defined(DEBUG)
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
     createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    createInfo.pfnUserCallback = Renderer::DebugCallback;
+    createInfo.pfnUserCallback = Renderer::RenderInstance::DebugCallback;
     return 0;
 #else
     return 1; // No debugging
 #endif
 }
 
-VkResult Renderer::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
+VkResult Renderer::RenderInstance::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
 {
 #if defined(DEBUG)
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
@@ -111,7 +119,7 @@ VkResult Renderer::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDeb
     return VK_ERROR_EXTENSION_NOT_PRESENT;
 }
 
-void Renderer::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
+void Renderer::RenderInstance::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
 {
 #if defined(DEBUG)
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
@@ -122,7 +130,7 @@ void Renderer::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMe
 #endif
 }
 
-VkBool32 Renderer::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+VkBool32 Renderer::RenderInstance::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
     fprintf(stderr, "[VALIDATION LAYER]: %s\n", pCallbackData->pMessage);
     // ASSERT(true);

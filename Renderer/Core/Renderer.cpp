@@ -3,32 +3,36 @@
 #include <Renderer/Core/Common/Globals.hpp>
 #include <Renderer/Core/Context/Context.hpp>
 #include <Renderer/Core/RenderDevice/RenderDevice.hpp>
+#include <Renderer/Core/SwapChain/SwapChain.hpp>
 
 TRE_NS_START
 
-int32 Renderer::Init(RenderEngine& engine, TRE::Window* wnd)
+Renderer::RenderEngine::RenderEngine(TRE::Window* wnd)
 {
-    engine.renderInstance = new RenderInstance{0};
-    engine.renderDevice   = new RenderDevice{0};
-    engine.renderContext  = new RenderContext{0};
+    renderInstance.CreateRenderInstance();
 
-    if (CreateRenderInstance(engine.renderInstance) != 0) {
-        return -1;
-    }
-
-    Renderer::CreateRenderContext(*engine.renderContext, wnd, *engine.renderInstance);
-    Renderer::CreateRenderDevice(*engine.renderDevice, *engine.renderInstance, *engine.renderContext);
-    Renderer::InitRenderContext(*engine.renderContext, *engine.renderInstance, *engine.renderDevice);
-    return 0;
+    renderContext.CreateRenderContext(wnd, renderInstance.internal);
+    renderDevice.CreateRenderDevice(renderInstance.internal, renderContext.internal);
+    renderContext.InitRenderContext(renderInstance.internal, renderDevice.internal);
 }
 
-void Renderer::Destrory(RenderEngine& engine)
+Renderer::RenderEngine::~RenderEngine()
 {
-    vkDeviceWaitIdle(engine.renderDevice->device);
+    vkDeviceWaitIdle(renderDevice.internal.device);
 
-    Renderer::DestroyRenderContext(engine);
-    Renderer::DestroryRenderDevice(*engine.renderDevice);
-    Renderer::DestroyRenderInstance(*engine.renderInstance);
+    renderContext.DestroyRenderContext(renderInstance.internal, renderDevice.internal, renderContext.internal);
+    renderDevice.DestroryRenderDevice();
+    renderInstance.DestroyRenderInstance();
+}
+
+void Renderer::RenderEngine::BeginFrame()
+{
+    TRE::Renderer::Internal::PrepareFrame(renderDevice.internal, renderContext.internal);
+}
+
+void Renderer::RenderEngine::EndFrame()
+{
+    TRE::Renderer::Internal::Present(renderDevice.internal, renderContext.internal);
 }
 
 TRE_NS_END

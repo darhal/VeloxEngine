@@ -33,174 +33,173 @@ namespace Renderer
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	};
 
-	enum QueueFamilyTypes {
-		QFT_GRAPHICS = 0,
-		QFT_COMPUTE = 1,
-		QFT_TRANSFER = 2,
-		QFT_SPARSE = 3,
-		QFT_PRESENT = 4,
+	namespace Internal {
+		enum QueueFamilyTypes {
+			QFT_GRAPHICS = 0,
+			QFT_COMPUTE = 1,
+			QFT_TRANSFER = 2,
+			QFT_SPARSE = 3,
+			QFT_PRESENT = 4,
 
-		QFT_MAX = 5
-	};
+			QFT_MAX = 5
+		};
 
-	struct QueueFamilyIndices
-	{
-		CONSTEXPR static uint32 REQUIRED_QUEUES[] = { QFT_GRAPHICS, QFT_TRANSFER };
-
-		uint32 queueFamilies[QFT_MAX] = { UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX };
-
-		bool IsComplete() const
+		struct QueueFamilyIndices
 		{
-			for (uint32 queueFamilyIndex : REQUIRED_QUEUES) {
-				if (queueFamilies[queueFamilyIndex] == UINT32_MAX) {
-					return false;
+			CONSTEXPR static uint32 REQUIRED_QUEUES[] = { QFT_GRAPHICS, QFT_TRANSFER };
+
+			uint32 queueFamilies[QFT_MAX] = { UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX };
+
+			bool IsComplete() const
+			{
+				for (uint32 queueFamilyIndex : REQUIRED_QUEUES) {
+					if (queueFamilies[queueFamilyIndex] == UINT32_MAX) {
+						return false;
+					}
 				}
+
+				return true;
+			}
+		};
+
+		struct Vertex
+		{
+			TRE::vec3 pos;
+			TRE::vec3 color;
+
+			Vertex(const TRE::vec3& pos, const TRE::vec3 color) :
+				pos(pos), color(color)
+			{
 			}
 
-			return true;
-		}
-	};
+			static VkVertexInputBindingDescription getBindingDescription() {
+				VkVertexInputBindingDescription bindingDescription{};
+				bindingDescription.binding = 0;
+				bindingDescription.stride = sizeof(Vertex);
+				bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-	struct Vertex 
-	{
-		TRE::vec3 pos;
-		TRE::vec3 color;
+				return bindingDescription;
+			}
 
-		Vertex(const TRE::vec3& pos, const TRE::vec3 color) : 
-			pos(pos), color(color)
+			static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+				std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+
+				attributeDescriptions[0].binding = 0;
+				attributeDescriptions[0].location = 0;
+				attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+				attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+				attributeDescriptions[1].binding = 0;
+				attributeDescriptions[1].location = 1;
+				attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+				attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+				return attributeDescriptions;
+			}
+		};
+
+
+		struct VertextAttribDesc
 		{
-		}
+			uint32		location;
+			uint32		offset;
+			VkFormat	format;
+		};
 
-		static VkVertexInputBindingDescription getBindingDescription() {
-			VkVertexInputBindingDescription bindingDescription{};
-			bindingDescription.binding	 = 0;
-			bindingDescription.stride	 = sizeof(Vertex);
-			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		struct VertexInputDesc
+		{
+			uint32							binding;
+			uint32							stride;
+			VkVertexInputRate				inputRate;
 
-			return bindingDescription;
-		}
+			TRE::Vector<VertextAttribDesc>	attribDesc;
+		};
 
-		static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-			std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+		struct InputAssemblyDesc
+		{
+			VkPrimitiveTopology                        topology;
+			VkBool32                                   primitiveRestartEnable;
+		};
 
-			attributeDescriptions[0].binding = 0;
-			attributeDescriptions[0].location = 0;
-			attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-			attributeDescriptions[0].offset = offsetof(Vertex, pos);
+		struct RasterizationDesc
+		{
+			VkPolygonMode                              polygonMode;
+			VkCullModeFlags                            cullMode;
+			VkFrontFace                                frontFace;
 
-			attributeDescriptions[1].binding = 0;
-			attributeDescriptions[1].location = 1;
-			attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-			attributeDescriptions[1].offset = offsetof(Vertex, color);
+			VkBool32                                   depthClampEnable;
+			VkBool32                                   rasterizerDiscardEnable;
+			VkBool32                                   depthBiasEnable;
 
-			return attributeDescriptions;
-		}
-	};
+			float                                      depthBiasConstantFactor;
+			float                                      depthBiasClamp;
+			float                                      depthBiasSlopeFactor;
+			float                                      lineWidth;
+		};
 
+		// struct DynamicStateDesc
 
-	struct VertextAttribDesc
-	{
-		uint32		location;
-		uint32		offset;
-		VkFormat	format;
-	};
+		// struct VkPipelineColorBlendStateCreateInfo
 
-	struct VertexInputDesc
-	{
-		uint32							binding;
-		uint32							stride;
-		VkVertexInputRate				inputRate;
+		// VkPipelineMultisampleStateCreateInfo
 
-		TRE::Vector<VertextAttribDesc>	attribDesc;
-	};
+		struct PipelineLayoutDesc
+		{
+			TRE::Vector<VkDescriptorSetLayout>	descriptorSetLayout;
+			TRE::Vector<VkPushConstantRange>	pushConstantRanges;
+		};
 
-	struct InputAssemblyDesc
-	{
-		VkPrimitiveTopology                        topology;
-		VkBool32                                   primitiveRestartEnable;
-	};
+		typedef TRE::Vector<VkPipelineShaderStageCreateInfo> ShaderStagesDesc;
 
-	struct RasterizationDesc
-	{
-		VkPolygonMode                              polygonMode;
-		VkCullModeFlags                            cullMode;
-		VkFrontFace                                frontFace;
+		struct GraphicsPiplineDesc
+		{
+			ShaderStagesDesc				shaderStagesDesc;
+			TRE::Vector<VertexInputDesc>	vertexInputDesc;
+			InputAssemblyDesc				inputAssemblyDesc;
+			RasterizationDesc				rasterStateDesc;
+			PipelineLayoutDesc				piplineLayoutDesc;
 
-		VkBool32                                   depthClampEnable;
-		VkBool32                                   rasterizerDiscardEnable;
-		VkBool32                                   depthBiasEnable;
+			// VkPipelineColorBlendAttachmentState(*)
+			// VkPipelineColorBlendStateCreateInfo(1)
 
-		float                                      depthBiasConstantFactor;
-		float                                      depthBiasClamp;
-		float                                      depthBiasSlopeFactor;
-		float                                      lineWidth;
-	};
+			// VkPipelineMultisampleStateCreateInfo(1)
 
-	// struct DynamicStateDesc
+			// VkPipelineDynamicStateCreateInfo(1)
 
-	// struct VkPipelineColorBlendStateCreateInfo
+			VkViewport						viewport;
+			VkRect2D						scissor;
 
-	// VkPipelineMultisampleStateCreateInfo
+			uint32_t						subpass;
+			VkPipeline						basePipelineHandle;
+			int32_t							basePipelineIndex;
+		};
 
-	struct PipelineLayoutDesc
-	{
-		TRE::Vector<VkDescriptorSetLayout>	descriptorSetLayout;
-		TRE::Vector<VkPushConstantRange>	pushConstantRanges;
-	};
+		struct GraphicsPipeline
+		{
+			VkPipeline						pipeline;
+			VkPipelineLayout				pipelineLayout;
+			VkRenderPass					renderPass;
+		};
 
-	typedef TRE::Vector<VkPipelineShaderStageCreateInfo> ShaderStagesDesc;
+		struct RenderPassDesc
+		{
+			TRE::Vector<VkSubpassDescription>		subpassesDesc;
+			TRE::Vector<VkSubpassDependency >		subpassDependency;
+			TRE::Vector<VkAttachmentDescription>	attachments;
+		};
 
-	struct GraphicsPiplineDesc
-	{
-		ShaderStagesDesc				shaderStagesDesc;
-		TRE::Vector<VertexInputDesc>	vertexInputDesc;
-		InputAssemblyDesc				inputAssemblyDesc;
-		RasterizationDesc				rasterStateDesc;
-		PipelineLayoutDesc				piplineLayoutDesc;
+		struct Buffer
+		{
+			VkBuffer		buffer;
+			VkDeviceMemory	bufferMemory;
+		};
 
-		// VkPipelineColorBlendAttachmentState(*)
-		// VkPipelineColorBlendStateCreateInfo(1)
-
-		// VkPipelineMultisampleStateCreateInfo(1)
-
-		// VkPipelineDynamicStateCreateInfo(1)
-
-		VkViewport						viewport;
-		VkRect2D						scissor;
-
-		uint32_t						subpass;
-		VkPipeline						basePipelineHandle;
-		int32_t							basePipelineIndex;
-	};
-
-	struct GraphicsPipeline
-	{
-		VkPipeline						pipeline;
-		VkPipelineLayout				pipelineLayout;
-		VkRenderPass					renderPass;
-	};
-
-	struct RenderPassDesc
-	{
-		TRE::Vector<VkSubpassDescription>		subpassesDesc;
-		TRE::Vector<VkSubpassDependency >		subpassDependency;
-		TRE::Vector<VkAttachmentDescription>	attachments;
-	};
-
-	struct Buffer
-	{
-		VkBuffer		buffer;
-		VkDeviceMemory	bufferMemory;
-	};
-
-	struct TransferBufferInfo
-	{
-		Buffer*						srcBuffer;
-		Buffer*						dstBuffer; 
-		TRE::Vector<VkBufferCopy>	copyRegions;
-	};
-
-	// namespace Internal {
+		struct TransferBufferInfo
+		{
+			Buffer* srcBuffer;
+			Buffer* dstBuffer;
+			TRE::Vector<VkBufferCopy>	copyRegions;
+		};
 
 		struct SwapChainData
 		{
@@ -282,16 +281,7 @@ namespace Renderer
 
 			bool							framebufferResized;
 		};
-
-
-	//namespace Internal {
-		struct RenderEngine
-		{
-			RenderInstance* renderInstance;
-			RenderDevice* renderDevice;
-			RenderContext* renderContext;
-		};
-	// }
+	}
 };
 
 TRE_NS_END

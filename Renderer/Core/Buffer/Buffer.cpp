@@ -3,7 +3,7 @@
 
 TRE_NS_START
 
-Renderer::Buffer Renderer::CreateBuffer(const RenderDevice& renderDevice, VkDeviceSize size, const void* data, 
+Renderer::Internal::Buffer Renderer::Internal::CreateBuffer(const RenderDevice& renderDevice, VkDeviceSize size, const void* data, 
 	uint32 usage, VkMemoryPropertyFlags properties, VkSharingMode sharingMode, uint32 queueFamilyIndexCount, uint32* queueFamilyIndices
 	)
 {
@@ -37,18 +37,18 @@ Renderer::Buffer Renderer::CreateBuffer(const RenderDevice& renderDevice, VkDevi
 	return buffer;
 }
 
-Renderer::Buffer Renderer::CreateStaginBuffer(const RenderDevice& renderDevice, VkDeviceSize size, const void* data)
+Renderer::Internal::Buffer Renderer::Internal::CreateStaginBuffer(const RenderDevice& renderDevice, VkDeviceSize size, const void* data)
 {
 	return CreateBuffer(renderDevice, size, data, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
-void Renderer::DestroyBuffer(const RenderDevice& renderDevice, Buffer& buffer)
+void Renderer::Internal::DestroyBuffer(const RenderDevice& renderDevice, Buffer& buffer)
 {
 	vkDestroyBuffer(renderDevice.device, buffer.buffer, NULL);
 	vkFreeMemory(renderDevice.device, buffer.bufferMemory, nullptr);
 }
 
-void Renderer::AllocateMemory(const RenderDevice& renderDevice, Buffer& buffer, VkMemoryPropertyFlags properties)
+void Renderer::Internal::AllocateMemory(const RenderDevice& renderDevice, Buffer& buffer, VkMemoryPropertyFlags properties)
 {
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(renderDevice.device, buffer.buffer, &memRequirements);
@@ -65,7 +65,7 @@ void Renderer::AllocateMemory(const RenderDevice& renderDevice, Buffer& buffer, 
 	vkBindBufferMemory(renderDevice.device, buffer.buffer, buffer.bufferMemory, 0);
 }
 
-uint32 Renderer::FindMemoryType(const RenderDevice& renderDevice, uint32 typeFilter, VkMemoryPropertyFlags properties)
+uint32 Renderer::Internal::FindMemoryType(const RenderDevice& renderDevice, uint32 typeFilter, VkMemoryPropertyFlags properties)
 {
 	const VkPhysicalDeviceMemoryProperties& memProperties = renderDevice.memoryProperties;
 
@@ -79,7 +79,7 @@ uint32 Renderer::FindMemoryType(const RenderDevice& renderDevice, uint32 typeFil
 	return 0;
 }
 
-void Renderer::CopyBuffers(VkCommandBuffer cmdBuffer, uint32 count, TransferBufferInfo* transferBufferInfo)
+void Renderer::Internal::CopyBuffers(VkCommandBuffer cmdBuffer, uint32 count, TransferBufferInfo* transferBufferInfo)
 {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -97,15 +97,15 @@ void Renderer::CopyBuffers(VkCommandBuffer cmdBuffer, uint32 count, TransferBuff
 	vkEndCommandBuffer(cmdBuffer);
 }
 
-void Renderer::TransferBuffers(RenderContext& ctx, uint32 count, TransferBufferInfo* transferBufferInfo)
+void Renderer::Internal::TransferBuffers(RenderContext& ctx, uint32 count, TransferBufferInfo* transferBufferInfo)
 {
-	VkCommandBuffer currentCmdBuff = TRE::Renderer::GetCurrentFrameResource(ctx).transferCommandBuffer;
+	VkCommandBuffer currentCmdBuff = GetCurrentFrameResource(ctx).transferCommandBuffer;
 	ctx.contextData.transferRequests = count;
 
-	TRE::Renderer::CopyBuffers(currentCmdBuff, count, transferBufferInfo);
+	CopyBuffers(currentCmdBuff, count, transferBufferInfo);
 }
 
-void Renderer::EditBuffer(const RenderDevice& renderDevice, Buffer& buffer, VkDeviceSize size, const void* data)
+void Renderer::Internal::EditBuffer(const RenderDevice& renderDevice, Buffer& buffer, VkDeviceSize size, const void* data)
 {
 	if (data) {
 		void* bufferData;

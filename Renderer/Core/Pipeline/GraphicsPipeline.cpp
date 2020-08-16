@@ -3,7 +3,7 @@
 
 TRE_NS_START
 
-VkShaderModule Renderer::CreateShaderModule(VkDevice device, const std::vector<char>& code)
+VkShaderModule Renderer::Internal::CreateShaderModule(VkDevice device, const std::vector<char>& code)
 {
     VkShaderModuleCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -18,7 +18,7 @@ VkShaderModule Renderer::CreateShaderModule(VkDevice device, const std::vector<c
     return shaderModule;
 }
 
-void Renderer::CreateGraphicsPipeline(const RenderDevice& renderDevice, GraphicsPipeline& pipline, const GraphicsPiplineDesc& desc)
+void Renderer::Internal::CreateGraphicsPipeline(const RenderDevice& renderDevice, GraphicsPipeline& pipline, const GraphicsPiplineDesc& desc)
 {
     TRE::Vector<VkVertexInputBindingDescription> vertexInputBindings(desc.vertexInputDesc.Size());
     TRE::Vector<VkVertexInputAttributeDescription> vertexInputAttribs(desc.vertexInputDesc.Size()); // it takes more than this size
@@ -144,7 +144,7 @@ void Renderer::CreateGraphicsPipeline(const RenderDevice& renderDevice, Graphics
     }
 }
 
-void Renderer::CreateRenderPass(const RenderDevice& renderDevice, VkRenderPass* renderPass, const RenderPassDesc& desc)
+void Renderer::Internal::CreateRenderPass(const RenderDevice& renderDevice, VkRenderPass* renderPass, const RenderPassDesc& desc)
 {
     VkRenderPassCreateInfo renderPassInfo{};
     renderPassInfo.sType            = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;

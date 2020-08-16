@@ -7,26 +7,28 @@
 
 TRE_NS_START
 
-void Renderer::CreateRenderContext(RenderContext& ctx, TRE::Window* wnd, const RenderInstance& instance)
+Renderer::RenderContext::RenderContext() : internal{0}
 {
-    ASSERT(instance.instance == VK_NULL_HANDLE);
-    ctx.window = wnd;
-    ctx.swapChainData.swapChainExtent = VkExtent2D{ ctx.window->getSize().x, ctx.window->getSize().y };
 
-    CreateWindowSurface(instance, ctx);
 }
 
-void Renderer::InitRenderContext(RenderContext& ctx, const RenderInstance& renderInstance, const RenderDevice& renderDevice)
+void Renderer::RenderContext::CreateRenderContext(TRE::Window* wnd, const Internal::RenderInstance& instance)
 {
-    CreateSwapChain(ctx, renderInstance, renderDevice);
+    internal.window = wnd;
+    internal.swapChainData.swapChainExtent = VkExtent2D{ internal.window->getSize().x, internal.window->getSize().y };
+
+    CreateWindowSurface(instance, internal);
 }
 
-void Renderer::DestroyRenderContext(const RenderEngine& engine)
+void Renderer::RenderContext::InitRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice)
 {
-    DestroySwapChain(*engine.renderDevice, *engine.renderContext);
-    DestroryWindowSurface(engine.renderInstance->instance, engine.renderContext->surface);
+    CreateSwapChain(renderDevice, internal);
+}
 
-    // TODO: free window as well maybe ?? (probably not its stack allocated !)
+void Renderer::RenderContext::DestroyRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice, Internal::RenderContext& renderContext)
+{
+    DestroySwapChain(renderDevice, renderContext);
+    Internal::DestroryWindowSurface(renderInstance.instance, renderContext.surface);
 }
 
 

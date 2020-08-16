@@ -9,25 +9,38 @@ TRE_NS_START
 
 namespace Renderer
 {
-	int32 CreateRenderInstance(Renderer::RenderInstance* p_ctx);
+	class RENDERER_API RenderInstance
+	{
+	public:
+		RenderInstance();
 
-	void DestroyRenderInstance(const RenderInstance& p_ctx);
+		~RenderInstance();
 
-	int32 CreateInstance(VkInstance* p_instance);
+		int32 CreateRenderInstance();
 
-	void DestroyInstance(VkInstance p_instance);
+		void DestroyRenderInstance();
 
-	// DEBUGGING SECTION // 
+	private:
+		static int32 CreateInstance(VkInstance* p_instance);
 
-	int32 SetupDebugMessenger(VkInstance p_instance, VkDebugUtilsMessengerEXT* p_debugMessenger);
+		static void DestroyInstance(VkInstance p_instance);
 
-	int32 InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+		// DEBUGGING SECTION // 
 
-	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
+		static int32 SetupDebugMessenger(VkInstance p_instance, VkDebugUtilsMessengerEXT* p_debugMessenger);
 
-	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+		static int32 InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
-	VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
+		static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
+
+		static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+
+		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
+	private:
+		Internal::RenderInstance internal;
+
+		friend class RenderEngine;
+	};
 };
 
 TRE_NS_END

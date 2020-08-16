@@ -8,19 +8,31 @@ TRE_NS_START
 
 namespace Renderer
 {
-	bool IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR surface);
+	class RENDERER_API RenderDevice
+	{
+	public:
+		RenderDevice();
 
-	typedef bool(*FPN_RankGPU)(VkPhysicalDevice, VkSurfaceKHR);
+		int32 CreateRenderDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx);
 
-	int32 CreateRenderDevice(RenderDevice& renderDevice, const RenderInstance& renderInstance, const RenderContext& ctx);
+		void DestroryRenderDevice();
 
-	void DestroryRenderDevice(RenderDevice& renderDevice);
+		int32 CreateLogicalDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx);
 
-	int32 CreateLogicalDevice(RenderDevice& renderDevice, const RenderInstance& renderInstance, const RenderContext& ctx);
+	private:
+		typedef bool(*FPN_RankGPU)(VkPhysicalDevice, VkSurfaceKHR);
 
-	VkPhysicalDevice PickGPU(const RenderInstance& renderInstance, const RenderContext& ctx, FPN_RankGPU p_pick_func = IsDeviceSuitable);
+		static bool IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR surface);
 
-	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice p_gpu, VkSurfaceKHR p_surface = NULL);
+		static VkPhysicalDevice PickGPU(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx, FPN_RankGPU p_pick_func = IsDeviceSuitable);
+
+		static Internal::QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice p_gpu, VkSurfaceKHR p_surface = NULL);
+
+	private:
+		Internal::RenderDevice internal;
+
+		friend class RenderEngine;
+	};
 };
 
 TRE_NS_END
