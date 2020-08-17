@@ -37,7 +37,7 @@ Renderer::Internal::Buffer Renderer::Internal::CreateBuffer(const RenderDevice& 
 	return buffer;
 }
 
-Renderer::Internal::Buffer Renderer::Internal::CreateStaginBuffer(const RenderDevice& renderDevice, VkDeviceSize size, const void* data)
+Renderer::Internal::Buffer Renderer::Internal::CreateStagingBuffer(const RenderDevice& renderDevice, VkDeviceSize size, const void* data)
 {
 	return CreateBuffer(renderDevice, size, data, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
@@ -95,14 +95,6 @@ void Renderer::Internal::CopyBuffers(VkCommandBuffer cmdBuffer, uint32 count, Tr
 	}
 
 	vkEndCommandBuffer(cmdBuffer);
-}
-
-void Renderer::Internal::TransferBuffers(RenderContext& ctx, uint32 count, TransferBufferInfo* transferBufferInfo)
-{
-	VkCommandBuffer currentCmdBuff = GetCurrentFrameResource(ctx).transferCommandBuffer;
-	ctx.contextData.transferRequests = count;
-
-	CopyBuffers(currentCmdBuff, count, transferBufferInfo);
 }
 
 void Renderer::Internal::EditBuffer(const RenderDevice& renderDevice, Buffer& buffer, VkDeviceSize size, const void* data)

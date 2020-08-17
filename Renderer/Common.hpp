@@ -16,4 +16,6 @@
 // #undef DEBUG
 // #define DEBUG
 
+#define VALIDATION_LAYERS
+
 #include <vulkan/vulkan.h>

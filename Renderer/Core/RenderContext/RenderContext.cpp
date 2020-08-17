@@ -1,0 +1,253 @@
+#include "RenderContext.hpp"
+#include <Renderer/Window/Window.hpp>
+#include <Renderer/Core/WindowSurface/WindowSurface.hpp>
+#include <Renderer/Core/SwapChain/SwapChain.hpp>
+#include <Renderer/Core/RenderInstance/RenderInstance.hpp>
+#include <Renderer/Core/Buffer/Buffer.hpp>
+#include <unordered_set>
+
+TRE_NS_START
+
+Renderer::RenderContext::RenderContext() : internal{ 0 }
+{
+
+}
+
+void Renderer::RenderContext::CreateRenderContext(TRE::Window* wnd, const Internal::RenderInstance& instance)
+{
+    internal.window = wnd;
+    internal.swapChainData.swapChainExtent = VkExtent2D{ internal.window->getSize().x, internal.window->getSize().y };
+
+    CreateWindowSurface(instance, internal);
+}
+
+void Renderer::RenderContext::InitRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice)
+{
+    CreateSwapChain(renderDevice, internal);
+}
+
+void Renderer::RenderContext::DestroyRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice, Internal::RenderContext& renderContext)
+{
+    DestroySwapChain(renderDevice, renderContext);
+    Internal::DestroryWindowSurface(renderInstance.instance, renderContext.surface);
+}
+
+
+void Renderer::RenderContext::ExecuteTransferMemory(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence, VkDevice device)
+{
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &cmdBuff;
+
+
+    if (waitSemaphore != VK_NULL_HANDLE) {
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = &waitSemaphore;
+        submitInfo.pWaitDstStageMask = &waitStage;
+    }
+
+    if (signalSemaphore != VK_NULL_HANDLE) {
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = &signalSemaphore;
+    }
+
+    vkQueueSubmit(queue, 1, &submitInfo, fence);
+
+    if (fence && device) {
+        vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
+        vkResetFences(device, 1, &fence);
+    }
+}
+
+void Renderer::RenderContext::BeginFrame(Internal::RenderDevice& renderDevice)
+{
+    using namespace Internal;
+
+    SwapChainData& swapChainData = internal.swapChainData;
+    RenderContextData& ctxData = internal.contextData;
+    ContextFrameResources& frameResources = GetCurrentFrameResource();
+
+    VkDevice device = renderDevice.device;
+    uint32 currentFrame = internal.currentFrame;
+
+    vkWaitForFences(device, 1, &swapChainData.fences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkResetFences(device, 1, &swapChainData.fences[currentFrame]);
+
+    VkResult result = vkAcquireNextImageKHR(device, internal.swapChain, UINT64_MAX, swapChainData.imageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &internal.currentImage);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+        RecreateSwapChainInternal(renderDevice, internal);
+        return;
+    } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        ASSERTF(true, "Failed to acquire swap chain image!\n");
+    }
+}
+
+void Renderer::RenderContext::EndFrame(Internal::RenderDevice& renderDevice)
+{
+    using namespace Internal;
+
+    SwapChainData& swapChainData = internal.swapChainData;
+    RenderContextData& ctxData = internal.contextData;
+    ContextFrameResources& frameResources = GetCurrentFrameResource();
+
+    VkDevice device = renderDevice.device;
+    uint32 currentFrame = internal.currentFrame;
+    uint32_t currentBuffer = internal.currentImage;
+
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    if (ctxData.transferRequests) {
+        if (renderDevice.isTransferQueueSeprate) {
+            ExecuteTransferMemory(renderDevice.queues[QFT_TRANSFER], frameResources.transferCommandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                swapChainData.imageAcquiredSemaphores[currentFrame], swapChainData.transferSemaphores[currentFrame]);
+
+            VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TRANSFER_BIT };
+            submitInfo.waitSemaphoreCount = 1;
+            submitInfo.pWaitSemaphores = &swapChainData.transferSemaphores[currentFrame];
+            submitInfo.pWaitDstStageMask = waitStages;
+
+            submitInfo.commandBufferCount = 1;
+            submitInfo.pCommandBuffers = &frameResources.graphicsCommandBuffer;
+
+            submitInfo.signalSemaphoreCount = 1;
+            submitInfo.pSignalSemaphores = &swapChainData.drawCompleteSemaphores[currentFrame];
+
+            if (vkQueueSubmit(renderDevice.queues[QFT_GRAPHICS], 1, &submitInfo, swapChainData.fences[currentFrame]) != VK_SUCCESS) {
+                ASSERTF(true, "failed to submit draw command buffer!");
+            }
+        } else {
+            VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+            VkCommandBuffer commandBuffers[] = { frameResources.transferCommandBuffer, frameResources.graphicsCommandBuffer };
+            VkSemaphore waitSemaphores[] = { swapChainData.imageAcquiredSemaphores[currentFrame] };
+            VkSemaphore signalSemaphores[] = { swapChainData.drawCompleteSemaphores[currentFrame] };
+
+            submitInfo.waitSemaphoreCount = 1;
+            submitInfo.pWaitSemaphores = waitSemaphores;
+            submitInfo.pWaitDstStageMask = waitStages;
+            submitInfo.commandBufferCount = 2;
+            submitInfo.pCommandBuffers = commandBuffers;
+            submitInfo.signalSemaphoreCount = 1;
+            submitInfo.pSignalSemaphores = signalSemaphores;
+
+            if (vkQueueSubmit(renderDevice.queues[QFT_GRAPHICS], 1, &submitInfo, swapChainData.fences[currentFrame]) != VK_SUCCESS) {
+                ASSERTF(true, "failed to submit draw command buffer!");
+            }
+        }
+
+        ctxData.transferRequests = 0; // All transfers are clear now
+    } else { // No transfers
+        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = &swapChainData.imageAcquiredSemaphores[currentFrame];
+        submitInfo.pWaitDstStageMask = waitStages;
+
+        submitInfo.commandBufferCount = 1; // (uint32)cmdbuff.Size();
+        submitInfo.pCommandBuffers = &frameResources.graphicsCommandBuffer; // cmdbuff.Data();
+
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = &swapChainData.drawCompleteSemaphores[currentFrame];
+
+        if (vkQueueSubmit(renderDevice.queues[QFT_GRAPHICS], 1, &submitInfo, swapChainData.fences[currentFrame]) != VK_SUCCESS) {
+            ASSERTF(true, "failed to submit draw command buffer!");
+        }
+    }
+
+    if (renderDevice.isPresentQueueSeprate) {
+        // If we are using separate queues, change image ownership to the
+        // present queue before presenting, waiting for the draw complete
+        // semaphore and signalling the ownership released semaphore when
+        // finished
+        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+        VkSubmitInfo present_submit_info{};
+        present_submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+        present_submit_info.waitSemaphoreCount = 1;
+        present_submit_info.pWaitSemaphores = &swapChainData.drawCompleteSemaphores[currentFrame];
+        present_submit_info.pWaitDstStageMask = waitStages;
+
+        present_submit_info.commandBufferCount = 1;
+        present_submit_info.pCommandBuffers = &frameResources.presentCommandBuffer; // TODO: change this command buffer (to graphics to present cmd)
+
+        present_submit_info.signalSemaphoreCount = 1;
+        present_submit_info.pSignalSemaphores = &swapChainData.imageOwnershipSemaphores[currentFrame];
+
+        if (vkQueueSubmit(renderDevice.queues[QFT_PRESENT], 1, &present_submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
+            ASSERTF(true, "failed to submit command buffer to present queue!");
+        }
+    }
+
+    // Presenting:
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = renderDevice.isPresentQueueSeprate ?
+        &swapChainData.imageOwnershipSemaphores[currentFrame] :
+        &swapChainData.drawCompleteSemaphores[currentFrame];
+
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &internal.swapChain;
+    presentInfo.pImageIndices = &currentBuffer;
+
+    VkResult result = vkQueuePresentKHR(renderDevice.queues[QFT_PRESENT], &presentInfo);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || internal.framebufferResized) {
+        internal.framebufferResized = false;
+        RecreateSwapChainInternal(renderDevice, internal);
+    } else if (result != VK_SUCCESS) {
+        ASSERTF(true, "Failed to present swap chain image!");
+    }
+
+    // vkQueueWaitIdle(renderDevice.queues[QFT_PRESENT]);
+    internal.currentFrame = (currentFrame + 1) % SwapChainData::MAX_FRAMES_IN_FLIGHT;
+}
+
+void Renderer::RenderContext::TransferBuffers(uint32 count, Internal::TransferBufferInfo* transferBufferInfo)
+{
+    VkCommandBuffer currentCmdBuff = GetCurrentFrameResource().transferCommandBuffer;
+    internal.contextData.transferRequests = count;
+
+    Internal::CopyBuffers(currentCmdBuff, count, transferBufferInfo);
+}
+
+void Renderer::RenderContext::FlushTransfers(Internal::RenderDevice& renderDevice)
+{
+ 
+    Internal::ContextFrameResources& frameResources = GetCurrentFrameResource();
+    Internal::SwapChainData& swapData = internal.swapChainData;
+
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    if (internal.contextData.transferRequests) {
+        if (renderDevice.isTransferQueueSeprate) {
+            ExecuteTransferMemory(renderDevice.queues[Internal::QFT_TRANSFER], frameResources.transferCommandBuffer, 0,
+                VK_NULL_HANDLE, VK_NULL_HANDLE, swapData.transferSyncFence, renderDevice.device);
+        } else {
+            ExecuteTransferMemory(renderDevice.queues[Internal::QFT_TRANSFER], frameResources.transferCommandBuffer, 0, VK_NULL_HANDLE, VK_NULL_HANDLE, swapData.transferSyncFence, renderDevice.device);
+        }
+    }
+
+    internal.contextData.transferRequests = 0;
+}
+
+const Renderer::Internal::ContextFrameResources& Renderer::RenderContext::GetCurrentFrameResource() const
+{
+    return internal.contextData.contextFrameResources[internal.currentImage];
+}
+
+Renderer::Internal::ContextFrameResources& Renderer::RenderContext::GetCurrentFrameResource()
+{
+    return internal.contextData.contextFrameResources[internal.currentImage];
+}
+
+const Renderer::Internal::SwapChainData& Renderer::RenderContext::GetSwapChainData() const
+{
+    return internal.swapChainData;
+}
+
+TRE_NS_END

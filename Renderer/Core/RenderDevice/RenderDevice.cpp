@@ -3,6 +3,7 @@
 #include <Renderer/Core/Common/Globals.hpp>
 #include <unordered_set>
 #include <Renderer/Core/Common/Utils.hpp>
+#include <Renderer/Core/Buffer/Buffer.hpp>
 
 TRE_NS_START
 
@@ -84,6 +85,29 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
     }
 
     return 0;
+}
+
+Renderer::Internal::Buffer Renderer::RenderDevice::CreateBuffer(VkDeviceSize size, const void* data, uint32 usage, 
+    uint32 properties, uint32 queueFamilies)
+{
+    uint32 queueFamilyIndices[Internal::QFT_MAX];
+    uint32 queueFamilyIndexCount = 0;
+    VkSharingMode sharingMode = (VkSharingMode)(queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
+
+    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
+        if (Internal::QUEUE_FAMILY_FLAGS[i] & queueFamilies) {
+            queueFamilyIndices[queueFamilyIndexCount++] = internal.queueFamilyIndices.queueFamilies[i];
+        }
+    }
+
+    return Internal::CreateBuffer(internal, size, data, 
+        (uint32)usage, (VkMemoryPropertyFlags)properties, sharingMode, 
+        queueFamilyIndexCount, queueFamilyIndices);
+}
+
+Renderer::Internal::Buffer Renderer::RenderDevice::CreateStagingBuffer(VkDeviceSize size, const void* data)
+{
+    return Internal::CreateStagingBuffer(internal, size, data);
 }
 
 VkPhysicalDevice Renderer::RenderDevice::PickGPU(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx, FPN_RankGPU p_pick_func)

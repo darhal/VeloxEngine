@@ -45,16 +45,16 @@ void Renderer::Internal::CreateSwapChain(const RenderDevice& renderDevice, Rende
     VkSurfaceFormatKHR surfaceFormat         = ChooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode             = ChooseSwapPresentMode(swapChainSupport.presentModes);
     VkExtent2D extent                        = ChooseSwapExtent(swapChainSupport.capabilities, ctx.swapChainData.swapChainExtent);
-    ctx.contextData.imagesCount              = swapChainSupport.capabilities.minImageCount + 1;
+    ctx.imagesCount                          = swapChainSupport.capabilities.minImageCount + 1;
 
-    if (swapChainSupport.capabilities.maxImageCount > 0 && ctx.contextData.imagesCount > swapChainSupport.capabilities.maxImageCount) {
-        ctx.contextData.imagesCount = swapChainSupport.capabilities.maxImageCount;
+    if (swapChainSupport.capabilities.maxImageCount > 0 && ctx.imagesCount > swapChainSupport.capabilities.maxImageCount) {
+        ctx.imagesCount = swapChainSupport.capabilities.maxImageCount;
     }
 
     VkSwapchainCreateInfoKHR    createInfo{};
     createInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.surface          = ctx.surface;
-    createInfo.minImageCount    = ctx.contextData.imagesCount;
+    createInfo.minImageCount    = ctx.imagesCount;
     createInfo.imageFormat      = surfaceFormat.format;
     createInfo.imageColorSpace  = surfaceFormat.colorSpace;
     createInfo.imageExtent      = extent;
@@ -82,10 +82,9 @@ void Renderer::Internal::CreateSwapChain(const RenderDevice& renderDevice, Rende
         ASSERTF(true, "Failed to create swap chain!");
     }
 
-    vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &ctx.contextData.imagesCount, NULL);
-    ctx.contextData.contextFrameResources.resize(ctx.contextData.imagesCount);
-    std::vector<VkImage> swapChainImages(ctx.contextData.imagesCount, VK_NULL_HANDLE);
-    vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &ctx.contextData.imagesCount, swapChainImages.data());
+    vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &ctx.imagesCount, NULL);
+    ctx.contextData.contextFrameResources.resize(ctx.imagesCount);
+    vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &ctx.imagesCount, ctx.swapChainData.swapChainImages);
     
     ctx.swapChainData.swapChainImageFormat = surfaceFormat.format;
     ctx.swapChainData.swapChainExtent      = extent;
@@ -95,11 +94,11 @@ void Renderer::Internal::CreateSwapChain(const RenderDevice& renderDevice, Rende
         CreateSwapChainRenderPass(renderDevice, ctx);
         CreateCommandPool(renderDevice, ctx);
         CreateCommandBuffers(renderDevice, ctx);
-    }else {
+    } else {
         vkDestroySwapchainKHR(renderDevice.device, oldSwapChain, NULL);
     }
 
-    CreateFrameResources(renderDevice, ctx, swapChainImages.data());
+    CreateSwapChainResources(renderDevice, ctx);
 }
 
 void Renderer::Internal::DestroySwapChain(const RenderDevice& renderDevice, RenderContext& ctx)
@@ -120,12 +119,12 @@ void Renderer::Internal::DestroySwapChain(const RenderDevice& renderDevice, Rend
 
 void Renderer::Internal::CleanupSwapChain(RenderContext& ctx, const RenderDevice& renderDevice)
 {
-    RenderContextData& ctxData   = ctx.contextData;
-    VkDevice device              = renderDevice.device;
+    SwapChainData& swapChainData   = ctx.swapChainData;
+    VkDevice device                 = renderDevice.device;
 
-    for (size_t i = 0; i < ctxData.imagesCount; i++) {
-        vkDestroyFramebuffer(device, ctxData.contextFrameResources[i].swapChainFramebuffer, NULL);
-        vkDestroyImageView(device, ctxData.contextFrameResources[i].swapChainImageView, NULL);
+    for (size_t i = 0; i < ctx.imagesCount; i++) {
+        vkDestroyFramebuffer(device, swapChainData.swapChainFramebuffers[i], NULL);
+        vkDestroyImageView(device, swapChainData.swapChainImageViews[i], NULL);
     }
 
     // vkFreeCommandBuffers(device, swapChainData.commandPool, static_cast<uint32_t>(swapChainData.commandBuffers.Size()), swapChainData.commandBuffers.Data());
@@ -154,174 +153,16 @@ void Renderer::Internal::RecreateSwapChainInternal(const RenderDevice& renderDev
     CreateSwapChain(renderDevice, ctx);
 }
 
-void Renderer::Internal::ExecuteTransferMemory(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore)
-{
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-    submitInfo.waitSemaphoreCount   = 1;
-    submitInfo.pWaitSemaphores      = &waitSemaphore;
-    submitInfo.pWaitDstStageMask    = &waitStage;
-
-    submitInfo.commandBufferCount   = 1;
-    submitInfo.pCommandBuffers      = &cmdBuff;
-
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores    = &signalSemaphore;
-
-    vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
-}
-
 void Renderer::Internal::UpdateSwapChain(RenderContext& ctx)
 {
     ctx.framebufferResized = true;
     // RecreateSwapChainInternal(*engine.renderContext, *engine.renderInstance, *engine.renderDevice);
 }
 
-void Renderer::Internal::PrepareFrame(RenderDevice& renderDevice, RenderContext& renderContext)
-{
-    SwapChainData& swapChainData            = renderContext.swapChainData;
-    RenderContextData& ctxData              = renderContext.contextData;
-    ContextFrameResources& frameResources   = GetCurrentFrameResource(renderContext);
-
-    VkDevice device                         = renderDevice.device;
-    uint32 currentFrame                     = ctxData.currentFrame;
-
-    vkWaitForFences(device, 1, &swapChainData.fences[currentFrame], VK_TRUE, UINT64_MAX);
-    vkResetFences(device, 1, &swapChainData.fences[currentFrame]);
-
-    VkResult result = vkAcquireNextImageKHR(device, renderContext.swapChain, UINT64_MAX, swapChainData.imageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &ctxData.currentBuffer);
-
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        RecreateSwapChainInternal(renderDevice, renderContext);
-        return;
-    } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        ASSERTF(true, "Failed to acquire swap chain image!\n");
-    }
-}
-
-void Renderer::Internal::Present(RenderDevice& renderDevice, RenderContext& renderContext)
-{
-    SwapChainData& swapChainData            = renderContext.swapChainData;
-    RenderContextData& ctxData              = renderContext.contextData;
-    ContextFrameResources& frameResources   = GetCurrentFrameResource(renderContext);
-
-    VkDevice device                         = renderDevice.device;
-    uint32 currentFrame                     = ctxData.currentFrame;
-    uint32_t currentBuffer                  = ctxData.currentBuffer;
-
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-    if (ctxData.transferRequests) {
-        if (renderDevice.isTransferQueueSeprate) {
-            ExecuteTransferMemory(renderDevice.queues[QFT_TRANSFER], frameResources.transferCommandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 
-                swapChainData.imageAcquiredSemaphores[currentFrame], swapChainData.transferSemaphores[currentFrame]);
-
-            VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TRANSFER_BIT };
-            submitInfo.waitSemaphoreCount   = 1;
-            submitInfo.pWaitSemaphores      = &swapChainData.transferSemaphores[currentFrame];
-            submitInfo.pWaitDstStageMask    = waitStages;
-
-            submitInfo.commandBufferCount   = 1;
-            submitInfo.pCommandBuffers      = &frameResources.graphicsCommandBuffer;
-
-            submitInfo.signalSemaphoreCount = 1;
-            submitInfo.pSignalSemaphores    = &swapChainData.drawCompleteSemaphores[currentFrame];
-
-            if (vkQueueSubmit(renderDevice.queues[QFT_GRAPHICS], 1, &submitInfo, swapChainData.fences[currentFrame]) != VK_SUCCESS) {
-                ASSERTF(true, "failed to submit draw command buffer!");
-            }
-        } else {
-            VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-            VkCommandBuffer commandBuffers[]  = { frameResources.transferCommandBuffer, frameResources.graphicsCommandBuffer };
-            VkSemaphore waitSemaphores[]      = { swapChainData.imageAcquiredSemaphores[currentFrame] };
-            VkSemaphore signalSemaphores[]    = { swapChainData.drawCompleteSemaphores[currentFrame] };
-
-            submitInfo.waitSemaphoreCount   = 1;
-            submitInfo.pWaitSemaphores      = waitSemaphores;
-            submitInfo.pWaitDstStageMask    = waitStages;
-            submitInfo.commandBufferCount   = 2;
-            submitInfo.pCommandBuffers      = commandBuffers;
-            submitInfo.signalSemaphoreCount = 1;
-            submitInfo.pSignalSemaphores    = signalSemaphores;
-
-            if (vkQueueSubmit(renderDevice.queues[QFT_GRAPHICS], 1, &submitInfo, swapChainData.fences[currentFrame]) != VK_SUCCESS) {
-                ASSERTF(true, "failed to submit draw command buffer!");
-            }
-        }
-
-        ctxData.transferRequests = 0; // All transfers are clear now
-    } else { // No transfers
-        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-        submitInfo.waitSemaphoreCount   = 1;
-        submitInfo.pWaitSemaphores      = &swapChainData.imageAcquiredSemaphores[currentFrame];
-        submitInfo.pWaitDstStageMask    = waitStages;
-
-        submitInfo.commandBufferCount   = 1; // (uint32)cmdbuff.Size();
-        submitInfo.pCommandBuffers      = &frameResources.graphicsCommandBuffer; // cmdbuff.Data();
-
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores    = &swapChainData.drawCompleteSemaphores[currentFrame];
-
-        if (vkQueueSubmit(renderDevice.queues[QFT_GRAPHICS], 1, &submitInfo, swapChainData.fences[currentFrame]) != VK_SUCCESS) {
-            ASSERTF(true, "failed to submit draw command buffer!");
-        }
-    }
-
-    if (renderDevice.isPresentQueueSeprate) {
-        // If we are using separate queues, change image ownership to the
-        // present queue before presenting, waiting for the draw complete
-        // semaphore and signalling the ownership released semaphore when
-        // finished
-        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-
-        VkSubmitInfo present_submit_info{};
-        present_submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-        present_submit_info.waitSemaphoreCount      = 1;
-        present_submit_info.pWaitSemaphores         = &swapChainData.drawCompleteSemaphores[currentFrame];
-        present_submit_info.pWaitDstStageMask       = waitStages;
-
-        present_submit_info.commandBufferCount      = 1;
-        present_submit_info.pCommandBuffers         = &frameResources.presentCommandBuffer; // TODO: change this command buffer (to graphics to present cmd)
-
-        present_submit_info.signalSemaphoreCount    = 1;
-        present_submit_info.pSignalSemaphores       = &swapChainData.imageOwnershipSemaphores[currentFrame];
-
-        if (vkQueueSubmit(renderDevice.queues[QFT_PRESENT], 1, &present_submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
-            ASSERTF(true, "failed to submit command buffer to present queue!");
-        }
-    }
-
-    // Presenting:
-    VkPresentInfoKHR presentInfo{};
-    presentInfo.sType               = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    presentInfo.waitSemaphoreCount  = 1;
-    presentInfo.pWaitSemaphores     = renderDevice.isPresentQueueSeprate ? 
-                                        &swapChainData.imageOwnershipSemaphores[currentFrame] : 
-                                        &swapChainData.drawCompleteSemaphores[currentFrame];
-
-    presentInfo.swapchainCount      = 1;
-    presentInfo.pSwapchains         = &renderContext.swapChain;
-    presentInfo.pImageIndices       = &currentBuffer;
-
-    VkResult result = vkQueuePresentKHR(renderDevice.queues[QFT_PRESENT], &presentInfo);
-
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || renderContext.framebufferResized) {
-        renderContext.framebufferResized = false;
-        RecreateSwapChainInternal(renderDevice, renderContext);
-    } else if (result != VK_SUCCESS) {
-        ASSERTF(true, "Failed to present swap chain image!");
-    }
-
-    // vkQueueWaitIdle(renderDevice.queues[QFT_PRESENT]);
-    ctxData.currentFrame = (currentFrame + 1) % SwapChainData::MAX_FRAMES_IN_FLIGHT;
-}
 
 void Renderer::Internal::CreateSyncObjects(const RenderDevice& renderDevice, RenderContext& ctx)
 {
-    ctx.contextData.currentFrame = 0;
+    ctx.currentFrame = 0;
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -343,6 +184,9 @@ void Renderer::Internal::CreateSyncObjects(const RenderDevice& renderDevice, Ren
             vkCreateSemaphore(renderDevice.device, &semaphoreInfo, NULL, &ctx.swapChainData.transferSemaphores[i]);
         }
     }
+
+    fenceInfo.flags = 0;
+    vkCreateFence(renderDevice.device, &fenceInfo, NULL, &ctx.swapChainData.transferSyncFence);
 }
 
 void Renderer::Internal::CreateCommandPool(const RenderDevice& renderDevice, RenderContext& ctx)
@@ -405,7 +249,7 @@ void Renderer::Internal::CreateCommandBuffers(const RenderDevice& renderDevice, 
         allocInfo[2].level                 = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo[2].commandBufferCount    = 1;
 
-        for (uint32 i = 0; i < ctxData.imagesCount; i++) {
+        for (uint32 i = 0; i < ctx.imagesCount; i++) {
             if (vkAllocateCommandBuffers(renderDevice.device, &allocInfo[0], &ctxData.contextFrameResources[i].graphicsCommandBuffer) != VK_SUCCESS) {
                 ASSERTF(true, "failed to allocate command buffers!");
             }
@@ -425,18 +269,17 @@ void Renderer::Internal::CreateCommandBuffers(const RenderDevice& renderDevice, 
     }
 }
 
-void Renderer::Internal::CreateFrameResources(const RenderDevice& renderDevice, RenderContext& ctx, VkImage* images)
+void Renderer::Internal::CreateSwapChainResources(const RenderDevice& renderDevice, RenderContext& ctx)
 {
-    for (size_t i = 0; i < ctx.contextData.imagesCount; i++) {
-        ContextFrameResources& frameResources = ctx.contextData.contextFrameResources[i];
-        frameResources.swapChainImage = images[i];
+    SwapChainData& swapChainData = ctx.swapChainData;
 
+    for (size_t i = 0; i < ctx.imagesCount; i++) {
         // Create Image view:
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        createInfo.image = frameResources.swapChainImage;
+        createInfo.image = swapChainData.swapChainImages[i];
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = ctx.swapChainData.swapChainImageFormat;
+        createInfo.format = swapChainData.swapChainImageFormat;
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -447,13 +290,13 @@ void Renderer::Internal::CreateFrameResources(const RenderDevice& renderDevice, 
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView(renderDevice.device, &createInfo, NULL, &frameResources.swapChainImageView) != VK_SUCCESS) {
+        if (vkCreateImageView(renderDevice.device, &createInfo, NULL, &swapChainData.swapChainImageViews[i]) != VK_SUCCESS) {
             ASSERTF(true, "Failed to create image views!");
         }
 
         // Create framebuffers:
         VkImageView attachments[] = {
-            frameResources.swapChainImageView
+            swapChainData.swapChainImageViews[i]
         };
 
         VkFramebufferCreateInfo framebufferInfo{};
@@ -465,7 +308,7 @@ void Renderer::Internal::CreateFrameResources(const RenderDevice& renderDevice, 
         framebufferInfo.height = ctx.swapChainData.swapChainExtent.height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(renderDevice.device, &framebufferInfo, NULL, &frameResources.swapChainFramebuffer) != VK_SUCCESS) {
+        if (vkCreateFramebuffer(renderDevice.device, &framebufferInfo, NULL, &swapChainData.swapChainFramebuffers[i]) != VK_SUCCESS) {
             ASSERTF(true, "failed to create framebuffer!");
         }
     }
@@ -476,33 +319,33 @@ void Renderer::Internal::CreateSwapChainRenderPass(const RenderDevice& renderDev
     RenderPassDesc renderpassDesc;
 
     VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = ctx.swapChainData.swapChainImageFormat;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    colorAttachment.format          = ctx.swapChainData.swapChainImageFormat;
+    colorAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.initialLayout   = VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachment.finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 
     VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependency.srcSubpass       = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass       = 0;
+    dependency.srcStageMask     = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask    = 0;
+    dependency.dstStageMask     = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask    = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
 
     VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachmentRef.attachment   = 0;
+    colorAttachmentRef.layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
+    subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount    = 1;
+    subpass.pColorAttachments       = &colorAttachmentRef;
 
     renderpassDesc.attachments.EmplaceBack(colorAttachment);
     renderpassDesc.subpassDependency.EmplaceBack(dependency);
@@ -525,23 +368,13 @@ void Renderer::Internal::BuildImageOwnershipCmd(const RenderDevice& renderDevice
     imageOwnershipBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     imageOwnershipBarrier.srcQueueFamilyIndex = renderDevice.queueFamilyIndices.queueFamilies[QFT_GRAPHICS];
     imageOwnershipBarrier.dstQueueFamilyIndex = renderDevice.queueFamilyIndices.queueFamilies[QFT_PRESENT];
-    imageOwnershipBarrier.image = ctx.contextData.contextFrameResources[imageIndex].swapChainImage;
+    imageOwnershipBarrier.image = ctx.swapChainData.swapChainImages[imageIndex];
     imageOwnershipBarrier.subresourceRange = VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
     vkCmdPipelineBarrier(presentCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
         VkDependencyFlagBits{}, 0, NULL, 0, NULL, 1, &imageOwnershipBarrier);
 
     vkEndCommandBuffer(presentCommandBuffer);
-}
-
-const TRE::Renderer::Internal::ContextFrameResources& Renderer::Internal::GetCurrentFrameResource(const RenderContext& ctx)
-{
-    return ctx.contextData.contextFrameResources[ctx.contextData.currentBuffer];
-}
-
-TRE::Renderer::Internal::ContextFrameResources& Renderer::Internal::GetCurrentFrameResource(RenderContext& ctx)
-{
-    return ctx.contextData.contextFrameResources[ctx.contextData.currentBuffer];
 }
 
 VkSurfaceFormatKHR Renderer::Internal::ChooseSwapSurfaceFormat(const TRE::Vector<VkSurfaceFormatKHR>& availableFormats) 

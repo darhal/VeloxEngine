@@ -17,14 +17,14 @@ namespace Renderer
 		"VK_KHR_surface",
 		"VK_KHR_win32_surface",
 
-#if defined(DEBUG)
+#if defined(DEBUG) && defined(VALIDATION_LAYERS)
 		"VK_EXT_debug_utils",
 		"VK_EXT_debug_report"
 #endif
 	};
 
 	const std::initializer_list<const char*> VK_REQ_LAYERS = {
-#if defined(DEBUG)
+#if defined(DEBUG) && defined(VALIDATION_LAYERS)
 		"VK_LAYER_KHRONOS_validation"
 #endif
 	};
@@ -33,7 +33,59 @@ namespace Renderer
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	};
 
+	typedef VkDeviceSize size;
+
+	enum MemoryProperty
+	{
+		DEVICE_LOCAL	= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		HOST_VISIBLE	= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		HOST_COHERENT	= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		HOST_CACHED		= VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
+		LAZILY_ALLOCATED = VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT,
+		PROTECTED		= VK_MEMORY_PROPERTY_PROTECTED_BIT,
+		DEVICE_COHERENT = VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD,
+		DEVICE_UNCACHED = VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD,
+	};
+
+	enum BufferUsage 
+	{
+		TRANSFER_SRC = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		TRANSFER_DST = VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		UNIFORM_TEXEL = VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT,
+		STORAGE_TEXEL = VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT,
+		UNIFORM_BUFFER = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		STORAGE_BUFFER = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		INDEX_BUFFER = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VERTEX_BUFFER = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		INDIRECT_BUFFER = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
+		SHADER_DEVICE_ADDRESS = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		TRANSFORM_FEEDBACK_BUFFER = VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT,
+		TRANSFORM_FEEDBACK_COUNTER_BUFFER = VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT,
+		CONDITIONAL_RENDERING = VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT,
+		RAY_TRACING = VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR,
+		SHADER_DEVICE_ADDRESS_EXT = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT,
+		VSHADER_DEVICE_ADDRESS = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR,
+	};
+
+	enum SharingMode
+	{
+		EXCLUSIVE = VK_SHARING_MODE_EXCLUSIVE,
+		CONCURRENT = VK_SHARING_MODE_CONCURRENT,
+	};
+
+	enum QueueFamilyFlag 
+	{
+		NONE	 = 0x0,
+		GRAPHICS = 0x1,
+		COMPUTE  = 0x2,
+		TRANSFER = 0x4,
+		SPARSE	 = 0x8,
+		PRESENT  = 0x10,
+	};
+
 	namespace Internal {
+		CONSTEXPR static QueueFamilyFlag QUEUE_FAMILY_FLAGS[] = { GRAPHICS, COMPUTE, TRANSFER, SPARSE, PRESENT };
+
 		enum QueueFamilyTypes {
 			QFT_GRAPHICS = 0,
 			QFT_COMPUTE = 1,
@@ -203,7 +255,8 @@ namespace Renderer
 
 		struct SwapChainData
 		{
-			CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT = 2;
+			CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT	= 3;
+			CONSTEXPR static uint32			MAX_IMAGES_COUNT		= 4;
 
 			VkSemaphore						imageAcquiredSemaphores[MAX_FRAMES_IN_FLIGHT];
 			VkSemaphore						drawCompleteSemaphores[MAX_FRAMES_IN_FLIGHT];
@@ -214,7 +267,15 @@ namespace Renderer
 
 			// To use when using seprate transfer queue:
 			VkSemaphore						transferSemaphores[MAX_FRAMES_IN_FLIGHT];
+			VkFence							transferSyncFence;
 
+
+			// Swap chain images
+			VkImage							swapChainImages[MAX_IMAGES_COUNT];
+			VkImageView						swapChainImageViews[MAX_IMAGES_COUNT];
+			VkFramebuffer					swapChainFramebuffers[MAX_IMAGES_COUNT];
+
+			// Other misc swapchain data:
 			VkFormat						swapChainImageFormat;
 			VkExtent2D						swapChainExtent;
 		};
@@ -224,10 +285,6 @@ namespace Renderer
 			VkCommandBuffer		graphicsCommandBuffer;
 			VkCommandBuffer		transferCommandBuffer;
 			VkCommandBuffer		presentCommandBuffer;
-
-			VkImage				swapChainImage;
-			VkImageView			swapChainImageView;
-			VkFramebuffer		swapChainFramebuffer;
 		};
 
 		struct RenderContextData
@@ -237,10 +294,6 @@ namespace Renderer
 			VkCommandPool						presentCommandPool;
 
 			VkRenderPass						renderPass;
-
-			uint32								currentFrame;
-			uint32								currentBuffer;
-			uint32								imagesCount;
 
 			uint32								transferRequests;
 
@@ -279,6 +332,11 @@ namespace Renderer
 			SwapChainData					swapChainData;
 			RenderContextData				contextData;
 
+			// Swap chain current frame and current buffer and images count
+			uint32							imagesCount;
+			uint32							currentFrame;
+			uint32							currentImage;
+			
 			bool							framebufferResized;
 		};
 	}

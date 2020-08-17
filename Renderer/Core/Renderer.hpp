@@ -2,9 +2,9 @@
 
 #include <Renderer/Common.hpp>
 #include <Renderer/Core/Common/Globals.hpp>
-#include <Renderer/Core/Instance/Instance.hpp>
+#include <Renderer/Core/RenderInstance/RenderInstance.hpp>
 #include <Renderer/Core/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Core/Context/Context.hpp>
+#include <Renderer/Core/RenderContext/RenderContext.hpp>
 
 TRE_NS_START
 
@@ -21,12 +21,16 @@ namespace Renderer
 
 		void EndFrame();
 
+		void FlushTransfers();
+
+		FORCEINLINE RenderInstance& GetRenderInstance() { return renderInstance; }
+		FORCEINLINE RenderContext& GetRenderContext() { return renderContext; }
+		FORCEINLINE RenderDevice& GerRenderDevice() { return renderDevice; }
+
 		Internal::RenderContext& GetCtxInternal() { return renderContext.internal; }
 		Internal::RenderDevice& GetDevInternal() { return renderDevice.internal; }
 		Internal::RenderInstance& GetInstInternal() { return renderInstance.internal; }
-	//private:
-		// Internal::RenderEngine engine;
-
+	private:
 		RenderInstance	renderInstance;
 		RenderDevice	renderDevice;
 		RenderContext	renderContext;

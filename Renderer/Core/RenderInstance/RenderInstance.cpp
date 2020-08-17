@@ -1,4 +1,4 @@
-#include "Instance.hpp"
+#include "RenderInstance.hpp"
 
 TRE_NS_START
 
@@ -76,7 +76,7 @@ void Renderer::RenderInstance::DestroyInstance(VkInstance p_instance)
 
 int32 Renderer::RenderInstance::SetupDebugMessenger(VkInstance p_instance, VkDebugUtilsMessengerEXT* p_debugMessenger)
 {
-#if defined(DEBUG)
+#if defined(DEBUG) && defined(VALIDATION_LAYERS)
     ASSERT(p_debugMessenger == VK_NULL_HANDLE);
 
     VkDebugUtilsMessengerCreateInfoEXT createInfo{};
@@ -94,7 +94,7 @@ int32 Renderer::RenderInstance::SetupDebugMessenger(VkInstance p_instance, VkDeb
 
 int32 Renderer::RenderInstance::InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
 {
-#if defined(DEBUG)
+#if defined(DEBUG) && defined(VALIDATION_LAYERS)
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
     createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
@@ -107,7 +107,7 @@ int32 Renderer::RenderInstance::InitDebugMessengerCreateInfo(VkDebugUtilsMesseng
 
 VkResult Renderer::RenderInstance::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
 {
-#if defined(DEBUG)
+#if defined(DEBUG) && defined(VALIDATION_LAYERS)
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
     
     if (func != nullptr) {
@@ -121,7 +121,7 @@ VkResult Renderer::RenderInstance::CreateDebugUtilsMessengerEXT(VkInstance insta
 
 void Renderer::RenderInstance::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
 {
-#if defined(DEBUG)
+#if defined(DEBUG) && defined(VALIDATION_LAYERS)
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
 
     if (func != nullptr) {

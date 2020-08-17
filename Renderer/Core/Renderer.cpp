@@ -1,7 +1,7 @@
 #include "Renderer.hpp"
-#include <Renderer/Core/Instance/Instance.hpp>
+#include <Renderer/Core/RenderInstance/RenderInstance.hpp>
 #include <Renderer/Core/Common/Globals.hpp>
-#include <Renderer/Core/Context/Context.hpp>
+#include <Renderer/Core/RenderContext/RenderContext.hpp>
 #include <Renderer/Core/RenderDevice/RenderDevice.hpp>
 #include <Renderer/Core/SwapChain/SwapChain.hpp>
 
@@ -27,12 +27,17 @@ Renderer::RenderEngine::~RenderEngine()
 
 void Renderer::RenderEngine::BeginFrame()
 {
-    TRE::Renderer::Internal::PrepareFrame(renderDevice.internal, renderContext.internal);
+    renderContext.BeginFrame(renderDevice.internal);
 }
 
 void Renderer::RenderEngine::EndFrame()
 {
-    TRE::Renderer::Internal::Present(renderDevice.internal, renderContext.internal);
+    renderContext.EndFrame(renderDevice.internal);
+}
+
+void Renderer::RenderEngine::FlushTransfers()
+{
+    renderContext.FlushTransfers(renderDevice.internal);
 }
 
 TRE_NS_END
