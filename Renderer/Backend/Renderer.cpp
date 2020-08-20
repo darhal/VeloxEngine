@@ -1,14 +1,17 @@
 #include "Renderer.hpp"
-#include <Renderer/Core/RenderInstance/RenderInstance.hpp>
-#include <Renderer/Core/Common/Globals.hpp>
-#include <Renderer/Core/RenderContext/RenderContext.hpp>
-#include <Renderer/Core/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Core/SwapChain/SwapChain.hpp>
+#include <Renderer/Backend/RenderInstance/RenderInstance.hpp>
+#include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/RenderContext/RenderContext.hpp>
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
+#include <Renderer/Backend/SwapChain/SwapChain.hpp>
 
 TRE_NS_START
 
 Renderer::RenderEngine::RenderEngine(TRE::Window* wnd)
 {
+    renderDevice.internal.renderContext = &renderContext.internal;
+    renderContext.internal.renderDevice = &renderDevice.internal;
+
     renderInstance.CreateRenderInstance();
 
     renderContext.CreateRenderContext(wnd, renderInstance.internal);

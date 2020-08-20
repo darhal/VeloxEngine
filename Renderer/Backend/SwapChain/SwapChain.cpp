@@ -1,7 +1,7 @@
 #include "SwapChain.hpp"
-#include <Renderer/Core/Common/Utils.hpp>
+#include <Renderer/Backend/Common/Utils.hpp>
 #include <Renderer/Window/Window.hpp>
-#include <Renderer/Core/Pipeline/GraphicsPipeline.hpp>
+#include <Renderer/Backend/Pipeline/GraphicsPipeline.hpp>
 
 TRE_NS_START
 
@@ -83,7 +83,6 @@ void Renderer::Internal::CreateSwapChain(const RenderDevice& renderDevice, Rende
     }
 
     vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &ctx.imagesCount, NULL);
-    ctx.contextData.contextFrameResources.resize(ctx.imagesCount);
     vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &ctx.imagesCount, ctx.swapChainData.swapChainImages);
     
     ctx.swapChainData.swapChainImageFormat = surfaceFormat.format;
@@ -249,7 +248,7 @@ void Renderer::Internal::CreateCommandBuffers(const RenderDevice& renderDevice, 
         allocInfo[2].level                 = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo[2].commandBufferCount    = 1;
 
-        for (uint32 i = 0; i < ctx.imagesCount; i++) {
+        for (uint32 i = 0; i < SwapChainData::MAX_FRAMES_IN_FLIGHT; i++) {
             if (vkAllocateCommandBuffers(renderDevice.device, &allocInfo[0], &ctxData.contextFrameResources[i].graphicsCommandBuffer) != VK_SUCCESS) {
                 ASSERTF(true, "failed to allocate command buffers!");
             }
@@ -390,12 +389,12 @@ VkSurfaceFormatKHR Renderer::Internal::ChooseSwapSurfaceFormat(const TRE::Vector
 
 VkPresentModeKHR Renderer::Internal::ChooseSwapPresentMode(const TRE::Vector<VkPresentModeKHR>& availablePresentModes)
 {
-    for (const auto& availablePresentMode : availablePresentModes) {
+    for (const auto& availablePresentMode : availablePresentModes) {        
         if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
             return availablePresentMode;
         }
     }
-
+    
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 

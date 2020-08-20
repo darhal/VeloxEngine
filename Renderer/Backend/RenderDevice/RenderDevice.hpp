@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Renderer/Common.hpp>
-#include <Renderer/Core/Common/Globals.hpp>
+#include <Renderer/Backend/Common/Globals.hpp>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
 
 TRE_NS_START
@@ -19,11 +19,6 @@ namespace Renderer
 
 		int32 CreateLogicalDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx);
 
-		Internal::Buffer CreateBuffer(VkDeviceSize size, const void* data, uint32 usage, uint32 properties, uint32 queueFamilies = QueueFamilyFlag::NONE);
-	
-		Internal::Buffer CreateStagingBuffer(VkDeviceSize size, const void* data);
-
-		void FlushTransfers();
 	private:
 		typedef bool(*FPN_RankGPU)(VkPhysicalDevice, VkSurfaceKHR);
 

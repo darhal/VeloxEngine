@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Renderer/Common.hpp>
-#include <Renderer/Core/Common/Globals.hpp>
+#include <Renderer/Backend/Common/Globals.hpp>
 
 TRE_NS_START
 

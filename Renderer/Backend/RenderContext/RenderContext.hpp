@@ -1,12 +1,21 @@
 #pragma once
 
 #include <Renderer/Common.hpp>
-#include <Renderer/Core/Common/Globals.hpp>
+#include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/MemoryAllocator/MemoryAllocator.hpp>
+#include <Renderer/Backend/Buffer/Buffer.hpp>
+#include <Renderer/Backend/StagingManager/StagingManager.hpp>
 
 TRE_NS_START
 
 namespace Renderer
 {
+	struct ContextMemory
+	{
+		MemoryAllocator	staticDataAlloc[VK_MAX_MEMORY_TYPES];
+		// MemoryAllocator	dynamicDataAlloc[Internal::SwapChainData::MAX_IMAGES_COUNT][VK_MAX_MEMORY_TYPES];
+	};
+
 	class RENDERER_API RenderContext
 	{
 	public:
@@ -20,11 +29,24 @@ namespace Renderer
 
 		void TransferBuffers(uint32 count, Internal::TransferBufferInfo* transferBufferInfo);
 
+		const Internal::ContextFrameResources& GetFrameResource(uint32 i) const;
+
+		Internal::ContextFrameResources& GetFrameResource(uint32 i);
+
 		Internal::ContextFrameResources& GetCurrentFrameResource();
 
 		const Internal::ContextFrameResources& GetCurrentFrameResource() const;
 
 		const Internal::SwapChainData& GetSwapChainData() const;
+
+		Buffer CreateBuffer(DeviceSize size, const void* data, uint32 usage, uint32 properties, uint32 queueFamilies = QueueFamilyFlag::NONE);
+
+		Buffer CreateStagingBuffer(DeviceSize size, const void* data);
+
+		RingBuffer CreateRingBuffer(DeviceSize size, const void* data, uint32 usage, 
+			uint32 ring_size = Internal::SwapChainData::MAX_FRAMES_IN_FLIGHT,
+			uint32 properties = MemoryProperty::DEVICE_LOCAL | MemoryProperty::HOST_COHERENT, 
+			uint32 queueFamilies = QueueFamilyFlag::NONE);
 
 		FORCEINLINE uint32 GetImagesCount() const { return internal.imagesCount; }
 
@@ -32,6 +54,9 @@ namespace Renderer
 
 		FORCEINLINE uint32 GetCurrentFrame() const { return internal.currentFrame; }
 
+		FORCEINLINE MemoryAllocator& GetStaticAlloc(uint32 memTypeIndex);
+
+		FORCEINLINE StagingManager& GetStagingManager() { return stagingManager; }
 	private:
 		void BeginFrame(Internal::RenderDevice& renderDevice);
 
@@ -42,9 +67,16 @@ namespace Renderer
 		void FlushTransfers(Internal::RenderDevice& renderDevice);
 	private:
 		Internal::RenderContext	internal;
+		ContextMemory			memoryAllocs;
+		StagingManager			stagingManager;
 
 		friend class RenderEngine;
 	};
+}
+
+Renderer::MemoryAllocator& Renderer::RenderContext::GetStaticAlloc(uint32 memTypeIndex)
+{
+	return memoryAllocs.staticDataAlloc[memTypeIndex];
 }
 
 TRE_NS_END

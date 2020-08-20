@@ -33,7 +33,9 @@ namespace Renderer
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	};
 
-	typedef VkDeviceSize size;
+	CONSTEXPR static uint32			MAX_FRAMES = 2;
+
+	typedef VkDeviceSize DeviceSize;
 
 	enum MemoryProperty
 	{
@@ -45,6 +47,15 @@ namespace Renderer
 		PROTECTED		= VK_MEMORY_PROPERTY_PROTECTED_BIT,
 		DEVICE_COHERENT = VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD,
 		DEVICE_UNCACHED = VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD,
+	};
+
+	enum class MemoryUsage
+	{
+		USAGE_UNKNOWN,
+		USAGE_GPU_ONLY,
+		USAGE_CPU_ONLY,
+		USAGE_CPU_TO_GPU,
+		USAGE_GPU_TO_CPU,
 	};
 
 	enum BufferUsage 
@@ -69,8 +80,8 @@ namespace Renderer
 
 	enum SharingMode
 	{
-		EXCLUSIVE = VK_SHARING_MODE_EXCLUSIVE,
-		CONCURRENT = VK_SHARING_MODE_CONCURRENT,
+		EXCLUSIVE	= VK_SHARING_MODE_EXCLUSIVE,
+		CONCURRENT	= VK_SHARING_MODE_CONCURRENT,
 	};
 
 	enum QueueFamilyFlag 
@@ -82,6 +93,24 @@ namespace Renderer
 		SPARSE	 = 0x8,
 		PRESENT  = 0x10,
 	};
+
+	struct MemoryView
+	{
+		VkDeviceMemory  memory;
+		DeviceSize	    offset;
+		DeviceSize		size;
+		uint32		    padding;
+	};
+
+	struct RingBuffer
+	{
+		MemoryView	bufferMemory;
+		VkBuffer    buffer;
+		uint32		ring_size;
+		uint32		unit_size;
+	};
+
+	class Buffer;
 
 	namespace Internal {
 		CONSTEXPR static QueueFamilyFlag QUEUE_FAMILY_FLAGS[] = { GRAPHICS, COMPUTE, TRANSFER, SPARSE, PRESENT };
@@ -240,12 +269,6 @@ namespace Renderer
 			TRE::Vector<VkAttachmentDescription>	attachments;
 		};
 
-		struct Buffer
-		{
-			VkBuffer		buffer;
-			VkDeviceMemory	bufferMemory;
-		};
-
 		struct TransferBufferInfo
 		{
 			Buffer* srcBuffer;
@@ -255,7 +278,7 @@ namespace Renderer
 
 		struct SwapChainData
 		{
-			CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT	= 3;
+			CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT	= MAX_FRAMES;
 			CONSTEXPR static uint32			MAX_IMAGES_COUNT		= 4;
 
 			VkSemaphore						imageAcquiredSemaphores[MAX_FRAMES_IN_FLIGHT];
@@ -269,8 +292,7 @@ namespace Renderer
 			VkSemaphore						transferSemaphores[MAX_FRAMES_IN_FLIGHT];
 			VkFence							transferSyncFence;
 
-
-			// Swap chain images
+			// Swap chain images:
 			VkImage							swapChainImages[MAX_IMAGES_COUNT];
 			VkImageView						swapChainImageViews[MAX_IMAGES_COUNT];
 			VkFramebuffer					swapChainFramebuffers[MAX_IMAGES_COUNT];
@@ -297,7 +319,7 @@ namespace Renderer
 
 			uint32								transferRequests;
 
-			std::vector<ContextFrameResources>	contextFrameResources;
+			ContextFrameResources				contextFrameResources[SwapChainData::MAX_FRAMES_IN_FLIGHT];
 		};
 
 
@@ -311,6 +333,8 @@ namespace Renderer
 
 		struct RenderDevice
 		{
+			struct RenderContext*				renderContext;
+
 			VkPhysicalDevice					gpu;
 			VkDevice							device;
 
@@ -325,7 +349,9 @@ namespace Renderer
 
 		struct RenderContext
 		{
-			::TRE::Window* window;
+			RenderDevice*					renderDevice;
+
+			::TRE::Window*					window;
 			VkSurfaceKHR					surface;
 
 			VkSwapchainKHR					swapChain;
@@ -338,6 +364,8 @@ namespace Renderer
 			uint32							currentImage;
 			
 			bool							framebufferResized;
+
+			VkDevice GetDevice() const { return renderDevice->device; }
 		};
 	}
 };

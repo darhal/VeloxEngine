@@ -1,10 +1,10 @@
 #pragma once
 
 #include <Renderer/Common.hpp>
-#include <Renderer/Core/Common/Globals.hpp>
-#include <Renderer/Core/RenderInstance/RenderInstance.hpp>
-#include <Renderer/Core/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Core/RenderContext/RenderContext.hpp>
+#include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/RenderInstance/RenderInstance.hpp>
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
+#include <Renderer/Backend/RenderContext/RenderContext.hpp>
 
 TRE_NS_START
 
