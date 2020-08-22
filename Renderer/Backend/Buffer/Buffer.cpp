@@ -56,6 +56,7 @@ uint32 Renderer::Buffer::FindMemoryTypeIndex(const Internal::RenderDevice& rende
 
 	switch (usage) {
 	case MemoryUsage::USAGE_GPU_ONLY:
+		required |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		break;
 	case MemoryUsage::USAGE_CPU_ONLY:

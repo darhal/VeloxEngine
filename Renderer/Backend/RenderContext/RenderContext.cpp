@@ -25,10 +25,7 @@ void Renderer::RenderContext::InitRenderContext(const Internal::RenderInstance& 
 {
     CreateSwapChain(renderDevice, internal);
     stagingManager.Init();
-
-    for (uint32 i = 0; i < renderDevice.memoryProperties.memoryTypeCount; i++) {
-        memoryAllocs.staticDataAlloc[i].Init(renderDevice.device, i);
-    }
+    gpuMemoryAllocator.Init(renderDevice);
 }
 
 void Renderer::RenderContext::DestroyRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice, Internal::RenderContext& renderContext)
@@ -207,7 +204,7 @@ void Renderer::RenderContext::FlushTransfers(Internal::RenderDevice& renderDevic
 }
 
 Renderer::Buffer Renderer::RenderContext::CreateBuffer(DeviceSize size, const void* data, uint32 usage,
-    uint32 properties, uint32 queueFamilies)
+    MemoryUsage memoryUsage, uint32 queueFamilies)
 {
     Internal::RenderDevice& renderDevice = *internal.renderDevice;
 
@@ -242,11 +239,11 @@ Renderer::Buffer Renderer::RenderContext::CreateBuffer(DeviceSize size, const vo
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(renderDevice.device, buffer.apiBuffer, &memRequirements);
-    uint32 memoryTypeIndex = Buffer::FindMemoryType(renderDevice, memRequirements.memoryTypeBits, properties);
-    buffer.bufferMemory = memoryAllocs.staticDataAlloc[memoryTypeIndex].Allocate(size, memRequirements.alignment);
+    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice, memRequirements.memoryTypeBits, memoryUsage);
+    buffer.bufferMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, size, memRequirements.alignment);
     vkBindBufferMemory(renderDevice.device, buffer.apiBuffer, buffer.bufferMemory.memory, buffer.bufferMemory.offset);
 
-    if (data && (properties & MemoryProperty::HOST_VISIBLE)) {
+    if (data && (memoryUsage == MemoryUsage::USAGE_CPU_ONLY || (memoryUsage == MemoryUsage::USAGE_CPU_TO_GPU))) {
         buffer.WriteToBuffer(size, data);
     }
 
@@ -255,18 +252,18 @@ Renderer::Buffer Renderer::RenderContext::CreateBuffer(DeviceSize size, const vo
 
 Renderer::Buffer Renderer::RenderContext::CreateStagingBuffer(DeviceSize size, const void* data)
 {
-    return this->CreateBuffer(size, data, BufferUsage::TRANSFER_SRC, MemoryProperty::HOST_VISIBLE | MemoryProperty::HOST_COHERENT);
+    return this->CreateBuffer(size, data, BufferUsage::TRANSFER_SRC, MemoryUsage::USAGE_CPU_ONLY);
 }
 
 Renderer::RingBuffer Renderer::RenderContext::CreateRingBuffer(DeviceSize size, const void* data, uint32 usage, uint32 ring_size, uint32 properties, uint32 queueFamilies)
 {
-    RingBuffer ringBuffer;
-    Buffer buffer = this->CreateBuffer(size * ring_size, data, usage, properties, queueFamilies);
+    RingBuffer ringBuffer{};
+    /*Buffer buffer = this->CreateBuffer(size * ring_size, data, usage, properties, queueFamilies);
     
     ringBuffer.buffer = buffer.apiBuffer;
     ringBuffer.bufferMemory = buffer.bufferMemory;
     ringBuffer.ring_size = ring_size;
-    ringBuffer.unit_size = size;
+    ringBuffer.unit_size = size;*/
 
     return ringBuffer;
 }

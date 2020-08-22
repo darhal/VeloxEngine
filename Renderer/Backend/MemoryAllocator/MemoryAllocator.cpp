@@ -2,54 +2,150 @@
 
 TRE_NS_START
 
-Renderer::MemoryAllocator::MemoryAllocator(VkDevice device, uint32_t memoryTypeIndex) :
-	memoryPool{ VK_NULL_HANDLE }, allocatedList{ NULL }
+Renderer::MemoryAllocator::AllocKey Renderer::MemoryAllocator::AllocPool::Allocate(VkDevice device, DeviceSize size, DeviceSize alignment)
 {
-	this->Init(device, memoryTypeIndex);
+	Chunk* chunk = GetLatestChunk(device, TOTAL_MEM_SIZE);
+	uint32 chunkId = uint32(chunks.size() - 1);
+	BindingInfo bindInfo{ UINT64_MAX, size, 0 };
+
+	if (FindFreeBinding(*chunk, alignment, bindInfo)) {
+		// Everything is done in the find free binding function
+	} else {
+		// printf("\nCreating new chunk!\n");
+		DeviceSize chunkSize = TOTAL_MEM_SIZE * chunks.size() + size + alignment;
+		chunk = CreateNewChunk(device, chunkSize);
+		chunkId = uint32(chunks.size() - 1);
+		FindFreeBinding(*chunk, alignment, bindInfo);
+	}
+
+	uint32 bindingId = (uint32)(chunk->bindingList.size());
+	chunk->bindingList.emplace_back(bindInfo);
+	return AllocKey(chunkId, bindingId);
 }
 
-Renderer::MemoryAllocator::MemoryAllocator() :
-	memoryPool{ VK_NULL_HANDLE }, allocatedList{ NULL }
+void Renderer::MemoryAllocator::AllocPool::Free(AllocKey key)
 {
+	// TODO: implement this
 }
 
-void Renderer::MemoryAllocator::Init(VkDevice device, uint32_t memoryTypeIndex)
+Renderer::MemoryView Renderer::MemoryAllocator::AllocPool::GetMemoryView(AllocKey key)
 {
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType				= VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize	= TOTAL_MEM_SIZE;
-	allocInfo.memoryTypeIndex	= memoryTypeIndex;
+	uint32 chunkIndex = key.GetChunkIndex();
+	uint32 bindingIndex = key.GetBindingIndex();
 
-	if (vkAllocateMemory(device, &allocInfo, NULL, &memoryPool) != VK_SUCCESS) {
-		ASSERTF(true, "failed to allocate vertex buffer memory!");
+	MemoryView memView;
+	memView.memory = chunks[chunkIndex].memory;
+	memView.offset = chunks[chunkIndex].bindingList[bindingIndex].offset;
+	memView.padding = chunks[chunkIndex].bindingList[bindingIndex].padding;
+	memView.size = chunks[chunkIndex].bindingList[bindingIndex].size;
+	return memView;
+}
+
+Renderer::MemoryAllocator::Chunk* Renderer::MemoryAllocator::AllocPool::GetLatestChunk(VkDevice device, DeviceSize totalSize)
+{
+	if (chunks.size() == 0) {
+		return CreateNewChunk(device, totalSize);
+	} else {
+		return &chunks.back();
 	}
 }
 
-Renderer::MemoryView Renderer::MemoryAllocator::Allocate(DeviceSize size, uint32 alignement)
+Renderer::MemoryAllocator::Chunk* Renderer::MemoryAllocator::AllocPool::CreateNewChunk(VkDevice device, DeviceSize totalSize)
 {
-	AllocNode* allocNode = new AllocNode{ MemoryView{ memoryPool, 0, size, 0 } , NULL};
+	Chunk chunk{ 0 };
+	chunk.totalSize = totalSize;
 
-	if (allocatedList) {
-		AllocNode* nextNode = allocatedList;
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = totalSize;
+	allocInfo.memoryTypeIndex = memoryTypeIndex;
+
+	if (vkAllocateMemory(device, &allocInfo, NULL, &chunk.memory) != VK_SUCCESS) {
+		ASSERTF(true, "failed to allocate memory!");
+	}
+
+	chunks.emplace_back(chunk);
+	return &chunks.back();
+}
+
+
+bool Renderer::MemoryAllocator::FindFreeBinding(const Chunk& chunk, DeviceSize alignment, BindingInfo& bindingOut)
+{
+	if (bindingOut.size > chunk.totalSize) {
+		// Create new chunk this one doesn't have enough size
+		return false;
+	}
+
+	DeviceSize currentBindingOffset = 0;
+	DeviceSize padding = (alignment - (currentBindingOffset % alignment)) % alignment;
+	DeviceSize sizeWithPadding = bindingOut.size + padding;
+
+	DeviceSize minDifferenceFit = chunk.totalSize;
+	uint32 bindingListLimit = chunk.bindingList.size();
+	DeviceSize nextBindingOffset;
+
+	for (uint32 i = 0; i < bindingListLimit; i++) {
+		const BindingInfo& currentBinding		= chunk.bindingList[i];
+		bool inLimit = i + 1 < bindingListLimit;
 		
+		if (inLimit) {
+			nextBindingOffset = chunk.bindingList[i + 1].offset;
+		} else {
+			nextBindingOffset = chunk.totalSize;
+		}
+		
+		currentBindingOffset = currentBinding.offset + currentBinding.size + currentBinding.padding;
+		const DeviceSize sizeDifference = nextBindingOffset - currentBindingOffset;
 
-		while (nextNode->next) {
-			nextNode = nextNode->next;
+		padding = (alignment - (currentBindingOffset % alignment)) % alignment;
+		sizeWithPadding = bindingOut.size + padding;
+
+		// Speical case when we have one buffer allocated we have to say that the rest is free, the difference comparison will be false
+		// If we put <= instead of <, the rest of the buffer will be allocated
+		if (sizeDifference >= sizeWithPadding && (bindingListLimit == 1 || sizeDifference < minDifferenceFit)) {
+			bindingOut.offset = currentBindingOffset + padding;
+			bindingOut.padding = padding;
+			minDifferenceFit = sizeDifference;
 		}
 
-		DeviceSize offset = nextNode->memoryView.offset + nextNode->memoryView.size;
-		uint32 padding	  = (alignement - (offset % alignement)) % alignement;
-
-		allocNode->memoryView.offset  = offset + padding;
-		allocNode->memoryView.padding = padding;
-		allocNode->next				  = allocatedList;
-
-		//  printf("Padding = %d (SIZE: %llu | Alignement: %llu)\n", padding, size, alignement);
-	} else {
-		allocatedList = allocNode;
+		// printf("[%u - %u]|", currentBindingOffset, nextBindingOffset);
 	}
 
-	return allocNode->memoryView;
+	if (minDifferenceFit == chunk.totalSize && chunk.bindingList.size()) {
+		// No free slots found, we have to create new one
+		return false;
+	}
+
+	if (bindingOut.offset == UINT64_MAX) {
+		bindingOut.offset = currentBindingOffset + padding;
+		bindingOut.padding = padding;
+	}
+	
+	// printf("Allocated bloc: [%u - %u] (TOTAL SIZE: %d)\n", bindingOut.offset, bindingOut.offset + bindingOut.size, chunk.totalSize);
+	return true;
+}
+
+Renderer::MemoryAllocator::MemoryAllocator()
+{
+
+}
+
+void Renderer::MemoryAllocator::Init(const Internal::RenderDevice& renderDevice)
+{
+	this->device = renderDevice.device;
+
+	for (uint32 i = 0; i < renderDevice.memoryProperties.memoryTypeCount; i++) {
+		allocatedList[i].memoryTypeIndex = i;
+	}
+}
+
+Renderer::MemoryView Renderer::MemoryAllocator::Allocate(uint32 memoryTypeIndex, DeviceSize size, DeviceSize alignement)
+{
+	// printf("Allocate : %d from %d\n", size, memoryTypeIndex);
+	AllocKey allocKey = allocatedList[memoryTypeIndex].Allocate(device, size, alignement);
+	return allocatedList[memoryTypeIndex].GetMemoryView(allocKey);
 }
 
 TRE_NS_END
+
+

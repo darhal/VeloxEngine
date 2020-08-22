@@ -31,7 +31,7 @@ namespace Renderer
 	private:
 		Internal::RenderDevice internal;
 
-		friend class RenderEngine;
+		friend class RenderBackend;
 	};
 };
 

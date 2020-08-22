@@ -39,7 +39,7 @@ namespace Renderer
 	private:
 		Internal::RenderInstance internal;
 
-		friend class RenderEngine;
+		friend class RenderBackend;
 	};
 };
 

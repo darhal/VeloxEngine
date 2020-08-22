@@ -1,4 +1,4 @@
-#include "Renderer.hpp"
+#include "RenderBackend.hpp"
 #include <Renderer/Backend/RenderInstance/RenderInstance.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/RenderContext/RenderContext.hpp>
@@ -7,7 +7,7 @@
 
 TRE_NS_START
 
-Renderer::RenderEngine::RenderEngine(TRE::Window* wnd)
+Renderer::RenderBackend::RenderBackend(TRE::Window* wnd)
 {
     renderDevice.internal.renderContext = &renderContext.internal;
     renderContext.internal.renderDevice = &renderDevice.internal;
@@ -19,7 +19,7 @@ Renderer::RenderEngine::RenderEngine(TRE::Window* wnd)
     renderContext.InitRenderContext(renderInstance.internal, renderDevice.internal);
 }
 
-Renderer::RenderEngine::~RenderEngine()
+Renderer::RenderBackend::~RenderBackend()
 {
     vkDeviceWaitIdle(renderDevice.internal.device);
 
@@ -28,17 +28,17 @@ Renderer::RenderEngine::~RenderEngine()
     renderInstance.DestroyRenderInstance();
 }
 
-void Renderer::RenderEngine::BeginFrame()
+void Renderer::RenderBackend::BeginFrame()
 {
     renderContext.BeginFrame(renderDevice.internal);
 }
 
-void Renderer::RenderEngine::EndFrame()
+void Renderer::RenderBackend::EndFrame()
 {
     renderContext.EndFrame(renderDevice.internal);
 }
 
-void Renderer::RenderEngine::FlushTransfers()
+void Renderer::RenderBackend::FlushTransfers()
 {
     renderContext.FlushTransfers(renderDevice.internal);
 }

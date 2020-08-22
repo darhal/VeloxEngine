@@ -10,12 +10,12 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RENDERER_API RenderEngine
+	class RENDERER_API RenderBackend
 	{
 	public:
-		RenderEngine(TRE::Window* wnd);
+		RenderBackend(TRE::Window* wnd);
 
-		~RenderEngine();
+		~RenderBackend();
 
 		void BeginFrame();
 

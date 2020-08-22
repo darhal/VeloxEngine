@@ -205,7 +205,7 @@ namespace Renderer
 			ExecuteTransferMemory(ctx->renderDevice->queues[TRANSFER], cmdBuff,
 				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, ctx->GetDevice());
 		} else {
-			ExecuteTransferMemory(ctx->renderDevice->queues[GRAPHICS], cmdBuff,
+			ExecuteTransferMemory(ctx->renderDevice->queues[TRANSFER], cmdBuff,
 				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, ctx->GetDevice());
 		}
 
@@ -266,11 +266,6 @@ namespace Renderer
 		}
 
 		vkQueueSubmit(queue, 1, &submitInfo, fence);
-
-		/*if (fence && device) {
-			vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
-			vkResetFences(device, 1, &fence);
-		}*/
 	}
 }
 

@@ -33,7 +33,7 @@ namespace Renderer
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	};
 
-	CONSTEXPR static uint32			MAX_FRAMES = 2;
+	CONSTEXPR static uint32			MAX_FRAMES = 3;
 
 	typedef VkDeviceSize DeviceSize;
 

@@ -25,7 +25,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #include <iostream>
 #include <chrono>
 #include <Renderer/Window/Window.hpp>
-#include <Renderer/Backend/Renderer.hpp>
+#include <Renderer/Backend/RenderBackend.hpp>
 #include <Renderer/Backend/SwapChain/SwapChain.hpp>
 #include <Renderer/Backend/Buffer/Buffer.hpp>
 #include <Renderer/Backend/Pipeline/GraphicsPipeline.hpp>
@@ -305,18 +305,18 @@ int main()
         extensionsNames[i++] = extension.extensionName;
     }*/
 
-    const unsigned int SCR_WIDTH = 1920 / 2;
-    const unsigned int SCR_HEIGHT = 1080 / 2;
+    const unsigned int SCR_WIDTH = 640;//1920 / 2;
+    const unsigned int SCR_HEIGHT = 480;//1080 / 2;
 
     using namespace TRE::Renderer;
     using namespace TRE;
 
     Event ev;
     Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
-    RenderEngine engine{ &window };
+    RenderBackend backend{ &window };
 
-    Internal::RenderContext& ctx = engine.GetCtxInternal();
-    Internal::RenderDevice& renderDevice = engine.GetDevInternal();
+    Internal::RenderContext& ctx = backend.GetCtxInternal();
+    Internal::RenderDevice& renderDevice = backend.GetDevInternal();
     Internal::SwapChainData& swapChainData = ctx.swapChainData;
 
 
@@ -334,22 +334,18 @@ int main()
     memcpy(data + vertexSize, indices.data(), indexSize);
 
     //Buffer staginVertexIndexBuffer = engine.GetRenderContext().CreateStagingBuffer(vertexSize + indexSize, data);
-    Buffer vertexIndexBuffer =
-        engine.GetRenderContext().CreateBuffer(vertexSize + indexSize, NULL,
-            BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER | BufferUsage::INDEX_BUFFER,
-            MemoryProperty::DEVICE_LOCAL, queueFamilies
-        );
+    const int MAX_VERTEX_BUFFERS = 1;
+    Buffer vertexIndexBuffer[MAX_VERTEX_BUFFERS];
 
-    engine.GetRenderContext().GetStagingManager().Stage(vertexIndexBuffer.GetAPIObject(), (void*)data, vertexSize + indexSize);
-    // engine.GetRenderContext().GetStagingManager().Flush();
-    // engine.GetRenderContext().GetStagingManager().Wait(currentStageBuffer);
-    // Internal::TransferBufferInfo transferInfo;
-    // transferInfo.srcBuffer = &staginVertexIndexBuffer;
-    // transferInfo.dstBuffer = &vertexIndexBuffer;
-    // transferInfo.copyRegions.EmplaceBack(VkBufferCopy{ 0, 0, vertexSize + indexSize });
+    for (int i = 0; i < MAX_VERTEX_BUFFERS; i++) {
+        vertexIndexBuffer[i] =
+            backend.GetRenderContext().CreateBuffer((vertexSize + indexSize) * (i + 1), NULL,
+                BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER | BufferUsage::INDEX_BUFFER,
+                MemoryUsage::USAGE_GPU_ONLY, queueFamilies
+            );
 
-    // engine.GetRenderContext().TransferBuffers(1, &transferInfo);
-    // engine.FlushTransfers();
+        backend.GetRenderContext().GetStagingManager().Stage(vertexIndexBuffer[i].GetAPIObject(), (void*)data, (vertexSize + indexSize) * (i + 1));
+    }
 
     Internal::GraphicsPipeline graphicsPipeline;
     Internal::GraphicsPiplineDesc pipelineDesc{};
@@ -360,8 +356,8 @@ int main()
     std::vector<TRE::Renderer::Buffer> uniformBuffers(1/*ctx.imagesCount*/);
 
     for (uint32 i = 0; i < 1/*ctx.imagesCount*/; i++) {
-        uniformBuffers[i] = engine.GetRenderContext().CreateBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER,
-            MemoryProperty::HOST_VISIBLE | MemoryProperty::HOST_COHERENT);
+        uniformBuffers[i] = backend.GetRenderContext().CreateBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER,
+            MemoryUsage::USAGE_CPU_ONLY);
     }
 
     VkDescriptorPoolSize poolSize{};
@@ -439,7 +435,7 @@ int main()
             continue;
         }
 
-        engine.BeginFrame();
+        backend.BeginFrame();
 
         /*if (time(NULL) != lasttime) {
             lasttime = time(NULL);
@@ -455,16 +451,17 @@ int main()
             }
 
             memcpy(data, vertices.data(), vertexSize);
-            engine.GetRenderContext().GetStagingManager().Stage(vertexIndexBuffer.GetAPIObject(), (void*)data, vertexSize);
+            backend.GetRenderContext().GetStagingManager().Stage(vertexIndexBuffer.GetAPIObject(), (void*)data, vertexSize);
         }*/
+
 
         /*TRE::Renderer::Internal::EditBuffer(renderDevice, staginVertexBuffer, vertexSize, vertices.data());
         engine.GetRenderContext().TransferBuffers(1, &transferInfo[0]);*/
 
-        // updateMVP(renderDevice, ctx, uniformBuffers[0/*ctx.imagesCount*/]);
-        RenderFrame(ctx.currentFrame, renderDevice, engine.GetRenderContext(), graphicsPipeline, vertexIndexBuffer, descriptorSets);
+        updateMVP(renderDevice, ctx, uniformBuffers[0/*ctx.imagesCount*/]);
+        RenderFrame(ctx.currentFrame, renderDevice, backend.GetRenderContext(), graphicsPipeline, vertexIndexBuffer[0], descriptorSets);
 
-        engine.EndFrame();
+        backend.EndFrame();
         printFPS();
     }
     

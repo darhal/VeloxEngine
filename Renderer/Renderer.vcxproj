@@ -442,7 +442,7 @@
     <ClInclude Include="glm\vector_relational.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="Backend\RenderInstance\RenderInstance.hpp" />
-    <ClInclude Include="Backend\Renderer.hpp" />
+    <ClInclude Include="Backend\RenderBackend.hpp" />
     <ClInclude Include="Backend\StagingManager\StagingManager.hpp" />
     <ClInclude Include="Window\Event.hpp" />
     <ClInclude Include="Window\Window.hpp" />
@@ -461,7 +461,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Backend\RenderInstance\RenderInstance.cpp" />
-    <ClCompile Include="Backend\Renderer.cpp" />
+    <ClCompile Include="Backend\RenderBackend.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Backend\StagingManager\StagingManager.cpp" />
     <ClCompile Include="Window\Window.cpp" />

@@ -10,12 +10,6 @@ TRE_NS_START
 
 namespace Renderer
 {
-	struct ContextMemory
-	{
-		MemoryAllocator	staticDataAlloc[VK_MAX_MEMORY_TYPES];
-		// MemoryAllocator	dynamicDataAlloc[Internal::SwapChainData::MAX_IMAGES_COUNT][VK_MAX_MEMORY_TYPES];
-	};
-
 	class RENDERER_API RenderContext
 	{
 	public:
@@ -39,7 +33,7 @@ namespace Renderer
 
 		const Internal::SwapChainData& GetSwapChainData() const;
 
-		Buffer CreateBuffer(DeviceSize size, const void* data, uint32 usage, uint32 properties, uint32 queueFamilies = QueueFamilyFlag::NONE);
+		Buffer CreateBuffer(DeviceSize size, const void* data, uint32 usage, MemoryUsage memoryUsage, uint32 queueFamilies = QueueFamilyFlag::NONE);
 
 		Buffer CreateStagingBuffer(DeviceSize size, const void* data);
 
@@ -54,7 +48,7 @@ namespace Renderer
 
 		FORCEINLINE uint32 GetCurrentFrame() const { return internal.currentFrame; }
 
-		FORCEINLINE MemoryAllocator& GetStaticAlloc(uint32 memTypeIndex);
+		FORCEINLINE MemoryAllocator& GetContextAllocator();
 
 		FORCEINLINE StagingManager& GetStagingManager() { return stagingManager; }
 	private:
@@ -67,16 +61,16 @@ namespace Renderer
 		void FlushTransfers(Internal::RenderDevice& renderDevice);
 	private:
 		Internal::RenderContext	internal;
-		ContextMemory			memoryAllocs;
+		MemoryAllocator			gpuMemoryAllocator;
 		StagingManager			stagingManager;
 
-		friend class RenderEngine;
+		friend class RenderBackend;
 	};
 }
 
-Renderer::MemoryAllocator& Renderer::RenderContext::GetStaticAlloc(uint32 memTypeIndex)
+Renderer::MemoryAllocator& Renderer::RenderContext::GetContextAllocator()
 {
-	return memoryAllocs.staticDataAlloc[memTypeIndex];
+	return gpuMemoryAllocator;
 }
 
 TRE_NS_END
