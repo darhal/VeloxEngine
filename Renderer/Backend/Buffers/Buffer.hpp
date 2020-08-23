@@ -23,11 +23,9 @@ namespace Renderer
 		void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
 
 		VkBuffer GetAPIObject() const { return apiBuffer; }
-	private:
+	protected:
 		MemoryView		bufferMemory;
 		VkBuffer		apiBuffer;
-
-		Internal::RenderContext* renderContext;
 
 		friend class RenderContext;
 	};

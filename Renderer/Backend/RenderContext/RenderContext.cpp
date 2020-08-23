@@ -3,7 +3,7 @@
 #include <Renderer/Backend/WindowSurface/WindowSurface.hpp>
 #include <Renderer/Backend/SwapChain/SwapChain.hpp>
 #include <Renderer/Backend/RenderInstance/RenderInstance.hpp>
-#include <Renderer/Backend/Buffer/Buffer.hpp>
+#include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <unordered_set>
 
 TRE_NS_START
@@ -219,7 +219,6 @@ Renderer::Buffer Renderer::RenderContext::CreateBuffer(DeviceSize size, const vo
     }
 
     Buffer buffer;
-    buffer.renderContext = &internal;
 
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -255,15 +254,16 @@ Renderer::Buffer Renderer::RenderContext::CreateStagingBuffer(DeviceSize size, c
     return this->CreateBuffer(size, data, BufferUsage::TRANSFER_SRC, MemoryUsage::USAGE_CPU_ONLY);
 }
 
-Renderer::RingBuffer Renderer::RenderContext::CreateRingBuffer(DeviceSize size, const void* data, uint32 usage, uint32 ring_size, uint32 properties, uint32 queueFamilies)
+Renderer::RingBuffer Renderer::RenderContext::CreateRingBuffer(DeviceSize size, const void* data, uint32 usage, MemoryUsage memoryUsage, uint32 queueFamilies)
 {
-    RingBuffer ringBuffer{};
-    /*Buffer buffer = this->CreateBuffer(size * ring_size, data, usage, properties, queueFamilies);
+    RingBuffer ringBuffer;
+    Buffer buffer = this->CreateBuffer(size * MAX_FRAMES, data, usage, memoryUsage, queueFamilies);
     
-    ringBuffer.buffer = buffer.apiBuffer;
+    ringBuffer.apiBuffer = buffer.apiBuffer;
     ringBuffer.bufferMemory = buffer.bufferMemory;
-    ringBuffer.ring_size = ring_size;
-    ringBuffer.unit_size = size;*/
+    ringBuffer.ring_size = MAX_FRAMES;
+    ringBuffer.unit_size = size;
+    ringBuffer.bufferIndex = 0;
 
     return ringBuffer;
 }

@@ -1,5 +1,5 @@
 #include "StagingManager.hpp"
-#include <Renderer/Backend/Buffer/Buffer.hpp>
+#include <Renderer/Backend/Buffers/Buffer.hpp>
 
 TRE_NS_START
 

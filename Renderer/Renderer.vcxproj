@@ -189,7 +189,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Common.hpp" />
-    <ClInclude Include="Backend\Buffer\Buffer.hpp" />
+    <ClInclude Include="Backend\Buffers\Buffer.hpp" />
     <ClInclude Include="Backend\Common\Globals.hpp" />
     <ClInclude Include="Backend\Common\Utils.hpp" />
     <ClInclude Include="Backend\MemoryAllocator\MemoryAllocator.hpp" />
@@ -444,11 +444,12 @@
     <ClInclude Include="Backend\RenderInstance\RenderInstance.hpp" />
     <ClInclude Include="Backend\RenderBackend.hpp" />
     <ClInclude Include="Backend\StagingManager\StagingManager.hpp" />
+    <ClInclude Include="Backend\Buffers\RingBuffer.hpp" />
     <ClInclude Include="Window\Event.hpp" />
     <ClInclude Include="Window\Window.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Backend\Buffer\Buffer.cpp" />
+    <ClCompile Include="Backend\Buffers\Buffer.cpp" />
     <ClCompile Include="Backend\MemoryAllocator\MemoryAllocator.cpp" />
     <ClCompile Include="Backend\RenderContext\RenderContext.cpp" />
     <ClCompile Include="Backend\Descriptor\Layout\DescriptorSetLayout.cpp" />
@@ -464,6 +465,7 @@
     <ClCompile Include="Backend\RenderBackend.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Backend\StagingManager\StagingManager.cpp" />
+    <ClCompile Include="Backend\Buffers\RingBuffer.cpp" />
     <ClCompile Include="Window\Window.cpp" />
     <ClCompile Include="Window\Window_Win32.cpp" />
   </ItemGroup>

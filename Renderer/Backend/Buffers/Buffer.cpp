@@ -97,13 +97,12 @@ void Renderer::Buffer::CopyBuffers(VkCommandBuffer cmdBuffer, uint32 count, Inte
 
 void Renderer::Buffer::WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset)
 {
-	if (data) {
-		void* bufferData;
-		vkMapMemory(renderContext->renderDevice->device, bufferMemory.memory, bufferMemory.offset + offset, size, 0, &bufferData);
-		memcpy(bufferData, data, size);
-		vkUnmapMemory(renderContext->renderDevice->device, bufferMemory.memory);
-	}
-}
+	ASSERTF(!data || !bufferMemory.mappedData, "Can't write to a buffer that have its memory unmapped (or data is NULL)");
 
+	void* bufferData = (uint8*)bufferMemory.mappedData + bufferMemory.offset + offset;
+	//vkMapMemory(renderContext->renderDevice->device, bufferMemory.memory, bufferMemory.offset + offset, size, 0, &bufferData);
+	memcpy(bufferData, data, size);
+	//vkUnmapMemory(renderContext->renderDevice->device, bufferMemory.memory);
+}
 
 TRE_NS_END

@@ -3,7 +3,7 @@
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <unordered_set>
 #include <Renderer/Backend/Common/Utils.hpp>
-#include <Renderer/Backend/Buffer/Buffer.hpp>
+#include <Renderer/Backend/Buffers/Buffer.hpp>
 
 TRE_NS_START
 

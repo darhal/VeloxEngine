@@ -100,14 +100,7 @@ namespace Renderer
 		DeviceSize	    offset;
 		DeviceSize		size;
 		uint32		    padding;
-	};
-
-	struct RingBuffer
-	{
-		MemoryView	bufferMemory;
-		VkBuffer    buffer;
-		uint32		ring_size;
-		uint32		unit_size;
+		void*			mappedData;
 	};
 
 	class Buffer;

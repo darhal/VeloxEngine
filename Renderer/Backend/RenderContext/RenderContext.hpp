@@ -3,7 +3,8 @@
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/MemoryAllocator/MemoryAllocator.hpp>
-#include <Renderer/Backend/Buffer/Buffer.hpp>
+#include <Renderer/Backend/Buffers/Buffer.hpp>
+#include <Renderer/Backend/Buffers/RingBuffer.hpp>
 #include <Renderer/Backend/StagingManager/StagingManager.hpp>
 
 TRE_NS_START
@@ -37,10 +38,7 @@ namespace Renderer
 
 		Buffer CreateStagingBuffer(DeviceSize size, const void* data);
 
-		RingBuffer CreateRingBuffer(DeviceSize size, const void* data, uint32 usage, 
-			uint32 ring_size = Internal::SwapChainData::MAX_FRAMES_IN_FLIGHT,
-			uint32 properties = MemoryProperty::DEVICE_LOCAL | MemoryProperty::HOST_COHERENT, 
-			uint32 queueFamilies = QueueFamilyFlag::NONE);
+		RingBuffer CreateRingBuffer(DeviceSize size, const void* data, uint32 usage, MemoryUsage memoryUsage, uint32 queueFamilies = QueueFamilyFlag::NONE);
 
 		FORCEINLINE uint32 GetImagesCount() const { return internal.imagesCount; }
 

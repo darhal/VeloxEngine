@@ -27,7 +27,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #include <Renderer/Window/Window.hpp>
 #include <Renderer/Backend/RenderBackend.hpp>
 #include <Renderer/Backend/SwapChain/SwapChain.hpp>
-#include <Renderer/Backend/Buffer/Buffer.hpp>
+#include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Pipeline/GraphicsPipeline.hpp>
 #include <Renderer/Backend/Common/Utils.hpp>
 
@@ -56,7 +56,7 @@ const std::vector<uint16_t> indices = {
     0, 1, 2, 2, 3, 0
 };
 
-void updateMVP(const TRE::Renderer::Internal::RenderDevice& dev, const TRE::Renderer::Internal::RenderContext& ctx, TRE::Renderer::Buffer& buffer)
+void updateMVP(const TRE::Renderer::Internal::RenderDevice& dev, const TRE::Renderer::Internal::RenderContext& ctx, TRE::Renderer::RingBuffer& buffer)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -353,10 +353,10 @@ int main()
     InitGraphicsPipelineDesc(renderDevice, ctx, pipelineDesc);
     Internal::CreateGraphicsPipeline(renderDevice, graphicsPipeline, pipelineDesc);
 
-    std::vector<TRE::Renderer::Buffer> uniformBuffers(1/*ctx.imagesCount*/);
+    std::vector<TRE::Renderer::RingBuffer> uniformBuffers(1/*ctx.imagesCount*/);
 
     for (uint32 i = 0; i < 1/*ctx.imagesCount*/; i++) {
-        uniformBuffers[i] = backend.GetRenderContext().CreateBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER,
+        uniformBuffers[i] = backend.GetRenderContext().CreateRingBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER,
             MemoryUsage::USAGE_CPU_ONLY);
     }
 
