@@ -17,6 +17,9 @@ int32 Renderer::RenderDevice::CreateRenderDevice(const Internal::RenderInstance&
     internal.gpu = PickGPU(renderInstance, ctx);
     ASSERTF(internal.gpu == VK_NULL_HANDLE, "Couldn't pick a GPU.");
 
+    vkGetPhysicalDeviceFeatures(internal.gpu, &internal.gpuFeatures);
+    vkGetPhysicalDeviceProperties(internal.gpu, &internal.gpuProperties);
+
     internal.queueFamilyIndices     = FindQueueFamilies(internal.gpu, ctx.surface);
     internal.isPresentQueueSeprate  = internal.queueFamilyIndices.queueFamilies[Internal::QFT_GRAPHICS] != 
                                             internal.queueFamilyIndices.queueFamilies[Internal::QFT_PRESENT];

@@ -33,7 +33,7 @@ namespace Renderer
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	};
 
-	CONSTEXPR static uint32			MAX_FRAMES = 3;
+	CONSTEXPR static uint32			MAX_FRAMES = 2;
 
 	typedef VkDeviceSize DeviceSize;
 
@@ -329,13 +329,14 @@ namespace Renderer
 			struct RenderContext*				renderContext;
 
 			VkPhysicalDevice					gpu;
-			VkDevice							device;
-
-			QueueFamilyIndices					queueFamilyIndices;
-			VkQueue								queues[QFT_MAX];
-
+			VkPhysicalDeviceProperties			gpuProperties;
+			VkPhysicalDeviceFeatures			gpuFeatures;
 			VkPhysicalDeviceMemoryProperties	memoryProperties;
 
+
+			VkDevice							device;
+			QueueFamilyIndices					queueFamilyIndices;
+			VkQueue								queues[QFT_MAX];
 			bool								isPresentQueueSeprate;
 			bool								isTransferQueueSeprate;
 		};

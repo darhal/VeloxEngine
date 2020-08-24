@@ -102,8 +102,6 @@ void Renderer::RenderContext::EndFrame(Internal::RenderDevice& renderDevice)
     uint32 currentFrame = internal.currentFrame;
     uint32_t currentBuffer = internal.currentImage;
 
-    
-
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     
@@ -256,13 +254,18 @@ Renderer::Buffer Renderer::RenderContext::CreateStagingBuffer(DeviceSize size, c
 
 Renderer::RingBuffer Renderer::RenderContext::CreateRingBuffer(DeviceSize size, const void* data, uint32 usage, MemoryUsage memoryUsage, uint32 queueFamilies)
 {
+    const uint32 alignment = internal.renderDevice->gpuProperties.limits.minUniformBufferOffsetAlignment;
+    const DeviceSize padding = (alignment - (size % alignment)) % alignment;
+    const DeviceSize alignedSize = size + padding;
+
+    // Removing padding from total size, as we dont need the last bytes for alignement
+    Buffer buffer = this->CreateBuffer(alignedSize * MAX_FRAMES - padding, data, usage, memoryUsage, queueFamilies);
+
     RingBuffer ringBuffer;
-    Buffer buffer = this->CreateBuffer(size * MAX_FRAMES, data, usage, memoryUsage, queueFamilies);
-    
     ringBuffer.apiBuffer = buffer.apiBuffer;
     ringBuffer.bufferMemory = buffer.bufferMemory;
     ringBuffer.ring_size = MAX_FRAMES;
-    ringBuffer.unit_size = size;
+    ringBuffer.unit_size = alignedSize;
     ringBuffer.bufferIndex = 0;
 
     return ringBuffer;
