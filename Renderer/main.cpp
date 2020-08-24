@@ -416,7 +416,6 @@ int main()
         descriptorWrite.pTexelBufferView = NULL; // Optional
 
         vkUpdateDescriptorSets(renderDevice.device, 1, &descriptorWrite, 0, NULL);
-        updateMVP(renderDevice, ctx, descriptorSets[i], uniformBuffers[i]);
     }
 
     for (uint32 i = 0; i < 4; i++) {
