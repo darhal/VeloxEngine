@@ -90,6 +90,10 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
     return 0;
 }
 
+void Renderer::RenderDevice::CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut)
+{
+    shaderProgramOut->Init(internal, shaderStages);
+}
 
 VkPhysicalDevice Renderer::RenderDevice::PickGPU(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx, FPN_RankGPU p_pick_func)
 {

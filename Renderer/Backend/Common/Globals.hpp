@@ -99,7 +99,7 @@ namespace Renderer
 		VkDeviceMemory  memory;
 		DeviceSize	    offset;
 		DeviceSize		size;
-		uint32		    padding;
+		DeviceSize		padding;
 		void*			mappedData;
 	};
 
@@ -248,7 +248,7 @@ namespace Renderer
 			int32_t							basePipelineIndex;
 		};
 
-		struct GraphicsPipeline
+		struct GraphicsPipeline2
 		{
 			VkPipeline						pipeline;
 			VkPipelineLayout				pipelineLayout;

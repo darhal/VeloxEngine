@@ -195,7 +195,7 @@ void InitGraphicsPipelineDesc(const TRE::Renderer::Internal::RenderDevice& dev, 
 
 void RenderFrame(uint32 i, const TRE::Renderer::Internal::RenderDevice& renderDevice,
     const TRE::Renderer::RenderContext& ctx,
-    TRE::Renderer::Internal::GraphicsPipeline& graphicsPipeline,
+    TRE::Renderer::Internal::GraphicsPipeline2& graphicsPipeline,
     TRE::Renderer::Buffer& vertexIndexBuffer,
     const std::vector<VkDescriptorSet>& descriptorSets,
     const TRE::Renderer::RingBuffer& uniformBuffer)
@@ -358,7 +358,7 @@ int main()
         backend.GetRenderContext().GetStagingManager().Stage(vertexIndexBuffer[i].GetAPIObject(), (void*)data, (vertexSize + indexSize) * (i + 1));
     }
 
-    Internal::GraphicsPipeline graphicsPipeline;
+    Internal::GraphicsPipeline2 graphicsPipeline;
     Internal::GraphicsPiplineDesc pipelineDesc{};
     graphicsPipeline.renderPass = ctx.contextData.renderPass;
     InitGraphicsPipelineDesc(renderDevice, ctx, pipelineDesc);

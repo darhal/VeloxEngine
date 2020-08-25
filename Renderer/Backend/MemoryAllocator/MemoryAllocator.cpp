@@ -117,7 +117,7 @@ bool Renderer::MemoryAllocator::FindFreeBinding(const Chunk& chunk, DeviceSize a
 	DeviceSize sizeWithPadding = bindingOut.size + padding;
 
 	DeviceSize minDifferenceFit = chunk.totalSize;
-	uint32 bindingListLimit = chunk.bindingList.size();
+	uint32 bindingListLimit = (uint32)chunk.bindingList.size();
 	DeviceSize nextBindingOffset;
 
 	for (uint32 i = 0; i < bindingListLimit; i++) {
