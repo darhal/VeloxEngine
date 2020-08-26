@@ -38,6 +38,7 @@ namespace Renderer
 		{
 			ShaderStage(const char* path, ShaderStages stage, const char* entryPoint = DEFAULT_ENTRY_POINT) : 
 				path(path), entryPoint(entryPoint), shaderStage(stage) {}
+
 			const char* path;
 			const char* entryPoint;
 			ShaderStages shaderStage;

@@ -188,6 +188,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Backend\Pipeline\VertexInput\VertexInput.hpp" />
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="Backend\Buffers\Buffer.hpp" />
     <ClInclude Include="Backend\Common\Globals.hpp" />

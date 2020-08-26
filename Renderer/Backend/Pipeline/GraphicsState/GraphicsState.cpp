@@ -2,12 +2,15 @@
 
 TRE_NS_START
 
+
 CONSTEXPR static Renderer::InputAssemblyState defaultInputAssemblyState = {
-        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-        false
+    VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO, NULL, 0,
+    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+    false
 };
 
 CONSTEXPR static Renderer::RasterizationState defaultRasterizationState = {
+    VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO, NULL, 0,
     false,
     false,
     VK_POLYGON_MODE_FILL,
@@ -20,16 +23,20 @@ CONSTEXPR static Renderer::RasterizationState defaultRasterizationState = {
     1.0f
 };
 
+
+
 CONSTEXPR static Renderer::MultisampleState defaultMultisampleState = {
+    VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, NULL, 0,
     VK_SAMPLE_COUNT_1_BIT,
     false,
     1.0f,
-    nullptr,
+    NULL,
     false,
     false
 };
 
 CONSTEXPR static Renderer::DepthStencilState defaultDepthStencilState = {
+    VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO, NULL, 0,
     false,
     true,
     VK_COMPARE_OP_LESS_OR_EQUAL,
@@ -40,18 +47,25 @@ CONSTEXPR static Renderer::DepthStencilState defaultDepthStencilState = {
         VK_STENCIL_OP_REPLACE,
         VK_STENCIL_OP_REPLACE,
         VK_COMPARE_OP_NEVER,
+        0,
+        0, 
+        0
     },
     {
         VK_STENCIL_OP_REPLACE,
         VK_STENCIL_OP_REPLACE,
         VK_STENCIL_OP_REPLACE,
         VK_COMPARE_OP_NEVER,
+        0,
+        0,
+        0
     },
     0.f,
     1.f
 };
 
 CONSTEXPR static Renderer::ColorBlendState defaultColorBlendState = {
+    VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO, NULL, 0,
     false,
     VK_LOGIC_OP_SET,
     0,
@@ -82,7 +96,7 @@ void Renderer::GraphicsState::Reset()
     memcpy(&rasterizationState, &defaultRasterizationState,sizeof(RasterizationState));;
     memcpy(&multisampleState, &defaultMultisampleState, sizeof(MultisampleState));
     memcpy(&depthStencilState, &defaultDepthStencilState, sizeof(DepthStencilState));
-	memcpy(&colorBlendState, &defaultColorBlendState, sizeof(ColorBlendState));
+    memcpy(&colorBlendState, &defaultColorBlendState, sizeof(ColorBlendState));
 
     for (uint32 i = 0; i < 8; i++)
         memcpy(&colorBlendAttachmetns[i], &defaultColorBlendAttachmentState, sizeof(ColorBlendAttachmentState));

@@ -4,6 +4,7 @@
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/Pipeline/GraphicsState/GraphicsState.hpp>
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
+#include <Renderer/Backend/Pipeline/VertexInput/VertexInput.hpp>
 
 TRE_NS_START
 
@@ -20,7 +21,7 @@ namespace Renderer
 	class GraphicsPipeline
 	{
 	public:
-		void Init(const Internal::RenderDevice& renderDevice, const ShaderProgram& shaderProgram, const GraphicsState& state);
+		void Init(const Internal::RenderDevice& renderDevice, const ShaderProgram& shaderProgram, const VertexInput& vertexInput, const GraphicsState& state);
 
 		VkPipeline						pipeline;
 		VkPipelineLayout				pipelineLayout;

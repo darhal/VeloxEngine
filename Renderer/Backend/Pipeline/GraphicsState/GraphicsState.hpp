@@ -6,12 +6,12 @@ TRE_NS_START
 
 namespace Renderer
 {
-	struct InputAssemblyState
+	/*struct InputAssemblyState
 	{
 		VkPrimitiveTopology topology;
 		VkBool32 primitiveRestartEnable;
 	};
-
+	
 	struct RasterizationState
 	{
 		VkBool32                                   depthClampEnable;
@@ -36,7 +36,7 @@ namespace Renderer
 		VkBool32 alphaToOneEnable;
 	};
 
-	struct StencilOpState
+		/*struct StencilOpState
 	{
 		VkStencilOp failOp;
 		VkStencilOp passOp;
@@ -56,9 +56,7 @@ namespace Renderer
 		float minDepthBounds;
 		float maxDepthBounds;
 	};
-
-	typedef VkPipelineColorBlendAttachmentState ColorBlendAttachmentState;
-
+	
 	struct ColorBlendState
 	{
 		VkBool32 logicOpEnable;
@@ -67,6 +65,17 @@ namespace Renderer
 		const ColorBlendAttachmentState* pAttachments;
 		float blendConstants[4];
 	};
+	*/
+
+	typedef VkPipelineInputAssemblyStateCreateInfo InputAssemblyState;
+	typedef VkPipelineRasterizationStateCreateInfo RasterizationState;
+	typedef VkPipelineMultisampleStateCreateInfo MultisampleState;
+
+	typedef VkStencilOpState StencilOpState;
+	typedef VkPipelineDepthStencilStateCreateInfo DepthStencilState;
+	typedef VkPipelineColorBlendStateCreateInfo ColorBlendState;
+
+	typedef VkPipelineColorBlendAttachmentState ColorBlendAttachmentState;
 
 	class GraphicsState
 	{

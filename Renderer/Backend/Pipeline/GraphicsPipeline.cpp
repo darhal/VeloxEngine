@@ -19,79 +19,36 @@ VkShaderModule Renderer::Internal::CreateShaderModule(VkDevice device, const std
 }
 
 
-void Renderer::GraphicsPipeline::Init(const Internal::RenderDevice& renderDevice, const ShaderProgram& shaderProgram, const GraphicsState& state)
+void Renderer::GraphicsPipeline::Init(const Internal::RenderDevice& renderDevice, const ShaderProgram& shaderProgram, const VertexInput& vertexInput, const GraphicsState& state)
 {
-    VkPipelineInputAssemblyStateCreateInfo inputAssembly;
-    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.pNext = NULL;
-    inputAssembly.topology = state.inputAssemblyState.topology;
-    inputAssembly.primitiveRestartEnable = state.inputAssemblyState.primitiveRestartEnable;
+    VkDynamicState dynamicStates[] = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_LINE_WIDTH
+    };
 
-    VkPipelineRasterizationStateCreateInfo rasterizer;
-    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizer.pNext = NULL;
-    rasterizer.polygonMode = state.rasterizationState.polygonMode;
-    rasterizer.cullMode = state.rasterizationState.cullMode;
-    rasterizer.frontFace = state.rasterizationState.frontFace;
-    rasterizer.lineWidth = state.rasterizationState.lineWidth;
-    rasterizer.depthClampEnable = state.rasterizationState.depthClampEnable;
-    rasterizer.rasterizerDiscardEnable = state.rasterizationState.rasterizerDiscardEnable;
-    rasterizer.depthBiasEnable = state.rasterizationState.depthBiasEnable;
-    rasterizer.depthBiasConstantFactor = state.rasterizationState.depthBiasConstantFactor;
-    rasterizer.depthBiasClamp = state.rasterizationState.depthBiasClamp;
-    rasterizer.depthBiasSlopeFactor = state.rasterizationState.depthBiasSlopeFactor;
-
-    VkPipelineMultisampleStateCreateInfo multisampling;
-    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisampling.pNext = NULL;
-    multisampling.sampleShadingEnable = state.multisampleState.sampleShadingEnable;
-    multisampling.rasterizationSamples = state.multisampleState.rasterizationSamples;
-    multisampling.minSampleShading = state.multisampleState.minSampleShading;
-    multisampling.pSampleMask = state.multisampleState.pSampleMask;
-    multisampling.alphaToCoverageEnable = state.multisampleState.alphaToCoverageEnable;
-    multisampling.alphaToOneEnable = state.multisampleState.alphaToOneEnable;
-
-    VkPipelineDepthStencilStateCreateInfo depthStencilState;
-    depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencilState.flags = 0;
-    depthStencilState.depthTestEnable = state.depthStencilState.depthTestEnable;
-    depthStencilState.depthWriteEnable = state.depthStencilState.depthWriteEnable;
-    depthStencilState.depthCompareOp = state.depthStencilState.depthCompareOp;
-    depthStencilState.depthBoundsTestEnable = state.depthStencilState.depthBoundsTestEnable;
-    depthStencilState.stencilTestEnable = state.depthStencilState.stencilTestEnable;
-    memcpy(&depthStencilState.front, &state.depthStencilState.front, sizeof(VkStencilOpState));
-    memcpy(&depthStencilState.back, &state.depthStencilState.back, sizeof(VkStencilOpState));
-    depthStencilState.minDepthBounds = state.depthStencilState.minDepthBounds;
-    depthStencilState.maxDepthBounds = state.depthStencilState.maxDepthBounds;
-
-
-    VkPipelineColorBlendStateCreateInfo	colorBlendState;
-    colorBlendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlendState.pNext = NULL;
-    colorBlendState.logicOpEnable = state.colorBlendState.logicOpEnable;
-    colorBlendState.logicOp = state.colorBlendState.logicOp;
-    colorBlendState.attachmentCount = state.colorBlendState.attachmentCount;
-    colorBlendState.pAttachments = state.colorBlendState.pAttachments;
-    memcpy(colorBlendState.blendConstants, state.colorBlendState.blendConstants, sizeof(float) * 4);
+    VkPipelineDynamicStateCreateInfo dynamicState{};
+    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicState.dynamicStateCount = 2;
+    dynamicState.pDynamicStates = dynamicStates;
 
  
     VkGraphicsPipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = (uint32)shaderProgram.GetShadersCount();
-    pipelineInfo.pStages = shaderProgram.GetShaderStages();
-    //pipelineInfo.pVertexInputState = &vertexInputInfo;
-    pipelineInfo.pInputAssemblyState = &inputAssembly;
-    //pipelineInfo.pViewportState = &viewportState;
-    pipelineInfo.pRasterizationState = &rasterizer;
-    pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pDepthStencilState = &depthStencilState;
-    pipelineInfo.pColorBlendState = &colorBlendState;
-    pipelineInfo.pDynamicState = NULL;
-    //pipelineInfo.layout = pipline.pipelineLayout;
-    //pipelineInfo.renderPass = pipline.renderPass;
-    //pipelineInfo.subpass = desc.subpass;
-    //pipelineInfo.basePipelineHandle = desc.basePipelineHandle;
-    //pipelineInfo.basePipelineIndex = desc.basePipelineIndex;
+    pipelineInfo.sType                  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineInfo.stageCount             = (uint32)shaderProgram.GetShadersCount();
+    pipelineInfo.pStages                = shaderProgram.GetShaderStages();
+    pipelineInfo.pVertexInputState      = &vertexInput.GetVertexInputDesc();
+    //pipelineInfo.pViewportState       = &viewportState;
+    pipelineInfo.pInputAssemblyState    = &state.inputAssemblyState;
+    pipelineInfo.pRasterizationState    = &state.rasterizationState;
+    pipelineInfo.pMultisampleState      = &state.multisampleState;
+    pipelineInfo.pDepthStencilState     = &state.depthStencilState;
+    pipelineInfo.pColorBlendState       = &state.colorBlendState;
+    pipelineInfo.pDynamicState          = &dynamicState;
+    //pipelineInfo.layout               = pipline.pipelineLayout;
+    //pipelineInfo.renderPass           = pipline.renderPass;
+    pipelineInfo.subpass                = 0; //desc.subpass;
+    pipelineInfo.basePipelineHandle     = 0; //desc.basePipelineHandle;
+    pipelineInfo.basePipelineIndex      = -1;//desc.basePipelineIndex;
 
     if (vkCreateGraphicsPipelines(renderDevice.device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &pipeline) != VK_SUCCESS) {
         ASSERTF(true, "failed to create graphics pipeline!");
