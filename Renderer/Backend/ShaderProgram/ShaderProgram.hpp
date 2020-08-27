@@ -44,7 +44,9 @@ namespace Renderer
 			ShaderStages shaderStage;
 		};
 	public:
-		void Init(const Internal::RenderDevice& renderDevice, const std::initializer_list<ShaderStage>& shaderStages);
+		ShaderProgram() : shadersCount(0) {}
+
+		void Create(const Internal::RenderDevice& renderDevice, const std::initializer_list<ShaderStage>& shaderStages);
 
 		uint32 GetShadersCount() const { return shadersCount; }
 

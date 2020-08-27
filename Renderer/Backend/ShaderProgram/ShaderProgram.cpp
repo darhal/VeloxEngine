@@ -18,7 +18,7 @@ VkShaderModule Renderer::ShaderProgram::CreateShaderModule(VkDevice device, cons
     return shaderModule;
 }
 
-void Renderer::ShaderProgram::Init(const Internal::RenderDevice& renderDevice, const std::initializer_list<ShaderStage>& shaderStages)
+void Renderer::ShaderProgram::Create(const Internal::RenderDevice& renderDevice, const std::initializer_list<ShaderStage>& shaderStages)
 {
     shadersCount = 0;
 
@@ -27,9 +27,12 @@ void Renderer::ShaderProgram::Init(const Internal::RenderDevice& renderDevice, c
         shaderModules[shadersCount] = CreateShaderModule(renderDevice.device, shaderCode);
 
         shaderStagesCreateInfo[shadersCount].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shaderStagesCreateInfo[shadersCount].pNext  = NULL;
+        shaderStagesCreateInfo[shadersCount].flags  = 0;
         shaderStagesCreateInfo[shadersCount].stage  = VK_SHADER_STAGES[shaderStage.shaderStage];
         shaderStagesCreateInfo[shadersCount].module = shaderModules[shadersCount];
-        shaderStagesCreateInfo[shadersCount].pName  = shaderStage.entryPoint;
+        shaderStagesCreateInfo[shadersCount].pName  = DEFAULT_ENTRY_POINT;
+        shaderStagesCreateInfo[shadersCount].pSpecializationInfo = NULL;
 
         shadersCount++;
     }

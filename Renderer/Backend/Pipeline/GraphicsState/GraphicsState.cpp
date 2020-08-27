@@ -18,12 +18,10 @@ CONSTEXPR static Renderer::RasterizationState defaultRasterizationState = {
     VK_FRONT_FACE_COUNTER_CLOCKWISE,
     false,
     0.0f,
-    1.0f,
-    1.0f,
+    0.0f,
+    0.0f,
     1.0f
 };
-
-
 
 CONSTEXPR static Renderer::MultisampleState defaultMultisampleState = {
     VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, NULL, 0,
@@ -73,7 +71,6 @@ CONSTEXPR static Renderer::ColorBlendState defaultColorBlendState = {
     {1.0f, 1.0f, 1.0f, 1.0f}
 };
 
-
 CONSTEXPR static Renderer::ColorBlendAttachmentState defaultColorBlendAttachmentState = {
     false,
     VK_BLEND_FACTOR_ONE,
@@ -101,8 +98,34 @@ void Renderer::GraphicsState::Reset()
     for (uint32 i = 0; i < 8; i++)
         memcpy(&colorBlendAttachmetns[i], &defaultColorBlendAttachmentState, sizeof(ColorBlendAttachmentState));
 
-    colorBlendState.attachmentCount = 0;
+    colorBlendState.attachmentCount = 1; // TODO: This have to have its own functionality
     colorBlendState.pAttachments = &colorBlendAttachmetns[0];
+
+    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportState.pNext = NULL;
+    viewportState.flags = 0;
+    viewportState.pViewports = viewports;
+    viewportState.viewportCount = 0;
+    viewportState.pScissors = scissors;
+    viewportState.scissorCount = 0;
+
+    subpassIndex = 0;
+}
+
+void Renderer::GraphicsState::AddViewport(const VkViewport& viewport)
+{
+    // TODO: perform a size check
+
+    memcpy(&viewports[viewportState.viewportCount], &viewport, sizeof(VkViewport));
+    viewportState.viewportCount++;
+}
+
+void Renderer::GraphicsState::AddScissor(const VkRect2D& rect)
+{
+    // TODO: perform a size check
+
+    memcpy(&scissors[viewportState.scissorCount], &rect, sizeof(VkRect2D));
+    viewportState.scissorCount++;
 }
 
 TRE_NS_END

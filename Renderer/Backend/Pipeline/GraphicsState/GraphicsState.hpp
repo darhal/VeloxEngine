@@ -83,6 +83,10 @@ namespace Renderer
 		GraphicsState();
 
 		void Reset();
+
+		void AddViewport(const VkViewport& viewport);
+
+		void AddScissor(const VkRect2D& rect);
 	private:
 		InputAssemblyState			inputAssemblyState;
 		RasterizationState			rasterizationState;
@@ -90,6 +94,12 @@ namespace Renderer
 		DepthStencilState			depthStencilState;
 		ColorBlendState				colorBlendState;
 		ColorBlendAttachmentState	colorBlendAttachmetns[8];
+
+		VkPipelineViewportStateCreateInfo	viewportState;
+		VkViewport							viewports[8];
+		VkRect2D							scissors[8];
+
+		uint32								subpassIndex;
 
 		friend class GraphicsPipeline;
 	};

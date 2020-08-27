@@ -167,9 +167,9 @@ void InitGraphicsPipelineDesc(const TRE::Renderer::Internal::RenderDevice& dev, 
     uboLayoutBinding.pImmutableSamplers     = NULL; // Optional
     
     VkDescriptorSetLayoutCreateInfo  layoutInfo{};
-    layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = 1;
-    layoutInfo.pBindings    = &uboLayoutBinding;
+    layoutInfo.sType            = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount     = 1;
+    layoutInfo.pBindings        = &uboLayoutBinding;
 
     VkDescriptorSetLayout descriptorSetLayout;
     if (vkCreateDescriptorSetLayout(dev.device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
@@ -195,9 +195,9 @@ void InitGraphicsPipelineDesc(const TRE::Renderer::Internal::RenderDevice& dev, 
 
 void RenderFrame(uint32 i, const TRE::Renderer::Internal::RenderDevice& renderDevice,
     const TRE::Renderer::RenderContext& ctx,
-    TRE::Renderer::Internal::GraphicsPipeline2& graphicsPipeline,
+    TRE::Renderer::GraphicsPipeline& graphicsPipeline,
     TRE::Renderer::Buffer& vertexIndexBuffer,
-    const std::vector<VkDescriptorSet>& descriptorSets,
+    VkDescriptorSet descriptorSet,
     const TRE::Renderer::RingBuffer& uniformBuffer)
 {
     const TRE::Renderer::Internal::SwapChainData& swapChainData = ctx.GetSwapChainData();
@@ -245,7 +245,7 @@ void RenderFrame(uint32 i, const TRE::Renderer::Internal::RenderDevice& renderDe
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType                = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass           = graphicsPipeline.renderPass;
+    renderPassInfo.renderPass           = graphicsPipeline.GetRenderPassAPIObject();
     renderPassInfo.framebuffer          = swapChainData.swapChainFramebuffers[ctx.GetCurrentImageIndex()];
     renderPassInfo.renderArea.offset    = { 0, 0 };
     renderPassInfo.renderArea.extent    = swapChainData.swapChainExtent;
@@ -254,7 +254,7 @@ void RenderFrame(uint32 i, const TRE::Renderer::Internal::RenderDevice& renderDe
 
     vkCmdBeginRenderPass(currentCmdBuff, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(currentCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipeline);
+    vkCmdBindPipeline(currentCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.GetAPIObject());
 
     vkCmdSetViewport(currentCmdBuff, 0, 1, &viewport);
     vkCmdSetScissor(currentCmdBuff, 0, 1, &scissor);
@@ -269,8 +269,8 @@ void RenderFrame(uint32 i, const TRE::Renderer::Internal::RenderDevice& renderDe
 
     vkCmdBindDescriptorSets(currentCmdBuff, 
         VK_PIPELINE_BIND_POINT_GRAPHICS, 
-        graphicsPipeline.pipelineLayout, 
-        0, 1, &descriptorSets[0], 1, dynamicOffset);
+        graphicsPipeline.GetPipelineLayout().GetAPIObject(),
+        0, 1, &descriptorSet, 1, dynamicOffset);
 
     // vkCmdDraw(currentCmdBuff, 3, 1, 0, 0);
     
@@ -344,7 +344,6 @@ int main()
     memcpy(data, vertices.data(), vertexSize);
     memcpy(data + vertexSize, indices.data(), indexSize);
 
-    //Buffer staginVertexIndexBuffer = engine.GetRenderContext().CreateStagingBuffer(vertexSize + indexSize, data);
     const int MAX_VERTEX_BUFFERS = 1;
     Buffer vertexIndexBuffer[MAX_VERTEX_BUFFERS];
 
@@ -358,55 +357,74 @@ int main()
         backend.GetRenderContext().GetStagingManager().Stage(vertexIndexBuffer[i].GetAPIObject(), (void*)data, (vertexSize + indexSize) * (i + 1));
     }
 
-    Internal::GraphicsPipeline2 graphicsPipeline;
-    Internal::GraphicsPiplineDesc pipelineDesc{};
-    graphicsPipeline.renderPass = ctx.contextData.renderPass;
-    InitGraphicsPipelineDesc(renderDevice, ctx, pipelineDesc);
-    Internal::CreateGraphicsPipeline(renderDevice, graphicsPipeline, pipelineDesc);
+    GraphicsPipeline graphicsPipeline;
+    GraphicsState state;
 
-    std::vector<TRE::Renderer::RingBuffer> uniformBuffers(1/*ctx.imagesCount*/);
+    DescriptorSetLayout descSetLayout;
+    ShaderProgram shaderProgram;
+    VertexInput vertexInput;
 
-    for (uint32 i = 0; i < 1/*ctx.imagesCount*/; i++) {
-        uniformBuffers[i] = backend.GetRenderContext().CreateRingBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER,
+    descSetLayout.AddBinding(0, 1, DescriptorType::UNIFORM_BUFFER_DYNC, VERTEX_SHADER);
+    descSetLayout.Create(renderDevice);
+
+    shaderProgram.Create(renderDevice, 
+        { 
+            {"shaders/vert.spv", ShaderProgram::VERTEX_SHADER}, 
+            {"shaders/frag.spv", ShaderProgram::FRAGMENT_SHADER} 
+        }
+    );
+
+    vertexInput.AddBinding(
+        { 
+            { 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Internal::Vertex, pos) }, 
+            { 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Internal::Vertex, color) } 
+        },
+        sizeof(Internal::Vertex)
+    );
+
+    graphicsPipeline.SetRenderPass(ctx.contextData.renderPass);
+    graphicsPipeline.GetPipelineLayout().AddDescriptorLayout(descSetLayout);
+    graphicsPipeline.Create(ctx, shaderProgram, vertexInput, state);
+
+    TRE::Renderer::RingBuffer uniformBuffer = backend.GetRenderContext().CreateRingBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER,
             MemoryUsage::USAGE_CPU_ONLY);
-    }
 
     VkDescriptorPoolSize poolSize{};
-    poolSize.type            =  VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSize.descriptorCount = (uint32_t)(1/*ctx.imagesCount*/);
+    poolSize.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    poolSize.descriptorCount = 1;
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount  = 1;
     poolInfo.pPoolSizes     = &poolSize;
-    poolInfo.maxSets        = (uint32_t)(1/*ctx.imagesCount*/);
+    poolInfo.maxSets        = 1;
 
     VkDescriptorPool descriptorPool;
     if (vkCreateDescriptorPool(renderDevice.device, &poolInfo, NULL, &descriptorPool) != VK_SUCCESS) {
         ASSERTF(true, "failed to create descriptor pool!");
     }
 
-    std::vector<VkDescriptorSetLayout> layouts(ctx.imagesCount, pipelineDesc.piplineLayoutDesc.descriptorSetLayout[0]);
+    VkDescriptorSetLayout layouts[] = { descSetLayout.GetAPIObject() };
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool        = descriptorPool;
-    allocInfo.descriptorSetCount    = static_cast<uint32_t>(1/*ctx.imagesCount*/);
-    allocInfo.pSetLayouts           = layouts.data();
+    allocInfo.descriptorSetCount    = 1;
+    allocInfo.pSetLayouts           = layouts;
 
-    std::vector<VkDescriptorSet> descriptorSets(1/*ctx.imagesCount*/);
-    if (vkAllocateDescriptorSets(renderDevice.device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
+    VkDescriptorSet descriptorSet;
+    if (vkAllocateDescriptorSets(renderDevice.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
     for (uint32 i = 0; i < 1/*ctx.imagesCount*/; i++) {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = uniformBuffers[i].GetAPIObject();
+        bufferInfo.buffer = uniformBuffer.GetAPIObject();
         bufferInfo.offset = 0;
         bufferInfo.range  = sizeof(MVP);
 
         VkWriteDescriptorSet descriptorWrite{};
         descriptorWrite.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet           = descriptorSets[i];
+        descriptorWrite.dstSet           = descriptorSet;
         descriptorWrite.dstBinding       = 0;
         descriptorWrite.dstArrayElement  = 0;
         descriptorWrite.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -467,8 +485,8 @@ int main()
         /*TRE::Renderer::Internal::EditBuffer(renderDevice, staginVertexBuffer, vertexSize, vertices.data());
         engine.GetRenderContext().TransferBuffers(1, &transferInfo[0]);*/
 
-        updateMVP(renderDevice, ctx, descriptorSets[0], uniformBuffers[0]);
-        RenderFrame(ctx.currentFrame, renderDevice, backend.GetRenderContext(), graphicsPipeline, vertexIndexBuffer[0], descriptorSets, uniformBuffers[0]);
+        updateMVP(renderDevice, ctx, descriptorSet, uniformBuffer);
+        RenderFrame(ctx.currentFrame, renderDevice, backend.GetRenderContext(), graphicsPipeline, vertexIndexBuffer[0], descriptorSet, uniformBuffer);
 
         backend.EndFrame();
         printFPS();

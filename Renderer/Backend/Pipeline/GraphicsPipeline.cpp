@@ -19,8 +19,24 @@ VkShaderModule Renderer::Internal::CreateShaderModule(VkDevice device, const std
 }
 
 
-void Renderer::GraphicsPipeline::Init(const Internal::RenderDevice& renderDevice, const ShaderProgram& shaderProgram, const VertexInput& vertexInput, const GraphicsState& state)
+void Renderer::GraphicsPipeline::Create(
+    const Internal::RenderContext& renderContext, 
+    const ShaderProgram& shaderProgram, 
+    const VertexInput& vertexInput, 
+    GraphicsState& state)
 {
+    if (state.viewportState.viewportCount == 0) {
+        state.AddViewport({ 0.f, 0.f, (float)renderContext.swapChainData.swapChainExtent.width, (float)renderContext.swapChainData.swapChainExtent.height, 0.f, 1.f });
+    }
+
+    if (state.viewportState.scissorCount == 0) {
+        state.AddScissor({ {0, 0}, renderContext.swapChainData.swapChainExtent });
+    }
+
+    if (pipelineLayout.GetAPIObject() == VK_NULL_HANDLE) { // If pipeline layout is not built
+        pipelineLayout.Create(*renderContext.renderDevice);
+    }
+    
     VkDynamicState dynamicStates[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_LINE_WIDTH
@@ -28,30 +44,35 @@ void Renderer::GraphicsPipeline::Init(const Internal::RenderDevice& renderDevice
 
     VkPipelineDynamicStateCreateInfo dynamicState{};
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicState.pNext = NULL;
+    dynamicState.flags = 0;
     dynamicState.dynamicStateCount = 2;
     dynamicState.pDynamicStates = dynamicStates;
+    
 
- 
-    VkGraphicsPipelineCreateInfo pipelineInfo{};
+    VkGraphicsPipelineCreateInfo pipelineInfo;
     pipelineInfo.sType                  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineInfo.pNext                  = NULL;
+    pipelineInfo.flags                  = 0;
     pipelineInfo.stageCount             = (uint32)shaderProgram.GetShadersCount();
-    pipelineInfo.pStages                = shaderProgram.GetShaderStages();
+    pipelineInfo.pStages                = shaderProgram.GetShaderStages(); //shaderStagesDesc.data();
     pipelineInfo.pVertexInputState      = &vertexInput.GetVertexInputDesc();
-    //pipelineInfo.pViewportState       = &viewportState;
+    pipelineInfo.pViewportState         = &state.viewportState;
     pipelineInfo.pInputAssemblyState    = &state.inputAssemblyState;
     pipelineInfo.pRasterizationState    = &state.rasterizationState;
+    pipelineInfo.pTessellationState     = NULL;
     pipelineInfo.pMultisampleState      = &state.multisampleState;
     pipelineInfo.pDepthStencilState     = &state.depthStencilState;
-    pipelineInfo.pColorBlendState       = &state.colorBlendState;
+    pipelineInfo.pColorBlendState       =  &state.colorBlendState;
     pipelineInfo.pDynamicState          = &dynamicState;
-    //pipelineInfo.layout               = pipline.pipelineLayout;
-    //pipelineInfo.renderPass           = pipline.renderPass;
-    pipelineInfo.subpass                = 0; //desc.subpass;
-    pipelineInfo.basePipelineHandle     = 0; //desc.basePipelineHandle;
+    pipelineInfo.layout                 = pipelineLayout.GetAPIObject();
+    pipelineInfo.renderPass             = this->renderPass;
+    pipelineInfo.subpass                = state.subpassIndex; //desc.subpass;
+    pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE; //desc.basePipelineHandle;
     pipelineInfo.basePipelineIndex      = -1;//desc.basePipelineIndex;
 
-    if (vkCreateGraphicsPipelines(renderDevice.device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &pipeline) != VK_SUCCESS) {
-        ASSERTF(true, "failed to create graphics pipeline!");
+    if (vkCreateGraphicsPipelines(renderContext.renderDevice->device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &pipeline) != VK_SUCCESS) {
+        ASSERTF(true, "Failed to create graphics pipeline!");
     }
 }
 

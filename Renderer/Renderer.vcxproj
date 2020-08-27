@@ -188,6 +188,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Backend\Pipeline\PipelineLayout\PipelineLayout.hpp" />
     <ClInclude Include="Backend\Pipeline\VertexInput\VertexInput.hpp" />
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="Backend\Buffers\Buffer.hpp" />
@@ -195,7 +196,7 @@
     <ClInclude Include="Backend\Common\Utils.hpp" />
     <ClInclude Include="Backend\MemoryAllocator\MemoryAllocator.hpp" />
     <ClInclude Include="Backend\RenderContext\RenderContext.hpp" />
-    <ClInclude Include="Backend\Descriptor\DescriptorSetLayout.hpp" />
+    <ClInclude Include="Backend\Descriptors\DescriptorSetLayout.hpp" />
     <ClInclude Include="Backend\Pipeline\GraphicsPipeline.hpp" />
     <ClInclude Include="Backend\RenderDevice\RenderDevice.hpp" />
     <ClInclude Include="Backend\SwapChain\SwapChain.hpp" />
@@ -455,7 +456,6 @@
     <ClCompile Include="Backend\Buffers\Buffer.cpp" />
     <ClCompile Include="Backend\MemoryAllocator\MemoryAllocator.cpp" />
     <ClCompile Include="Backend\RenderContext\RenderContext.cpp" />
-    <ClCompile Include="Backend\Descriptor\DescriptorSetLayout.cpp" />
     <ClCompile Include="Backend\Pipeline\GraphicsPipeline.cpp" />
     <ClCompile Include="Backend\RenderDevice\RenderDevice.cpp" />
     <ClCompile Include="Backend\SwapChain\SwapChain.cpp" />
