@@ -12,7 +12,7 @@ namespace Renderer
 	public:
 		CONSTEXPR static uint32 MAX_BINDINGS = 64;
 
-		DescriptorSetLayout() : bindingsCount(0), descriptorSetLayout(VK_NULL_HANDLE){}
+		DescriptorSetLayout() : bindingsCount(0), descriptorSetLayout(VK_NULL_HANDLE) {}
 
 		void AddBinding(uint32 binding, uint32 descriptorCount, DescriptorType descriptorType, ShaderStagesFlags shaderStages, const VkSampler* sampelr = NULL)
 		{

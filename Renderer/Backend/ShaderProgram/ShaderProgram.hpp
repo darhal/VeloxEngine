@@ -3,6 +3,8 @@
 #include <vector>
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/Pipeline/PipelineLayout/PipelineLayout.hpp>
+#include <Renderer/Backend/Pipeline/VertexInput/VertexInput.hpp>
 
 TRE_NS_START
 
@@ -32,6 +34,12 @@ namespace Renderer
 			VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT
 		};
 
+		
+		CONSTEXPR static uint32 MAX_DESCRIPTOR_SET = 4;
+
+		CONSTEXPR static const char* DYNAMIC_KEYWORD_PREFIX = "DYNC_";
+		CONSTEXPR static uint32 DYNAMIC_KEYWORD_SIZE = ARRAY_SIZE(DYNAMIC_KEYWORD_PREFIX);
+
 		CONSTEXPR static const char* DEFAULT_ENTRY_POINT = "main";
 
 		struct ShaderStage
@@ -44,18 +52,31 @@ namespace Renderer
 			ShaderStages shaderStage;
 		};
 	public:
-		ShaderProgram() : shadersCount(0) {}
+		ShaderProgram() : shadersCount(0), descSetLayoutCount(0) {}
 
 		void Create(const Internal::RenderDevice& renderDevice, const std::initializer_list<ShaderStage>& shaderStages);
 
 		uint32 GetShadersCount() const { return shadersCount; }
 
 		const VkPipelineShaderStageCreateInfo* GetShaderStages() const { return shaderStagesCreateInfo; }
+
+		const PipelineLayout& GetPipelineLayout() const { return piplineLayout; };
+
+		const DescriptorSetLayout& GetDescriptorSetLayout(uint32 i) const { return descSetLayout[i]; }
+
+		VertexInput& GetVertexInput() { return vertexInput; }
 	private:
 		static VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& code);
+
+		void ReflectShaderCode(const Internal::RenderDevice& renderDevice, const void* sprivCode, size_t size, ShaderStages shaderStage);
 	private:
 		VkPipelineShaderStageCreateInfo shaderStagesCreateInfo[MAX_SHADER_STAGES];
 		VkShaderModule shaderModules[MAX_SHADER_STAGES];
+		DescriptorSetLayout descSetLayout[PipelineLayout::MAX_LAYOUTS];
+		PipelineLayout piplineLayout;
+		VertexInput vertexInput;
+
+		uint32 descSetLayoutCount;
 		uint32 shadersCount;
 	};
 }

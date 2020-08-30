@@ -349,45 +349,34 @@ int main()
 
     for (int i = 0; i < MAX_VERTEX_BUFFERS; i++) {
         vertexIndexBuffer[i] =
-            backend.GetRenderContext().CreateBuffer((vertexSize + indexSize) * (i + 1), NULL,
+            backend.CreateBuffer((vertexSize + indexSize) * (i + 1), NULL,
                 BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER | BufferUsage::INDEX_BUFFER,
-                MemoryUsage::USAGE_GPU_ONLY, queueFamilies
+                MemoryUsage::GPU_ONLY, queueFamilies
             );
 
-        backend.GetRenderContext().GetStagingManager().Stage(vertexIndexBuffer[i].GetAPIObject(), (void*)data, (vertexSize + indexSize) * (i + 1));
+        backend.GetStagingManager().Stage(vertexIndexBuffer[i].GetAPIObject(), (void*)data, (vertexSize + indexSize) * (i + 1));
     }
 
     GraphicsPipeline graphicsPipeline;
     GraphicsState state;
 
-    DescriptorSetLayout descSetLayout;
-    ShaderProgram shaderProgram;
-    VertexInput vertexInput;
-
-    descSetLayout.AddBinding(0, 1, DescriptorType::UNIFORM_BUFFER_DYNC, VERTEX_SHADER);
-    descSetLayout.Create(renderDevice);
-
-    shaderProgram.Create(renderDevice, 
+    graphicsPipeline.GetShaderProgram().Create(renderDevice,
         { 
             {"shaders/vert.spv", ShaderProgram::VERTEX_SHADER}, 
             {"shaders/frag.spv", ShaderProgram::FRAGMENT_SHADER} 
         }
     );
 
-    vertexInput.AddBinding(
-        { 
-            { 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Internal::Vertex, pos) }, 
-            { 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Internal::Vertex, color) } 
-        },
-        sizeof(Internal::Vertex)
+    graphicsPipeline.GetShaderProgram().GetVertexInput().AddBinding(
+        0, sizeof(Internal::Vertex), 
+        VertexInput::LOCATION_0 | VertexInput::LOCATION_1, 
+        { offsetof(Internal::Vertex, pos), offsetof(Internal::Vertex, color) }
     );
 
     graphicsPipeline.SetRenderPass(ctx.contextData.renderPass);
-    graphicsPipeline.GetPipelineLayout().AddDescriptorLayout(descSetLayout);
-    graphicsPipeline.Create(ctx, shaderProgram, vertexInput, state);
+    graphicsPipeline.Create(ctx, state);
 
-    TRE::Renderer::RingBuffer uniformBuffer = backend.GetRenderContext().CreateRingBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER,
-            MemoryUsage::USAGE_CPU_ONLY);
+    TRE::Renderer::RingBuffer uniformBuffer = backend.CreateRingBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_ONLY);
 
     VkDescriptorPoolSize poolSize{};
     poolSize.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -404,7 +393,7 @@ int main()
         ASSERTF(true, "failed to create descriptor pool!");
     }
 
-    VkDescriptorSetLayout layouts[] = { descSetLayout.GetAPIObject() };
+    VkDescriptorSetLayout layouts[] = { graphicsPipeline.GetShaderProgram().GetDescriptorSetLayout(0).GetAPIObject() };
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool        = descriptorPool;

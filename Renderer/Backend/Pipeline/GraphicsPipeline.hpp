@@ -22,15 +22,20 @@ namespace Renderer
 	class GraphicsPipeline
 	{
 	public:
-		GraphicsPipeline() : pipeline(VK_NULL_HANDLE), renderPass(VK_NULL_HANDLE), pipelineLayout{} {}
+		GraphicsPipeline() : shaderProgram{}, renderPass(VK_NULL_HANDLE), pipeline(VK_NULL_HANDLE) {}
 
 		void Create(
 			const Internal::RenderContext& renderContext,
-			const ShaderProgram& shaderProgram, 
 			const VertexInput& vertexInput, 
 			GraphicsState& state);
 
-		PipelineLayout& GetPipelineLayout() { return pipelineLayout; }
+		void Create(
+			const Internal::RenderContext& renderContext,
+			GraphicsState& state);
+
+		const PipelineLayout& GetPipelineLayout() const { return shaderProgram.GetPipelineLayout(); }
+
+		ShaderProgram& GetShaderProgram() { return shaderProgram; }
 
 		VkPipeline GetAPIObject() const { return pipeline; }
 
@@ -38,9 +43,9 @@ namespace Renderer
 
 		void SetRenderPass(VkRenderPass renderPass) { this->renderPass = renderPass; }
 	private:
-		VkPipeline						pipeline;
+		ShaderProgram					shaderProgram;
 		VkRenderPass					renderPass;
-		PipelineLayout					pipelineLayout;
+		VkPipeline						pipeline;
 	};
 }
 

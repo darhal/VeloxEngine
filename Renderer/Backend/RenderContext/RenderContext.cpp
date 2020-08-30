@@ -8,7 +8,7 @@
 
 TRE_NS_START
 
-Renderer::RenderContext::RenderContext() : internal{ 0 }, stagingManager{&internal}
+Renderer::RenderContext::RenderContext() : internal{ 0 }
 {
 
 }
@@ -24,46 +24,15 @@ void Renderer::RenderContext::CreateRenderContext(TRE::Window* wnd, const Intern
 void Renderer::RenderContext::InitRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice)
 {
     CreateSwapChain(renderDevice, internal);
-    stagingManager.Init();
-    gpuMemoryAllocator.Init(renderDevice);
 }
 
 void Renderer::RenderContext::DestroyRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice, Internal::RenderContext& renderContext)
 {
     DestroySwapChain(renderDevice, renderContext);
-    stagingManager.Shutdown();
     Internal::DestroryWindowSurface(renderInstance.instance, renderContext.surface);
 }
 
-void Renderer::RenderContext::ExecuteTransferMemory(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence, VkDevice device)
-{
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &cmdBuff;
-
-
-    if (waitSemaphore != VK_NULL_HANDLE) {
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = &waitSemaphore;
-        submitInfo.pWaitDstStageMask = &waitStage;
-    }
-
-    if (signalSemaphore != VK_NULL_HANDLE) {
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &signalSemaphore;
-    }
-
-    vkQueueSubmit(queue, 1, &submitInfo, fence);
-
-    if (fence && device) {
-        vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
-        vkResetFences(device, 1, &fence);
-    }
-}
-
-void Renderer::RenderContext::BeginFrame(Internal::RenderDevice& renderDevice)
+void Renderer::RenderContext::BeginFrame(Internal::RenderDevice& renderDevice, StagingManager& stagingManager)
 {
     using namespace Internal;
 
@@ -170,105 +139,6 @@ void Renderer::RenderContext::EndFrame(Internal::RenderDevice& renderDevice)
 
     // vkQueueWaitIdle(renderDevice.queues[QFT_PRESENT]);
     internal.currentFrame = (currentFrame + 1) % SwapChainData::MAX_FRAMES_IN_FLIGHT;
-}
-
-void Renderer::RenderContext::TransferBuffers(uint32 count, Internal::TransferBufferInfo* transferBufferInfo)
-{
-    VkCommandBuffer currentCmdBuff = GetCurrentFrameResource().transferCommandBuffer;
-    internal.contextData.transferRequests = count;
-
-    Buffer::CopyBuffers(currentCmdBuff, count, transferBufferInfo);
-}
-
-void Renderer::RenderContext::FlushTransfers(Internal::RenderDevice& renderDevice)
-{
- 
-    Internal::ContextFrameResources& frameResources = GetCurrentFrameResource();
-    Internal::SwapChainData& swapData = internal.swapChainData;
-
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-    if (internal.contextData.transferRequests) {
-        if (renderDevice.isTransferQueueSeprate) {
-            ExecuteTransferMemory(renderDevice.queues[Internal::QFT_TRANSFER], frameResources.transferCommandBuffer, 0,
-                VK_NULL_HANDLE, VK_NULL_HANDLE, swapData.transferSyncFence, renderDevice.device);
-        } else {
-            ExecuteTransferMemory(renderDevice.queues[Internal::QFT_TRANSFER], frameResources.transferCommandBuffer, 0, VK_NULL_HANDLE, VK_NULL_HANDLE, swapData.transferSyncFence, renderDevice.device);
-        }
-    }
-
-    internal.contextData.transferRequests = 0;
-}
-
-Renderer::Buffer Renderer::RenderContext::CreateBuffer(DeviceSize size, const void* data, uint32 usage,
-    MemoryUsage memoryUsage, uint32 queueFamilies)
-{
-    Internal::RenderDevice& renderDevice = *internal.renderDevice;
-
-    uint32 queueFamilyIndices[Internal::QFT_MAX];
-    uint32 queueFamilyIndexCount = 0;
-    VkSharingMode sharingMode = (VkSharingMode)(queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
-
-    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
-        if (Internal::QUEUE_FAMILY_FLAGS[i] & queueFamilies) {
-            queueFamilyIndices[queueFamilyIndexCount++] = renderDevice.queueFamilyIndices.queueFamilies[i];
-        }
-    }
-
-    Buffer buffer;
-
-    VkBufferCreateInfo bufferInfo{};
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = size;
-    bufferInfo.usage = usage;
-    bufferInfo.sharingMode = sharingMode;
-    bufferInfo.flags = 0;
-
-    if (bufferInfo.sharingMode == VK_SHARING_MODE_CONCURRENT) {
-        bufferInfo.queueFamilyIndexCount = queueFamilyIndexCount;
-        bufferInfo.pQueueFamilyIndices = queueFamilyIndices;
-    }
-
-    if (vkCreateBuffer(renderDevice.device, &bufferInfo, NULL, &buffer.apiBuffer) != VK_SUCCESS) {
-        ASSERTF(true, "failed to create a buffer!");
-    }
-
-    VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(renderDevice.device, buffer.apiBuffer, &memRequirements);
-    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice, memRequirements.memoryTypeBits, memoryUsage);
-    buffer.bufferMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, size, memRequirements.alignment);
-    vkBindBufferMemory(renderDevice.device, buffer.apiBuffer, buffer.bufferMemory.memory, buffer.bufferMemory.offset);
-
-    if (data && (memoryUsage == MemoryUsage::USAGE_CPU_ONLY || (memoryUsage == MemoryUsage::USAGE_CPU_TO_GPU))) {
-        buffer.WriteToBuffer(size, data);
-    }
-
-    return buffer;
-}
-
-Renderer::Buffer Renderer::RenderContext::CreateStagingBuffer(DeviceSize size, const void* data)
-{
-    return this->CreateBuffer(size, data, BufferUsage::TRANSFER_SRC, MemoryUsage::USAGE_CPU_ONLY);
-}
-
-Renderer::RingBuffer Renderer::RenderContext::CreateRingBuffer(DeviceSize size, const void* data, uint32 usage, MemoryUsage memoryUsage, uint32 queueFamilies)
-{
-    const uint32 alignment = internal.renderDevice->gpuProperties.limits.minUniformBufferOffsetAlignment;
-    const DeviceSize padding = (alignment - (size % alignment)) % alignment;
-    const DeviceSize alignedSize = size + padding;
-
-    // Removing padding from total size, as we dont need the last bytes for alignement
-    Buffer buffer = this->CreateBuffer(alignedSize * MAX_FRAMES - padding, data, usage, memoryUsage, queueFamilies);
-
-    RingBuffer ringBuffer;
-    ringBuffer.apiBuffer = buffer.apiBuffer;
-    ringBuffer.bufferMemory = buffer.bufferMemory;
-    ringBuffer.ring_size = MAX_FRAMES;
-    ringBuffer.unit_size = alignedSize;
-    ringBuffer.bufferIndex = 0;
-
-    return ringBuffer;
 }
 
 const Renderer::Internal::ContextFrameResources& Renderer::RenderContext::GetFrameResource(uint32 i) const

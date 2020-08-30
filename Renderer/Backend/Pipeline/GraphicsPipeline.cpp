@@ -19,11 +19,7 @@ VkShaderModule Renderer::Internal::CreateShaderModule(VkDevice device, const std
 }
 
 
-void Renderer::GraphicsPipeline::Create(
-    const Internal::RenderContext& renderContext, 
-    const ShaderProgram& shaderProgram, 
-    const VertexInput& vertexInput, 
-    GraphicsState& state)
+void Renderer::GraphicsPipeline::Create(const Internal::RenderContext& renderContext, const VertexInput& vertexInput, GraphicsState& state)
 {
     if (state.viewportState.viewportCount == 0) {
         state.AddViewport({ 0.f, 0.f, (float)renderContext.swapChainData.swapChainExtent.width, (float)renderContext.swapChainData.swapChainExtent.height, 0.f, 1.f });
@@ -31,10 +27,6 @@ void Renderer::GraphicsPipeline::Create(
 
     if (state.viewportState.scissorCount == 0) {
         state.AddScissor({ {0, 0}, renderContext.swapChainData.swapChainExtent });
-    }
-
-    if (pipelineLayout.GetAPIObject() == VK_NULL_HANDLE) { // If pipeline layout is not built
-        pipelineLayout.Create(*renderContext.renderDevice);
     }
     
     VkDynamicState dynamicStates[] = {
@@ -63,9 +55,9 @@ void Renderer::GraphicsPipeline::Create(
     pipelineInfo.pTessellationState     = NULL;
     pipelineInfo.pMultisampleState      = &state.multisampleState;
     pipelineInfo.pDepthStencilState     = &state.depthStencilState;
-    pipelineInfo.pColorBlendState       =  &state.colorBlendState;
+    pipelineInfo.pColorBlendState       = &state.colorBlendState;
     pipelineInfo.pDynamicState          = &dynamicState;
-    pipelineInfo.layout                 = pipelineLayout.GetAPIObject();
+    pipelineInfo.layout                 = shaderProgram.GetPipelineLayout().GetAPIObject();
     pipelineInfo.renderPass             = this->renderPass;
     pipelineInfo.subpass                = state.subpassIndex; //desc.subpass;
     pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE; //desc.basePipelineHandle;
@@ -74,6 +66,11 @@ void Renderer::GraphicsPipeline::Create(
     if (vkCreateGraphicsPipelines(renderContext.renderDevice->device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &pipeline) != VK_SUCCESS) {
         ASSERTF(true, "Failed to create graphics pipeline!");
     }
+}
+
+void Renderer::GraphicsPipeline::Create(const Internal::RenderContext& renderContext, GraphicsState& state)
+{
+    this->Create(renderContext, shaderProgram.GetVertexInput(), state);
 }
 
 void Renderer::Internal::CreateGraphicsPipeline(const RenderDevice& renderDevice, GraphicsPipeline2& pipline, const GraphicsPiplineDesc& desc)

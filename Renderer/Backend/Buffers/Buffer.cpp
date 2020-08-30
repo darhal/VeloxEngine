@@ -52,26 +52,30 @@ uint32 Renderer::Buffer::FindMemoryType(const Internal::RenderDevice& renderDevi
 uint32 Renderer::Buffer::FindMemoryTypeIndex(const Internal::RenderDevice& renderDevice, uint32 typeFilter, MemoryUsage usage)
 {
 	VkMemoryPropertyFlags required = 0;
-	VkMemoryPropertyFlags preferred = 0;
+	// VkMemoryPropertyFlags preferred = 0;
 
 	switch (usage) {
-	case MemoryUsage::USAGE_GPU_ONLY:
+	case MemoryUsage::GPU_ONLY:
 		required |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-		preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		// preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		break;
-	case MemoryUsage::USAGE_CPU_ONLY:
+	case MemoryUsage::LINKED_GPU_CPU:
+		required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		break;
+	case MemoryUsage::CPU_ONLY:
+		required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+		// preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		break;
+	case MemoryUsage::CPU_CACHED:
+		required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+		// preferred |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+		break;
+	case MemoryUsage::CPU_COHERENT:
 		required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-		break;
-	case MemoryUsage::USAGE_CPU_TO_GPU:
-		required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-		preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-		break;
-	case MemoryUsage::USAGE_GPU_TO_CPU:
-		required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-		preferred |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+		// preferred |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
 		break;
 	default:
-		ASSERTF(true, "Unknoiwn memory usage!");
+		ASSERTF(true, "Unknown memory usage!");
 	}
 
 	return FindMemoryType(renderDevice, typeFilter, required);

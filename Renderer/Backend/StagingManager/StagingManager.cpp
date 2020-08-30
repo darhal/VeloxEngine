@@ -5,7 +5,7 @@ TRE_NS_START
 
 namespace Renderer
 {
-	StagingManager::StagingManager(Internal::RenderContext* ctx) : ctx(ctx), currentBuffer(0)
+	StagingManager::StagingManager(const Internal::RenderDevice* renderDevice) : renderDevice(renderDevice), currentBuffer(0)
 	{
 	}
 
@@ -15,7 +15,7 @@ namespace Renderer
 
 	void StagingManager::Shutdown()
 	{
-		VkDevice device = ctx->GetDevice();
+		VkDevice device = renderDevice->device;
 
 		vkUnmapMemory(device, memory);
 
@@ -30,7 +30,7 @@ namespace Renderer
 
 	void StagingManager::Init()
 	{
-		VkDevice device = ctx->GetDevice();
+		VkDevice device = renderDevice->device;
 
 		VkBufferCreateInfo bufferCreateInfo = {};
 		bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -52,7 +52,7 @@ namespace Renderer
 		VkMemoryAllocateInfo memoryAllocateInfo = {};
 		memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memoryAllocateInfo.allocationSize = alignedSize * MAX_FRAMES;
-		memoryAllocateInfo.memoryTypeIndex = Buffer::FindMemoryTypeIndex(*ctx->renderDevice, memoryRequirements.memoryTypeBits, MemoryUsage::USAGE_CPU_TO_GPU);
+		memoryAllocateInfo.memoryTypeIndex = Buffer::FindMemoryTypeIndex(*renderDevice, memoryRequirements.memoryTypeBits, MemoryUsage::CPU_COHERENT);
 
 		vkAllocateMemory(device, &memoryAllocateInfo, NULL, &memory);
 		vkMapMemory(device, memory, 0, alignedSize * MAX_FRAMES, 0, reinterpret_cast<void**>(&mappedData));
@@ -60,7 +60,7 @@ namespace Renderer
 		VkCommandPoolCreateInfo commandPoolCreateInfo = {};
 		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		commandPoolCreateInfo.queueFamilyIndex = ctx->renderDevice->queueFamilyIndices.queueFamilies[TRANSFER];
+		commandPoolCreateInfo.queueFamilyIndex = renderDevice->queueFamilyIndices.queueFamilies[TRANSFER];
 		vkCreateCommandPool(device, &commandPoolCreateInfo, NULL, &commandPool);
 
 		{
@@ -153,7 +153,7 @@ namespace Renderer
 
 		VkCommandBuffer cmdBuff = stage.transferCmdBuff;
 
-		if (!ctx->renderDevice->isTransferQueueSeprate) {
+		if (!renderDevice->isTransferQueueSeprate) {
 			VkMemoryBarrier barrier = {};
 			barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -170,7 +170,7 @@ namespace Renderer
 		memoryRange.sType	= VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 		memoryRange.memory	= memory;
 		memoryRange.size	= VK_WHOLE_SIZE;
-		vkFlushMappedMemoryRanges(ctx->GetDevice(), 1, &memoryRange);
+		vkFlushMappedMemoryRanges(renderDevice->device, 1, &memoryRange);
 		return &stage;
 	}
 
@@ -199,14 +199,12 @@ namespace Renderer
 
 		VkCommandBuffer cmdBuff = stage->transferCmdBuff;
 
-		if (ctx->renderDevice->isTransferQueueSeprate) {
-			Internal::SwapChainData& swapChainData = ctx->swapChainData;
-
-			ExecuteTransferMemory(ctx->renderDevice->queues[TRANSFER], cmdBuff,
-				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, ctx->GetDevice());
+		if (renderDevice->isTransferQueueSeprate) {
+			ExecuteTransferMemory(renderDevice->queues[TRANSFER], cmdBuff,
+				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, renderDevice->device);
 		} else {
-			ExecuteTransferMemory(ctx->renderDevice->queues[TRANSFER], cmdBuff,
-				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, ctx->GetDevice());
+			ExecuteTransferMemory(renderDevice->queues[TRANSFER], cmdBuff,
+				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, renderDevice->device);
 		}
 
 		stage->submitted = true;
@@ -221,8 +219,8 @@ namespace Renderer
 			return;
 		}
 
-		vkWaitForFences(ctx->GetDevice(), 1, &stage.transferFence, VK_TRUE, UINT64_MAX);
-		vkResetFences(ctx->GetDevice(), 1, &stage.transferFence);
+		vkWaitForFences(renderDevice->device, 1, &stage.transferFence, VK_TRUE, UINT64_MAX);
+		vkResetFences(renderDevice->device, 1, &stage.transferFence);
 
 		stage.offset	= 0;
 		stage.submitted = false;

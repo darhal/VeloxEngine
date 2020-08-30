@@ -8,6 +8,18 @@ namespace Renderer
 {
 	struct VertexInput
 	{
+		enum AttribLocation
+		{
+			LOCATION_0 = 1,
+			LOCATION_1 = 1 << 1,
+			LOCATION_2 = 1 << 2,
+			LOCATION_3 = 1 << 3,
+			LOCATION_4 = 1 << 4,
+			LOCATION_5 = 1 << 5,
+			LOCATION_6 = 1 << 6,
+			LOCATION_7 = 1 << 7,
+		};
+
 		enum InputRate
 		{
 			VERTEX_RATE = VK_VERTEX_INPUT_RATE_VERTEX,
@@ -24,16 +36,6 @@ namespace Renderer
 			uint32_t    offset;
 		};
 
-		/*struct VertexBinding
-		{
-			uint32 binding;
-			uint32 stide;
-			uint32 inputRate;
-			uint32 attribCount;
-
-			VertexAttrib attribs[MAX_ATTRIBS];
-		};*/
-
 		VkVertexInputBindingDescription bindingDescription[MAX_BINDINGS];
 		VkVertexInputAttributeDescription attributeDescriptions[MAX_ATTRIBS * MAX_BINDINGS];
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo;
@@ -45,7 +47,7 @@ namespace Renderer
 			}
 		{ }
 
-		FORCEINLINE void AddBinding(const std::initializer_list<VertexAttrib>& attribs, uint32 stride, InputRate inputRate = VERTEX_RATE)
+		FORCEINLINE void AddBindings(const std::initializer_list<VertexAttrib>& attribs, uint32 stride, InputRate inputRate = VERTEX_RATE)
 		{
 			uint32& bindingCount = vertexInputInfo.vertexBindingDescriptionCount;
 			uint32& attribsCount = vertexInputInfo.vertexAttributeDescriptionCount;
@@ -63,6 +65,58 @@ namespace Renderer
 			}
 
 			bindingCount++;
+		}
+
+		FORCEINLINE void AddAttribute(const uint32 location, const VkFormat format, const uint32 offset = 0, const uint32 binding = 0)
+		{
+			uint32& attribsCount = vertexInputInfo.vertexAttributeDescriptionCount;
+
+			attributeDescriptions[attribsCount].binding = binding;
+			attributeDescriptions[attribsCount].location = location;
+			attributeDescriptions[attribsCount].format = format;
+			attributeDescriptions[attribsCount].offset = offset;
+
+			attribsCount++;
+		}
+
+		void AddBinding(const uint32 binding, const uint32 stride, const uint32 locations, const std::initializer_list<uint32>& offsets, const InputRate inputRate = VERTEX_RATE)
+		{
+			uint32& bindingCount = vertexInputInfo.vertexBindingDescriptionCount;
+			bindingDescription[bindingCount].binding	= binding;
+			bindingDescription[bindingCount].stride		= stride;
+			bindingDescription[bindingCount].inputRate	= (VkVertexInputRate)inputRate;
+			const uint32 attribsCount = vertexInputInfo.vertexAttributeDescriptionCount;
+			uint slot = 0;
+			
+			for (uint8 i = 0; i < MAX_ATTRIBS && i < attribsCount; i++) {
+				// printf("TESTING: %d | %d\n", (uint8(1) << i), locations);
+
+				if (locations & (uint32(1) << i)) {
+					for (uint32 j = 0; j < attribsCount; j++) {
+						VkVertexInputAttributeDescription& attrib = attributeDescriptions[j];
+
+						if (attrib.location == i) {
+							attrib.binding = binding;
+							attrib.offset = *(offsets.begin() + slot);
+
+							slot++;
+						}
+					}
+				}
+			}
+
+			bindingCount++;
+		}
+
+		FORCEINLINE void Reset()
+		{
+			vertexInputInfo.vertexBindingDescriptionCount = 0;
+			vertexInputInfo.vertexAttributeDescriptionCount = 0;
+		}
+
+		FORCEINLINE bool IsEmpty()
+		{
+			return !vertexInputInfo.vertexBindingDescriptionCount || !vertexInputInfo.vertexAttributeDescriptionCount ;
 		}
 
 		FORCEINLINE const VkPipelineVertexInputStateCreateInfo& GetVertexInputDesc() const

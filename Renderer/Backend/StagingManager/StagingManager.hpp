@@ -21,7 +21,7 @@ namespace Renderer
 	class RENDERER_API StagingManager
 	{
 	public:
-		StagingManager(Internal::RenderContext* ctx);
+		StagingManager(const Internal::RenderDevice* renderDevice);
 
 		~StagingManager();
 
@@ -55,7 +55,7 @@ namespace Renderer
 		VkCommandPool	commandPool;
 		uint32			currentBuffer;
 
-		Internal::RenderContext* ctx;
+		const Internal::RenderDevice* renderDevice;
 		
 		CONSTEXPR static uint32 MAX_UPLOAD_BUFFER_SIZE = 64 * 1024 * 1024;
 	};

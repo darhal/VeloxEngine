@@ -10,7 +10,7 @@ namespace Renderer
 	class PipelineLayout
 	{
 	public:
-		CONSTEXPR static uint32 MAX_LAYOUTS = 64;
+		CONSTEXPR static uint32 MAX_LAYOUTS = 4;
 	public:
 		PipelineLayout() : descriptorLayoutsCount(0), pushConstantsCount(0), pipelineLayout(VK_NULL_HANDLE) {}
 

@@ -52,10 +52,11 @@ namespace Renderer
 	enum class MemoryUsage
 	{
 		USAGE_UNKNOWN,
-		USAGE_GPU_ONLY,
-		USAGE_CPU_ONLY,
-		USAGE_CPU_TO_GPU,
-		USAGE_GPU_TO_CPU,
+		GPU_ONLY,			// Device local. Probably not visible from CPU.
+		LINKED_GPU_CPU,		// On desktop, directly mapped VRAM over PCI.
+		CPU_ONLY,			// Host-only, needs to be synced to GPU. Might be device local as well on iGPUs.
+		CPU_CACHED,			// Host and cached
+		CPU_COHERENT,		// Host and coherent
 	};
 
 	enum BufferUsage 
@@ -336,8 +337,6 @@ namespace Renderer
 			VkCommandPool						presentCommandPool;
 
 			VkRenderPass						renderPass;
-
-			uint32								transferRequests;
 
 			ContextFrameResources				contextFrameResources[SwapChainData::MAX_FRAMES_IN_FLIGHT];
 		};

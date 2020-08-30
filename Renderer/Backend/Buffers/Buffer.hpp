@@ -27,7 +27,7 @@ namespace Renderer
 		MemoryView		bufferMemory;
 		VkBuffer		apiBuffer;
 
-		friend class RenderContext;
+		friend class RenderBackend;
 	};
 }
 

@@ -19,7 +19,7 @@ namespace Renderer
 		uint32		unit_size;
 		uint32		bufferIndex;
 
-		friend class RenderContext;
+		friend class RenderBackend;
 	};
 }
 
