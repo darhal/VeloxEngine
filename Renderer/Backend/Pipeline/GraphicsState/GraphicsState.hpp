@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Renderer/Common.hpp>
+#include <Renderer/Backend/Common/Globals.hpp>
 
 TRE_NS_START
 
@@ -93,7 +94,7 @@ namespace Renderer
 		MultisampleState			multisampleState;
 		DepthStencilState			depthStencilState;
 		ColorBlendState				colorBlendState;
-		ColorBlendAttachmentState	colorBlendAttachmetns[8];
+		ColorBlendAttachmentState	colorBlendAttachmetns[MAX_ATTACHMENTS];
 
 		VkPipelineViewportStateCreateInfo	viewportState;
 		VkViewport							viewports[8];

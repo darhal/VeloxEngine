@@ -1,14 +1,13 @@
 #include "RenderContext.hpp"
 #include <Renderer/Window/Window.hpp>
 #include <Renderer/Backend/WindowSurface/WindowSurface.hpp>
-#include <Renderer/Backend/SwapChain/SwapChain.hpp>
 #include <Renderer/Backend/RenderInstance/RenderInstance.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <unordered_set>
 
 TRE_NS_START
 
-Renderer::RenderContext::RenderContext() : internal{ 0 }
+Renderer::RenderContext::RenderContext(RenderDevice* renderDevice) : internal{ 0 }, swapchain(*renderDevice, *this)
 {
 
 }
@@ -23,12 +22,12 @@ void Renderer::RenderContext::CreateRenderContext(TRE::Window* wnd, const Intern
 
 void Renderer::RenderContext::InitRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice)
 {
-    CreateSwapChain(renderDevice, internal);
+    swapchain.CreateSwapchain();
 }
 
 void Renderer::RenderContext::DestroyRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice, Internal::RenderContext& renderContext)
 {
-    DestroySwapChain(renderDevice, renderContext);
+    swapchain.DestroySwapchain();
     Internal::DestroryWindowSurface(renderInstance.instance, renderContext.surface);
 }
 
@@ -52,7 +51,7 @@ void Renderer::RenderContext::BeginFrame(Internal::RenderDevice& renderDevice, S
     stagingManager.Flush();
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        RecreateSwapChainInternal(renderDevice, internal);
+        swapchain.RecreateSwapchain();
         return;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         ASSERTF(true, "Failed to acquire swap chain image!\n");
@@ -132,7 +131,7 @@ void Renderer::RenderContext::EndFrame(Internal::RenderDevice& renderDevice)
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || internal.framebufferResized) {
         internal.framebufferResized = false;
-        RecreateSwapChainInternal(renderDevice, internal);
+        swapchain.RecreateSwapchain();
     } else if (result != VK_SUCCESS) {
         ASSERTF(true, "Failed to present swap chain image!");
     }

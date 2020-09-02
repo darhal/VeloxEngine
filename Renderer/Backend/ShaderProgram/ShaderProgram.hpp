@@ -34,13 +34,9 @@ namespace Renderer
 			VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT
 		};
 
-		
-		CONSTEXPR static uint32 MAX_DESCRIPTOR_SET = 4;
-
 		CONSTEXPR static const char* DYNAMIC_KEYWORD_PREFIX = "DYNC_";
-		CONSTEXPR static uint32 DYNAMIC_KEYWORD_SIZE = ARRAY_SIZE(DYNAMIC_KEYWORD_PREFIX);
-
-		CONSTEXPR static const char* DEFAULT_ENTRY_POINT = "main";
+		CONSTEXPR static const char* DEFAULT_ENTRY_POINT	= "main";
+		CONSTEXPR static uint32 DYNAMIC_KEYWORD_SIZE		= ARRAY_SIZE(DYNAMIC_KEYWORD_PREFIX);
 
 		struct ShaderStage
 		{
@@ -72,7 +68,7 @@ namespace Renderer
 	private:
 		VkPipelineShaderStageCreateInfo shaderStagesCreateInfo[MAX_SHADER_STAGES];
 		VkShaderModule shaderModules[MAX_SHADER_STAGES];
-		DescriptorSetLayout descSetLayout[PipelineLayout::MAX_LAYOUTS];
+		DescriptorSetLayout descSetLayout[MAX_DESCRIPTOR_SET];
 		PipelineLayout piplineLayout;
 		VertexInput vertexInput;
 

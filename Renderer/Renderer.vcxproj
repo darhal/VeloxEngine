@@ -188,8 +188,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Backend\CommandList\CommandList.hpp" />
+    <ClInclude Include="Backend\Descriptors\DescriptorSetAlloc.hpp" />
     <ClInclude Include="Backend\Pipeline\PipelineLayout\PipelineLayout.hpp" />
     <ClInclude Include="Backend\Pipeline\VertexInput\VertexInput.hpp" />
+    <ClInclude Include="Backend\RenderPass\RenderPass.hpp" />
+    <ClInclude Include="Backend\ShaderProgram\ResourceBinding\ResourceBinding.hpp" />
     <ClInclude Include="Backend\ShaderProgram\ShaderReflect\spirv.h" />
     <ClInclude Include="Backend\ShaderProgram\ShaderReflect\spirv_reflect.h" />
     <ClInclude Include="Common.hpp" />
@@ -203,6 +207,7 @@
     <ClInclude Include="Backend\RenderDevice\RenderDevice.hpp" />
     <ClInclude Include="Backend\SwapChain\SwapChain.hpp" />
     <ClInclude Include="Backend\WindowSurface\WindowSurface.hpp" />
+    <ClInclude Include="Core\Allocators\StackAllocator.hpp" />
     <ClInclude Include="Core\Handle\Handle.hpp" />
     <ClInclude Include="Core\ObjectPool\ObjectPool.hpp" />
     <ClInclude Include="Core\Utils\AlignedAlloc.hpp" />
@@ -459,12 +464,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Backend\Buffers\Buffer.cpp" />
+    <ClCompile Include="Backend\Descriptors\DescriptorSetAlloc.cpp" />
     <ClCompile Include="Backend\MemoryAllocator\MemoryAllocator.cpp" />
     <ClCompile Include="Backend\RenderContext\RenderContext.cpp" />
     <ClCompile Include="Backend\Pipeline\GraphicsPipeline.cpp" />
     <ClCompile Include="Backend\RenderDevice\RenderDevice.cpp" />
     <ClCompile Include="Backend\ShaderProgram\ShaderReflect\spirv_reflect.c" />
-    <ClCompile Include="Backend\SwapChain\SwapChain.cpp" />
+    <ClCompile Include="Backend\Swapchain\Swapchain.cpp" />
     <ClCompile Include="Backend\WindowSurface\WindowSurface.cpp" />
     <ClCompile Include="glm\detail\glm.cpp" />
     <ClCompile Include="Backend\Pipeline\GraphicsState\GraphicsState.cpp" />

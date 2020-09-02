@@ -1,5 +1,5 @@
 #include "RenderDevice.hpp"
-#include <Renderer/Backend/SwapChain/SwapChain.hpp>
+#include <Renderer/Backend/Swapchain/Swapchain.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <unordered_set>
 #include <Renderer/Backend/Common/Utils.hpp>
@@ -27,7 +27,6 @@ int32 Renderer::RenderDevice::CreateRenderDevice(const Internal::RenderInstance&
                                             internal.queueFamilyIndices.queueFamilies[Internal::QFT_TRANSFER];
 
     vkGetPhysicalDeviceMemoryProperties(internal.gpu, &internal.memoryProperties);
-
     return CreateLogicalDevice(renderInstance, ctx);
 }
 
@@ -128,7 +127,7 @@ bool Renderer::RenderDevice::IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR
     Internal::QueueFamilyIndices indices = FindQueueFamilies(gpu, surface);
     
     bool swapChainAdequate = false;
-    Internal::SwapChainSupportDetails swapChainSupport = Internal::QuerySwapChainSupport(gpu, surface);
+    Renderer::Swapchain::SwapchainSupportDetails swapChainSupport = Renderer::Swapchain::QuerySwapchainSupport(gpu, surface);
     swapChainAdequate = !swapChainSupport.formats.IsEmpty() && !swapChainSupport.presentModes.IsEmpty();
 
 	return indices.IsComplete() && swapChainAdequate;

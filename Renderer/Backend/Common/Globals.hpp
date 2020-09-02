@@ -33,7 +33,17 @@ namespace Renderer
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	};
 
-	CONSTEXPR static uint32			MAX_FRAMES = 2;
+	// Frame related constants:
+	CONSTEXPR static uint32	MAX_FRAMES				= 2;
+
+	// Descriptor related constants:
+	CONSTEXPR static uint32	MAX_DESCRIPTOR_SET		= 4;
+	CONSTEXPR static uint32	MAX_DESCRIPTOR_BINDINGS = 16;
+	CONSTEXPR static uint32 MAX_DESCRIPTOR_TYPES	= 11;
+	CONSTEXPR static uint32 MAX_SETS_PER_POOL		= 16;
+
+	// Renderpass and framebuffers:
+	CONSTEXPR static uint32 MAX_ATTACHMENTS			= 8;
 
 	typedef VkDeviceSize DeviceSize;
 

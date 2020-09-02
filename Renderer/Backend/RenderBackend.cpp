@@ -7,7 +7,7 @@
 
 TRE_NS_START
 
-Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) : stagingManager{ &renderDevice.internal }
+Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) : stagingManager{ &renderDevice.internal }, renderContext(&renderDevice)
 {
     renderDevice.internal.renderContext = &renderContext.internal;
     renderContext.internal.renderDevice = &renderDevice.internal;
@@ -42,7 +42,6 @@ void Renderer::RenderBackend::EndFrame()
 {
     renderContext.EndFrame(renderDevice.internal);
 }
-
 
 Renderer::Buffer Renderer::RenderBackend::CreateBuffer(DeviceSize size, const void* data, uint32 usage,
     MemoryUsage memoryUsage, uint32 queueFamilies)

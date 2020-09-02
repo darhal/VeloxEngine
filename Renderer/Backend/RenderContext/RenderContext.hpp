@@ -3,15 +3,19 @@
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/StagingManager/StagingManager.hpp>
+#include <Renderer/Backend/Swapchain/Swapchain.hpp>
 
 TRE_NS_START
 
 namespace Renderer
 {
+	class Swapchain;
+	class RenderDevice;
+
 	class RENDERER_API RenderContext
 	{
 	public:
-		RenderContext();
+		RenderContext(RenderDevice* renderDevice);
 
 		void CreateRenderContext(TRE::Window* wnd, const Internal::RenderInstance& instance);
 
@@ -34,12 +38,22 @@ namespace Renderer
 		FORCEINLINE uint32 GetCurrentImageIndex() const { return internal.currentImage; }
 
 		FORCEINLINE uint32 GetCurrentFrame() const { return internal.currentFrame; }
+
+		FORCEINLINE Window* GetWindow() const { return internal.window; }
+
+		FORCEINLINE VkSurfaceKHR GetSurface() const { return internal.surface; }
+
+		FORCEINLINE Swapchain& GetSwapchain() { return swapchain; }
+
+		FORCEINLINE RenderDevice* GetRenderDevice() const { return renderDevice; }
 	private:
 		void BeginFrame(Internal::RenderDevice& renderDevice, StagingManager& stagingManager);
 
 		void EndFrame(Internal::RenderDevice& renderDevice);
 	private:
 		Internal::RenderContext	internal;
+		Swapchain swapchain;
+		RenderDevice* renderDevice;
 
 		friend class RenderBackend;
 	};

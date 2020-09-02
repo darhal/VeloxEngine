@@ -10,8 +10,6 @@ namespace Renderer
 	class PipelineLayout
 	{
 	public:
-		CONSTEXPR static uint32 MAX_LAYOUTS = 4;
-	public:
 		PipelineLayout() : descriptorLayoutsCount(0), pushConstantsCount(0), pipelineLayout(VK_NULL_HANDLE) {}
 
 		void Create(const Internal::RenderDevice& renderDevice)
@@ -45,10 +43,10 @@ namespace Renderer
 			pushConstantsRanges[pushConstantsCount++] = { stageFlags, offset, size };
 		}
 	private:
-		VkDescriptorSetLayout descriptorLayouts[MAX_LAYOUTS];
+		VkDescriptorSetLayout descriptorLayouts[MAX_DESCRIPTOR_SET];
 		uint32 descriptorLayoutsCount;
 
-		VkPushConstantRange pushConstantsRanges[MAX_LAYOUTS * 4];
+		VkPushConstantRange pushConstantsRanges[MAX_DESCRIPTOR_SET * 4];
 		uint32 pushConstantsCount;
 
 		VkPipelineLayout pipelineLayout;

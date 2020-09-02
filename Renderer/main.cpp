@@ -328,8 +328,6 @@ int main()
 
     Internal::RenderContext& ctx = backend.GetCtxInternal();
     Internal::RenderDevice& renderDevice = backend.GetDevInternal();
-    Internal::SwapChainData& swapChainData = ctx.swapChainData;
-
 
     size_t vertexSize = sizeof(vertices[0]) * vertices.size();
     size_t indexSize = sizeof(indices[0]) * indices.size();
@@ -447,7 +445,7 @@ int main()
         window.getEvent(ev);
        
         if (ev.Type == TRE::Event::TE_RESIZE) {
-            Internal::UpdateSwapChain(ctx);
+            backend.GetRenderContext().GetSwapchain().UpdateSwapchain();
             continue;
         }
 

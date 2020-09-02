@@ -10,8 +10,6 @@ namespace Renderer
 	class DescriptorSetLayout
 	{
 	public:
-		CONSTEXPR static uint32 MAX_BINDINGS = 64;
-
 		DescriptorSetLayout() : bindingsCount(0), descriptorSetLayout(VK_NULL_HANDLE) {}
 
 		void AddBinding(uint32 binding, uint32 descriptorCount, DescriptorType descriptorType, ShaderStagesFlags shaderStages, const VkSampler* sampelr = NULL)
@@ -44,8 +42,12 @@ namespace Renderer
 		}
 
 		VkDescriptorSetLayout GetAPIObject() const { return descriptorSetLayout; }
+
+		const VkDescriptorSetLayoutBinding* const GetDescriptorSetLayoutBindings() const { return layoutBindings; }
+
+		uint32 GetBindingsCount() const { return bindingsCount; }
 	private:
-		VkDescriptorSetLayoutBinding layoutBindings[MAX_BINDINGS];
+		VkDescriptorSetLayoutBinding layoutBindings[MAX_DESCRIPTOR_BINDINGS];
 		uint32 bindingsCount;
 
 		VkDescriptorSetLayout descriptorSetLayout;
