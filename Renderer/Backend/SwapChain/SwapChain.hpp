@@ -16,18 +16,15 @@ namespace Renderer
     public:
         struct SwapchainData
         {
-            CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT = MAX_FRAMES;
-            CONSTEXPR static uint32			MAX_IMAGES_COUNT = 4;
-
-            VkSemaphore						imageAcquiredSemaphores[MAX_FRAMES_IN_FLIGHT];
-            VkSemaphore						drawCompleteSemaphores[MAX_FRAMES_IN_FLIGHT];
-            VkFence							fences[MAX_FRAMES_IN_FLIGHT];
+            VkSemaphore						imageAcquiredSemaphores[MAX_FRAMES];
+            VkSemaphore						drawCompleteSemaphores[MAX_FRAMES];
+            VkFence							fences[MAX_FRAMES];
 
             // To use when using seprate presentation queue:
-            VkSemaphore						imageOwnershipSemaphores[MAX_FRAMES_IN_FLIGHT];
+            VkSemaphore						imageOwnershipSemaphores[MAX_FRAMES];
 
             // To use when using seprate transfer queue:
-            VkSemaphore						transferSemaphores[MAX_FRAMES_IN_FLIGHT];
+            VkSemaphore						transferSemaphores[MAX_FRAMES];
             VkFence							transferSyncFence;
 
             // Swap chain images:
@@ -72,20 +69,32 @@ namespace Renderer
         VkPresentModeKHR ChooseSwapPresentMode(const TRE::Vector<VkPresentModeKHR>& availablePresentModes);
         VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, const VkExtent2D& extent);
 
+        FORCEINLINE VkFramebuffer GetCurrentFramebuffer() const;
+
+        FORCEINLINE const SwapchainData& GetSwapchainData() const { return swapchainData; }
+
+        FORCEINLINE const SwapchainSupportDetails& GetSwapchainSupportDetaims() const { return supportDetails; }
+
+        FORCEINLINE VkSwapchainKHR GetAPIObject() const { return swapchain; }
+
+        FORCEINLINE VkRenderPass GetRenderPass() const { return renderPass; }
+
+        FORCEINLINE const VkExtent2D& GetExtent() const { return swapchainData.swapChainExtent; }
+
+        FORCEINLINE VkFormat GetFormat() const { return swapchainData.swapChainImageFormat; }
     private:
-        SwapchainData           swapChainData;
+        SwapchainData           swapchainData;
         SwapchainSupportDetails supportDetails;
 
         const RenderDevice&     renderDevice;
         RenderContext&          renderContext;
-        VkSwapchainKHR          swapChain;
+        VkSwapchainKHR          swapchain;
         VkRenderPass            renderPass;
-
-        uint32					imagesCount;
-        uint32					currentFrame;
-        uint32					currentImage;
+        uint32                  imagesCount;
 
         bool					framebufferResized;
+
+        friend class RenderContext;
     };
 
     /*namespace Internal 

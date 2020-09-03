@@ -56,20 +56,19 @@ const std::vector<uint16_t> indices = {
     0, 1, 2, 2, 3, 0
 };
 
-void updateMVP(const TRE::Renderer::Internal::RenderDevice& dev, const TRE::Renderer::Internal::RenderContext& ctx, VkDescriptorSet descriptorSet, TRE::Renderer::RingBuffer& buffer)
+void updateMVP(const TRE::Renderer::RenderBackend& backend, VkDescriptorSet descriptorSet, TRE::Renderer::RingBuffer& buffer)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
-
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-    const TRE::Renderer::Internal::SwapChainData& swapData = ctx.swapChainData;
+    
+    const TRE::Renderer::Swapchain::SwapchainData& swapchainData = backend.GetRenderContext().GetSwapchain().GetSwapchainData();
 
     MVP mvp{};
 
     mvp.model   = glm::rotate(glm::mat4(1.0f), time * TRE::Math::ToRad(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     mvp.view    = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    mvp.proj    = glm::perspective<float>(TRE::Math::ToRad(45.0f), swapData.swapChainExtent.width / (float)swapData.swapChainExtent.height, 0.1, 10.f);
+    mvp.proj    = glm::perspective<float>(TRE::Math::ToRad(45.0f), swapchainData.swapChainExtent.width / (float)swapchainData.swapChainExtent.height, 0.1, 10.f);
     mvp.proj[1][1] *= -1;
     
     //mvp.model.transpose();
@@ -79,214 +78,39 @@ void updateMVP(const TRE::Renderer::Internal::RenderDevice& dev, const TRE::Rend
     buffer.WriteToBuffer(sizeof(mvp), &mvp);
 }
 
-void InitRenderPassDesc(const TRE::Renderer::Internal::RenderDevice& dev, const TRE::Renderer::Internal::RenderContext& ctx, TRE::Renderer::Internal::RenderPassDesc& desc)
-{
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = ctx.swapChainData.swapChainImageFormat;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-
-    VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-
-    desc.attachments.EmplaceBack(colorAttachment);
-    desc.subpassDependency.EmplaceBack(dependency);
-    desc.subpassesDesc.EmplaceBack(subpass);
-}
-
-void InitGraphicsPipelineDesc(const TRE::Renderer::Internal::RenderDevice& dev, const TRE::Renderer::Internal::RenderContext& ctx, TRE::Renderer::Internal::GraphicsPiplineDesc& desc)
-{
-    auto vertShaderCode = TRE::Renderer::ReadShaderFile("shaders/vert.spv");
-    auto fragShaderCode = TRE::Renderer::ReadShaderFile("shaders/frag.spv");
-
-    VkShaderModule vertShaderModule = TRE::Renderer::Internal::CreateShaderModule(dev.device, vertShaderCode);
-    VkShaderModule fragShaderModule = TRE::Renderer::Internal::CreateShaderModule(dev.device, fragShaderCode);
-
-    VkPipelineShaderStageCreateInfo vertexShaderInfo{};
-    vertexShaderInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertexShaderInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertexShaderInfo.module = vertShaderModule;
-    vertexShaderInfo.pName = "main";
-
-    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragShaderStageInfo.module = fragShaderModule;
-    fragShaderStageInfo.pName = "main";
-
-    desc.shaderStagesDesc.EmplaceBack(vertexShaderInfo);
-    desc.shaderStagesDesc.EmplaceBack(fragShaderStageInfo);
-
-    TRE::Renderer::Internal::VertexInputDesc vertexInputDesc;
-    vertexInputDesc.binding = 0;
-    vertexInputDesc.stride = sizeof(TRE::Renderer::Internal::Vertex);
-    vertexInputDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-    vertexInputDesc.attribDesc.EmplaceBack(TRE::Renderer::Internal::VertextAttribDesc{ 0, offsetof(TRE::Renderer::Internal::Vertex, pos), VK_FORMAT_R32G32B32_SFLOAT });
-    vertexInputDesc.attribDesc.EmplaceBack(TRE::Renderer::Internal::VertextAttribDesc{ 1, offsetof(TRE::Renderer::Internal::Vertex, color), VK_FORMAT_R32G32B32_SFLOAT });
-    desc.vertexInputDesc.EmplaceBack(vertexInputDesc);
-
-
-    desc.inputAssemblyDesc.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    desc.inputAssemblyDesc.primitiveRestartEnable = VK_FALSE;
-
-    desc.rasterStateDesc.depthClampEnable = VK_FALSE;
-    desc.rasterStateDesc.rasterizerDiscardEnable = VK_FALSE;
-    desc.rasterStateDesc.polygonMode = VK_POLYGON_MODE_FILL;
-    desc.rasterStateDesc.lineWidth = 1.0f;
-    desc.rasterStateDesc.cullMode = VK_CULL_MODE_NONE;//VK_CULL_MODE_BACK_BIT;
-    desc.rasterStateDesc.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    desc.rasterStateDesc.depthBiasEnable = VK_FALSE;
-
-
-    VkDescriptorSetLayoutBinding uboLayoutBinding{};
-    uboLayoutBinding.binding                = 0;
-    uboLayoutBinding.descriptorType         = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    uboLayoutBinding.descriptorCount        = 1;
-    uboLayoutBinding.stageFlags             = VK_SHADER_STAGE_VERTEX_BIT;
-    uboLayoutBinding.pImmutableSamplers     = NULL; // Optional
-    
-    VkDescriptorSetLayoutCreateInfo  layoutInfo{};
-    layoutInfo.sType            = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount     = 1;
-    layoutInfo.pBindings        = &uboLayoutBinding;
-
-    VkDescriptorSetLayout descriptorSetLayout;
-    if (vkCreateDescriptorSetLayout(dev.device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create descriptor set layout!");
-    }
-
-    desc.piplineLayoutDesc.descriptorSetLayout.EmplaceBack(descriptorSetLayout);
-
-    desc.viewport.x = 0.0f;
-    desc.viewport.y = 0.0f;
-    desc.viewport.width = (float)ctx.swapChainData.swapChainExtent.width;
-    desc.viewport.height = (float)ctx.swapChainData.swapChainExtent.height;
-    desc.viewport.minDepth = 0.0f;
-    desc.viewport.maxDepth = 1.0f;
-
-    desc.scissor.offset = { 0, 0 };
-    desc.scissor.extent = ctx.swapChainData.swapChainExtent;
-
-    desc.subpass = 0;
-    desc.basePipelineHandle = 0;
-    desc.basePipelineIndex = -1;
-}
-
-void RenderFrame(uint32 i, const TRE::Renderer::Internal::RenderDevice& renderDevice,
-    const TRE::Renderer::RenderContext& ctx,
+void RenderFrame(uint32 i,
+    TRE::Renderer::RenderBackend& backend,
     TRE::Renderer::GraphicsPipeline& graphicsPipeline,
     TRE::Renderer::Buffer& vertexIndexBuffer,
     VkDescriptorSet descriptorSet,
     const TRE::Renderer::RingBuffer& uniformBuffer)
 {
-    const TRE::Renderer::Internal::SwapChainData& swapChainData = ctx.GetSwapChainData();
-    // const TRE::Renderer::Internal::RenderContextData& ctxData = ctx.contextData;
-    const TRE::Renderer::Internal::ContextFrameResources& ctxResource = ctx.GetFrameResource(i);
+    const TRE::Renderer::Swapchain::SwapchainData& swapChainData = backend.GetRenderContext().GetSwapchain().GetSwapchainData();
+    TRE::Renderer::CommandBufferHandle currentCmdBuff = backend.RequestCommandBuffer(TRE::Renderer::QueueTypes::GRAPHICS_ONLY);
 
-    VkDevice device = renderDevice.device;    
-    VkCommandBuffer currentCmdBuff = ctxResource.graphicsCommandBuffer;
+    currentCmdBuff->Begin();
 
-    vkResetCommandBuffer(currentCmdBuff, 0);
+    currentCmdBuff->BeginRenderPass({ 164.0f / 256.0f, 30.0f / 256.0f, 34.0f / 256.0f, 0.0f });
+    currentCmdBuff->BindPipeline(graphicsPipeline);
+    currentCmdBuff->SetViewport({ 0.f, 0.f, (float)swapChainData.swapChainExtent.width, (float)swapChainData.swapChainExtent.height, 0.f, 1.f });
+    currentCmdBuff->SetScissor({ {0, 0}, swapChainData.swapChainExtent });
 
-    VkClearColorValue clearColor = { 164.0f / 256.0f, 30.0f / 256.0f, 34.0f / 256.0f, 0.0f };
-    VkClearValue clearValue = {};
-    clearValue.color = clearColor;
-
-    VkViewport viewport{};
-    viewport.width      = (float)swapChainData.swapChainExtent.width;
-    viewport.height     = (float)swapChainData.swapChainExtent.height;
-    viewport.maxDepth   = 1.0f;
-
-    VkRect2D scissor{};
-    scissor.offset = { 0, 0 };
-    scissor.extent = swapChainData.swapChainExtent;
-
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
-
-    if (vkBeginCommandBuffer(currentCmdBuff, &beginInfo) != VK_SUCCESS) {
-        throw std::runtime_error("failed to begin recording command buffer!");
-    }
-
-    /*if (!renderDevice.isTransferQueueSeprate && ctxData.transferRequests) {
-        VkMemoryBarrier memoryBarrier = {};
-        memoryBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-        memoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        memoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-
-        vkCmdPipelineBarrier(currentCmdBuff,
-            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_DEPENDENCY_DEVICE_GROUP_BIT,
-            1, &memoryBarrier, 0, NULL, 0, NULL
-        );
-    }*/
-
-    VkRenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType                = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass           = graphicsPipeline.GetRenderPassAPIObject();
-    renderPassInfo.framebuffer          = swapChainData.swapChainFramebuffers[ctx.GetCurrentImageIndex()];
-    renderPassInfo.renderArea.offset    = { 0, 0 };
-    renderPassInfo.renderArea.extent    = swapChainData.swapChainExtent;
-    renderPassInfo.clearValueCount      = 1;
-    renderPassInfo.pClearValues         = &clearValue;
-
-    vkCmdBeginRenderPass(currentCmdBuff, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    vkCmdBindPipeline(currentCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.GetAPIObject());
-
-    vkCmdSetViewport(currentCmdBuff, 0, 1, &viewport);
-    vkCmdSetScissor(currentCmdBuff, 0, 1, &scissor);
-
-    VkBuffer vertexBuffers[] = { vertexIndexBuffer.GetAPIObject() };
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(currentCmdBuff, 0, 1, vertexBuffers, offsets);
-    vkCmdBindIndexBuffer(currentCmdBuff, vertexIndexBuffer.GetAPIObject(), sizeof(vertices[0]) * vertices.size(), VK_INDEX_TYPE_UINT16);
-
+    currentCmdBuff->BindVertexBuffer(vertexIndexBuffer);
+    currentCmdBuff->BindIndexBuffer(vertexIndexBuffer, sizeof(vertices[0]) * vertices.size());
 
     const uint32 dynamicOffset[] = { uniformBuffer.GetCurrentOffset() };
-
-    vkCmdBindDescriptorSets(currentCmdBuff, 
+    vkCmdBindDescriptorSets(currentCmdBuff->GetAPIObject(), 
         VK_PIPELINE_BIND_POINT_GRAPHICS, 
         graphicsPipeline.GetPipelineLayout().GetAPIObject(),
         0, 1, &descriptorSet, 1, dynamicOffset);
 
-    // vkCmdDraw(currentCmdBuff, 3, 1, 0, 0);
+    currentCmdBuff->DrawIndexed(6);
     
-    vkCmdDrawIndexed(currentCmdBuff, 6, 1, 0, 0, 0);   
-    
-    vkCmdEndRenderPass(currentCmdBuff);
+    currentCmdBuff->EndRenderPass();
+    currentCmdBuff->End();
 
-    //VkImageSubresourceRange imgRange = VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-    //vkCmdClearColorImage(currentCmdBuff, swapChainData.swapChainImages[currentBuffer], VK_IMAGE_LAYOUT_GENERAL, &clearColor, 1, &imgRange);
-
-    if (vkEndCommandBuffer(currentCmdBuff) != VK_SUCCESS) {
-        throw std::runtime_error("failed to record command buffer!");
-    }
+    backend.Submit(currentCmdBuff->GetAPIObject());
 }
-
-
 
 void printFPS() {
     static std::chrono::time_point<std::chrono::steady_clock> oldTime = std::chrono::high_resolution_clock::now();
@@ -371,8 +195,8 @@ int main()
         { offsetof(Internal::Vertex, pos), offsetof(Internal::Vertex, color) }
     );
 
-    graphicsPipeline.SetRenderPass(ctx.contextData.renderPass);
-    graphicsPipeline.Create(ctx, state);
+    graphicsPipeline.SetRenderPass(backend.GetRenderContext().GetSwapchain().GetRenderPass());
+    graphicsPipeline.Create(backend.GetRenderContext(), state);
 
     TRE::Renderer::RingBuffer uniformBuffer = backend.CreateRingBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_ONLY);
 
@@ -472,8 +296,8 @@ int main()
         /*TRE::Renderer::Internal::EditBuffer(renderDevice, staginVertexBuffer, vertexSize, vertices.data());
         engine.GetRenderContext().TransferBuffers(1, &transferInfo[0]);*/
 
-        updateMVP(renderDevice, ctx, descriptorSet, uniformBuffer);
-        RenderFrame(ctx.currentFrame, renderDevice, backend.GetRenderContext(), graphicsPipeline, vertexIndexBuffer[0], descriptorSet, uniformBuffer);
+        updateMVP(backend, descriptorSet, uniformBuffer);
+        RenderFrame(ctx.currentFrame, backend, graphicsPipeline, vertexIndexBuffer[0], descriptorSet, uniformBuffer);
 
         backend.EndFrame();
         printFPS();
@@ -484,3 +308,25 @@ int main()
 }
 
 #endif
+
+
+
+
+
+
+
+/*if (!renderDevice.isTransferQueueSeprate && ctxData.transferRequests) {
+    VkMemoryBarrier memoryBarrier = {};
+    memoryBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    memoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    memoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+
+    vkCmdPipelineBarrier(currentCmdBuff,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_DEPENDENCY_DEVICE_GROUP_BIT,
+        1, &memoryBarrier, 0, NULL, 0, NULL
+    );
+}*/
+// vkCmdDraw(currentCmdBuff, 3, 1, 0, 0);
+
+//VkImageSubresourceRange imgRange = VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+//vkCmdClearColorImage(currentCmdBuff, swapChainData.swapChainImages[currentBuffer], VK_IMAGE_LAYOUT_GENERAL, &clearColor, 1, &imgRange);

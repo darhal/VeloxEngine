@@ -15,7 +15,7 @@ namespace Renderer
 	class RENDERER_API RenderContext
 	{
 	public:
-		RenderContext(RenderDevice* renderDevice);
+		RenderContext(RenderDevice* renderDevice = NULL);
 
 		void CreateRenderContext(TRE::Window* wnd, const Internal::RenderInstance& instance);
 
@@ -23,21 +23,11 @@ namespace Renderer
 
 		void DestroyRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice, Internal::RenderContext& renderContext);
 
-		const Internal::ContextFrameResources& GetFrameResource(uint32 i) const;
-
-		Internal::ContextFrameResources& GetFrameResource(uint32 i);
-
-		Internal::ContextFrameResources& GetCurrentFrameResource();
-
-		const Internal::ContextFrameResources& GetCurrentFrameResource() const;
-
-		const Internal::SwapChainData& GetSwapChainData() const;
-
-		FORCEINLINE uint32 GetImagesCount() const { return internal.imagesCount; }
-
 		FORCEINLINE uint32 GetCurrentImageIndex() const { return internal.currentImage; }
 
 		FORCEINLINE uint32 GetCurrentFrame() const { return internal.currentFrame; }
+
+		FORCEINLINE uint32 GetNumFrames() const { return internal.numFramesInFlight; }
 
 		FORCEINLINE Window* GetWindow() const { return internal.window; }
 
@@ -45,11 +35,13 @@ namespace Renderer
 
 		FORCEINLINE Swapchain& GetSwapchain() { return swapchain; }
 
-		FORCEINLINE RenderDevice* GetRenderDevice() const { return renderDevice; }
-	private:
-		void BeginFrame(Internal::RenderDevice& renderDevice, StagingManager& stagingManager);
+		FORCEINLINE const Swapchain& GetSwapchain() const { return swapchain; }
 
-		void EndFrame(Internal::RenderDevice& renderDevice);
+		FORCEINLINE RenderDevice* GetRenderDevice() const { return renderDevice; }
+
+		void BeginFrame(const RenderDevice& renderDevice, StagingManager& stagingManager);
+
+		void EndFrame(const RenderDevice& renderDevice, const VkCommandBuffer* commandBuffers, const uint32 cmdBuffCount);
 	private:
 		Internal::RenderContext	internal;
 		Swapchain swapchain;

@@ -19,7 +19,7 @@ namespace Renderer
 
 		vkUnmapMemory(device, memory);
 
-		for (uint32 i = 0; i < MAX_FRAMES; i++) {
+		for (uint32 i = 0; i < NUM_FRAMES; i++) {
 			vkDestroyBuffer(device, stagingBuffers[i].apiBuffer, NULL);
 			vkDestroyFence(device, stagingBuffers[i].transferFence, NULL);
 		}
@@ -37,7 +37,7 @@ namespace Renderer
 		bufferCreateInfo.size = MAX_UPLOAD_BUFFER_SIZE;
 		bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-		for (int i = 0; i < MAX_FRAMES; ++i) {
+		for (int i = 0; i < NUM_FRAMES; ++i) {
 			stagingBuffers[i].offset = 0;
 
 			vkCreateBuffer(device, &bufferCreateInfo, NULL, &stagingBuffers[i].apiBuffer);
@@ -51,11 +51,11 @@ namespace Renderer
 
 		VkMemoryAllocateInfo memoryAllocateInfo = {};
 		memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		memoryAllocateInfo.allocationSize = alignedSize * MAX_FRAMES;
+		memoryAllocateInfo.allocationSize = alignedSize * NUM_FRAMES;
 		memoryAllocateInfo.memoryTypeIndex = Buffer::FindMemoryTypeIndex(*renderDevice, memoryRequirements.memoryTypeBits, MemoryUsage::CPU_COHERENT);
 
 		vkAllocateMemory(device, &memoryAllocateInfo, NULL, &memory);
-		vkMapMemory(device, memory, 0, alignedSize * MAX_FRAMES, 0, reinterpret_cast<void**>(&mappedData));
+		vkMapMemory(device, memory, 0, alignedSize * NUM_FRAMES, 0, reinterpret_cast<void**>(&mappedData));
 
 		VkCommandPoolCreateInfo commandPoolCreateInfo = {};
 		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -75,7 +75,7 @@ namespace Renderer
 			VkCommandBufferBeginInfo commandBufferBeginInfo = {};
 			commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 			
-			for (int i = 0; i < MAX_FRAMES; i++) {
+			for (int i = 0; i < NUM_FRAMES; i++) {
 				vkBindBufferMemory(device, stagingBuffers[i].apiBuffer, memory, i * alignedSize);
 				vkAllocateCommandBuffers(device, &commandBufferAllocateInfo, &stagingBuffers[i].transferCmdBuff);
 				vkCreateFence(device, &fenceCreateInfo, NULL, &stagingBuffers[i].transferFence);
@@ -208,7 +208,7 @@ namespace Renderer
 		}
 
 		stage->submitted = true;
-		currentBuffer = (currentBuffer + 1) % MAX_FRAMES;
+		currentBuffer = (currentBuffer + 1) % NUM_FRAMES;
 
 		return cmdBuff;
 	}
@@ -233,10 +233,10 @@ namespace Renderer
 
 	void StagingManager::WaitCurrent()
 	{
-		uint32 prevBufferIndex = ((currentBuffer - 1) % MAX_FRAMES);
+		uint32 prevBufferIndex = ((currentBuffer - 1) % NUM_FRAMES);
 
 		if (prevBufferIndex < 0) {
-			prevBufferIndex += MAX_FRAMES;
+			prevBufferIndex += NUM_FRAMES;
 		}
 
 		this->Wait(stagingBuffers[prevBufferIndex]);

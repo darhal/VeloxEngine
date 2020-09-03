@@ -6,47 +6,52 @@ TRE_NS_START
 
 namespace Renderer
 {
-	template<typename T, size_t N = 512>
-	class StackAllocator
+	namespace Utils
 	{
-	public:
-		StackAllocator() : offset(0) {}
-
-		T* Allocate(size_t count)
+		template<typename T, size_t N = 512>
+		class StackAllocator
 		{
-			ASSERTF(count == 0, "Can't allocate 0 element");
+		public:
+			StackAllocator() : offset(0) {}
 
-			if (offset + count > N)
-				return NULL;
+			T* Allocate(size_t count)
+			{
+				ASSERTF(count == 0, "Can't allocate 0 element");
 
-			T* ret = buffer + offset;
-			offset += count;
-			return ret;
-		}
+				if (offset + count > N)
+					return NULL;
 
-		T* AllocateInit(size_t count, const T& obj = T())
-		{
-			T* ret = this->Allocate(count);
+				T* ret = buffer + offset;
+				offset += count;
+				return ret;
+			}
 
-			if (ret)
-				std::fill(ret, ret + count, T());
+			T* AllocateInit(size_t count, const T& obj = T())
+			{
+				T* ret = this->Allocate(count);
 
-			return ret;
-		}
+				if (ret)
+					std::fill(ret, ret + count, T());
 
-		void Reset()
-		{
-			offset = 0;
-			// TODO: do specilized function is T is not pod then call objects dtor
-		}
+				return ret;
+			}
 
-		void SetOffset(size_t off) { offset = off; }
+			void Reset()
+			{
+				offset = 0;
+				// TODO: do specilized function is T is not pod then call objects dtor
+			}
 
-		size_t GetElementCount() const { return offset; }
-	private:
-		T buffer[N];
-		size_t offset;
-	};
+			void SetOffset(size_t off) { offset = off; }
+
+			size_t GetElementCount() const { return offset; }
+
+			const T* GetData() const { return buffer; }
+		private:
+			T buffer[N];
+			size_t offset;
+		};
+	}
 }
 
 TRE_NS_END

@@ -43,14 +43,14 @@ void Renderer::Swapchain::CreateSwapchain()
 
     uint32 width = renderContext.GetWindow()->getSize().x;
     uint32 height = renderContext.GetWindow()->getSize().y;
-    VkSwapchainKHR oldSwapchain = swapChain;
+    VkSwapchainKHR oldSwapchain = swapchain;
 
-    swapChainData.swapChainExtent = VkExtent2D{ width, height };
+    swapchainData.swapChainExtent = VkExtent2D{ width, height };
     
     supportDetails                           = QuerySwapchainSupport(renderDevice.GetGPU(), renderContext.GetSurface());
     VkSurfaceFormatKHR surfaceFormat         = ChooseSwapSurfaceFormat(supportDetails.formats);
     VkPresentModeKHR presentMode             = ChooseSwapPresentMode(supportDetails.presentModes);
-    VkExtent2D extent                        = ChooseSwapExtent(supportDetails.capabilities, swapChainData.swapChainExtent);
+    VkExtent2D extent                        = ChooseSwapExtent(supportDetails.capabilities, swapchainData.swapChainExtent);
     imagesCount                              = supportDetails.capabilities.minImageCount + 1;
 
     if (supportDetails.capabilities.maxImageCount > 0 && imagesCount > supportDetails.capabilities.maxImageCount) {
@@ -84,15 +84,15 @@ void Renderer::Swapchain::CreateSwapchain()
     createInfo.clipped          = VK_TRUE;
     createInfo.oldSwapchain     = oldSwapchain;
 
-    if (vkCreateSwapchainKHR(renderDevice.GetDevice(), &createInfo, NULL, &swapChain) != VK_SUCCESS) {
+    if (vkCreateSwapchainKHR(renderDevice.GetDevice(), &createInfo, NULL, &swapchain) != VK_SUCCESS) {
         ASSERTF(true, "Failed to create swap chain!");
     }
 
-    vkGetSwapchainImagesKHR(renderDevice.GetDevice(), swapChain, &imagesCount, NULL);
-    vkGetSwapchainImagesKHR(renderDevice.GetDevice(), swapChain, &imagesCount, swapChainData.swapChainImages);
+    vkGetSwapchainImagesKHR(renderDevice.GetDevice(), swapchain, &imagesCount, NULL);
+    vkGetSwapchainImagesKHR(renderDevice.GetDevice(), swapchain, &imagesCount, swapchainData.swapChainImages);
     
-    swapChainData.swapChainImageFormat = surfaceFormat.format;
-    swapChainData.swapChainExtent      = extent;
+    swapchainData.swapChainImageFormat = surfaceFormat.format;
+    swapchainData.swapChainExtent      = extent;
 
     if (oldSwapchain == VK_NULL_HANDLE) {
         CreateSyncObjects();
@@ -110,13 +110,13 @@ void Renderer::Swapchain::DestroySwapchain()
 {
     CleanupSwapchain();
 
-    vkDestroySwapchainKHR(renderDevice.GetDevice(), swapChain, NULL);
-    swapChain = VK_NULL_HANDLE;
+    vkDestroySwapchainKHR(renderDevice.GetDevice(), swapchain, NULL);
+    swapchain = VK_NULL_HANDLE;
 
-    for (size_t i = 0; i < SwapchainData::MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroySemaphore(renderDevice.GetDevice(), swapChainData.drawCompleteSemaphores[i], NULL);
-        vkDestroySemaphore(renderDevice.GetDevice(), swapChainData.imageAcquiredSemaphores[i], NULL);
-        vkDestroyFence(renderDevice.GetDevice(), swapChainData.fences[i], NULL);
+    for (size_t i = 0; i < renderContext.GetNumFrames(); i++) {
+        vkDestroySemaphore(renderDevice.GetDevice(), swapchainData.drawCompleteSemaphores[i], NULL);
+        vkDestroySemaphore(renderDevice.GetDevice(), swapchainData.imageAcquiredSemaphores[i], NULL);
+        vkDestroyFence(renderDevice.GetDevice(), swapchainData.fences[i], NULL);
     }
 
     // TODO: verify this later
@@ -125,11 +125,11 @@ void Renderer::Swapchain::DestroySwapchain()
 
 void Renderer::Swapchain::CleanupSwapchain()
 {
-    VkDevice device                 = renderDevice.GetDevice();
+    VkDevice device = renderDevice.GetDevice();
 
     for (size_t i = 0; i < imagesCount; i++) {
-        vkDestroyFramebuffer(device, swapChainData.swapChainFramebuffers[i], NULL);
-        vkDestroyImageView(device, swapChainData.swapChainImageViews[i], NULL);
+        vkDestroyFramebuffer(device, swapchainData.swapChainFramebuffers[i], NULL);
+        vkDestroyImageView(device, swapchainData.swapChainImageViews[i], NULL);
     }
 }
 
@@ -160,8 +160,6 @@ void Renderer::Swapchain::UpdateSwapchain()
 
 void Renderer::Swapchain::CreateSyncObjects()
 {
-    currentFrame = 0;
-
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -169,22 +167,22 @@ void Renderer::Swapchain::CreateSyncObjects()
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (size_t i = 0; i < SwapchainData::MAX_FRAMES_IN_FLIGHT; i++) {
-        vkCreateSemaphore(renderDevice.GetDevice(), &semaphoreInfo, NULL, &swapChainData.imageAcquiredSemaphores[i]);
-        vkCreateSemaphore(renderDevice.GetDevice(), &semaphoreInfo, NULL, &swapChainData.drawCompleteSemaphores[i]);
-        vkCreateFence(renderDevice.GetDevice(), &fenceInfo, NULL, &swapChainData.fences[i]);
+    for (size_t i = 0; i < renderContext.GetNumFrames(); i++) {
+        vkCreateSemaphore(renderDevice.GetDevice(), &semaphoreInfo, NULL, &swapchainData.imageAcquiredSemaphores[i]);
+        vkCreateSemaphore(renderDevice.GetDevice(), &semaphoreInfo, NULL, &swapchainData.drawCompleteSemaphores[i]);
+        vkCreateFence(renderDevice.GetDevice(), &fenceInfo, NULL, &swapchainData.fences[i]);
 
         if (renderDevice.IsPresentQueueSeprate()) {
-            vkCreateSemaphore(renderDevice.GetDevice(), &semaphoreInfo, NULL, &swapChainData.imageOwnershipSemaphores[i]);
+            vkCreateSemaphore(renderDevice.GetDevice(), &semaphoreInfo, NULL, &swapchainData.imageOwnershipSemaphores[i]);
         }
 
         if (renderDevice.IsTransferQueueSeprate()) {
-            vkCreateSemaphore(renderDevice.GetDevice(), &semaphoreInfo, NULL, &swapChainData.transferSemaphores[i]);
+            vkCreateSemaphore(renderDevice.GetDevice(), &semaphoreInfo, NULL, &swapchainData.transferSemaphores[i]);
         }
     }
 
     fenceInfo.flags = 0;
-    vkCreateFence(renderDevice.GetDevice(), &fenceInfo, NULL, &swapChainData.transferSyncFence);
+    vkCreateFence(renderDevice.GetDevice(), &fenceInfo, NULL, &swapchainData.transferSyncFence);
 }
 
 void Renderer::Swapchain::CreateSwapchainResources()
@@ -193,9 +191,9 @@ void Renderer::Swapchain::CreateSwapchainResources()
         // Create Image view:
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        createInfo.image = swapChainData.swapChainImages[i];
+        createInfo.image = swapchainData.swapChainImages[i];
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = swapChainData.swapChainImageFormat;
+        createInfo.format = swapchainData.swapChainImageFormat;
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -206,13 +204,13 @@ void Renderer::Swapchain::CreateSwapchainResources()
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView(renderDevice.GetDevice(), &createInfo, NULL, &swapChainData.swapChainImageViews[i]) != VK_SUCCESS) {
+        if (vkCreateImageView(renderDevice.GetDevice(), &createInfo, NULL, &swapchainData.swapChainImageViews[i]) != VK_SUCCESS) {
             ASSERTF(true, "Failed to create image views!");
         }
 
         // Create framebuffers:
         VkImageView attachments[] = {
-            swapChainData.swapChainImageViews[i]
+            swapchainData.swapChainImageViews[i]
         };
 
         VkFramebufferCreateInfo framebufferInfo{};
@@ -220,11 +218,11 @@ void Renderer::Swapchain::CreateSwapchainResources()
         framebufferInfo.renderPass      = renderPass;
         framebufferInfo.attachmentCount = 1;
         framebufferInfo.pAttachments    = attachments;
-        framebufferInfo.width           = swapChainData.swapChainExtent.width;
-        framebufferInfo.height          = swapChainData.swapChainExtent.height;
+        framebufferInfo.width           = swapchainData.swapChainExtent.width;
+        framebufferInfo.height          = swapchainData.swapChainExtent.height;
         framebufferInfo.layers          = 1;
 
-        if (vkCreateFramebuffer(renderDevice.GetDevice(), &framebufferInfo, NULL, &swapChainData.swapChainFramebuffers[i]) != VK_SUCCESS) {
+        if (vkCreateFramebuffer(renderDevice.GetDevice(), &framebufferInfo, NULL, &swapchainData.swapChainFramebuffers[i]) != VK_SUCCESS) {
             ASSERTF(true, "failed to create framebuffer!");
         }
     }
@@ -232,44 +230,45 @@ void Renderer::Swapchain::CreateSwapchainResources()
 
 void Renderer::Swapchain::CreateSwapchainRenderPass()
 {
-    Internal::RenderPassDesc renderpassDesc;
-
     VkAttachmentDescription colorAttachment{};
-    colorAttachment.format          = swapChainData.swapChainImageFormat;
-    colorAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout   = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass       = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass       = 0;
-    dependency.srcStageMask     = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask    = 0;
-    dependency.dstStageMask     = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask    = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
+    colorAttachment.format = swapchainData.swapChainImageFormat;
+    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment   = 0;
-    colorAttachmentRef.layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachmentRef.attachment = 0;
+    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount    = 1;
-    subpass.pColorAttachments       = &colorAttachmentRef;
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &colorAttachmentRef;
 
-    renderpassDesc.attachments.EmplaceBack(colorAttachment);
-    renderpassDesc.subpassDependency.EmplaceBack(dependency);
-    renderpassDesc.subpassesDesc.EmplaceBack(subpass);
+    VkSubpassDependency dependency{};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-    // CreateRenderPass(renderDevice, &renderPass, renderpassDesc);
+    VkRenderPassCreateInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = 1;
+    renderPassInfo.pAttachments = &colorAttachment;
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &dependency;
 
-    // TODO: come back here
+    if (vkCreateRenderPass(renderDevice.GetDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create render pass!");
+    }
 }
 
 VkSurfaceFormatKHR Renderer::Swapchain::ChooseSwapSurfaceFormat(const TRE::Vector<VkSurfaceFormatKHR>& availableFormats)
@@ -314,6 +313,11 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
     }
 }
 
+VkFramebuffer Renderer::Swapchain::GetCurrentFramebuffer() const 
+{ 
+    return swapchainData.swapChainFramebuffers[renderContext.GetCurrentImageIndex()]; 
+}
+
 /*void Renderer::Swapchain::BuildImageOwnershipCmd(const RenderDevice& renderDevice, RenderContext& ctx, uint32 imageIndex)
 {
     VkCommandBuffer presentCommandBuffer = ctx.contextData.contextFrameResources[imageIndex].presentCommandBuffer;
@@ -328,7 +332,7 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
     imageOwnershipBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     imageOwnershipBarrier.srcQueueFamilyIndex = renderDevice.queueFamilyIndices.queueFamilies[QFT_GRAPHICS];
     imageOwnershipBarrier.dstQueueFamilyIndex = renderDevice.queueFamilyIndices.queueFamilies[QFT_PRESENT];
-    imageOwnershipBarrier.image = ctx.swapChainData.swapChainImages[imageIndex];
+    imageOwnershipBarrier.image = ctx.swapchainData.swapChainImages[imageIndex];
     imageOwnershipBarrier.subresourceRange = VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
     vkCmdPipelineBarrier(presentCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
@@ -377,7 +381,7 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 
 /*void Renderer::Swapchain::CreateCommandBuffers(const RenderDevice& renderDevice, RenderContext& ctx)
 {
-    SwapchainData& swapChainData = ctx.swapChainData;
+    SwapchainData& swapchainData = ctx.swapchainData;
     RenderContextData& ctxData = ctx.contextData;
 
     {
@@ -451,12 +455,12 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 //    uint32 height = ctx.window->getSize().y;
 //    VkSwapchainKHR oldSwapchain = ctx.swapChain;
 //
-//    ctx.swapChainData.swapChainExtent        = VkExtent2D{ width, height };
+//    ctx.swapchainData.swapChainExtent        = VkExtent2D{ width, height };
 //    
 //    SwapchainSupportDetails swapChainSupport = QuerySwapchainSupport(renderDevice.gpu, ctx.surface);
 //    VkSurfaceFormatKHR surfaceFormat         = ChooseSwapSurfaceFormat(swapChainSupport.formats);
 //    VkPresentModeKHR presentMode             = ChooseSwapPresentMode(swapChainSupport.presentModes);
-//    VkExtent2D extent                        = ChooseSwapExtent(swapChainSupport.capabilities, ctx.swapChainData.swapChainExtent);
+//    VkExtent2D extent                        = ChooseSwapExtent(swapChainSupport.capabilities, ctx.swapchainData.swapChainExtent);
 //    ctx.imagesCount                          = swapChainSupport.capabilities.minImageCount + 1;
 //
 //    if (swapChainSupport.capabilities.maxImageCount > 0 && ctx.imagesCount > swapChainSupport.capabilities.maxImageCount) {
@@ -495,10 +499,10 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 //    }
 //
 //    vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &ctx.imagesCount, NULL);
-//    vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &ctx.imagesCount, ctx.swapChainData.swapChainImages);
+//    vkGetSwapchainImagesKHR(renderDevice.device, ctx.swapChain, &ctx.imagesCount, ctx.swapchainData.swapChainImages);
 //    
-//    ctx.swapChainData.swapChainImageFormat = surfaceFormat.format;
-//    ctx.swapChainData.swapChainExtent      = extent;
+//    ctx.swapchainData.swapChainImageFormat = surfaceFormat.format;
+//    ctx.swapchainData.swapChainExtent      = extent;
 //
 //    if (oldSwapchain == VK_NULL_HANDLE) {
 //        CreateSyncObjects(renderDevice, ctx);
@@ -520,9 +524,9 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 //    ctx.swapChain = VK_NULL_HANDLE;
 //
 //    for (size_t i = 0; i < SwapchainData::MAX_FRAMES_IN_FLIGHT; i++) {
-//        vkDestroySemaphore(renderDevice.device, ctx.swapChainData.drawCompleteSemaphores[i], NULL);
-//        vkDestroySemaphore(renderDevice.device, ctx.swapChainData.imageAcquiredSemaphores[i], NULL);
-//        vkDestroyFence(renderDevice.device, ctx.swapChainData.fences[i], NULL);
+//        vkDestroySemaphore(renderDevice.device, ctx.swapchainData.drawCompleteSemaphores[i], NULL);
+//        vkDestroySemaphore(renderDevice.device, ctx.swapchainData.imageAcquiredSemaphores[i], NULL);
+//        vkDestroyFence(renderDevice.device, ctx.swapchainData.fences[i], NULL);
 //    }
 //
 //    vkDestroyCommandPool(renderDevice.device, ctx.contextData.commandPool, NULL);
@@ -530,19 +534,19 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 //
 //void Renderer::Internal::CleanupSwapchain(RenderContext& ctx, const RenderDevice& renderDevice)
 //{
-//    SwapchainData& swapChainData   = ctx.swapChainData;
+//    SwapchainData& swapchainData   = ctx.swapchainData;
 //    VkDevice device                 = renderDevice.device;
 //
 //    for (size_t i = 0; i < ctx.imagesCount; i++) {
-//        vkDestroyFramebuffer(device, swapChainData.swapChainFramebuffers[i], NULL);
-//        vkDestroyImageView(device, swapChainData.swapChainImageViews[i], NULL);
+//        vkDestroyFramebuffer(device, swapchainData.swapChainFramebuffers[i], NULL);
+//        vkDestroyImageView(device, swapchainData.swapChainImageViews[i], NULL);
 //    }
 //
-//    // vkFreeCommandBuffers(device, swapChainData.commandPool, static_cast<uint32_t>(swapChainData.commandBuffers.Size()), swapChainData.commandBuffers.Data());
+//    // vkFreeCommandBuffers(device, swapchainData.commandPool, static_cast<uint32_t>(swapchainData.commandBuffers.Size()), swapchainData.commandBuffers.Data());
 //
-//    // vkDestroyPipeline(device, swapChainData.graphicsPipeline, NULL);
-//    // vkDestroyPipelineLayout(device, swapChainData.pipelineLayout, NULL);
-//    // vkDestroyRenderPass(device, swapChainData.renderPass, NULL);
+//    // vkDestroyPipeline(device, swapchainData.graphicsPipeline, NULL);
+//    // vkDestroyPipelineLayout(device, swapchainData.pipelineLayout, NULL);
+//    // vkDestroyRenderPass(device, swapchainData.renderPass, NULL);
 //}
 //
 //void Renderer::Internal::RecreateSwapchainInternal(const RenderDevice& renderDevice, RenderContext& ctx)
@@ -583,21 +587,21 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 //    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 //
 //    for (size_t i = 0; i < SwapchainData::MAX_FRAMES_IN_FLIGHT; i++) {
-//        vkCreateSemaphore(renderDevice.device, &semaphoreInfo, NULL, &ctx.swapChainData.imageAcquiredSemaphores[i]);
-//        vkCreateSemaphore(renderDevice.device, &semaphoreInfo, NULL, &ctx.swapChainData.drawCompleteSemaphores[i]);
-//        vkCreateFence(renderDevice.device, &fenceInfo, NULL, &ctx.swapChainData.fences[i]);
+//        vkCreateSemaphore(renderDevice.device, &semaphoreInfo, NULL, &ctx.swapchainData.imageAcquiredSemaphores[i]);
+//        vkCreateSemaphore(renderDevice.device, &semaphoreInfo, NULL, &ctx.swapchainData.drawCompleteSemaphores[i]);
+//        vkCreateFence(renderDevice.device, &fenceInfo, NULL, &ctx.swapchainData.fences[i]);
 //
 //        if (renderDevice.isPresentQueueSeprate) {
-//            vkCreateSemaphore(renderDevice.device, &semaphoreInfo, NULL, &ctx.swapChainData.imageOwnershipSemaphores[i]);
+//            vkCreateSemaphore(renderDevice.device, &semaphoreInfo, NULL, &ctx.swapchainData.imageOwnershipSemaphores[i]);
 //        }
 //
 //        if (renderDevice.isTransferQueueSeprate) {
-//            vkCreateSemaphore(renderDevice.device, &semaphoreInfo, NULL, &ctx.swapChainData.transferSemaphores[i]);
+//            vkCreateSemaphore(renderDevice.device, &semaphoreInfo, NULL, &ctx.swapchainData.transferSemaphores[i]);
 //        }
 //    }
 //
 //    fenceInfo.flags = 0;
-//    vkCreateFence(renderDevice.device, &fenceInfo, NULL, &ctx.swapChainData.transferSyncFence);
+//    vkCreateFence(renderDevice.device, &fenceInfo, NULL, &ctx.swapchainData.transferSyncFence);
 //}
 //
 //void Renderer::Internal::CreateCommandPool(const RenderDevice& renderDevice, RenderContext& ctx)
@@ -640,7 +644,7 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 //
 //void Renderer::Internal::CreateCommandBuffers(const RenderDevice& renderDevice, RenderContext& ctx)
 //{
-//    SwapchainData& swapChainData = ctx.swapChainData;
+//    SwapchainData& swapchainData = ctx.swapchainData;
 //    RenderContextData& ctxData = ctx.contextData;
 //
 //    {
@@ -682,15 +686,15 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 //
 //void Renderer::Internal::CreateSwapchainResources(const RenderDevice& renderDevice, RenderContext& ctx)
 //{
-//    SwapchainData& swapChainData = ctx.swapChainData;
+//    SwapchainData& swapchainData = ctx.swapchainData;
 //
 //    for (size_t i = 0; i < ctx.imagesCount; i++) {
 //        // Create Image view:
 //        VkImageViewCreateInfo createInfo{};
 //        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-//        createInfo.image = swapChainData.swapChainImages[i];
+//        createInfo.image = swapchainData.swapChainImages[i];
 //        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-//        createInfo.format = swapChainData.swapChainImageFormat;
+//        createInfo.format = swapchainData.swapChainImageFormat;
 //        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 //        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 //        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -701,13 +705,13 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 //        createInfo.subresourceRange.baseArrayLayer = 0;
 //        createInfo.subresourceRange.layerCount = 1;
 //
-//        if (vkCreateImageView(renderDevice.device, &createInfo, NULL, &swapChainData.swapChainImageViews[i]) != VK_SUCCESS) {
+//        if (vkCreateImageView(renderDevice.device, &createInfo, NULL, &swapchainData.swapChainImageViews[i]) != VK_SUCCESS) {
 //            ASSERTF(true, "Failed to create image views!");
 //        }
 //
 //        // Create framebuffers:
 //        VkImageView attachments[] = {
-//            swapChainData.swapChainImageViews[i]
+//            swapchainData.swapChainImageViews[i]
 //        };
 //
 //        VkFramebufferCreateInfo framebufferInfo{};
@@ -715,11 +719,11 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 //        framebufferInfo.renderPass = ctx.contextData.renderPass;
 //        framebufferInfo.attachmentCount = 1;
 //        framebufferInfo.pAttachments = attachments;
-//        framebufferInfo.width = ctx.swapChainData.swapChainExtent.width;
-//        framebufferInfo.height = ctx.swapChainData.swapChainExtent.height;
+//        framebufferInfo.width = ctx.swapchainData.swapChainExtent.width;
+//        framebufferInfo.height = ctx.swapchainData.swapChainExtent.height;
 //        framebufferInfo.layers = 1;
 //
-//        if (vkCreateFramebuffer(renderDevice.device, &framebufferInfo, NULL, &swapChainData.swapChainFramebuffers[i]) != VK_SUCCESS) {
+//        if (vkCreateFramebuffer(renderDevice.device, &framebufferInfo, NULL, &swapchainData.swapChainFramebuffers[i]) != VK_SUCCESS) {
 //            ASSERTF(true, "failed to create framebuffer!");
 //        }
 //    }
@@ -730,7 +734,7 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 //    RenderPassDesc renderpassDesc;
 //
 //    VkAttachmentDescription colorAttachment{};
-//    colorAttachment.format          = ctx.swapChainData.swapChainImageFormat;
+//    colorAttachment.format          = ctx.swapchainData.swapChainImageFormat;
 //    colorAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
 //    colorAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_CLEAR;
 //    colorAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
@@ -779,7 +783,7 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 //    imageOwnershipBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 //    imageOwnershipBarrier.srcQueueFamilyIndex = renderDevice.queueFamilyIndices.queueFamilies[QFT_GRAPHICS];
 //    imageOwnershipBarrier.dstQueueFamilyIndex = renderDevice.queueFamilyIndices.queueFamilies[QFT_PRESENT];
-//    imageOwnershipBarrier.image = ctx.swapChainData.swapChainImages[imageIndex];
+//    imageOwnershipBarrier.image = ctx.swapchainData.swapChainImages[imageIndex];
 //    imageOwnershipBarrier.subresourceRange = VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 //
 //    vkCmdPipelineBarrier(presentCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,

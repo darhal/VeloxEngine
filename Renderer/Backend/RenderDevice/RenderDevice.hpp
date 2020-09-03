@@ -22,12 +22,13 @@ namespace Renderer
 
 		void CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut);
 
-
 		FORCEINLINE VkDevice GetDevice() const { return internal.device; }
 
 		FORCEINLINE VkPhysicalDevice GetGPU() const { return internal.gpu; }
 
 		FORCEINLINE const Internal::QueueFamilyIndices& GetQueueFamilyIndices() const { return internal.queueFamilyIndices; }
+
+		FORCEINLINE const VkQueue* const GetQueues() const { return internal.queues; }
 
 		FORCEINLINE bool IsPresentQueueSeprate() const { return internal.isPresentQueueSeprate; }
 

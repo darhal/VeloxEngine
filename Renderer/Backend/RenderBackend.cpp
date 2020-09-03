@@ -20,6 +20,31 @@ Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) : stagingManager{ &rend
 
     stagingManager.Init();
     gpuMemoryAllocator.Init(renderDevice.internal);
+
+    this->Init();
+}
+
+void Renderer::RenderBackend::Init()
+{
+    for (uint32 f = 0; f < renderContext.GetNumFrames(); f++) {
+        for (uint32 t = 0; t < MAX_THREADS; t++) {
+            for (uint32 i = 0; i < (uint32)QueueTypes::MAX; i++) {
+                const Internal::QueueFamilyIndices& queueFamilyIndices = renderDevice.GetQueueFamilyIndices();
+                PerFrame& frame = perFrame[f];
+                frame.commandPools[t][i] = std::move(CommandPool(&renderDevice, queueFamilyIndices.queueFamilies[i]));
+            }
+        }
+    }
+}
+
+void Renderer::RenderBackend::ClearFrame()
+{
+    PerFrame& frame = Frame();
+
+    for (uint32 i = 0; i < (uint32)QueueTypes::MAX; i++) {
+        frame.commandPools[0][i].Reset();
+        frame.submissions[i].Reset();
+    }
 }
 
 Renderer::RenderBackend::~RenderBackend()
@@ -35,12 +60,15 @@ Renderer::RenderBackend::~RenderBackend()
 
 void Renderer::RenderBackend::BeginFrame()
 {
-    renderContext.BeginFrame(renderDevice.internal, stagingManager);
+    renderContext.BeginFrame(renderDevice, stagingManager);
+    this->ClearFrame();
 }
 
 void Renderer::RenderBackend::EndFrame()
 {
-    renderContext.EndFrame(renderDevice.internal);
+    const PerFrame& frame = this->Frame();
+    const auto& submissions = frame.submissions[(uint32)QueueTypes::GRAPHICS_ONLY];
+    renderContext.EndFrame(renderDevice, submissions.GetData(), (uint32)submissions.GetElementCount());
 }
 
 Renderer::Buffer Renderer::RenderBackend::CreateBuffer(DeviceSize size, const void* data, uint32 usage,
@@ -101,16 +129,32 @@ Renderer::RingBuffer Renderer::RenderBackend::CreateRingBuffer(DeviceSize size, 
     const DeviceSize alignedSize = size + padding;
 
     // Removing padding from total size, as we dont need the last bytes for alignement
-    Buffer buffer = this->CreateBuffer(alignedSize * MAX_FRAMES - padding, data, usage, memoryUsage, queueFamilies);
+    Buffer buffer = this->CreateBuffer(alignedSize * NUM_FRAMES - padding, data, usage, memoryUsage, queueFamilies);
 
     RingBuffer ringBuffer;
     ringBuffer.apiBuffer = buffer.apiBuffer;
     ringBuffer.bufferMemory = buffer.bufferMemory;
-    ringBuffer.ring_size = MAX_FRAMES;
+    ringBuffer.ring_size = NUM_FRAMES;
     ringBuffer.unit_size = alignedSize;
     ringBuffer.bufferIndex = 0;
 
     return ringBuffer;
 }
+
+Renderer::CommandBufferHandle Renderer::RenderBackend::RequestCommandBuffer(QueueTypes type)
+{
+    PerFrame& frame = Frame();
+    VkCommandBuffer buffer = frame.commandPools[0][(uint32)type].RequestCommandBuffer();
+    CommandBufferHandle handle(objectsPool.commandBuffers.Allocate(&renderContext, buffer, CommandBuffer::Type::GENERIC));
+    return handle;
+}
+
+void Renderer::RenderBackend::Submit(VkCommandBuffer cmd)
+{
+    PerFrame& frame = Frame();
+    VkCommandBuffer* allocCmd = frame.submissions[(uint32)QueueTypes::GRAPHICS_ONLY].Allocate(1);
+    *allocCmd = cmd;
+}
+
 
 TRE_NS_END

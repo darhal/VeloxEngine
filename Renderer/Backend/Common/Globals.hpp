@@ -4,6 +4,8 @@
 #include <initializer_list>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
 #include <Engine/Core/Misc/Maths/Common.hpp>
+#include <Renderer/Core/ObjectPool/ObjectPool.hpp>
+#include <Renderer/Core/Allocators/StackAllocator.hpp>
 #include <vector>
 #include <array>
 
@@ -33,8 +35,13 @@ namespace Renderer
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	};
 
+	// Threading related constants:
+	CONSTEXPR static uint32 MAX_THREADS				= 1;
+
 	// Frame related constants:
 	CONSTEXPR static uint32	MAX_FRAMES				= 2;
+	CONSTEXPR static uint32	NUM_FRAMES				= 2;
+	CONSTEXPR static uint32	MAX_IMAGES_COUNT		= 4;
 
 	// Descriptor related constants:
 	CONSTEXPR static uint32	MAX_DESCRIPTOR_SET		= 4;
@@ -44,6 +51,12 @@ namespace Renderer
 
 	// Renderpass and framebuffers:
 	CONSTEXPR static uint32 MAX_ATTACHMENTS			= 8;
+
+	template<typename T>
+	using ObjectPool = Utils::ObjectPool<T>;
+
+	template<typename T, size_t S>
+	using StackAlloc = Utils::StackAllocator<T, S>;
 
 	typedef VkDeviceSize DeviceSize;
 
@@ -132,6 +145,17 @@ namespace Renderer
 		PRESENT  = 0x10,
 	};
 
+	enum class QueueTypes
+	{
+		GRAPHICS_ONLY = 0,
+		TRANSFER_ONLY = 1, 
+		// COMPUTE_ONLY = 2,
+		
+		// GENERIC = 3,
+
+		MAX,
+	};
+
 	struct MemoryView
 	{
 		VkDeviceMemory  memory;
@@ -144,12 +168,12 @@ namespace Renderer
 	class Buffer;
 
 	namespace Internal {
-		CONSTEXPR static QueueFamilyFlag QUEUE_FAMILY_FLAGS[] = { GRAPHICS, COMPUTE, TRANSFER, SPARSE, PRESENT };
+		CONSTEXPR static QueueFamilyFlag QUEUE_FAMILY_FLAGS[] = { GRAPHICS, TRANSFER, COMPUTE, SPARSE, PRESENT };
 
 		enum QueueFamilyTypes {
 			QFT_GRAPHICS = 0,
-			QFT_COMPUTE = 1,
-			QFT_TRANSFER = 2,
+			QFT_TRANSFER = 1,
+			QFT_COMPUTE = 2,
 			QFT_SPARSE = 3,
 			QFT_PRESENT = 4,
 
@@ -307,33 +331,7 @@ namespace Renderer
 			TRE::Vector<VkBufferCopy>	copyRegions;
 		};
 
-		struct SwapChainData
-		{
-			CONSTEXPR static uint32			MAX_FRAMES_IN_FLIGHT	= MAX_FRAMES;
-			CONSTEXPR static uint32			MAX_IMAGES_COUNT		= 4;
-
-			VkSemaphore						imageAcquiredSemaphores[MAX_FRAMES_IN_FLIGHT];
-			VkSemaphore						drawCompleteSemaphores[MAX_FRAMES_IN_FLIGHT];
-			VkFence							fences[MAX_FRAMES_IN_FLIGHT];
-
-			// To use when using seprate presentation queue:
-			VkSemaphore						imageOwnershipSemaphores[MAX_FRAMES_IN_FLIGHT];
-
-			// To use when using seprate transfer queue:
-			VkSemaphore						transferSemaphores[MAX_FRAMES_IN_FLIGHT];
-			VkFence							transferSyncFence;
-
-			// Swap chain images:
-			VkImage							swapChainImages[MAX_IMAGES_COUNT];
-			VkImageView						swapChainImageViews[MAX_IMAGES_COUNT];
-			VkFramebuffer					swapChainFramebuffers[MAX_IMAGES_COUNT];
-
-			// Other misc swapchain data:
-			VkFormat						swapChainImageFormat;
-			VkExtent2D						swapChainExtent;
-		};
-
-		struct ContextFrameResources
+		/*struct ContextFrameResources
 		{
 			VkCommandBuffer		graphicsCommandBuffer;
 			VkCommandBuffer		transferCommandBuffer;
@@ -346,11 +344,8 @@ namespace Renderer
 			VkCommandPool						memoryCommandPool;
 			VkCommandPool						presentCommandPool;
 
-			VkRenderPass						renderPass;
-
-			ContextFrameResources				contextFrameResources[SwapChainData::MAX_FRAMES_IN_FLIGHT];
-		};
-
+			ContextFrameResources				contextFrameResources[MAX_FRAMES];
+		};*/
 
 		struct RenderInstance
 		{
@@ -384,14 +379,10 @@ namespace Renderer
 			::TRE::Window*					window;
 			VkSurfaceKHR					surface;
 
-			VkSwapchainKHR					swapChain;
-			SwapChainData					swapChainData;
-			RenderContextData				contextData;
-
 			// Swap chain current frame and current buffer and images count
-			uint32							imagesCount;
-			uint32							currentFrame;
 			uint32							currentImage;
+			uint32							currentFrame;
+			uint32							numFramesInFlight;
 			
 			bool							framebufferResized;
 

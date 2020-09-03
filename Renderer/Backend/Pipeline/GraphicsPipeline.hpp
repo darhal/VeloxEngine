@@ -11,6 +11,8 @@ TRE_NS_START
 
 namespace Renderer
 {
+	class RenderContext;
+
 	namespace Internal {
 		void CreateGraphicsPipeline(const RenderDevice& renderDevice, GraphicsPipeline2& pipline, const GraphicsPiplineDesc& desc);
 
@@ -25,12 +27,12 @@ namespace Renderer
 		GraphicsPipeline() : shaderProgram{}, renderPass(VK_NULL_HANDLE), pipeline(VK_NULL_HANDLE) {}
 
 		void Create(
-			const Internal::RenderContext& renderContext,
+			const RenderContext& renderContext,
 			const VertexInput& vertexInput, 
 			GraphicsState& state);
 
 		void Create(
-			const Internal::RenderContext& renderContext,
+			const RenderContext& renderContext,
 			GraphicsState& state);
 
 		const PipelineLayout& GetPipelineLayout() const { return shaderProgram.GetPipelineLayout(); }

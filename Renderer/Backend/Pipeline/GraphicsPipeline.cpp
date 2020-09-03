@@ -1,5 +1,7 @@
 #include "GraphicsPipeline.hpp"
 #include <Renderer/Backend/Common/Utils.hpp>
+#include <Renderer/Backend/RenderContext/RenderContext.hpp>
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 
 TRE_NS_START
 
@@ -19,14 +21,16 @@ VkShaderModule Renderer::Internal::CreateShaderModule(VkDevice device, const std
 }
 
 
-void Renderer::GraphicsPipeline::Create(const Internal::RenderContext& renderContext, const VertexInput& vertexInput, GraphicsState& state)
+void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, const VertexInput& vertexInput, GraphicsState& state)
 {
     if (state.viewportState.viewportCount == 0) {
-        state.AddViewport({ 0.f, 0.f, (float)renderContext.swapChainData.swapChainExtent.width, (float)renderContext.swapChainData.swapChainExtent.height, 0.f, 1.f });
+        const Swapchain::SwapchainData& swapchainData = renderContext.GetSwapchain().GetSwapchainData();
+        state.AddViewport({ 0.f, 0.f, (float)swapchainData.swapChainExtent.width, (float)swapchainData.swapChainExtent.height, 0.f, 1.f });
     }
 
     if (state.viewportState.scissorCount == 0) {
-        state.AddScissor({ {0, 0}, renderContext.swapChainData.swapChainExtent });
+        const Swapchain::SwapchainData& swapchainData = renderContext.GetSwapchain().GetSwapchainData();
+        state.AddScissor({ {0, 0}, swapchainData.swapChainExtent });
     }
     
     VkDynamicState dynamicStates[] = {
@@ -63,12 +67,12 @@ void Renderer::GraphicsPipeline::Create(const Internal::RenderContext& renderCon
     pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE; //desc.basePipelineHandle;
     pipelineInfo.basePipelineIndex      = -1;//desc.basePipelineIndex;
 
-    if (vkCreateGraphicsPipelines(renderContext.renderDevice->device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &pipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(renderContext.GetRenderDevice()->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &pipeline) != VK_SUCCESS) {
         ASSERTF(true, "Failed to create graphics pipeline!");
     }
 }
 
-void Renderer::GraphicsPipeline::Create(const Internal::RenderContext& renderContext, GraphicsState& state)
+void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, GraphicsState& state)
 {
     this->Create(renderContext, shaderProgram.GetVertexInput(), state);
 }

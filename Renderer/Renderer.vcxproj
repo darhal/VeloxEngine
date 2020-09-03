@@ -189,6 +189,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Backend\CommandList\CommandList.hpp" />
+    <ClInclude Include="Backend\CommandList\CommandPool.hpp" />
     <ClInclude Include="Backend\Descriptors\DescriptorSetAlloc.hpp" />
     <ClInclude Include="Backend\Pipeline\PipelineLayout\PipelineLayout.hpp" />
     <ClInclude Include="Backend\Pipeline\VertexInput\VertexInput.hpp" />
@@ -464,6 +465,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Backend\Buffers\Buffer.cpp" />
+    <ClCompile Include="Backend\CommandList\CommandList.cpp" />
+    <ClCompile Include="Backend\CommandList\CommandPool.cpp" />
     <ClCompile Include="Backend\Descriptors\DescriptorSetAlloc.cpp" />
     <ClCompile Include="Backend\MemoryAllocator\MemoryAllocator.cpp" />
     <ClCompile Include="Backend\RenderContext\RenderContext.cpp" />

@@ -49,7 +49,7 @@ namespace Renderer
 		void ExecuteTransferMemory(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage,
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence = VK_NULL_HANDLE, VkDevice device = VK_NULL_HANDLE);
 	private:
-		StagingBuffer   stagingBuffers[MAX_FRAMES];
+		StagingBuffer   stagingBuffers[NUM_FRAMES];
 		uint8*		    mappedData;
 		VkDeviceMemory	memory;
 		VkCommandPool	commandPool;
