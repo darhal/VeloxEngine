@@ -50,6 +50,8 @@ namespace Renderer
 		uint32 pushConstantsCount;
 
 		VkPipelineLayout pipelineLayout;
+
+		// TODO: add array of descriptor set allocators here
 	};
 }
 

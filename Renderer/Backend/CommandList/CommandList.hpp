@@ -3,6 +3,7 @@
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Core/Handle/Handle.hpp>
+#include <Renderer/Backend/ShaderProgram/ResourceBinding/ResourceBinding.hpp>
 
 TRE_NS_START
 
@@ -11,6 +12,13 @@ namespace Renderer
 	class Buffer;
 	class RenderContext;
 	class GraphicsPipeline;
+	class DescriptorSetLayout;
+
+	struct DescriptorSetDirty
+	{
+		uint32 dirtyBindings[MAX_DESCRIPTOR_SET];
+		uint8 dirtySets;
+	};
 
 	class CommandBuffer
 	{
@@ -48,9 +56,19 @@ namespace Renderer
 
 		void Draw(uint32 vertexCount, uint32 instanceCount = 1, uint32 firstVertex = 0, uint32 firstInstance = 0);
 
+		void BindDescriptorSet(const GraphicsPipeline& pipeline, const std::initializer_list<VkDescriptorSet>& descriptors, 
+			const std::initializer_list<uint32>& dyncOffsets);
+
+		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range);
+
 		FORCEINLINE VkCommandBuffer GetAPIObject() const { return commandBuffer; }
+
+	private:
+		void UpdateDescriptorSet(VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings);
 	private:
 		RenderContext* renderContext;
+		ResouceBindings bindings;
+		DescriptorSetDirty dirtySets;
 		VkCommandBuffer commandBuffer;
 		Type type;
 	};

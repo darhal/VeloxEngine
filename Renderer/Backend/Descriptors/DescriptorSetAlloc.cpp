@@ -1,10 +1,12 @@
 #include "DescriptorSetAlloc.hpp"
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 
 TRE_NS_START
 
-Renderer::DescriptorSetAllocator::DescriptorSetAllocator(Internal::RenderDevice* renderDevice, const DescriptorSetLayout& layout) : 
+Renderer::DescriptorSetAllocator::DescriptorSetAllocator(RenderDevice* renderDevice, const DescriptorSetLayout& layout) : 
 	renderDevice(renderDevice), descriptorSetLayout(layout), poolSizeCount(0)
 {
+    this->Init();
 }
 
 void Renderer::DescriptorSetAllocator::Init()
@@ -28,7 +30,7 @@ void Renderer::DescriptorSetAllocator::AllocatePool()
     poolInfo.maxSets = MAX_SETS_PER_POOL;
     VkDescriptorPool pool;
 
-    if (vkCreateDescriptorPool(renderDevice->device, &poolInfo, NULL, &pool) != VK_SUCCESS) {
+    if (vkCreateDescriptorPool(renderDevice->GetDevice(), &poolInfo, NULL, &pool) != VK_SUCCESS) {
         ASSERTF(true, "failed to create descriptor pool!");
     }
 
@@ -46,7 +48,7 @@ void Renderer::DescriptorSetAllocator::AllocatePool()
 
     emptyDescriptors.resize(MAX_SETS_PER_POOL);
 
-    if (vkAllocateDescriptorSets(renderDevice->device, &allocInfo, emptyDescriptors.data()) != VK_SUCCESS) {
+    if (vkAllocateDescriptorSets(renderDevice->GetDevice(), &allocInfo, emptyDescriptors.data()) != VK_SUCCESS) {
         ASSERTF(true, "failed to allocate descriptor sets!");
     }
 }

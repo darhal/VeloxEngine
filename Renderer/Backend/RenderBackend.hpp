@@ -12,6 +12,7 @@
 #include <Renderer/Core/Allocators/StackAllocator.hpp>
 #include <Renderer/Backend/CommandList/CommandPool.hpp>
 #include <Renderer/Backend/CommandList/CommandList.hpp>
+#include <Renderer/Backend/Descriptors/DescriptorSetAlloc.hpp>
 
 TRE_NS_START
 

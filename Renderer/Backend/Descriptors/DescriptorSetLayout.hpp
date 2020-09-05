@@ -7,18 +7,38 @@ TRE_NS_START
 
 namespace Renderer
 {
+	// TODO: continue this tommrow..
+	struct DescriptorSetLayout
+	{
+		uint32 sampled_image_mask = 0;
+		uint32 storage_image_mask = 0;
+		uint32 uniform_buffer_mask = 0;
+		uint32 storage_buffer_mask = 0;
+		uint32 sampled_buffer_mask = 0;
+		uint32 input_attachment_mask = 0;
+		uint32 sampler_mask = 0;
+		uint32 separate_image_mask = 0;
+		uint32 fp_mask = 0;
+		uint32 immutable_sampler_mask = 0;
+		uint64 immutable_samplers = 0;
+
+		uint32 type_mask[10];
+		uint8 array_size[MAX_DESCRIPTOR_BINDINGS] = {};
+		enum { UNSIZED_ARRAY = 0xff };
+	};
+
 	class DescriptorSetLayout
 	{
 	public:
 		DescriptorSetLayout() : bindingsCount(0), descriptorSetLayout(VK_NULL_HANDLE) {}
 
-		void AddBinding(uint32 binding, uint32 descriptorCount, DescriptorType descriptorType, ShaderStagesFlags shaderStages, const VkSampler* sampelr = NULL)
+		void AddBinding(uint32 binding, uint32 descriptorCount, DescriptorType descriptorType, ShaderStagesFlags shaderStages, const VkSampler* sampler = NULL)
 		{
 			layoutBindings[bindingsCount].binding				= binding;
 			layoutBindings[bindingsCount].descriptorType		= (VkDescriptorType)descriptorType;
 			layoutBindings[bindingsCount].descriptorCount		= descriptorCount;
 			layoutBindings[bindingsCount].stageFlags			= shaderStages;
-			layoutBindings[bindingsCount].pImmutableSamplers	= sampelr;
+			layoutBindings[bindingsCount].pImmutableSamplers	= sampler;
 
 			bindingsCount++;
 		}

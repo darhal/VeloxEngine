@@ -8,13 +8,12 @@ TRE_NS_START
 
 namespace Renderer
 {
+	class RenderDevice;
+
 	class DescriptorSetAllocator
 	{
 	public:
-		CONSTEXPR static uint32 MAX_DESCRIPTOR_TYPES = 11;
-		CONSTEXPR static uint32 MAX_SETS_PER_POOL = 16;
-	public:
-		DescriptorSetAllocator(Internal::RenderDevice* renderDevice, const DescriptorSetLayout& layout);
+		DescriptorSetAllocator(RenderDevice* renderDevice, const DescriptorSetLayout& layout);
 
 		void Init();
 
@@ -24,7 +23,7 @@ namespace Renderer
 	private:
 		void AllocatePool();
 	private:
-		Internal::RenderDevice* renderDevice;
+		RenderDevice* renderDevice;
 		const DescriptorSetLayout& descriptorSetLayout;
 
 		std::vector<VkDescriptorPool> descriptorSetPools;

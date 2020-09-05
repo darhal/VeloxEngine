@@ -98,11 +98,7 @@ void RenderFrame(uint32 i,
     currentCmdBuff->BindVertexBuffer(vertexIndexBuffer);
     currentCmdBuff->BindIndexBuffer(vertexIndexBuffer, sizeof(vertices[0]) * vertices.size());
 
-    const uint32 dynamicOffset[] = { uniformBuffer.GetCurrentOffset() };
-    vkCmdBindDescriptorSets(currentCmdBuff->GetAPIObject(), 
-        VK_PIPELINE_BIND_POINT_GRAPHICS, 
-        graphicsPipeline.GetPipelineLayout().GetAPIObject(),
-        0, 1, &descriptorSet, 1, dynamicOffset);
+    currentCmdBuff->BindDescriptorSet(graphicsPipeline, { descriptorSet }, { uniformBuffer.GetCurrentOffset() });
 
     currentCmdBuff->DrawIndexed(6);
     
@@ -200,32 +196,8 @@ int main()
 
     TRE::Renderer::RingBuffer uniformBuffer = backend.CreateRingBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_ONLY);
 
-    VkDescriptorPoolSize poolSize{};
-    poolSize.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    poolSize.descriptorCount = 1;
-
-    VkDescriptorPoolCreateInfo poolInfo{};
-    poolInfo.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount  = 1;
-    poolInfo.pPoolSizes     = &poolSize;
-    poolInfo.maxSets        = 1;
-
-    VkDescriptorPool descriptorPool;
-    if (vkCreateDescriptorPool(renderDevice.device, &poolInfo, NULL, &descriptorPool) != VK_SUCCESS) {
-        ASSERTF(true, "failed to create descriptor pool!");
-    }
-
-    VkDescriptorSetLayout layouts[] = { graphicsPipeline.GetShaderProgram().GetDescriptorSetLayout(0).GetAPIObject() };
-    VkDescriptorSetAllocateInfo allocInfo{};
-    allocInfo.sType                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool        = descriptorPool;
-    allocInfo.descriptorSetCount    = 1;
-    allocInfo.pSetLayouts           = layouts;
-
-    VkDescriptorSet descriptorSet;
-    if (vkAllocateDescriptorSets(renderDevice.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate descriptor sets!");
-    }
+    DescriptorSetAllocator alloc(&backend.GerRenderDevice(), graphicsPipeline.GetShaderProgram().GetDescriptorSetLayout(0));
+    VkDescriptorSet descriptorSet = alloc.Allocate();
 
     for (uint32 i = 0; i < 1/*ctx.imagesCount*/; i++) {
         VkDescriptorBufferInfo bufferInfo{};
