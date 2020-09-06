@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/RenderInstance/RenderInstance.hpp>
@@ -13,6 +15,7 @@
 #include <Renderer/Backend/CommandList/CommandPool.hpp>
 #include <Renderer/Backend/CommandList/CommandList.hpp>
 #include <Renderer/Backend/Descriptors/DescriptorSetAlloc.hpp>
+#include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 
 TRE_NS_START
 
@@ -20,6 +23,17 @@ namespace Renderer
 {
 	class RENDERER_API RenderBackend
 	{
+	public:
+		struct PerFrame
+		{
+			CommandPool commandPools[MAX_THREADS][(uint32)QueueTypes::MAX];
+			StackAlloc<VkCommandBuffer, 32> submissions[(uint32)QueueTypes::MAX];
+		};
+
+		struct HandlePool
+		{
+			ObjectPool<CommandBuffer> commandBuffers;
+		};
 	public:
 		RenderBackend(TRE::Window* wnd);
 
@@ -31,10 +45,10 @@ namespace Renderer
 
 		FORCEINLINE RenderInstance& GetRenderInstance() { return renderInstance; }
 		FORCEINLINE RenderContext& GetRenderContext() { return renderContext; }
-		FORCEINLINE RenderDevice& GerRenderDevice() { return renderDevice; }
+		FORCEINLINE RenderDevice& GetRenderDevice() { return renderDevice; }
 		FORCEINLINE const RenderInstance& GetRenderInstance() const { return renderInstance; }
 		FORCEINLINE const RenderContext& GetRenderContext() const { return renderContext; }
-		FORCEINLINE const RenderDevice& GerRenderDevice() const { return renderDevice; }
+		FORCEINLINE const RenderDevice& GetRenderDevice() const { return renderDevice; }
 
 		Internal::RenderContext& GetCtxInternal() { return renderContext.internal; }
 		Internal::RenderDevice& GetDevInternal() { return renderDevice.internal; }
@@ -48,13 +62,25 @@ namespace Renderer
 	
 		CommandBufferHandle RequestCommandBuffer(QueueTypes type);
 
-		void Submit(VkCommandBuffer cmd);
+		void Submit(CommandBufferHandle cmd);
+
+		void CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut);
+
+		DescriptorSetAllocator* RequestDescriptorSetAllocator(const DescriptorSetLayout& layout);
 
 		FORCEINLINE MemoryAllocator& GetContextAllocator() { return gpuMemoryAllocator; }
 
 		FORCEINLINE StagingManager& GetStagingManager() { return stagingManager; }
+
+		FORCEINLINE ObjectPool<CommandBuffer>& GetCommandBufferPool() { return objectsPool.commandBuffers; }
 	private:
 		void Init();
+
+		FORCEINLINE const PerFrame& Frame() const { return perFrame[renderContext.GetCurrentFrame()]; }
+
+		FORCEINLINE PerFrame& Frame() { return perFrame[renderContext.GetCurrentFrame()]; }
+
+		void ClearFrame();
 	private:
 		RenderInstance	renderInstance;
 		RenderDevice	renderDevice;
@@ -63,22 +89,10 @@ namespace Renderer
 		MemoryAllocator	gpuMemoryAllocator;
 		StagingManager	stagingManager;
 
-		struct PerFrame
-		{
-			CommandPool commandPools[MAX_THREADS][(uint32)QueueTypes::MAX];
-			StackAlloc<VkCommandBuffer, 32> submissions[(uint32)QueueTypes::MAX];
-		} perFrame[MAX_FRAMES];
+		std::unordered_map<Hash, DescriptorSetAllocator> descriptorSetAllocators;
 
-		struct HandlePool
-		{
-			ObjectPool<CommandBuffer> commandBuffers;
-		} objectsPool;
-
-	private:
-		FORCEINLINE const PerFrame& Frame() const { return perFrame[renderContext.GetCurrentFrame()]; }
-		FORCEINLINE PerFrame& Frame() { return perFrame[renderContext.GetCurrentFrame()]; }
-
-		void ClearFrame();
+		PerFrame		perFrame[MAX_FRAMES];
+		HandlePool		objectsPool;
 	};
 };
 

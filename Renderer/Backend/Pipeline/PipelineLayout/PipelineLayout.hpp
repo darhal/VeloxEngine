@@ -7,51 +7,55 @@ TRE_NS_START
 
 namespace Renderer
 {
+	/*struct ResourceLayout
+	{
+		DescriptorSetLayout descriptorSetLayouts[MAX_DESCRIPTOR_SET];
+		VkPushConstantRange pushConstantsRanges[MAX_DESCRIPTOR_SET * 4];
+		
+		uint32 descriptorSetLayoutsCount;
+		uint32 pushConstantsCount;
+	};*/
+
+	class DescriptorSetAllocator;
+	class RenderBackend;
+
 	class PipelineLayout
 	{
 	public:
-		PipelineLayout() : descriptorLayoutsCount(0), pushConstantsCount(0), pipelineLayout(VK_NULL_HANDLE) {}
+		PipelineLayout() : descriptorSetLayoutCount(0), pushConstantsCount(0), pipelineLayout(VK_NULL_HANDLE) {}
 
-		void Create(const Internal::RenderDevice& renderDevice)
-		{
-			VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-			pipelineLayoutInfo.pNext = NULL;
-			pipelineLayoutInfo.flags = 0;
-			pipelineLayoutInfo.setLayoutCount	= descriptorLayoutsCount;
-			pipelineLayoutInfo.pSetLayouts		= descriptorLayouts;
-			pipelineLayoutInfo.pushConstantRangeCount = pushConstantsCount;
-			pipelineLayoutInfo.pPushConstantRanges = pushConstantsRanges;
-
-			if (vkCreatePipelineLayout(renderDevice.device, &pipelineLayoutInfo, NULL, &pipelineLayout) != VK_SUCCESS) {
-				ASSERTF(true, "failed to create pipeline layout!");
-			}
-		}
+		void Create(RenderBackend& backend);
 
 		VkPipelineLayout GetAPIObject() const
 		{
 			return pipelineLayout;
 		}
 
-		void AddDescriptorLayout(const DescriptorSetLayout& descSetLayout)
+		void AddDescriptorSetLayout(uint32 binding, uint32 descriptorCount, DescriptorType descriptorType, ShaderStagesFlags shaderStages, const VkSampler* sampler = NULL)
 		{
-			descriptorLayouts[descriptorLayoutsCount++] = descSetLayout.descriptorSetLayout;
+			descriptorSetLayouts[descriptorSetLayoutCount++].AddBinding(binding, descriptorCount, descriptorType, shaderStages, sampler);
 		}
 
 		void AddPushConstantRange(VkShaderStageFlags stageFlags, uint32_t offset, uint32_t size)
 		{
 			pushConstantsRanges[pushConstantsCount++] = { stageFlags, offset, size };
 		}
-	private:
-		VkDescriptorSetLayout descriptorLayouts[MAX_DESCRIPTOR_SET];
-		uint32 descriptorLayoutsCount;
 
+		const DescriptorSetLayout& GetDescriptorSetLayout(uint32 set) const { return descriptorSetLayouts[set]; }
+
+		DescriptorSetAllocator* GetAllocator(uint32 set) const { return descriptorSetAlloc[set]; }
+	private:
+		DescriptorSetAllocator* descriptorSetAlloc[MAX_DESCRIPTOR_SET];
+
+		DescriptorSetLayout descriptorSetLayouts[MAX_DESCRIPTOR_SET];
 		VkPushConstantRange pushConstantsRanges[MAX_DESCRIPTOR_SET * 4];
-		uint32 pushConstantsCount;
 
 		VkPipelineLayout pipelineLayout;
+		
+		uint32 descriptorSetLayoutCount;
+		uint32 pushConstantsCount;
 
-		// TODO: add array of descriptor set allocators here
+		// TODO: this need to know aeverything about the layout, not just VK objects
 	};
 }
 

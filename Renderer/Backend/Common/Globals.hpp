@@ -6,6 +6,7 @@
 #include <Engine/Core/Misc/Maths/Common.hpp>
 #include <Renderer/Core/ObjectPool/ObjectPool.hpp>
 #include <Renderer/Core/Allocators/StackAllocator.hpp>
+#include <Renderer/Core/Hash/Hash.hpp>
 #include <vector>
 #include <array>
 
@@ -57,6 +58,9 @@ namespace Renderer
 
 	template<typename T, size_t S>
 	using StackAlloc = Utils::StackAllocator<T, S>;
+
+	using Hash = Utils::Hash;
+	using Hasher = Utils::Hasher;
 
 	typedef VkDeviceSize DeviceSize;
 

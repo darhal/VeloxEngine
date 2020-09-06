@@ -46,7 +46,7 @@ namespace Renderer
 				empty.push_back(ptr);
 			}
 
-			void clear()
+			void Clear()
 			{
 				empty.clear();
 				memory.clear();

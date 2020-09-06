@@ -8,7 +8,7 @@ TRE_NS_START
 namespace Renderer
 {
 	// TODO: continue this tommrow..
-	struct DescriptorSetLayout
+	/*struct DescriptorSetLayout
 	{
 		uint32 sampled_image_mask = 0;
 		uint32 storage_image_mask = 0;
@@ -25,7 +25,7 @@ namespace Renderer
 		uint32 type_mask[10];
 		uint8 array_size[MAX_DESCRIPTOR_BINDINGS] = {};
 		enum { UNSIZED_ARRAY = 0xff };
-	};
+	};*/
 
 	class DescriptorSetLayout
 	{
@@ -43,18 +43,18 @@ namespace Renderer
 			bindingsCount++;
 		}
 
-		VkDescriptorSetLayout Create(const Internal::RenderDevice& renderDevice)
+		VkDescriptorSetLayout Create(const VkDevice& vkDevice)
 		{
 			ASSERTF(bindingsCount == 0, "Cant create descriptor set layout with 0 bindings");
 
-			VkDescriptorSetLayoutCreateInfo  layoutInfo{};
+			VkDescriptorSetLayoutCreateInfo  layoutInfo;
 			layoutInfo.sType		= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			layoutInfo.pNext		= NULL;
 			layoutInfo.flags		= 0;
 			layoutInfo.bindingCount = bindingsCount;
 			layoutInfo.pBindings	= layoutBindings;
 
-			if (vkCreateDescriptorSetLayout(renderDevice.device, &layoutInfo, NULL, &descriptorSetLayout) != VK_SUCCESS) {
+			if (vkCreateDescriptorSetLayout(vkDevice, &layoutInfo, NULL, &descriptorSetLayout) != VK_SUCCESS) {
 				ASSERTF(true, "Failed to create descriptor set layout!");
 			}
 
@@ -65,12 +65,13 @@ namespace Renderer
 
 		const VkDescriptorSetLayoutBinding* const GetDescriptorSetLayoutBindings() const { return layoutBindings; }
 
+		const VkDescriptorSetLayoutBinding& GetDescriptorSetLayoutBinding(uint32 i) const { return layoutBindings[i]; }
+
 		uint32 GetBindingsCount() const { return bindingsCount; }
 	private:
 		VkDescriptorSetLayoutBinding layoutBindings[MAX_DESCRIPTOR_BINDINGS];
-		uint32 bindingsCount;
-
 		VkDescriptorSetLayout descriptorSetLayout;
+		uint32 bindingsCount;
 
 		friend class PipelineLayout;
 	};

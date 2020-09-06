@@ -6,7 +6,14 @@ TRE_NS_START
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator(RenderDevice* renderDevice, const DescriptorSetLayout& layout) : 
 	renderDevice(renderDevice), descriptorSetLayout(layout), poolSizeCount(0)
 {
-    this->Init();
+    // this->Init();
+}
+
+Renderer::DescriptorSetAllocator::DescriptorSetAllocator(const std::pair<RenderDevice*, const DescriptorSetLayout&>& renderDeviceLayoutPair) :
+    renderDevice(renderDeviceLayoutPair.first), 
+    descriptorSetLayout(renderDeviceLayoutPair.second), 
+    poolSizeCount(0)
+{
 }
 
 void Renderer::DescriptorSetAllocator::Init()

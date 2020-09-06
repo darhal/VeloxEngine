@@ -2,11 +2,12 @@
 #include <Renderer/Backend/RenderContext/RenderContext.hpp>
 #include <Renderer/Backend/Pipeline/GraphicsPipeline.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
+#include <Renderer/Backend/Descriptors/DescriptorSetAlloc.hpp>
 
 TRE_NS_START
 
 Renderer::CommandBuffer::CommandBuffer(RenderContext* renderContext, VkCommandBuffer buffer, Type type) :
-    renderContext(renderContext), commandBuffer(buffer), type(type)
+    renderContext(renderContext), commandBuffer(buffer), type(type), allocatedSets{}
 {
 }
 
@@ -62,6 +63,7 @@ void Renderer::CommandBuffer::EndRenderPass()
 
 void Renderer::CommandBuffer::BindPipeline(const GraphicsPipeline& pipeline)
 {
+    this->pipeline = &pipeline;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetAPIObject());
 }
 
@@ -109,32 +111,42 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
     dirtySets.dirtyBindings[set] |= (1u << binding);
 }
 
-void Renderer::CommandBuffer::UpdateDescriptorSet(VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings)
+void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings)
 {
     VkWriteDescriptorSet writes[MAX_DESCRIPTOR_BINDINGS];
     uint32 writeCount = 0;
 
-    for (uint8 set = 0; set < MAX_DESCRIPTOR_SET; set++) {
-        if (dirtySets.dirtySets & (1u << set)) {
-            for (uint32 binding = 0; binding < MAX_DESCRIPTOR_BINDINGS; binding++) {
-                if (dirtySets.dirtyBindings[set] && (1u << binding)) {
-                    writes[writeCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                    writes[writeCount].pNext            = NULL;
-                    writes[writeCount].dstSet           = descSet;
-                    writes[writeCount].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-                    writes[writeCount].descriptorCount  = 1;
-                    writes[writeCount].dstBinding       = binding;
-                    writes[writeCount].dstArrayElement  = 0;
-                    writes[writeCount].pBufferInfo      = &bindings[binding].buffer;
-                    writes[writeCount].pImageInfo       = NULL;
-                    writes[writeCount].pTexelBufferView = NULL;
-
-
-                    dirtySets.dirtySets++;
-                }
+    for (uint32 binding = 0; binding < MAX_DESCRIPTOR_BINDINGS; binding++) {
+        if (dirtySets.dirtyBindings[set] && (1u << binding)) {
+            if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) {
+                writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writes[writeCount].pNext = NULL;
+                writes[writeCount].dstSet = descSet;
+                writes[writeCount].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+                writes[writeCount].descriptorCount = 1;
+                writes[writeCount].dstBinding = binding;
+                writes[writeCount].dstArrayElement = 0;
+                writes[writeCount].pBufferInfo = &bindings[binding].buffer;
+                writes[writeCount].pImageInfo = NULL;
+                writes[writeCount].pTexelBufferView = NULL;
+                break;
             }
         }
     }
+}
+
+void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
+{
+    ASSERT(pipeline == NULL);
+
+    const PipelineLayout& layout = pipeline->GetShaderProgram().GetPipelineLayout();
+    VkDescriptorSet descSet = layout.GetAllocator(set)->Allocate(); 
+
+    this->UpdateDescriptorSet(set, descSet, layout.GetDescriptorSetLayout(set), bindings.bindings[set]);
+
+
+    // TODO: start working from here
+    allocatedSets[set] = descSet;
 }
 
 TRE_NS_END

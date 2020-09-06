@@ -39,6 +39,8 @@ namespace Renderer
 
 		ShaderProgram& GetShaderProgram() { return shaderProgram; }
 
+		const ShaderProgram& GetShaderProgram() const { return shaderProgram; }
+
 		VkPipeline GetAPIObject() const { return pipeline; }
 
 		VkRenderPass GetRenderPassAPIObject() const { return renderPass; }

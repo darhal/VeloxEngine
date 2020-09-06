@@ -62,13 +62,16 @@ namespace Renderer
 		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range);
 
 		FORCEINLINE VkCommandBuffer GetAPIObject() const { return commandBuffer; }
+	private:
+		void UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings);
 
+		void FlushDescriptorSet(uint32 set);
 	private:
-		void UpdateDescriptorSet(VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings);
-	private:
-		RenderContext* renderContext;
 		ResouceBindings bindings;
 		DescriptorSetDirty dirtySets;
+		RenderContext* renderContext;
+		const GraphicsPipeline* pipeline;
+		VkDescriptorSet allocatedSets[MAX_DESCRIPTOR_SET];
 		VkCommandBuffer commandBuffer;
 		Type type;
 	};

@@ -14,7 +14,7 @@ namespace Renderer
 		public:
 			StackAllocator() : offset(0) {}
 
-			T* Allocate(size_t count)
+			T* Allocate(size_t count = 1)
 			{
 				ASSERTF(count == 0, "Can't allocate 0 element");
 

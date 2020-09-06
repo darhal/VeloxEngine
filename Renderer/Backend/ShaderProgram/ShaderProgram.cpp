@@ -1,5 +1,6 @@
 #include "ShaderProgram.hpp"
 #include <Renderer/Backend/Common/Utils.hpp>
+#include <Renderer/Backend/RenderBackend.hpp>
 #include <Renderer/Backend/ShaderProgram/ShaderReflect/spirv_reflect.h>
 
 TRE_NS_START
@@ -19,7 +20,7 @@ VkShaderModule Renderer::ShaderProgram::CreateShaderModule(VkDevice device, cons
     return shaderModule;
 }
 
-void Renderer::ShaderProgram::ReflectShaderCode(const Internal::RenderDevice& renderDevice, const void* sprivCode, size_t size, ShaderStages shaderStage)
+void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage)
 {
     // Generate reflection data for a shader
     SpvReflectShaderModule module;
@@ -57,13 +58,8 @@ void Renderer::ShaderProgram::ReflectShaderCode(const Internal::RenderDevice& re
             }
 
             // printf("\tBinding: %d - Name: %s - Descriptor type: %d - Count: %d - Description type: %s\n", bindings->binding, bindings->name, descriptorType, bindings->count, bindings->type_description->type_name);
-            descSetLayout[descSetLayoutCount].AddBinding(bindings->set, bindings->count, descriptorType, VK_SHADER_STAGES[shaderStage], NULL);
+            piplineLayout.AddDescriptorSetLayout(bindings->set, bindings->count, descriptorType, VK_SHADER_STAGES[shaderStage], NULL);
         }
-
-        descSetLayout[descSetLayoutCount].Create(renderDevice);
-        piplineLayout.AddDescriptorLayout(descSetLayout[descSetLayoutCount]);
-
-        descSetLayoutCount++;
     }
 
     // Enumerate push constants:
@@ -82,14 +78,15 @@ void Renderer::ShaderProgram::ReflectShaderCode(const Internal::RenderDevice& re
     spvReflectDestroyShaderModule(&module);
 }
 
-void Renderer::ShaderProgram::Create(const Internal::RenderDevice& renderDevice, const std::initializer_list<ShaderStage>& shaderStages)
+void Renderer::ShaderProgram::Create(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages)
 {
     shadersCount = 0;
+    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
 
     for (const auto& shaderStage : shaderStages) {
         auto shaderCode = TRE::Renderer::ReadShaderFile(shaderStage.path);
-        shaderModules[shadersCount] = CreateShaderModule(renderDevice.device, shaderCode);
-        this->ReflectShaderCode(renderDevice, shaderCode.data(), shaderCode.size(), shaderStage.shaderStage);
+        shaderModules[shadersCount] = CreateShaderModule(renderDevice.GetDevice(), shaderCode);
+        this->ReflectShaderCode(shaderCode.data(), shaderCode.size(), shaderStage.shaderStage);
 
         shaderStagesCreateInfo[shadersCount].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shaderStagesCreateInfo[shadersCount].pNext  = NULL;
@@ -102,7 +99,7 @@ void Renderer::ShaderProgram::Create(const Internal::RenderDevice& renderDevice,
         shadersCount++;
     }
 
-    piplineLayout.Create(renderDevice);
+    piplineLayout.Create(renderBackend);
 }
 
 TRE_NS_END

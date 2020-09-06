@@ -105,7 +105,8 @@ void RenderFrame(uint32 i,
     currentCmdBuff->EndRenderPass();
     currentCmdBuff->End();
 
-    backend.Submit(currentCmdBuff->GetAPIObject());
+    backend.Submit(currentCmdBuff);
+    backend.GetCommandBufferPool().Free(currentCmdBuff.Get());
 }
 
 void printFPS() {
@@ -178,7 +179,7 @@ int main()
     GraphicsPipeline graphicsPipeline;
     GraphicsState state;
 
-    graphicsPipeline.GetShaderProgram().Create(renderDevice,
+    graphicsPipeline.GetShaderProgram().Create(backend,
         { 
             {"shaders/vert.spv", ShaderProgram::VERTEX_SHADER}, 
             {"shaders/frag.spv", ShaderProgram::FRAGMENT_SHADER} 
@@ -196,8 +197,8 @@ int main()
 
     TRE::Renderer::RingBuffer uniformBuffer = backend.CreateRingBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_ONLY);
 
-    DescriptorSetAllocator alloc(&backend.GerRenderDevice(), graphicsPipeline.GetShaderProgram().GetDescriptorSetLayout(0));
-    VkDescriptorSet descriptorSet = alloc.Allocate();
+    DescriptorSetAllocator* alloc = backend.RequestDescriptorSetAllocator(graphicsPipeline.GetShaderProgram().GetPipelineLayout().GetDescriptorSetLayout(0));
+    VkDescriptorSet descriptorSet = alloc->Allocate();
 
     for (uint32 i = 0; i < 1/*ctx.imagesCount*/; i++) {
         VkDescriptorBufferInfo bufferInfo{};

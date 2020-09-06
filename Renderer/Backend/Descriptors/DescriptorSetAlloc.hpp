@@ -15,6 +15,9 @@ namespace Renderer
 	public:
 		DescriptorSetAllocator(RenderDevice* renderDevice, const DescriptorSetLayout& layout);
 
+		// Make it easier to deal with emplace ctor later with map
+		DescriptorSetAllocator(const std::pair<RenderDevice*, const DescriptorSetLayout&>& renderDeviceLayoutPair);
+
 		void Init();
 
 		VkDescriptorSet Allocate();

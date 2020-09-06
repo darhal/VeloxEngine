@@ -45,6 +45,8 @@ void Renderer::RenderBackend::ClearFrame()
         frame.commandPools[0][i].Reset();
         frame.submissions[i].Reset();
     }
+
+    // objectsPool.commandBuffers.Clear();
 }
 
 Renderer::RenderBackend::~RenderBackend()
@@ -149,11 +151,32 @@ Renderer::CommandBufferHandle Renderer::RenderBackend::RequestCommandBuffer(Queu
     return handle;
 }
 
-void Renderer::RenderBackend::Submit(VkCommandBuffer cmd)
+Renderer::DescriptorSetAllocator* Renderer::RenderBackend::RequestDescriptorSetAllocator(const DescriptorSetLayout& layout)
+{
+    Hasher h;
+    h.Data(reinterpret_cast<const uint32*>(layout.GetDescriptorSetLayoutBindings()), sizeof(VkDescriptorSetLayoutBinding) * layout.GetBindingsCount());
+
+    // For the weird return value check: https://en.cppreference.com/w/cpp/container/unordered_map/emplace
+    const auto ctor_arg = std::pair<RenderDevice*, const DescriptorSetLayout&>(&renderDevice, layout);
+    const auto& res = descriptorSetAllocators.emplace(h.Get(), ctor_arg);
+
+    if (res.second) {
+        res.first->second.Init();
+    }
+
+    return &res.first->second;
+}
+
+void Renderer::RenderBackend::Submit(CommandBufferHandle cmd)
 {
     PerFrame& frame = Frame();
     VkCommandBuffer* allocCmd = frame.submissions[(uint32)QueueTypes::GRAPHICS_ONLY].Allocate(1);
-    *allocCmd = cmd;
+    *allocCmd = cmd->GetAPIObject();
+}
+
+void Renderer::RenderBackend::CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut)
+{
+    shaderProgramOut->Create(*this, shaderStages);
 }
 
 

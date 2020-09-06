@@ -2,7 +2,6 @@
 
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
-#include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
 
 TRE_NS_START
@@ -19,8 +18,6 @@ namespace Renderer
 		void DestroryRenderDevice();
 
 		int32 CreateLogicalDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx);
-
-		void CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut);
 
 		FORCEINLINE VkDevice GetDevice() const { return internal.device; }
 
