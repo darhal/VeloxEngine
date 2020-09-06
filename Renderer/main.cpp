@@ -78,8 +78,7 @@ void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingB
     buffer.WriteToBuffer(sizeof(mvp), &mvp);
 }
 
-void RenderFrame(uint32 i,
-    TRE::Renderer::RenderBackend& backend,
+void RenderFrame(TRE::Renderer::RenderBackend& backend,
     TRE::Renderer::GraphicsPipeline& graphicsPipeline,
     TRE::Renderer::Buffer& vertexIndexBuffer,
     // VkDescriptorSet descriptorSet,
@@ -90,7 +89,7 @@ void RenderFrame(uint32 i,
 
     currentCmdBuff->Begin();
 
-    currentCmdBuff->BeginRenderPass({ 164.0f / 256.0f, 30.0f / 256.0f, 34.0f / 256.0f, 0.0f });
+    currentCmdBuff->BeginRenderPass({ 0.051f, 0.051f, 0.051f, 0.0f });
     currentCmdBuff->BindPipeline(graphicsPipeline);
     currentCmdBuff->SetViewport({ 0.f, 0.f, (float)swapChainData.swapChainExtent.width, (float)swapChainData.swapChainExtent.height, 0.f, 1.f });
     currentCmdBuff->SetScissor({ {0, 0}, swapChainData.swapChainExtent });
@@ -148,7 +147,6 @@ int main()
     Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
     RenderBackend backend{ &window };
 
-    Internal::RenderContext& ctx = backend.GetCtxInternal();
     Internal::RenderDevice& renderDevice = backend.GetDevInternal();
 
     size_t vertexSize = sizeof(vertices[0]) * vertices.size();
@@ -248,7 +246,7 @@ int main()
         engine.GetRenderContext().TransferBuffers(1, &transferInfo[0]);*/
 
         updateMVP(backend, uniformBuffer);
-        RenderFrame(ctx.currentFrame, backend, graphicsPipeline, vertexIndexBuffer[0], uniformBuffer);
+        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer[0], uniformBuffer);
 
         backend.EndFrame();
         printFPS();
