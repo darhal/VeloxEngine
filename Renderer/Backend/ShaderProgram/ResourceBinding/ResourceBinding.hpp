@@ -9,18 +9,12 @@ namespace Renderer
 {
 	struct ResourceBinding
 	{
-		union
+		union Resource
 		{
 			VkDescriptorBufferInfo buffer;
-
-			struct
-			{
-				VkDescriptorImageInfo fp;
-				VkDescriptorImageInfo integer;
-			} image;
-
-			VkBufferView buffer_view;
-		};
+			VkDescriptorImageInfo image;
+			// VkBufferView buffer_view;
+		} resource;
 
 		VkDeviceSize dynamicOffset;
 	};

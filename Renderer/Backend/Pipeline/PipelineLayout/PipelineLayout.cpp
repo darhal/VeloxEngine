@@ -10,7 +10,6 @@ void Renderer::PipelineLayout::Create(RenderBackend& backend)
 	StackAlloc<VkDescriptorSetLayout, MAX_DESCRIPTOR_SET> vkDescSetAlloc;
 	VkDescriptorSetLayout* layouts = vkDescSetAlloc.Allocate(descriptorSetLayoutCount);
 
-	printf("Init pipeline layout\n");
 	for (uint32 i = 0; i < descriptorSetLayoutCount; i++) {
 		layouts[i] = descriptorSetLayouts[i].Create(renderDevice.GetDevice());
 		descriptorSetAlloc[i] = backend.RequestDescriptorSetAllocator(descriptorSetLayouts[i]);

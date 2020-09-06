@@ -56,7 +56,7 @@ const std::vector<uint16_t> indices = {
     0, 1, 2, 2, 3, 0
 };
 
-void updateMVP(const TRE::Renderer::RenderBackend& backend, VkDescriptorSet descriptorSet, TRE::Renderer::RingBuffer& buffer)
+void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBuffer& buffer)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -82,7 +82,7 @@ void RenderFrame(uint32 i,
     TRE::Renderer::RenderBackend& backend,
     TRE::Renderer::GraphicsPipeline& graphicsPipeline,
     TRE::Renderer::Buffer& vertexIndexBuffer,
-    VkDescriptorSet descriptorSet,
+    // VkDescriptorSet descriptorSet,
     const TRE::Renderer::RingBuffer& uniformBuffer)
 {
     const TRE::Renderer::Swapchain::SwapchainData& swapChainData = backend.GetRenderContext().GetSwapchain().GetSwapchainData();
@@ -98,8 +98,9 @@ void RenderFrame(uint32 i,
     currentCmdBuff->BindVertexBuffer(vertexIndexBuffer);
     currentCmdBuff->BindIndexBuffer(vertexIndexBuffer, sizeof(vertices[0]) * vertices.size());
 
-    currentCmdBuff->BindDescriptorSet(graphicsPipeline, { descriptorSet }, { uniformBuffer.GetCurrentOffset() });
+    // currentCmdBuff->BindDescriptorSet(graphicsPipeline, { descriptorSet }, { uniformBuffer.GetCurrentOffset() });
 
+    currentCmdBuff->SetUniformBuffer(0, 0, uniformBuffer, uniformBuffer.GetCurrentOffset());
     currentCmdBuff->DrawIndexed(6);
     
     currentCmdBuff->EndRenderPass();
@@ -197,29 +198,6 @@ int main()
 
     TRE::Renderer::RingBuffer uniformBuffer = backend.CreateRingBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_ONLY);
 
-    DescriptorSetAllocator* alloc = backend.RequestDescriptorSetAllocator(graphicsPipeline.GetShaderProgram().GetPipelineLayout().GetDescriptorSetLayout(0));
-    VkDescriptorSet descriptorSet = alloc->Allocate();
-
-    for (uint32 i = 0; i < 1/*ctx.imagesCount*/; i++) {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = uniformBuffer.GetAPIObject();
-        bufferInfo.offset = 0;
-        bufferInfo.range  = sizeof(MVP);
-
-        VkWriteDescriptorSet descriptorWrite{};
-        descriptorWrite.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet           = descriptorSet;
-        descriptorWrite.dstBinding       = 0;
-        descriptorWrite.dstArrayElement  = 0;
-        descriptorWrite.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-        descriptorWrite.descriptorCount  = 1;
-        descriptorWrite.pBufferInfo      = &bufferInfo;
-        descriptorWrite.pImageInfo       = NULL; // Optional
-        descriptorWrite.pTexelBufferView = NULL; // Optional
-
-        vkUpdateDescriptorSets(renderDevice.device, 1, &descriptorWrite, 0, NULL);
-    }
-
     for (uint32 i = 0; i < 4; i++) {
         float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
         float g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
@@ -269,8 +247,8 @@ int main()
         /*TRE::Renderer::Internal::EditBuffer(renderDevice, staginVertexBuffer, vertexSize, vertices.data());
         engine.GetRenderContext().TransferBuffers(1, &transferInfo[0]);*/
 
-        updateMVP(backend, descriptorSet, uniformBuffer);
-        RenderFrame(ctx.currentFrame, backend, graphicsPipeline, vertexIndexBuffer[0], descriptorSet, uniformBuffer);
+        updateMVP(backend, uniformBuffer);
+        RenderFrame(ctx.currentFrame, backend, graphicsPipeline, vertexIndexBuffer[0], uniformBuffer);
 
         backend.EndFrame();
         printFPS();
@@ -284,6 +262,28 @@ int main()
 
 
 
+//DescriptorSetAllocator* alloc = backend.RequestDescriptorSetAllocator(graphicsPipeline.GetShaderProgram().GetPipelineLayout().GetDescriptorSetLayout(0));
+//VkDescriptorSet descriptorSet = alloc->Allocate();
+
+//for (uint32 i = 0; i < 1/*ctx.imagesCount*/; i++) {
+//    VkDescriptorBufferInfo bufferInfo{};
+//    bufferInfo.buffer = uniformBuffer.GetAPIObject();
+//    bufferInfo.offset = 0;
+//    bufferInfo.range  = sizeof(MVP);
+
+//    VkWriteDescriptorSet descriptorWrite{};
+//    descriptorWrite.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+//    descriptorWrite.dstSet           = descriptorSet;
+//    descriptorWrite.dstBinding       = 0;
+//    descriptorWrite.dstArrayElement  = 0;
+//    descriptorWrite.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+//    descriptorWrite.descriptorCount  = 1;
+//    descriptorWrite.pBufferInfo      = &bufferInfo;
+//    descriptorWrite.pImageInfo       = NULL; // Optional
+//    descriptorWrite.pTexelBufferView = NULL; // Optional
+
+//    vkUpdateDescriptorSets(renderDevice.device, 1, &descriptorWrite, 0, NULL);
+//}
 
 
 

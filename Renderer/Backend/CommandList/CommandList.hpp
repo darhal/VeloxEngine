@@ -59,13 +59,15 @@ namespace Renderer
 		void BindDescriptorSet(const GraphicsPipeline& pipeline, const std::initializer_list<VkDescriptorSet>& descriptors, 
 			const std::initializer_list<uint32>& dyncOffsets);
 
-		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range);
+		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range = VK_WHOLE_SIZE);
 
 		FORCEINLINE VkCommandBuffer GetAPIObject() const { return commandBuffer; }
 	private:
 		void UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings);
 
 		void FlushDescriptorSet(uint32 set);
+
+		void FlushDescriptorSets();
 	private:
 		ResouceBindings bindings;
 		DescriptorSetDirty dirtySets;

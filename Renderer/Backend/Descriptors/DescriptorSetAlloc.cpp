@@ -71,6 +71,19 @@ VkDescriptorSet Renderer::DescriptorSetAllocator::Allocate()
     return descriptorSet;
 }
 
+std::pair<VkDescriptorSet, bool> Renderer::DescriptorSetAllocator::Find(Hash hash)
+{
+    const auto& ret = descriptorCache.emplace(std::pair<Hash, VkDescriptorSet>(hash, VK_NULL_HANDLE));
+
+    if (!ret.second) { // Insertion didn't happen
+        return std::make_pair(ret.first->second, true);
+    }
+
+    ret.first->second = this->Allocate();
+    emptyDescriptors.pop_back();
+    return std::make_pair(ret.first->second, false);
+}
+
 void Renderer::DescriptorSetAllocator::Free(VkDescriptorSet set)
 {
     emptyDescriptors.push_back(set);

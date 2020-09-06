@@ -3,6 +3,7 @@
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/Descriptors/DescriptorSetLayout.hpp>
+#include <unordered_map>
 
 TRE_NS_START
 
@@ -22,6 +23,9 @@ namespace Renderer
 
 		VkDescriptorSet Allocate();
 
+		// @return: Descriptor potentially cached, bool: true cache found, false otherwise
+		std::pair<VkDescriptorSet, bool> Find(Hash hash);
+
 		void Free(VkDescriptorSet set);
 	private:
 		void AllocatePool();
@@ -31,6 +35,7 @@ namespace Renderer
 
 		std::vector<VkDescriptorPool> descriptorSetPools;
 		std::vector<VkDescriptorSet> emptyDescriptors;
+		std::unordered_map<Hash, VkDescriptorSet> descriptorCache;
 
 		VkDescriptorPoolSize poolSize[MAX_DESCRIPTOR_TYPES];
 		uint32 poolSizeCount;
