@@ -6,6 +6,11 @@ TRE_NS_START
 
 namespace Renderer
 {
+	struct RenderPassInfo
+	{
+
+	};
+
 	class RenderPass
 	{
 

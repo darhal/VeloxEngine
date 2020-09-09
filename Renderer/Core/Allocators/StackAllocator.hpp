@@ -31,7 +31,7 @@ namespace Renderer
 				T* ret = this->Allocate(count);
 
 				if (ret)
-					std::fill(ret, ret + count, T());
+					std::fill(ret, ret + count, obj);
 
 				return ret;
 			}

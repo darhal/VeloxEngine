@@ -73,18 +73,89 @@ void Renderer::RenderBackend::EndFrame()
     renderContext.EndFrame(renderDevice, submissions.GetData(), (uint32)submissions.GetElementCount());
 }
 
+Renderer::Image Renderer::RenderBackend::CreateImage(const ImageCreateInfo& createInfo)
+{
+    Image image;
+    MemoryUsage memUsage = MemoryUsage::USAGE_UNKNOWN;
+
+    VkImageCreateInfo info;
+    info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    info.pNext       = NULL;
+    info.flags       = createInfo.flags;
+    info.imageType   = createInfo.type;
+    info.format      = createInfo.format;
+    info.extent      = { createInfo.width, createInfo.height, createInfo.depth };
+    info.mipLevels   = createInfo.levels;
+    info.arrayLayers = createInfo.layers;
+    info.samples     = createInfo.samples;
+    info.usage       = createInfo.usage;
+    info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    switch(createInfo.domain) {
+    case ImageDomain::PHYSICAL:
+        memUsage = MemoryUsage::GPU_ONLY;
+        info.tiling = VK_IMAGE_TILING_OPTIMAL;
+        info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        break;
+    case ImageDomain::TRANSIENT:
+        memUsage = MemoryUsage::GPU_ONLY;
+        info.tiling = VK_IMAGE_TILING_OPTIMAL;
+        info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        info.usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+        break;
+    case ImageDomain::LINEAR_HOST:
+        memUsage = MemoryUsage::CPU_ONLY;
+        info.tiling = VK_IMAGE_TILING_LINEAR;
+        info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+        break;
+    case ImageDomain::LINEAR_HOST_CACHED:
+        memUsage = MemoryUsage::CPU_CACHED;
+        info.tiling = VK_IMAGE_TILING_LINEAR;
+        info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+        break;
+    }
+
+    if (info.mipLevels == 0) {
+        info.mipLevels = 1; // TODO: complete
+    }
+
+    StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
+    info.sharingMode = (VkSharingMode)(createInfo.queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
+
+    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
+        if (Internal::QUEUE_FAMILY_FLAGS[i] & createInfo.queueFamilies) {
+            queueFamilyIndices.AllocateInit(1, renderDevice.GetQueueFamilyIndices().queueFamilies[i]);
+        }
+    }
+
+    if (info.sharingMode == VK_SHARING_MODE_CONCURRENT) {
+        info.queueFamilyIndexCount = queueFamilyIndices.GetElementCount();
+        info.pQueueFamilyIndices = queueFamilyIndices.GetData();
+    }
+
+    if (vkCreateImage(renderDevice.GetDevice(), &info, NULL, &image.apiImage) != VK_SUCCESS) {
+        ASSERTF(true, "failed to create a image!");
+    }
+    
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(renderDevice.GetDevice(), image.apiImage, &memRequirements);
+    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice.internal, memRequirements.memoryTypeBits, memUsage);
+    image.imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, memRequirements.alignment);
+    vkBindImageMemory(renderDevice.GetDevice(), image.apiImage, image.imageMemory.memory, image.imageMemory.offset);
+
+    return image;
+}
+
 Renderer::Buffer Renderer::RenderBackend::CreateBuffer(DeviceSize size, const void* data, uint32 usage,
     MemoryUsage memoryUsage, uint32 queueFamilies)
 {
     Internal::RenderDevice& renderDevice = this->renderDevice.internal;
-
-    uint32 queueFamilyIndices[Internal::QFT_MAX];
-    uint32 queueFamilyIndexCount = 0;
+    StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
     VkSharingMode sharingMode = (VkSharingMode)(queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
 
     for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
         if (Internal::QUEUE_FAMILY_FLAGS[i] & queueFamilies) {
-            queueFamilyIndices[queueFamilyIndexCount++] = renderDevice.queueFamilyIndices.queueFamilies[i];
+            queueFamilyIndices.AllocateInit(1, renderDevice.queueFamilyIndices.queueFamilies[i]);
         }
     }
 
@@ -98,8 +169,8 @@ Renderer::Buffer Renderer::RenderBackend::CreateBuffer(DeviceSize size, const vo
     bufferInfo.flags = 0;
 
     if (bufferInfo.sharingMode == VK_SHARING_MODE_CONCURRENT) {
-        bufferInfo.queueFamilyIndexCount = queueFamilyIndexCount;
-        bufferInfo.pQueueFamilyIndices = queueFamilyIndices;
+        bufferInfo.queueFamilyIndexCount = queueFamilyIndices.GetElementCount();
+        bufferInfo.pQueueFamilyIndices = queueFamilyIndices.GetData();
     }
 
     if (vkCreateBuffer(renderDevice.device, &bufferInfo, NULL, &buffer.apiBuffer) != VK_SUCCESS) {

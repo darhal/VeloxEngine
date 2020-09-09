@@ -7,6 +7,8 @@ TRE_NS_START
 
 namespace Renderer
 {
+	class Image;
+
 	struct StagingBuffer
 	{
 		VkCommandBuffer transferCmdBuff;
@@ -30,6 +32,8 @@ namespace Renderer
 		void Shutdown();
 
 		void Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment = 256, DeviceSize offset = 0);
+
+		void Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment = 256);
 
 		void* Stage(const DeviceSize size, const DeviceSize alignment, VkCommandBuffer& commandBuffer, VkBuffer& buffer, DeviceSize& bufferOffset);
 

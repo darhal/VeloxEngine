@@ -1,5 +1,6 @@
 #include "StagingManager.hpp"
 #include <Renderer/Backend/Buffers/Buffer.hpp>
+#include <Renderer/Backend/Images/Image.hpp>
 
 TRE_NS_START
 
@@ -110,6 +111,56 @@ namespace Renderer
 		memcpy(stageBufferData, data, size);
 		VkBufferCopy bufferCopy{stage->offset, offset, size};
 		vkCmdCopyBuffer(stage->transferCmdBuff, stage->apiBuffer, dstBuffer, 1, &bufferCopy);
+		stage->offset += size;
+	}
+
+	void StagingManager::Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment)
+	{
+		if (size > MAX_UPLOAD_BUFFER_SIZE) {
+			ASSERTF(true, "Can't allocate %d MB in GPU transfer buffer", (uint32)(size / (1024 * 1024)));
+		}
+
+		StagingBuffer* stage = &stagingBuffers[currentBuffer];
+		DeviceSize newOffset = stage->offset + size;
+		DeviceSize padding = (alignment - (newOffset % alignment)) % alignment;
+		stage->offset += padding;
+
+		if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {
+			Flush();
+		}
+
+		stage = &stagingBuffers[currentBuffer];
+		if (stage->submitted) {
+			Wait(*stage);
+		}
+
+		uint8* stageBufferData = stage->data + stage->offset;
+		memcpy(stageBufferData, data, size);
+
+
+		//VkBufferCopy bufferCopy{ stage->offset, offset, size };
+		//vkCmdCopyBuffer(stage->transferCmdBuff, stage->apiBuffer, dstBuffer, 1, &bufferCopy);
+
+		const ImageCreateInfo& info = dstImage.GetInfo();
+
+		VkBufferImageCopy imageCopy;
+		imageCopy.bufferOffset = stage->offset;
+		imageCopy.bufferRowLength = 0;
+		imageCopy.bufferImageHeight = 0;
+		imageCopy.imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT , 0, 0, 1};
+		imageCopy.imageOffset = { 0, 0, 0 };
+		imageCopy.imageExtent = { info.width, info.height, info.depth };
+
+		vkCmdCopyBufferToImage(
+			stage->transferCmdBuff,
+			stage->apiBuffer,
+			dstImage.apiImage,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1, &imageCopy
+		);
+
+		// TODO: manage layer trasnitioning 
+		// https://vulkan-tutorial.com/Texture_mapping/Images (Preparing texture image)
 		stage->offset += size;
 	}
 

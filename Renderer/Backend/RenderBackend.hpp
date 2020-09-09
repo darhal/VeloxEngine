@@ -16,6 +16,7 @@
 #include <Renderer/Backend/CommandList/CommandList.hpp>
 #include <Renderer/Backend/Descriptors/DescriptorSetAlloc.hpp>
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
+#include <Renderer/Backend/Images/Image.hpp>
 
 TRE_NS_START
 
@@ -53,6 +54,8 @@ namespace Renderer
 		Internal::RenderContext& GetCtxInternal() { return renderContext.internal; }
 		Internal::RenderDevice& GetDevInternal() { return renderDevice.internal; }
 		Internal::RenderInstance& GetInstInternal() { return renderInstance.internal; }
+
+		Image CreateImage(const ImageCreateInfo& createInfo);
 
 		Buffer CreateBuffer(DeviceSize size, const void* data, uint32 usage, MemoryUsage memoryUsage, uint32 queueFamilies = QueueFamilyFlag::NONE);
 
