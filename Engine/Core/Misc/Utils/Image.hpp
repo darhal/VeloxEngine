@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
+#include <Engine/Core/Misc/Defines/Common.hpp>
 #include "Color.hpp"
 #include "Common.hpp"
 
@@ -47,6 +47,8 @@ public:
 	FORCEINLINE void SetPixel(uint x, uint y, const Color& color);
 
 	FORCEINLINE uint8* GetBytes() const { return (uint8*)image; }
+
+	FORCEINLINE usize GetSize() const { return width * height * 4; }
 
 	Image(const Image& i)
 	{

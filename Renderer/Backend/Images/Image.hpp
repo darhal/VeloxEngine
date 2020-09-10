@@ -51,28 +51,21 @@ namespace Renderer
 
 	struct ImageCreateInfo
 	{
-		ImageCreateInfo() :
-			domain(ImageDomain::PHYSICAL), width(0), height(0), depth(1), levels(1),
-			format(VK_FORMAT_R8G8B8A8_SRGB), type(VK_IMAGE_TYPE_2D), layers(1), usage(0), queueFamilies(QueueFamilyFlag::NONE),
-			samples(VK_SAMPLE_COUNT_1_BIT), flags(0), misc(0), initialLayout(VK_IMAGE_LAYOUT_GENERAL),
-			swizzle{VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A}
-		{}
-
-		ImageDomain domain;
-		uint32 width;
-		uint32 height;
-		uint32 depth;
-		uint32 levels;
-		VkFormat format;
-		VkImageType type;
-		uint32 layers;
-		VkImageUsageFlags usage;
-		uint32 queueFamilies;
-		VkSampleCountFlagBits samples;
-		VkImageCreateFlags flags;
-		ImageMiscFlags misc;
-		VkImageLayout initialLayout;
-		VkComponentMapping swizzle;
+		ImageDomain domain			  = ImageDomain::PHYSICAL;
+		uint32 width				  = 0;
+		uint32 height				  = 0;
+		uint32 depth				  = 1;
+		uint32 levels				  = 1;
+		VkFormat format				  = VK_FORMAT_R8G8B8A8_SRGB;
+		VkImageType type			  = VK_IMAGE_TYPE_2D;
+		uint32 layers				  = 1;
+		VkImageUsageFlags usage		  = 0;
+		uint32 queueFamilies		  = QueueFamilyFlag::NONE;
+		VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
+		VkImageCreateFlags flags	  = 0;
+		ImageMiscFlags misc			  = 0;
+		VkImageLayout initialLayout   = VK_IMAGE_LAYOUT_UNDEFINED;
+		VkComponentMapping swizzle	  = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
 		// const DeviceAllocation** memory_aliases = nullptr;
 		// uint32 num_memory_aliases = 0;
 
@@ -97,9 +90,14 @@ namespace Renderer
 	class Image
 	{
 	public:
+		Image(VkImage image, const ImageCreateInfo& info, MemoryView memory);
+
 		VkImage GetAPIObject() const { return apiImage; }
 
 		const ImageCreateInfo& GetInfo() const { return info; }
+
+	private:
+		Image() = default;
 	private:
 		ImageCreateInfo info;
 		MemoryView imageMemory;

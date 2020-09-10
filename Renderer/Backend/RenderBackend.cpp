@@ -77,6 +77,7 @@ Renderer::Image Renderer::RenderBackend::CreateImage(const ImageCreateInfo& crea
 {
     Image image;
     MemoryUsage memUsage = MemoryUsage::USAGE_UNKNOWN;
+    image.info = createInfo;
 
     VkImageCreateInfo info;
     info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -160,6 +161,7 @@ Renderer::Buffer Renderer::RenderBackend::CreateBuffer(DeviceSize size, const vo
     }
 
     Buffer buffer;
+    buffer.bufferInfo = {size, usage, memoryUsage, queueFamilies};
 
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -183,8 +185,60 @@ Renderer::Buffer Renderer::RenderBackend::CreateBuffer(DeviceSize size, const vo
     buffer.bufferMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, size, memRequirements.alignment);
     vkBindBufferMemory(renderDevice.device, buffer.apiBuffer, buffer.bufferMemory.memory, buffer.bufferMemory.offset);
 
-    if (data && (memoryUsage == MemoryUsage::CPU_ONLY || memoryUsage == MemoryUsage::CPU_CACHED || memoryUsage == MemoryUsage::CPU_COHERENT)) {
-        buffer.WriteToBuffer(size, data);
+    if (data) {
+        if (memoryUsage == MemoryUsage::CPU_ONLY || memoryUsage == MemoryUsage::CPU_CACHED || memoryUsage == MemoryUsage::CPU_COHERENT) {
+            buffer.WriteToBuffer(size, data);
+        } else {
+            stagingManager.Stage(buffer.apiBuffer, data, size, memRequirements.alignment);
+        }
+    }
+
+    return buffer;
+}
+
+Renderer::Buffer Renderer::RenderBackend::CreateBuffer(const BufferInfo& info, const void* data)
+{
+    Internal::RenderDevice& renderDevice = this->renderDevice.internal;
+    StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
+    VkSharingMode sharingMode = (VkSharingMode)(info.queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
+
+    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
+        if (Internal::QUEUE_FAMILY_FLAGS[i] & info.queueFamilies) {
+            queueFamilyIndices.AllocateInit(1, renderDevice.queueFamilyIndices.queueFamilies[i]);
+        }
+    }
+
+    Buffer buffer;
+    buffer.bufferInfo = info;
+
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size        = info.size;
+    bufferInfo.usage       = info.usage;
+    bufferInfo.sharingMode = sharingMode;
+    bufferInfo.flags       = 0;
+
+    if (bufferInfo.sharingMode == VK_SHARING_MODE_CONCURRENT) {
+        bufferInfo.queueFamilyIndexCount = queueFamilyIndices.GetElementCount();
+        bufferInfo.pQueueFamilyIndices = queueFamilyIndices.GetData();
+    }
+
+    if (vkCreateBuffer(renderDevice.device, &bufferInfo, NULL, &buffer.apiBuffer) != VK_SUCCESS) {
+        ASSERTF(true, "failed to create a buffer!");
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(renderDevice.device, buffer.apiBuffer, &memRequirements);
+    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice, memRequirements.memoryTypeBits, info.domain);
+    buffer.bufferMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, info.size, memRequirements.alignment);
+    vkBindBufferMemory(renderDevice.device, buffer.apiBuffer, buffer.bufferMemory.memory, buffer.bufferMemory.offset);
+
+    if (data) {
+        if (info.domain == MemoryUsage::CPU_ONLY || info.domain == MemoryUsage::CPU_CACHED || info.domain == MemoryUsage::CPU_COHERENT) {
+            buffer.WriteToBuffer(info.size, data);
+        } else {
+            stagingManager.Stage(buffer.apiBuffer, data, info.size, memRequirements.alignment);
+        }
     }
 
     return buffer;

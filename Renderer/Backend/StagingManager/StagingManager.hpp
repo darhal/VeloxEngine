@@ -33,7 +33,7 @@ namespace Renderer
 
 		void Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment = 256, DeviceSize offset = 0);
 
-		void Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment = 256);
+		void Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment = 256, VkImageLayout newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		void* Stage(const DeviceSize size, const DeviceSize alignment, VkCommandBuffer& commandBuffer, VkBuffer& buffer, DeviceSize& bufferOffset);
 
@@ -52,6 +52,8 @@ namespace Renderer
 
 		void ExecuteTransferMemory(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage,
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence = VK_NULL_HANDLE, VkDevice device = VK_NULL_HANDLE);
+
+		void ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout);
 	private:
 		StagingBuffer   stagingBuffers[NUM_FRAMES];
 		uint8*		    mappedData;

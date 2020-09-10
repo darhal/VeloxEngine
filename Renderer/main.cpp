@@ -37,6 +37,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 #include <Engine/Core/Misc/Maths/Maths.hpp>
 #include <Engine/Core/Misc/Utils/Logging.hpp>
+// #include <Engine/Core/Misc/Utils/Image.hpp>
 
 struct MVP
 {
@@ -162,18 +163,20 @@ int main()
     memcpy(data, vertices.data(), vertexSize);
     memcpy(data + vertexSize, indices.data(), indexSize);
 
-    const int MAX_VERTEX_BUFFERS = 1;
-    Buffer vertexIndexBuffer[MAX_VERTEX_BUFFERS];
+    Buffer vertexIndexBuffer = backend.CreateBuffer(
+        { vertexSize + indexSize, BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER | BufferUsage::INDEX_BUFFER }, 
+        data);
 
-    for (int i = 0; i < MAX_VERTEX_BUFFERS; i++) {
-        vertexIndexBuffer[i] =
-            backend.CreateBuffer((vertexSize + indexSize) * (i + 1), NULL,
-                BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER | BufferUsage::INDEX_BUFFER,
-                MemoryUsage::GPU_ONLY, queueFamilies
-            );
+    // TRE::Image image("Assets/box1.jpeg");
+    const uint32_t checkerboard[] = {
+        0u, ~0u, 0u, ~0u,
+        ~0u, 0u, ~0u, 0u,
+        0u, ~0u, 0u, ~0u,
+        ~0u, 0u, ~0u, 0u,
+    };
 
-        backend.GetStagingManager().Stage(vertexIndexBuffer[i].GetAPIObject(), (void*)data, (vertexSize + indexSize) * (i + 1));
-    }
+    Image texture = backend.CreateImage(ImageCreateInfo::Texture2D(4, 4));
+    backend.GetStagingManager().Stage(texture, checkerboard, 4 * 4 * 4);
 
     GraphicsPipeline graphicsPipeline;
     GraphicsState state;
@@ -246,7 +249,7 @@ int main()
         engine.GetRenderContext().TransferBuffers(1, &transferInfo[0]);*/
 
         updateMVP(backend, uniformBuffer);
-        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer[0], uniformBuffer);
+        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer, uniformBuffer);
 
         backend.EndFrame();
         printFPS();

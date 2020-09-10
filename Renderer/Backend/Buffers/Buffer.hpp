@@ -7,25 +7,33 @@ TRE_NS_START
 
 namespace Renderer
 {
+	struct BufferInfo
+	{
+		DeviceSize size      = 0;
+		uint32 usage		 = ~0u;
+		MemoryUsage domain   = MemoryUsage::GPU_ONLY;
+		uint32 queueFamilies = QueueFamilyFlag::NONE;
+	};
+
+	typedef BufferInfo BufferCreateInfo;
+
 	class Buffer
 	{
 	public:
-		static Buffer CreateBuffer(const Internal::RenderDevice& renderDevice, VkDeviceSize size, const void* data, uint32 usage, VkMemoryPropertyFlags properties, VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE, uint32 queueFamilyIndexCount = 0, uint32* queueFamilyIndices = NULL);
-
-		static void DestroyBuffer(const Internal::RenderDevice& renderDevice, Buffer& buffer);
-
 		static uint32 FindMemoryType(const Internal::RenderDevice& renderDevice, uint32 typeFilter, VkMemoryPropertyFlags properties);
 
 		static uint32 FindMemoryTypeIndex(const Internal::RenderDevice& renderDevice, uint32 typeFilter, MemoryUsage usage);
 
-		static void CopyBuffers(VkCommandBuffer cmdBuffer, uint32 count, Internal::TransferBufferInfo* transferBufferInfo);
-
 		void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
 
 		VkBuffer GetAPIObject() const { return apiBuffer; }
+
+		const BufferInfo& GetBufferInfo() const { return bufferInfo; }
+
 	protected:
-		MemoryView		bufferMemory;
-		VkBuffer		apiBuffer;
+		MemoryView bufferMemory;
+		BufferInfo bufferInfo;
+		VkBuffer   apiBuffer;
 
 		friend class RenderBackend;
 	};

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/Misc/Defines/Platform.hpp>
+#include <Engine/Core/Misc/Defines/Common.hpp>
+#include <Engine/Core/Misc/Defines/Platform.hpp>
 #include <vector>
 #include <string>
 #include <map>

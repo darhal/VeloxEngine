@@ -59,6 +59,8 @@ namespace Renderer
 
 		Buffer CreateBuffer(DeviceSize size, const void* data, uint32 usage, MemoryUsage memoryUsage, uint32 queueFamilies = QueueFamilyFlag::NONE);
 
+		Buffer CreateBuffer(const BufferInfo& info, const void* data = NULL);
+
 		Buffer CreateStagingBuffer(DeviceSize size, const void* data);
 
 		RingBuffer CreateRingBuffer(DeviceSize size, const void* data, uint32 usage, MemoryUsage memoryUsage, uint32 queueFamilies = QueueFamilyFlag::NONE);
