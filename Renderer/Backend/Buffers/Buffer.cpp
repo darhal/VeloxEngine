@@ -50,6 +50,11 @@ uint32 Renderer::Buffer::FindMemoryTypeIndex(const Internal::RenderDevice& rende
 	return FindMemoryType(renderDevice, typeFilter, required);
 }
 
+Renderer::Buffer::Buffer(VkBuffer buffer, const BufferInfo& info, const MemoryView& mem) : 
+	apiBuffer(buffer), bufferInfo(info), bufferMemory(mem)
+{
+}
+
 void Renderer::Buffer::WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset)
 {
 	ASSERTF(!data || !bufferMemory.mappedData, "Can't write to a buffer that have its memory unmapped (or data is NULL)");

@@ -20,7 +20,7 @@ VkShaderModule Renderer::ShaderProgram::CreateShaderModule(VkDevice device, cons
     return shaderModule;
 }
 
-void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage)
+void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage, std::unordered_set<uint32>& seenDescriptorSets)
 {
     // Generate reflection data for a shader
     SpvReflectShaderModule module;
@@ -47,18 +47,24 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
     spvReflectEnumerateDescriptorSets(&module, &descSetCount, &descriptorSetsReflect);
 
     for (uint32 i = 0; i < descSetCount; i++) {
-        // printf("Set : %d -  Binding count: %d\n", descriptorSets[i].set, descriptorSets[i].binding_count);
+        if (seenDescriptorSets.find(descriptorSetsReflect[i].set) == seenDescriptorSets.end()) {
+            seenDescriptorSets.emplace(descriptorSetsReflect[i].set);
+            piplineLayout.AddDescriptorSetLayout();
+            printf("Set : %d -  Binding count: %d\n", descriptorSetsReflect[i].set, descriptorSetsReflect[i].binding_count);
+        }
         
         for (uint32 j = 0; j < descriptorSetsReflect[i].binding_count; j++) {
             SpvReflectDescriptorBinding* bindings = descriptorSetsReflect[i].bindings[i];
             DescriptorType descriptorType = (DescriptorType)bindings->descriptor_type;
-
-            if (strncmp(bindings->type_description->type_name, DYNAMIC_KEYWORD_PREFIX, DYNAMIC_KEYWORD_SIZE) && bindings->descriptor_type) {
+           
+            if (bindings->type_description->type_name && bindings->descriptor_type 
+                && strncmp(bindings->type_description->type_name, DYNAMIC_KEYWORD_PREFIX, DYNAMIC_KEYWORD_SIZE)) 
+            {
                 descriptorType = DescriptorType::UNIFORM_BUFFER_DYNC;
             }
 
-            // printf("\tBinding: %d - Name: %s - Descriptor type: %d - Count: %d - Description type: %s\n", bindings->binding, bindings->name, descriptorType, bindings->count, bindings->type_description->type_name);
-            piplineLayout.AddDescriptorSetLayout(bindings->set, bindings->count, descriptorType, VK_SHADER_STAGES[shaderStage], NULL);
+            printf("\tSet: %d - Binding: %d - Name: %s - Descriptor type: %d - Count: %d - Description type: %s\n", bindings->set, bindings->binding, bindings->name, descriptorType, bindings->count, bindings->type_description->type_name);
+            piplineLayout.AddBindingToSet(bindings->set, bindings->binding, bindings->count, descriptorType, VK_SHADER_STAGES[shaderStage], NULL);
         }
     }
 
@@ -82,11 +88,12 @@ void Renderer::ShaderProgram::Create(RenderBackend& renderBackend, const std::in
 {
     shadersCount = 0;
     const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
+    std::unordered_set<uint32> seenDescriptorSets;
 
     for (const auto& shaderStage : shaderStages) {
         auto shaderCode = TRE::Renderer::ReadShaderFile(shaderStage.path);
         shaderModules[shadersCount] = CreateShaderModule(renderDevice.GetDevice(), shaderCode);
-        this->ReflectShaderCode(shaderCode.data(), shaderCode.size(), shaderStage.shaderStage);
+        this->ReflectShaderCode(shaderCode.data(), shaderCode.size(), shaderStage.shaderStage, seenDescriptorSets);
 
         shaderStagesCreateInfo[shadersCount].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shaderStagesCreateInfo[shadersCount].pNext  = NULL;

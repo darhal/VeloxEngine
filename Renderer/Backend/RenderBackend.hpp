@@ -17,6 +17,7 @@
 #include <Renderer/Backend/Descriptors/DescriptorSetAlloc.hpp>
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 #include <Renderer/Backend/Images/Image.hpp>
+#include <Renderer/Backend/Images/Sampler.hpp>
 
 TRE_NS_START
 
@@ -34,6 +35,11 @@ namespace Renderer
 		struct HandlePool
 		{
 			ObjectPool<CommandBuffer> commandBuffers;
+			ObjectPool<Buffer>		  buffers;
+			ObjectPool<RingBuffer>	  ringBuffers;
+			ObjectPool<Image>		  images;
+			ObjectPool<ImageView>	  imageViews;
+			ObjectPool<Sampler>		  samplers;
 		};
 	public:
 		RenderBackend(TRE::Window* wnd);
@@ -47,23 +53,22 @@ namespace Renderer
 		FORCEINLINE RenderInstance& GetRenderInstance() { return renderInstance; }
 		FORCEINLINE RenderContext& GetRenderContext() { return renderContext; }
 		FORCEINLINE RenderDevice& GetRenderDevice() { return renderDevice; }
+
 		FORCEINLINE const RenderInstance& GetRenderInstance() const { return renderInstance; }
 		FORCEINLINE const RenderContext& GetRenderContext() const { return renderContext; }
 		FORCEINLINE const RenderDevice& GetRenderDevice() const { return renderDevice; }
 
-		Internal::RenderContext& GetCtxInternal() { return renderContext.internal; }
-		Internal::RenderDevice& GetDevInternal() { return renderDevice.internal; }
-		Internal::RenderInstance& GetInstInternal() { return renderInstance.internal; }
+		ImageHandle CreateImage(const ImageCreateInfo& createInfo, const void* data = NULL);
 
-		Image CreateImage(const ImageCreateInfo& createInfo);
+		ImageViewHandle CreateImageView(const ImageViewCreateInfo& createInfo);
 
-		Buffer CreateBuffer(DeviceSize size, const void* data, uint32 usage, MemoryUsage memoryUsage, uint32 queueFamilies = QueueFamilyFlag::NONE);
+		bool CreateBufferInternal(VkBuffer& outBuffer, MemoryView& outMemoryView, const BufferInfo& createInfo);
 
-		Buffer CreateBuffer(const BufferInfo& info, const void* data = NULL);
+		BufferHandle CreateBuffer(const BufferInfo& createInfo, const void* data = NULL);
 
-		Buffer CreateStagingBuffer(DeviceSize size, const void* data);
+		RingBufferHandle CreateRingBuffer(const BufferInfo& createInfo, const void* data = NULL);
 
-		RingBuffer CreateRingBuffer(DeviceSize size, const void* data, uint32 usage, MemoryUsage memoryUsage, uint32 queueFamilies = QueueFamilyFlag::NONE);
+		SamplerHandle CreateSampler(const SamplerInfo& createInfo);
 	
 		CommandBufferHandle RequestCommandBuffer(QueueTypes type);
 

@@ -4,6 +4,8 @@
 #include <Renderer/Backend/Pipeline/GraphicsPipeline.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Descriptors/DescriptorSetAlloc.hpp>
+#include <Renderer/Backend/Images/Image.hpp>
+#include <Renderer/Backend/Images/Sampler.hpp>
 
 TRE_NS_START
 
@@ -114,6 +116,38 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
     dirtySets.dirtyBindings[set] |= (1u << binding);
 }
 
+void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const ImageView& texture)
+{
+    ASSERT(set >= MAX_DESCRIPTOR_SET);
+    ASSERT(binding >= MAX_DESCRIPTOR_BINDINGS);
+
+    auto& b = bindings.bindings[set][binding];
+
+    b.resource.image.imageView = texture.GetAPIObject();
+    b.resource.image.imageLayout = texture.GetInfo().image->GetInfo().layout;
+
+    dirtySets.dirtySets |= (1u << set);
+    dirtySets.dirtyBindings[set] |= (1u << binding);
+}
+
+void Renderer::CommandBuffer::SetSampler(uint32 set, uint32 binding, const Sampler& sampler)
+{
+    ASSERT(set >= MAX_DESCRIPTOR_SET);
+    ASSERT(binding >= MAX_DESCRIPTOR_BINDINGS);
+
+    auto& b = bindings.bindings[set][binding];
+    b.resource.image.sampler = sampler.GetAPIObject();
+
+    dirtySets.dirtySets |= (1u << set);
+    dirtySets.dirtyBindings[set] |= (1u << binding);
+}
+
+void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const ImageView& texture, const Sampler& sampler)
+{
+    this->SetTexture(set, binding, texture);
+    this->SetSampler(set, binding, sampler);
+}
+
 void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings)
 {
     ASSERT(set >= MAX_DESCRIPTOR_SET);
@@ -123,7 +157,7 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
     uint32 writeCount = 0;
 
     for (uint32 binding = 0; binding < MAX_DESCRIPTOR_BINDINGS; binding++) {
-        if (dirtySets.dirtyBindings[set] && (1u << binding)) {
+        if (dirtySets.dirtyBindings[set] & (1u << binding)) {
             if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) {
                 writes[writeCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 writes[writeCount].pNext            = NULL;
@@ -137,11 +171,24 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
                 writes[writeCount].pTexelBufferView = NULL;
 
                 writeCount++;
+            } else if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
+                writes[writeCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writes[writeCount].pNext            = NULL;
+                writes[writeCount].dstSet           = descSet;
+                writes[writeCount].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                writes[writeCount].descriptorCount  = 1;
+                writes[writeCount].dstBinding       = binding;
+                writes[writeCount].dstArrayElement  = 0;
+                writes[writeCount].pBufferInfo      = NULL;
+                writes[writeCount].pImageInfo       = &bindings[binding].resource.image;
+                writes[writeCount].pTexelBufferView = NULL;
+
+                writeCount++;
             }
         }
     }
 
-    printf("Updating descriptor sets: count:%u\n", writeCount);
+    printf("Updating descriptor sets: writting count:%u\n", writeCount);
     vkUpdateDescriptorSets(renderContext->GetRenderDevice()->GetDevice(), writeCount, writes, 0, NULL);
 }
 
@@ -173,7 +220,8 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
         this->UpdateDescriptorSet(set, alloc.first, setLayout, resourceBinding);
     }
     
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetAPIObject(), 
+    vkCmdBindDescriptorSets(
+        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetAPIObject(), 
         0, 1, &alloc.first, numDyncOffset, dyncOffset);
 
     allocatedSets[set] = alloc.first;

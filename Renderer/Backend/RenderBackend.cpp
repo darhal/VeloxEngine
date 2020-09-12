@@ -73,11 +73,9 @@ void Renderer::RenderBackend::EndFrame()
     renderContext.EndFrame(renderDevice, submissions.GetData(), (uint32)submissions.GetElementCount());
 }
 
-Renderer::Image Renderer::RenderBackend::CreateImage(const ImageCreateInfo& createInfo)
+Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo& createInfo, const void* data)
 {
-    Image image;
     MemoryUsage memUsage = MemoryUsage::USAGE_UNKNOWN;
-    image.info = createInfo;
 
     VkImageCreateInfo info;
     info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -134,39 +132,93 @@ Renderer::Image Renderer::RenderBackend::CreateImage(const ImageCreateInfo& crea
         info.pQueueFamilyIndices = queueFamilyIndices.GetData();
     }
 
-    if (vkCreateImage(renderDevice.GetDevice(), &info, NULL, &image.apiImage) != VK_SUCCESS) {
+    VkImage apiImage;
+    if (vkCreateImage(renderDevice.GetDevice(), &info, NULL, &apiImage) != VK_SUCCESS) {
         ASSERTF(true, "failed to create a image!");
     }
     
+    MemoryView imageMemory;
     VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(renderDevice.GetDevice(), image.apiImage, &memRequirements);
+    vkGetImageMemoryRequirements(renderDevice.GetDevice(), apiImage, &memRequirements);
     uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice.internal, memRequirements.memoryTypeBits, memUsage);
-    image.imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, memRequirements.alignment);
-    vkBindImageMemory(renderDevice.GetDevice(), image.apiImage, image.imageMemory.memory, image.imageMemory.offset);
+    imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, memRequirements.alignment);
+    vkBindImageMemory(renderDevice.GetDevice(), apiImage, imageMemory.memory, imageMemory.offset);
 
-    return image;
-}
+    ImageHandle ret(objectsPool.images.Allocate(apiImage, createInfo, imageMemory));
 
-Renderer::Buffer Renderer::RenderBackend::CreateBuffer(DeviceSize size, const void* data, uint32 usage,
-    MemoryUsage memoryUsage, uint32 queueFamilies)
-{
-    Internal::RenderDevice& renderDevice = this->renderDevice.internal;
-    StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
-    VkSharingMode sharingMode = (VkSharingMode)(queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
+    // TODO: add layout trasnisioning here: using staging manager:
 
-    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
-        if (Internal::QUEUE_FAMILY_FLAGS[i] & queueFamilies) {
-            queueFamilyIndices.AllocateInit(1, renderDevice.queueFamilyIndices.queueFamilies[i]);
+    if (data) {
+        if (memUsage == MemoryUsage::GPU_ONLY) {
+            stagingManager.Stage(*ret, data, createInfo.width * createInfo.height * FormatToChannelCount(createInfo.format));
+        } else {
+            // TODO: add uploading directly from GPU
+            ASSERTF(true, "Not supported!");
         }
     }
 
-    Buffer buffer;
-    buffer.bufferInfo = {size, usage, memoryUsage, queueFamilies};
+    return ret;
+}
 
+Renderer::ImageViewHandle Renderer::RenderBackend::CreateImageView(const ImageViewCreateInfo& createInfo)
+{
+    ImageViewCreateInfo info = createInfo;
+    const auto& imageCreateInfo = createInfo.image->GetInfo();
+
+    if (createInfo.format == VK_FORMAT_UNDEFINED) {
+        info.format = imageCreateInfo.format;
+    }
+
+    if (createInfo.viewType == VK_IMAGE_VIEW_TYPE_MAX_ENUM) {
+        info.viewType = GetImageViewType(imageCreateInfo, &createInfo);
+    }
+
+    if (createInfo.levels == VK_REMAINING_MIP_LEVELS) {
+        info.levels = imageCreateInfo.levels - createInfo.baseLevel;
+    }
+
+    if (createInfo.layers == VK_REMAINING_ARRAY_LAYERS) {
+        info.layers = imageCreateInfo.layers - createInfo.baseLayer;
+    }
+
+    VkImageViewCreateInfo viewInfo;
+    viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.pNext      = NULL;
+    viewInfo.flags      = 0;
+    viewInfo.image      = info.image->GetAPIObject();
+    viewInfo.viewType   = info.viewType;
+    viewInfo.format     = info.format;
+    viewInfo.components = info.swizzle;
+
+    viewInfo.subresourceRange = { 
+        FormatToAspectMask(viewInfo.format), 
+        info.baseLevel, info.levels, 
+        info.baseLayer, info.layers
+    };
+
+    VkImageView apiImageView;
+    vkCreateImageView(renderDevice.GetDevice(), &viewInfo, NULL, &apiImageView);
+
+    ImageViewHandle ret(objectsPool.imageViews.Allocate(apiImageView, info));
+    return ret;
+}
+
+bool Renderer::RenderBackend::CreateBufferInternal(VkBuffer& outBuffer, MemoryView& outMemoryView, const BufferInfo& createInfo)
+{
+    Internal::RenderDevice& renderDevice = this->renderDevice.internal;
+    StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
+    VkSharingMode sharingMode = (VkSharingMode)(createInfo.queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
+
+    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
+        if (Internal::QUEUE_FAMILY_FLAGS[i] & createInfo.queueFamilies) {
+            queueFamilyIndices.AllocateInit(1, renderDevice.queueFamilyIndices.queueFamilies[i]);
+        }
+    }
+    
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = size;
-    bufferInfo.usage = usage;
+    bufferInfo.size = createInfo.size;
+    bufferInfo.usage = createInfo.usage;
     bufferInfo.sharingMode = sharingMode;
     bufferInfo.flags = 0;
 
@@ -175,97 +227,73 @@ Renderer::Buffer Renderer::RenderBackend::CreateBuffer(DeviceSize size, const vo
         bufferInfo.pQueueFamilyIndices = queueFamilyIndices.GetData();
     }
 
-    if (vkCreateBuffer(renderDevice.device, &bufferInfo, NULL, &buffer.apiBuffer) != VK_SUCCESS) {
+    if (vkCreateBuffer(renderDevice.device, &bufferInfo, NULL, &outBuffer) != VK_SUCCESS) {
         ASSERTF(true, "failed to create a buffer!");
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(renderDevice.device, buffer.apiBuffer, &memRequirements);
-    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice, memRequirements.memoryTypeBits, memoryUsage);
-    buffer.bufferMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, size, memRequirements.alignment);
-    vkBindBufferMemory(renderDevice.device, buffer.apiBuffer, buffer.bufferMemory.memory, buffer.bufferMemory.offset);
+    vkGetBufferMemoryRequirements(renderDevice.device, outBuffer, &memRequirements);
+    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice, memRequirements.memoryTypeBits, createInfo.domain);
+    outMemoryView = gpuMemoryAllocator.Allocate(memoryTypeIndex, createInfo.size, memRequirements.alignment);
+    vkBindBufferMemory(renderDevice.device, outBuffer, outMemoryView.memory, outMemoryView.offset);
 
-    if (data) {
-        if (memoryUsage == MemoryUsage::CPU_ONLY || memoryUsage == MemoryUsage::CPU_CACHED || memoryUsage == MemoryUsage::CPU_COHERENT) {
-            buffer.WriteToBuffer(size, data);
-        } else {
-            stagingManager.Stage(buffer.apiBuffer, data, size, memRequirements.alignment);
-        }
-    }
-
-    return buffer;
+    return true;
 }
 
-Renderer::Buffer Renderer::RenderBackend::CreateBuffer(const BufferInfo& info, const void* data)
+Renderer::BufferHandle Renderer::RenderBackend::CreateBuffer(const BufferInfo& createInfo, const void* data)
 {
-    Internal::RenderDevice& renderDevice = this->renderDevice.internal;
-    StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
-    VkSharingMode sharingMode = (VkSharingMode)(info.queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
+    MemoryView bufferMemory;
+    VkBuffer apiBuffer;
 
-    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
-        if (Internal::QUEUE_FAMILY_FLAGS[i] & info.queueFamilies) {
-            queueFamilyIndices.AllocateInit(1, renderDevice.queueFamilyIndices.queueFamilies[i]);
+    this->CreateBufferInternal(apiBuffer, bufferMemory, createInfo);
+    BufferHandle ret(objectsPool.buffers.Allocate(apiBuffer, createInfo, bufferMemory));
+
+    if (data) {
+        if (createInfo.domain == MemoryUsage::CPU_ONLY || createInfo.domain == MemoryUsage::CPU_CACHED || createInfo.domain == MemoryUsage::CPU_COHERENT) {
+            ret->WriteToBuffer(createInfo.size, data);
+        } else {
+            stagingManager.Stage(ret->apiBuffer, data, createInfo.size, bufferMemory.alignment);
         }
     }
 
-    Buffer buffer;
-    buffer.bufferInfo = info;
+    return ret;
+}
 
-    VkBufferCreateInfo bufferInfo{};
-    bufferInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size        = info.size;
-    bufferInfo.usage       = info.usage;
-    bufferInfo.sharingMode = sharingMode;
-    bufferInfo.flags       = 0;
+Renderer::RingBufferHandle Renderer::RenderBackend::CreateRingBuffer(const BufferInfo& createInfo, const void* data)
+{
+    BufferInfo info = createInfo;
+    const DeviceSize alignment = this->renderDevice.internal.gpuProperties.limits.minUniformBufferOffsetAlignment;
+    const DeviceSize padding = (alignment - (info.size % alignment)) % alignment;
+    const DeviceSize alignedSize = info.size + padding;
+    info.size = alignedSize * NUM_FRAMES - padding;
 
-    if (bufferInfo.sharingMode == VK_SHARING_MODE_CONCURRENT) {
-        bufferInfo.queueFamilyIndexCount = queueFamilyIndices.GetElementCount();
-        bufferInfo.pQueueFamilyIndices = queueFamilyIndices.GetData();
-    }
+    MemoryView bufferMemory;
+    VkBuffer apiBuffer;
 
-    if (vkCreateBuffer(renderDevice.device, &bufferInfo, NULL, &buffer.apiBuffer) != VK_SUCCESS) {
-        ASSERTF(true, "failed to create a buffer!");
-    }
-
-    VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(renderDevice.device, buffer.apiBuffer, &memRequirements);
-    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice, memRequirements.memoryTypeBits, info.domain);
-    buffer.bufferMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, info.size, memRequirements.alignment);
-    vkBindBufferMemory(renderDevice.device, buffer.apiBuffer, buffer.bufferMemory.memory, buffer.bufferMemory.offset);
+    // Removing padding from total size, as we dont need the last bytes for alignement
+    // alignedSize * NUM_FRAMES - padding, data, usage, memoryUsage, queueFamilies
+    this->CreateBufferInternal(apiBuffer, bufferMemory, info);
+    RingBufferHandle ret(objectsPool.ringBuffers.Allocate(apiBuffer, info, bufferMemory, alignedSize, NUM_FRAMES));
 
     if (data) {
         if (info.domain == MemoryUsage::CPU_ONLY || info.domain == MemoryUsage::CPU_CACHED || info.domain == MemoryUsage::CPU_COHERENT) {
-            buffer.WriteToBuffer(info.size, data);
+            ret->WriteToBuffer(createInfo.size, data);
         } else {
-            stagingManager.Stage(buffer.apiBuffer, data, info.size, memRequirements.alignment);
+            stagingManager.Stage(ret->apiBuffer, data, createInfo.size, bufferMemory.alignment);
         }
     }
 
-    return buffer;
+    return ret;
 }
 
-Renderer::Buffer Renderer::RenderBackend::CreateStagingBuffer(DeviceSize size, const void* data)
+Renderer::SamplerHandle Renderer::RenderBackend::CreateSampler(const SamplerInfo& createInfo)
 {
-    return this->CreateBuffer(size, data, BufferUsage::TRANSFER_SRC, MemoryUsage::CPU_ONLY);
-}
-
-Renderer::RingBuffer Renderer::RenderBackend::CreateRingBuffer(DeviceSize size, const void* data, uint32 usage, MemoryUsage memoryUsage, uint32 queueFamilies)
-{
-    const DeviceSize alignment = this->renderDevice.internal.gpuProperties.limits.minUniformBufferOffsetAlignment;
-    const DeviceSize padding = (alignment - (size % alignment)) % alignment;
-    const DeviceSize alignedSize = size + padding;
-
-    // Removing padding from total size, as we dont need the last bytes for alignement
-    Buffer buffer = this->CreateBuffer(alignedSize * NUM_FRAMES - padding, data, usage, memoryUsage, queueFamilies);
-
-    RingBuffer ringBuffer;
-    ringBuffer.apiBuffer = buffer.apiBuffer;
-    ringBuffer.bufferMemory = buffer.bufferMemory;
-    ringBuffer.ring_size = NUM_FRAMES;
-    ringBuffer.unit_size = alignedSize;
-    ringBuffer.bufferIndex = 0;
-
-    return ringBuffer;
+    VkSampler sampler;
+    VkSamplerCreateInfo info;
+    SamplerInfo::FillVkSamplerCreateInfo(createInfo, info);
+    vkCreateSampler(renderDevice.GetDevice(), &info, NULL, &sampler);
+    SamplerHandle ret(objectsPool.samplers.Allocate(sampler, createInfo));
+    return ret;
 }
 
 Renderer::CommandBufferHandle Renderer::RenderBackend::RequestCommandBuffer(QueueTypes type)

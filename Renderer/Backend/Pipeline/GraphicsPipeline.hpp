@@ -13,14 +13,6 @@ namespace Renderer
 {
 	class RenderContext;
 
-	namespace Internal {
-		void CreateGraphicsPipeline(const RenderDevice& renderDevice, GraphicsPipeline2& pipline, const GraphicsPiplineDesc& desc);
-
-		VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& code);
-
-		void CreateRenderPass(const RenderDevice& renderDevice, VkRenderPass* renderPass, const RenderPassDesc& desc);
-	}
-
 	class GraphicsPipeline
 	{
 	public:

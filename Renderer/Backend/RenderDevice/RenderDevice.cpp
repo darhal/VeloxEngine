@@ -58,6 +58,7 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
     }
 
     VkPhysicalDeviceFeatures deviceFeatures{};
+    deviceFeatures.samplerAnisotropy = VK_TRUE; // TODO: check if the GPU supports this feature
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

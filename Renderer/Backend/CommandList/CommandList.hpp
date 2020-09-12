@@ -10,6 +10,8 @@ TRE_NS_START
 namespace Renderer
 {
 	class Buffer;
+	class ImageView;
+	class Sampler;
 	class RenderContext;
 	class GraphicsPipeline;
 	class DescriptorSetLayout;
@@ -61,6 +63,12 @@ namespace Renderer
 
 		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range = VK_WHOLE_SIZE);
 
+		void SetTexture(uint32 set, uint32 binding, const ImageView& texture);
+
+		void SetSampler(uint32 set, uint32 binding, const Sampler& sampler);
+
+		void SetTexture(uint32 set, uint32 binding, const ImageView& texture, const Sampler& sampler);
+
 		FORCEINLINE VkCommandBuffer GetAPIObject() const { return commandBuffer; }
 	private:
 		void UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings);
@@ -79,7 +87,7 @@ namespace Renderer
 	};
 
 	typedef CommandBuffer CommandList;
-	using CommandBufferHandle = Utils::Handle<CommandBuffer>;
+	using CommandBufferHandle = Handle<CommandBuffer>;
 }
 
 TRE_NS_END

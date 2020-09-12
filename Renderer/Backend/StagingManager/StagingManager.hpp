@@ -18,6 +18,7 @@ namespace Renderer
 		uint8*			data;
 
 		bool			submitted;
+		bool			shouldRun; // Used for memory barriers and layout transitioning 
 	};
 
 	class RENDERER_API StagingManager
@@ -33,9 +34,11 @@ namespace Renderer
 
 		void Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment = 256, DeviceSize offset = 0);
 
-		void Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment = 256, VkImageLayout newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		void Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment = 256);
 
 		void* Stage(const DeviceSize size, const DeviceSize alignment, VkCommandBuffer& commandBuffer, VkBuffer& buffer, DeviceSize& bufferOffset);
+
+		void ChangeImageLayout(Image& image, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 		void Prepare();
 
@@ -46,7 +49,6 @@ namespace Renderer
 		void WaitCurrent();
 
 		FORCEINLINE StagingBuffer& GetCurrentStagingBuffer() { return stagingBuffers[currentBuffer]; }
-	
 	private:
 		StagingBuffer* PrepareFlush();
 
@@ -60,6 +62,7 @@ namespace Renderer
 		VkDeviceMemory	memory;
 		VkCommandPool	commandPool;
 		uint32			currentBuffer;
+		
 
 		const Internal::RenderDevice* renderDevice;
 		

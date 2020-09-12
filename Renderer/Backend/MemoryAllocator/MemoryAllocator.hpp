@@ -36,6 +36,7 @@ namespace Renderer
 			VkDeviceSize		offset;
 			VkDeviceSize		size;
 			VkDeviceSize		padding;
+			uint32				alignment;
 		};
 		
 		struct Chunk

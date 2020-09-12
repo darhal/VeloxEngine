@@ -5,6 +5,7 @@
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/Pipeline/PipelineLayout/PipelineLayout.hpp>
 #include <Renderer/Backend/Pipeline/VertexInput/VertexInput.hpp>
+#include <unordered_set>
 
 TRE_NS_START
 
@@ -64,7 +65,7 @@ namespace Renderer
 	private:
 		static VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& code);
 
-		void ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage);
+		void ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage, std::unordered_set<uint32>& seenDescriptorSets);
 	private:
 		VkPipelineShaderStageCreateInfo shaderStagesCreateInfo[MAX_SHADER_STAGES];
 		VkShaderModule shaderModules[MAX_SHADER_STAGES];

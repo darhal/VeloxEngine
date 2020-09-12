@@ -30,6 +30,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Pipeline/GraphicsPipeline.hpp>
 #include <Renderer/Backend/Common/Utils.hpp>
+#include <Renderer/Misc/Color/Color.hpp>
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -46,18 +47,30 @@ struct MVP
     glm::mat4 proj;
 };
 
-std::vector<TRE::Renderer::Internal::Vertex> vertices = {
-    {TRE::vec3{-0.5f, -0.5f, 0.f},  TRE::vec3{1.0f, 0.0f, 0.0f}},
-    {TRE::vec3{0.5f, -0.5f, 0.f},   TRE::vec3{0.0f, 1.0f, 0.0f}},
-    {TRE::vec3{0.5f, 0.5f, 0.f},    TRE::vec3{0.0f, 0.0f, 1.0f}},
-    {TRE::vec3{-0.5f, 0.5f, 0.f},   TRE::vec3{1.0f, 1.0f, 1.0f}}
+struct Vertex
+{
+    TRE::vec3 pos;
+    TRE::vec3 color;
+    TRE::vec2 tex;
+
+    Vertex(const TRE::vec3& pos, const TRE::vec3 color, TRE::vec2 tex) :
+        pos(pos), color(color), tex(tex)
+    {
+    }
+};
+
+std::vector<Vertex> vertices = {
+    {TRE::vec3{-0.5f, -0.5f, 0.f},  TRE::vec3{1.0f, 0.0f, 0.0f},  TRE::vec2{0.0f, 0.0f}},
+    {TRE::vec3{0.5f, -0.5f, 0.f},   TRE::vec3{0.0f, 1.0f, 0.0f},  TRE::vec2{1.0f, 0.0f}},
+    {TRE::vec3{0.5f, 0.5f, 0.f},    TRE::vec3{0.0f, 0.0f, 1.0f},  TRE::vec2{1.0f, 1.0f}},
+    {TRE::vec3{-0.5f, 0.5f, 0.f},   TRE::vec3{1.0f, 1.0f, 1.0f},  TRE::vec2{0.0f, 1.0f}}
 };
 
 const std::vector<uint16_t> indices = {
     0, 1, 2, 2, 3, 0
 };
 
-void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBuffer& buffer)
+void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBufferHandle buffer)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -70,20 +83,23 @@ void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingB
     mvp.model   = glm::rotate(glm::mat4(1.0f), time * TRE::Math::ToRad(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     mvp.view    = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     mvp.proj    = glm::perspective<float>(TRE::Math::ToRad(45.0f), swapchainData.swapChainExtent.width / (float)swapchainData.swapChainExtent.height, 0.1, 10.f);
+    // mvp.proj    = glm::ortho(0, 1, 0, 1, 0, 1);
     mvp.proj[1][1] *= -1;
     
     //mvp.model.transpose();
     //mvp.view.transpose();
     //mvp.proj.transpose();
 
-    buffer.WriteToBuffer(sizeof(mvp), &mvp);
+    buffer->WriteToBuffer(sizeof(mvp), &mvp);
 }
 
 void RenderFrame(TRE::Renderer::RenderBackend& backend,
     TRE::Renderer::GraphicsPipeline& graphicsPipeline,
-    TRE::Renderer::Buffer& vertexIndexBuffer,
+    const TRE::Renderer::BufferHandle vertexIndexBuffer,
     // VkDescriptorSet descriptorSet,
-    const TRE::Renderer::RingBuffer& uniformBuffer)
+    const TRE::Renderer::RingBufferHandle uniformBuffer,
+    const TRE::Renderer::ImageViewHandle texture,
+    const TRE::Renderer::SamplerHandle sampler)
 {
     const TRE::Renderer::Swapchain::SwapchainData& swapChainData = backend.GetRenderContext().GetSwapchain().GetSwapchainData();
     TRE::Renderer::CommandBufferHandle currentCmdBuff = backend.RequestCommandBuffer(TRE::Renderer::QueueTypes::GRAPHICS_ONLY);
@@ -95,12 +111,13 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     currentCmdBuff->SetViewport({ 0.f, 0.f, (float)swapChainData.swapChainExtent.width, (float)swapChainData.swapChainExtent.height, 0.f, 1.f });
     currentCmdBuff->SetScissor({ {0, 0}, swapChainData.swapChainExtent });
 
-    currentCmdBuff->BindVertexBuffer(vertexIndexBuffer);
-    currentCmdBuff->BindIndexBuffer(vertexIndexBuffer, sizeof(vertices[0]) * vertices.size());
+    currentCmdBuff->BindVertexBuffer(*vertexIndexBuffer);
+    currentCmdBuff->BindIndexBuffer(*vertexIndexBuffer, sizeof(vertices[0]) * vertices.size());
 
     // currentCmdBuff->BindDescriptorSet(graphicsPipeline, { descriptorSet }, { uniformBuffer.GetCurrentOffset() });
 
-    currentCmdBuff->SetUniformBuffer(0, 0, uniformBuffer, uniformBuffer.GetCurrentOffset());
+    currentCmdBuff->SetUniformBuffer(0, 0, *uniformBuffer, uniformBuffer->GetCurrentOffset());
+    currentCmdBuff->SetTexture(0, 1, *texture, *sampler);
     currentCmdBuff->DrawIndexed(6);
     
     currentCmdBuff->EndRenderPass();
@@ -148,14 +165,12 @@ int main()
     Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
     RenderBackend backend{ &window };
 
-    Internal::RenderDevice& renderDevice = backend.GetDevInternal();
-
     size_t vertexSize = sizeof(vertices[0]) * vertices.size();
     size_t indexSize = sizeof(indices[0]) * indices.size();
 
     uint32 queueFamilies = QueueFamilyFlag::NONE;
 
-    if (renderDevice.isTransferQueueSeprate){
+    if (backend.GetRenderDevice().IsTransferQueueSeprate()){
         queueFamilies = QueueFamilyFlag::TRANSFER | QueueFamilyFlag::GRAPHICS;
     }
 
@@ -163,20 +178,28 @@ int main()
     memcpy(data, vertices.data(), vertexSize);
     memcpy(data + vertexSize, indices.data(), indexSize);
 
-    Buffer vertexIndexBuffer = backend.CreateBuffer(
+    BufferHandle vertexIndexBuffer = backend.CreateBuffer(
         { vertexSize + indexSize, BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER | BufferUsage::INDEX_BUFFER }, 
         data);
 
     // TRE::Image image("Assets/box1.jpeg");
-    const uint32_t checkerboard[] = {
+    /*uint32 red = Color(228, 3, 3).hex;
+    uint32 orange = Color(255, 140, 0).hex;
+    uint32 yellow = Color(255, 237, 0).hex;
+    uint32 green = Color(0, 128, 38).hex;
+    uint32 blue = Color(0, 77, 255).hex;
+    uint32 purple = Color(117, 7, 135).hex;*/
+
+    const uint32 checkerboard[] = {
         0u, ~0u, 0u, ~0u,
         ~0u, 0u, ~0u, 0u,
         0u, ~0u, 0u, ~0u,
         ~0u, 0u, ~0u, 0u,
     };
 
-    Image texture = backend.CreateImage(ImageCreateInfo::Texture2D(4, 4));
-    backend.GetStagingManager().Stage(texture, checkerboard, 4 * 4 * 4);
+    ImageHandle texture = backend.CreateImage(ImageCreateInfo::Texture2D(4, 4), checkerboard);
+    ImageViewHandle textureView = backend.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
+    SamplerHandle sampler = backend.CreateSampler(SamplerInfo::Sampler2D());
 
     GraphicsPipeline graphicsPipeline;
     GraphicsState state;
@@ -189,15 +212,16 @@ int main()
     );
 
     graphicsPipeline.GetShaderProgram().GetVertexInput().AddBinding(
-        0, sizeof(Internal::Vertex), 
-        VertexInput::LOCATION_0 | VertexInput::LOCATION_1, 
-        { offsetof(Internal::Vertex, pos), offsetof(Internal::Vertex, color) }
+        0, sizeof(Vertex), 
+        VertexInput::LOCATION_0 | VertexInput::LOCATION_1 | VertexInput::LOCATION_2, 
+        { offsetof(Vertex, pos), offsetof(Vertex, color), offsetof(Vertex, tex) }
     );
 
     graphicsPipeline.SetRenderPass(backend.GetRenderContext().GetSwapchain().GetRenderPass());
     graphicsPipeline.Create(backend.GetRenderContext(), state);
 
-    TRE::Renderer::RingBuffer uniformBuffer = backend.CreateRingBuffer(sizeof(MVP), NULL, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_ONLY);
+    
+    RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)));
 
     for (uint32 i = 0; i < 4; i++) {
         float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
@@ -249,7 +273,7 @@ int main()
         engine.GetRenderContext().TransferBuffers(1, &transferInfo[0]);*/
 
         updateMVP(backend, uniformBuffer);
-        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer, uniformBuffer);
+        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer, uniformBuffer, textureView, sampler);
 
         backend.EndFrame();
         printFPS();

@@ -40,6 +40,7 @@ namespace Renderer
 
 		for (int i = 0; i < NUM_FRAMES; ++i) {
 			stagingBuffers[i].offset = 0;
+			stagingBuffers[i].shouldRun = false;
 
 			vkCreateBuffer(device, &bufferCreateInfo, NULL, &stagingBuffers[i].apiBuffer);
 		}
@@ -114,7 +115,7 @@ namespace Renderer
 		stage->offset += size;
 	}
 
-	void StagingManager::Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment, VkImageLayout newLayout)
+	void StagingManager::Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment)
 	{
 		if (size > MAX_UPLOAD_BUFFER_SIZE) {
 			ASSERTF(true, "Can't allocate %d MB in GPU transfer buffer", (uint32)(size / (1024 * 1024)));
@@ -138,7 +139,7 @@ namespace Renderer
 		memcpy(stageBufferData, data, size);
 
 		const ImageCreateInfo& info = dstImage.GetInfo();
-		ChangeImageLayout(stage->transferCmdBuff, dstImage, info.initialLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		ChangeImageLayout(stage->transferCmdBuff, dstImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		VkBufferImageCopy imageCopy;
 		imageCopy.bufferOffset		= stage->offset;
@@ -157,7 +158,7 @@ namespace Renderer
 		);
 
 		// Manage layer trasnitioning :
-		ChangeImageLayout(stage->transferCmdBuff, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, newLayout);
+		ChangeImageLayout(stage->transferCmdBuff, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, info.layout);
 		stage->offset += size;
 	}
 
@@ -191,9 +192,47 @@ namespace Renderer
 		return data;
 	}
 
+	void StagingManager::ChangeImageLayout(Image& image, VkImageLayout oldLayout, VkImageLayout newLayout)
+	{
+		StagingBuffer& stage = stagingBuffers[currentBuffer];
+		stage.shouldRun = true;
+
+		// Put image pipline barrier for changing layout
+		VkImageMemoryBarrier barrier{};
+		barrier.sType				= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.oldLayout			= oldLayout;
+		barrier.newLayout			= newLayout;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;  // TODO: make it a param
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;  // TODO: make it a param
+		barrier.image				= image.GetAPIObject();
+		barrier.srcAccessMask		= 0;
+		barrier.dstAccessMask		= 0;
+		barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT; // TODO: cutomise all of these
+		barrier.subresourceRange.baseMipLevel	= 0;
+		barrier.subresourceRange.levelCount		= 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount		= 1;
+
+		VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+
+		vkCmdPipelineBarrier(
+			stage.transferCmdBuff,
+			sourceStage, destinationStage,
+			0,
+			0, NULL,
+			0, NULL,
+			1, &barrier
+		);
+	}
+
 	StagingBuffer* StagingManager::PrepareFlush()
 	{
 		StagingBuffer& stage = stagingBuffers[currentBuffer];
+
+		if (stage.shouldRun) {
+			return &stage;
+		}
 
 		if (stage.offset == 0 || stage.submitted) {
 			return NULL;
@@ -257,7 +296,6 @@ namespace Renderer
 
 		stage->submitted = true;
 		currentBuffer = (currentBuffer + 1) % NUM_FRAMES;
-
 		return cmdBuff;
 	}
 
@@ -272,6 +310,7 @@ namespace Renderer
 
 		stage.offset	= 0;
 		stage.submitted = false;
+		stage.shouldRun = false;
 
 		VkCommandBufferBeginInfo commandBufferBeginInfo = {};
 		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -320,10 +359,10 @@ namespace Renderer
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		barrier.oldLayout = oldLayout;
 		barrier.newLayout = newLayout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // TODO: Change this
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // TODO: change this
 		barrier.image	= image.GetAPIObject();
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT; // TODO: cutomise all of these
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;

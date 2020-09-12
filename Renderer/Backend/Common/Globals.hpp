@@ -7,6 +7,7 @@
 #include <Renderer/Core/ObjectPool/ObjectPool.hpp>
 #include <Renderer/Core/Allocators/StackAllocator.hpp>
 #include <Renderer/Core/Hash/Hash.hpp>
+#include <Renderer/Core/Handle/Handle.hpp>
 #include <vector>
 #include <array>
 
@@ -55,6 +56,9 @@ namespace Renderer
 
 	template<typename T>
 	using ObjectPool = Utils::ObjectPool<T>;
+
+	template<typename T>
+	using Handle = Utils::Handle<T>;
 
 	template<typename T, size_t S>
 	using StackAlloc = Utils::StackAllocator<T, S>;
@@ -167,6 +171,7 @@ namespace Renderer
 		DeviceSize		size;
 		DeviceSize		padding;
 		void*			mappedData;
+		uint32			alignment;
 	};
 
 	class Buffer;
@@ -200,125 +205,6 @@ namespace Renderer
 
 				return true;
 			}
-		};
-
-		struct Vertex
-		{
-			TRE::vec3 pos;
-			TRE::vec3 color;
-
-			Vertex(const TRE::vec3& pos, const TRE::vec3 color) :
-				pos(pos), color(color)
-			{
-			}
-
-			static VkVertexInputBindingDescription getBindingDescription() {
-				VkVertexInputBindingDescription bindingDescription{};
-				bindingDescription.binding = 0;
-				bindingDescription.stride = sizeof(Vertex);
-				bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-				return bindingDescription;
-			}
-
-			static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-				std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
-
-				attributeDescriptions[0].binding = 0;
-				attributeDescriptions[0].location = 0;
-				attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-				attributeDescriptions[0].offset = offsetof(Vertex, pos);
-
-				attributeDescriptions[1].binding = 0;
-				attributeDescriptions[1].location = 1;
-				attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-				attributeDescriptions[1].offset = offsetof(Vertex, color);
-
-				return attributeDescriptions;
-			}
-		};
-
-
-		struct VertextAttribDesc
-		{
-			uint32		location;
-			uint32		offset;
-			VkFormat	format;
-		};
-
-		struct VertexInputDesc
-		{
-			uint32							binding;
-			uint32							stride;
-			VkVertexInputRate				inputRate;
-
-			TRE::Vector<VertextAttribDesc>	attribDesc;
-		};
-
-		struct InputAssemblyDesc
-		{
-			VkPrimitiveTopology                        topology;
-			VkBool32                                   primitiveRestartEnable;
-		};
-
-		struct RasterizationDesc
-		{
-			VkPolygonMode                              polygonMode;
-			VkCullModeFlags                            cullMode;
-			VkFrontFace                                frontFace;
-
-			VkBool32                                   depthClampEnable;
-			VkBool32                                   rasterizerDiscardEnable;
-			VkBool32                                   depthBiasEnable;
-
-			float                                      depthBiasConstantFactor;
-			float                                      depthBiasClamp;
-			float                                      depthBiasSlopeFactor;
-			float                                      lineWidth;
-		};
-
-		// struct DynamicStateDesc
-
-		// struct VkPipelineColorBlendStateCreateInfo
-
-		// VkPipelineMultisampleStateCreateInfo
-
-		struct PipelineLayoutDesc
-		{
-			TRE::Vector<VkDescriptorSetLayout>	descriptorSetLayout;
-			TRE::Vector<VkPushConstantRange>	pushConstantRanges;
-		};
-
-		typedef TRE::Vector<VkPipelineShaderStageCreateInfo> ShaderStagesDesc;
-
-		struct GraphicsPiplineDesc
-		{
-			ShaderStagesDesc				shaderStagesDesc;
-			TRE::Vector<VertexInputDesc>	vertexInputDesc;
-			InputAssemblyDesc				inputAssemblyDesc;
-			RasterizationDesc				rasterStateDesc;
-			PipelineLayoutDesc				piplineLayoutDesc;
-
-			// VkPipelineColorBlendAttachmentState(*)
-			// VkPipelineColorBlendStateCreateInfo(1)
-
-			// VkPipelineMultisampleStateCreateInfo(1)
-
-			// VkPipelineDynamicStateCreateInfo(1)
-
-			VkViewport						viewport;
-			VkRect2D						scissor;
-
-			uint32_t						subpass;
-			VkPipeline						basePipelineHandle;
-			int32_t							basePipelineIndex;
-		};
-
-		struct GraphicsPipeline2
-		{
-			VkPipeline						pipeline;
-			VkPipelineLayout				pipelineLayout;
-			VkRenderPass					renderPass;
 		};
 
 		struct RenderPassDesc

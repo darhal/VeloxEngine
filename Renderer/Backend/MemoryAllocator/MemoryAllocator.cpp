@@ -6,7 +6,7 @@ Renderer::MemoryAllocator::AllocKey Renderer::MemoryAllocator::AllocPool::Alloca
 {
 	Chunk* chunk = GetLatestChunk(TOTAL_MEM_SIZE);
 	uint32 chunkId = uint32(chunks.size() - 1);
-	BindingInfo bindInfo{ UINT64_MAX, size, 0 };
+	BindingInfo bindInfo{ UINT64_MAX, size, 0, alignment };
 
 	if (FindFreeBinding(*chunk, alignment, bindInfo)) {
 		// Everything is done in the find free binding function
@@ -67,10 +67,12 @@ Renderer::MemoryView Renderer::MemoryAllocator::AllocPool::GetMemoryView(AllocKe
 
 	MemoryView memView;
 	memView.memory = chunks[chunkIndex].memory;
-	memView.offset = chunks[chunkIndex].bindingList[bindingIndex].offset;
-	memView.padding = chunks[chunkIndex].bindingList[bindingIndex].padding;
-	memView.size = chunks[chunkIndex].bindingList[bindingIndex].size;
 	memView.mappedData = chunks[chunkIndex].mappedData;
+
+	memView.size = chunks[chunkIndex].bindingList[bindingIndex].size;
+	memView.offset = chunks[chunkIndex].bindingList[bindingIndex].offset;
+	memView.padding = chunks[chunkIndex].bindingList[bindingIndex].alignment;
+
 	return memView;
 }
 

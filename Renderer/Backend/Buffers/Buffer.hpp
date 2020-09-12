@@ -13,6 +13,11 @@ namespace Renderer
 		uint32 usage		 = ~0u;
 		MemoryUsage domain   = MemoryUsage::GPU_ONLY;
 		uint32 queueFamilies = QueueFamilyFlag::NONE;
+
+		static FORCEINLINE BufferInfo UniformBuffer(DeviceSize size)
+		{
+			return BufferInfo{ size, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_ONLY , QueueFamilyFlag::NONE };
+		}
 	};
 
 	typedef BufferInfo BufferCreateInfo;
@@ -24,6 +29,8 @@ namespace Renderer
 
 		static uint32 FindMemoryTypeIndex(const Internal::RenderDevice& renderDevice, uint32 typeFilter, MemoryUsage usage);
 
+		Buffer(VkBuffer buffer, const BufferInfo& info, const MemoryView& mem);
+
 		void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
 
 		VkBuffer GetAPIObject() const { return apiBuffer; }
@@ -31,12 +38,14 @@ namespace Renderer
 		const BufferInfo& GetBufferInfo() const { return bufferInfo; }
 
 	protected:
-		MemoryView bufferMemory;
 		BufferInfo bufferInfo;
+		MemoryView bufferMemory;
 		VkBuffer   apiBuffer;
 
 		friend class RenderBackend;
 	};
+
+	using BufferHandle = Handle<Buffer>;
 }
 
 TRE_NS_END

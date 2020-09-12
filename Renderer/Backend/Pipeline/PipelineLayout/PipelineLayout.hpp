@@ -31,9 +31,21 @@ namespace Renderer
 			return pipelineLayout;
 		}
 
-		void AddDescriptorSetLayout(uint32 binding, uint32 descriptorCount, DescriptorType descriptorType, ShaderStagesFlags shaderStages, const VkSampler* sampler = NULL)
+		void AddBindingToSet(uint32 set, uint32 binding, uint32 descriptorCount, DescriptorType descriptorType, ShaderStagesFlags shaderStages, const VkSampler* sampler = NULL)
 		{
-			descriptorSetLayouts[descriptorSetLayoutCount++].AddBinding(binding, descriptorCount, descriptorType, shaderStages, sampler);
+			ASSERT(set >= MAX_DESCRIPTOR_SET);
+			descriptorSetLayouts[set].AddBinding(binding, descriptorCount, descriptorType, shaderStages, sampler);
+		}
+
+		void AddBindingToSet(uint32 binding, uint32 descriptorCount, DescriptorType descriptorType, ShaderStagesFlags shaderStages, const VkSampler* sampler = NULL)
+		{
+			ASSERT(descriptorSetLayoutCount <= 0 || descriptorSetLayoutCount >= MAX_DESCRIPTOR_SET);
+			this->AddBindingToSet(descriptorSetLayoutCount - 1, binding, descriptorCount, descriptorType, shaderStages, sampler);
+		}
+
+		uint32 AddDescriptorSetLayout()
+		{
+			return descriptorSetLayoutCount++;
 		}
 
 		void AddPushConstantRange(VkShaderStageFlags stageFlags, uint32_t offset, uint32_t size)

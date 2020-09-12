@@ -195,6 +195,7 @@
     <ClInclude Include="Backend\CommandList\CommandPool.hpp" />
     <ClInclude Include="Backend\Descriptors\DescriptorSetAlloc.hpp" />
     <ClInclude Include="Backend\Images\Image.hpp" />
+    <ClInclude Include="Backend\Images\Sampler.hpp" />
     <ClInclude Include="Backend\Pipeline\PipelineLayout\PipelineLayout.hpp" />
     <ClInclude Include="Backend\Pipeline\VertexInput\VertexInput.hpp" />
     <ClInclude Include="Backend\RenderPass\RenderPass.hpp" />
@@ -459,6 +460,7 @@
     <ClInclude Include="glm\vec4.hpp" />
     <ClInclude Include="glm\vector_relational.hpp" />
     <ClInclude Include="Backend\Pipeline\GraphicsState\GraphicsState.hpp" />
+    <ClInclude Include="Misc\Color\Color.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="Backend\RenderInstance\RenderInstance.hpp" />
     <ClInclude Include="Backend\RenderBackend.hpp" />
@@ -474,6 +476,7 @@
     <ClCompile Include="Backend\CommandList\CommandPool.cpp" />
     <ClCompile Include="Backend\Descriptors\DescriptorSetAlloc.cpp" />
     <ClCompile Include="Backend\Images\Image.cpp" />
+    <ClCompile Include="Backend\Images\Sampler.cpp" />
     <ClCompile Include="Backend\MemoryAllocator\MemoryAllocator.cpp" />
     <ClCompile Include="Backend\Pipeline\PipelineLayout\PipelineLayout.cpp" />
     <ClCompile Include="Backend\RenderContext\RenderContext.cpp" />
