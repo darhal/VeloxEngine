@@ -44,8 +44,9 @@ void Renderer::CommandBuffer::SetScissor(const VkRect2D& scissor)
 
 void Renderer::CommandBuffer::BeginRenderPass(VkClearColorValue clearColor)
 {
-    VkClearValue clearValue = {};
-    clearValue.color = clearColor;
+    VkClearValue clearValue[2];
+    clearValue[0].color = clearColor;
+    clearValue[1].depthStencil = { 1.f, 0 };
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -53,8 +54,8 @@ void Renderer::CommandBuffer::BeginRenderPass(VkClearColorValue clearColor)
     renderPassInfo.framebuffer       = renderContext->GetSwapchain().GetCurrentFramebuffer();
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = renderContext->GetSwapchain().GetExtent();
-    renderPassInfo.clearValueCount   = 1;
-    renderPassInfo.pClearValues      = &clearValue;
+    renderPassInfo.clearValueCount   = 2;
+    renderPassInfo.pClearValues      = clearValue;
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }

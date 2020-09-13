@@ -88,6 +88,14 @@ namespace Renderer
 		void AddViewport(const VkViewport& viewport);
 
 		void AddScissor(const VkRect2D& rect);
+
+		FORCEINLINE InputAssemblyState& GetInputAssemblyState() { return inputAssemblyState; };
+		FORCEINLINE RasterizationState& GetRasterizationState() { return rasterizationState; }
+		FORCEINLINE MultisampleState& GetMultisampleState() { return multisampleState; }
+		FORCEINLINE DepthStencilState& GetDepthStencilState() { return depthStencilState; }
+		FORCEINLINE ColorBlendState& GetColorBlendState() { return colorBlendState; }
+
+		FORCEINLINE ColorBlendAttachmentState& GetColorBlendAttachmentState(uint32 i) { return colorBlendAttachmetns[i]; }
 	private:
 		InputAssemblyState			inputAssemblyState;
 		RasterizationState			rasterizationState;

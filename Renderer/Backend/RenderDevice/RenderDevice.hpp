@@ -19,6 +19,12 @@ namespace Renderer
 
 		int32 CreateLogicalDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx);
 
+		VkDeviceMemory AllocateDedicatedMemory(VkImage image, MemoryUsage memoryDomain = MemoryUsage::GPU_ONLY) const;
+
+		VkDeviceMemory AllocateDedicatedMemory(VkBuffer buffer, MemoryUsage memoryDomain = MemoryUsage::GPU_ONLY) const;
+
+		void FreeDedicatedMemory(VkDeviceMemory memory) const;
+
 		FORCEINLINE VkDevice GetDevice() const { return internal.device; }
 
 		FORCEINLINE VkPhysicalDevice GetGPU() const { return internal.gpu; }

@@ -32,6 +32,11 @@ namespace Renderer
             VkImageView						swapChainImageViews[MAX_IMAGES_COUNT];
             VkFramebuffer					swapChainFramebuffers[MAX_IMAGES_COUNT];
 
+            // Depth/Stencil resources:
+            VkImage                         depthStencilImage;
+            VkImageView                     depthStencilIamgeView;
+            VkDeviceMemory                  depthStencilImageMemory;
+
             // Other misc swapchain data:
             VkFormat						swapChainImageFormat;
             VkExtent2D						swapChainExtent;
@@ -49,8 +54,11 @@ namespace Renderer
         static SwapchainSupportDetails QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 
         void CreateSwapchain();
+
         void CreateSwapchainResources();
+
         void DestroySwapchain();
+
         void CleanupSwapchain();
 
         void UpdateSwapchain();
@@ -60,6 +68,8 @@ namespace Renderer
         void CreateSyncObjects();
 
         void CreateSwapchainRenderPass();
+
+        void CreateDepthResources();
 
         /*void CreateCommandPool(const RenderDevice& renderDevice, RenderContext& ctx);
         void CreateCommandBuffers(const RenderDevice& renderDevice, RenderContext& ctx);
@@ -82,6 +92,15 @@ namespace Renderer
         FORCEINLINE const VkExtent2D& GetExtent() const { return swapchainData.swapChainExtent; }
 
         FORCEINLINE VkFormat GetFormat() const { return swapchainData.swapChainImageFormat; }
+
+    private:
+        VkFormat FindSupportedFormat(const TRE::Vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+
+        VkFormat FindDepthFormat();
+
+        VkImageView CreateImageView(VkImage image, VkFormat format);
+
+        VkImage CreateImage(VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage);
     private:
         SwapchainData           swapchainData;
         SwapchainSupportDetails supportDetails;

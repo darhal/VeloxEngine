@@ -90,6 +90,45 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
     return 0;
 }
 
+VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkImage image, MemoryUsage memoryDomain) const
+{
+    VkDeviceMemory memory;
+    VkMemoryAllocateInfo info;
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(internal.device, image, &memRequirements);
+
+    info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    info.pNext           = NULL;
+    info.allocationSize  = memRequirements.size;
+    info.memoryTypeIndex = Buffer::FindMemoryTypeIndex(internal, memRequirements.memoryTypeBits, memoryDomain);
+
+    vkAllocateMemory(internal.device, &info, NULL, &memory);
+    vkBindImageMemory(internal.device, image, memory, 0);
+    return memory;
+}
+
+VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkBuffer buffer, MemoryUsage memoryDomain) const
+{
+    VkDeviceMemory memory;
+    VkMemoryAllocateInfo info;
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(internal.device, buffer, &memRequirements);
+
+    info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    info.pNext = NULL;
+    info.allocationSize = memRequirements.size;
+    info.memoryTypeIndex = Buffer::FindMemoryTypeIndex(internal, memRequirements.memoryTypeBits, memoryDomain);
+
+    vkAllocateMemory(internal.device, &info, NULL, &memory);
+    vkBindBufferMemory(internal.device, buffer, memory, 0);
+    return memory;
+}
+
+void Renderer::RenderDevice::FreeDedicatedMemory(VkDeviceMemory memory) const
+{
+    vkFreeMemory(internal.device, memory, NULL);
+}
+
 VkPhysicalDevice Renderer::RenderDevice::PickGPU(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx, FPN_RankGPU p_pick_func)
 {
     ASSERT(ctx.surface == NULL);

@@ -205,16 +205,14 @@ namespace Renderer
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;  // TODO: make it a param
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;  // TODO: make it a param
 		barrier.image				= image.GetAPIObject();
-		barrier.srcAccessMask		= 0;
-		barrier.dstAccessMask		= 0;
-		barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT; // TODO: cutomise all of these
-		barrier.subresourceRange.baseMipLevel	= 0;
-		barrier.subresourceRange.levelCount		= 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount		= 1;
+		barrier.srcAccessMask		= ImageUsageToPossibleAccess(image.GetInfo().usage); // TODO: some doubt there
+		barrier.dstAccessMask		= ImageUsageToPossibleAccess(image.GetInfo().usage); // TODO: same doubt
+		barrier.subresourceRange.aspectMask		= FormatToAspectMask(image.GetInfo().format);
+		barrier.subresourceRange.layerCount		= image.GetInfo().layers;
+		barrier.subresourceRange.levelCount		= image.GetInfo().levels;
 
-		VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+		VkPipelineStageFlags sourceStage	  = ImageUsageToPossibleStages(image.GetInfo().usage);
+		VkPipelineStageFlags destinationStage = ImageUsageToPossibleStages(image.GetInfo().usage);
 
 		vkCmdPipelineBarrier(
 			stage.transferCmdBuff,
@@ -356,17 +354,15 @@ namespace Renderer
 	void StagingManager::ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
 		VkImageMemoryBarrier barrier{};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.oldLayout = oldLayout;
-		barrier.newLayout = newLayout;
+		barrier.sType				= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.oldLayout			= oldLayout;
+		barrier.newLayout			= newLayout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // TODO: Change this
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // TODO: change this
-		barrier.image	= image.GetAPIObject();
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT; // TODO: cutomise all of these
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
+		barrier.image				= image.GetAPIObject();
+		barrier.subresourceRange.aspectMask		= FormatToAspectMask(image.GetInfo().format); // TODO: cutomise all of these
+		barrier.subresourceRange.layerCount		= image.GetInfo().layers;
+		barrier.subresourceRange.levelCount		= image.GetInfo().levels;
 
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
@@ -386,6 +382,11 @@ namespace Renderer
 		} else {
 			throw std::invalid_argument("unsupported layout transition!");
 		}
+
+		//barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		//barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		//sourceStage			= ImageUsageToPossibleStages(image.GetInfo().usage);
+		//destinationStage	= ImageUsageToPossibleStages(image.GetInfo().usage);
 
 		vkCmdPipelineBarrier(
 			cmd,

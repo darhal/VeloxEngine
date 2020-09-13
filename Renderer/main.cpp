@@ -39,6 +39,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #include <Engine/Core/Misc/Maths/Maths.hpp>
 #include <Engine/Core/Misc/Utils/Logging.hpp>
 // #include <Engine/Core/Misc/Utils/Image.hpp>
+#include "cube.hpp"
 
 struct MVP
 {
@@ -57,18 +58,35 @@ struct Vertex
         pos(pos), color(color), tex(tex)
     {
     }
+
+    Vertex() = default;
 };
 
 std::vector<Vertex> vertices = {
-    {TRE::vec3{-0.5f, -0.5f, 0.f},  TRE::vec3{1.0f, 0.0f, 0.0f},  TRE::vec2{0.0f, 0.0f}},
-    {TRE::vec3{0.5f, -0.5f, 0.f},   TRE::vec3{0.0f, 1.0f, 0.0f},  TRE::vec2{1.0f, 0.0f}},
-    {TRE::vec3{0.5f, 0.5f, 0.f},    TRE::vec3{0.0f, 0.0f, 1.0f},  TRE::vec2{1.0f, 1.0f}},
-    {TRE::vec3{-0.5f, 0.5f, 0.f},   TRE::vec3{1.0f, 1.0f, 1.0f},  TRE::vec2{0.0f, 1.0f}}
+    { TRE::vec3{-0.5f, -0.5f, 0.f},  TRE::vec3{1.0f, 0.0f, 0.0f},  TRE::vec2{0.0f, 0.0f} },
+    { TRE::vec3{0.5f, -0.5f, 0.f},   TRE::vec3{0.0f, 1.0f, 0.0f},  TRE::vec2{1.0f, 0.0f} },
+    { TRE::vec3{0.5f, 0.5f, 0.f},    TRE::vec3{0.0f, 0.0f, 1.0f},  TRE::vec2{1.0f, 1.0f} },
+    { TRE::vec3{-0.5f, 0.5f, 0.f},   TRE::vec3{1.0f, 1.0f, 1.0f},  TRE::vec2{0.0f, 1.0f} },
+
+    // Cube:
+    //{ TRE::vec3{-0.5, -0.5,  0.5},   TRE::vec3{1.0f, 0.0f, 0.0f},  TRE::vec2{0.0f, 0.0f}  },
+    //{ TRE::vec3{0.5, -0.5,  0.5},    TRE::vec3{0.0f, 1.0f, 0.0f},  TRE::vec2{1.0f, 0.0f}  },
+    //{ TRE::vec3{-0.5, 0.5,  0.5},  TRE::vec3{0.0f, 0.0f, 1.0f},  TRE::vec2{1.0f, 1.0f}  },
+    //{ TRE::vec3{0.5, 0.5,  0.5},   TRE::vec3{1.0f, 1.0f, 1.0f},  TRE::vec2{0.0f, 1.0f}  },
+    //{ TRE::vec3{-0.5, -0.5, -0.5},   TRE::vec3{1.0f, 0.0f, 0.0f},  TRE::vec2{0.0f, 0.0f}  },
+    //{ TRE::vec3{0.5, -0.5, -0.5},    TRE::vec3{0.0f, 1.0f, 0.0f},  TRE::vec2{1.0f, 0.0f}  },
+    //{ TRE::vec3{-0.5, 0.5, -0.5},  TRE::vec3{0.0f, 0.0f, 1.0f},  TRE::vec2{1.0f, 1.0f}  },
+    //{ TRE::vec3{0.5, 0.5, -0.5},   TRE::vec3{1.0f, 1.0f, 1.0f},  TRE::vec2{0.0f, 1.0f}  },
 };
 
 const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0
+     0, 1, 2, 2, 3, 0
+
+    // Cube:
+    //0, 1, 2, 3, 7, 1, 5, 4, 7, 6, 2, 4, 0, 1
 };
+
+#define CUBE
 
 void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBufferHandle buffer)
 {
@@ -81,6 +99,9 @@ void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingB
     MVP mvp{};
 
     mvp.model   = glm::rotate(glm::mat4(1.0f), time * TRE::Math::ToRad(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+#if defined(CUBE)
+    mvp.model   =  glm::scale(mvp.model, glm::vec3(0.5f, 0.5f, 0.5f));
+#endif
     mvp.view    = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     mvp.proj    = glm::perspective<float>(TRE::Math::ToRad(45.0f), swapchainData.swapChainExtent.width / (float)swapchainData.swapChainExtent.height, 0.1, 10.f);
     // mvp.proj    = glm::ortho(0, 1, 0, 1, 0, 1);
@@ -112,13 +133,18 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     currentCmdBuff->SetScissor({ {0, 0}, swapChainData.swapChainExtent });
 
     currentCmdBuff->BindVertexBuffer(*vertexIndexBuffer);
+#if !defined(CUBE)
     currentCmdBuff->BindIndexBuffer(*vertexIndexBuffer, sizeof(vertices[0]) * vertices.size());
-
-    // currentCmdBuff->BindDescriptorSet(graphicsPipeline, { descriptorSet }, { uniformBuffer.GetCurrentOffset() });
+#endif
 
     currentCmdBuff->SetUniformBuffer(0, 0, *uniformBuffer, uniformBuffer->GetCurrentOffset());
     currentCmdBuff->SetTexture(0, 1, *texture, *sampler);
-    currentCmdBuff->DrawIndexed(6);
+
+#if !defined(CUBE)
+    currentCmdBuff->DrawIndexed(indices.size());
+#else
+    currentCmdBuff->Draw(36);
+#endif
     
     currentCmdBuff->EndRenderPass();
     currentCmdBuff->End();
@@ -165,15 +191,15 @@ int main()
     Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
     RenderBackend backend{ &window };
 
-    size_t vertexSize = sizeof(vertices[0]) * vertices.size();
-    size_t indexSize = sizeof(indices[0]) * indices.size();
-
     uint32 queueFamilies = QueueFamilyFlag::NONE;
 
-    if (backend.GetRenderDevice().IsTransferQueueSeprate()){
+    if (backend.GetRenderDevice().IsTransferQueueSeprate()) {
         queueFamilies = QueueFamilyFlag::TRANSFER | QueueFamilyFlag::GRAPHICS;
     }
 
+#if !defined(CUBE)
+    size_t vertexSize = sizeof(vertices[0]) * vertices.size();
+    size_t indexSize = sizeof(indices[0]) * indices.size();
     char* data = new char[vertexSize + indexSize];
     memcpy(data, vertices.data(), vertexSize);
     memcpy(data + vertexSize, indices.data(), indexSize);
@@ -181,7 +207,16 @@ int main()
     BufferHandle vertexIndexBuffer = backend.CreateBuffer(
         { vertexSize + indexSize, BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER | BufferUsage::INDEX_BUFFER }, 
         data);
-
+#else
+    Vertex vertecies[12 * 3];
+    for (int32_t i = 0; i < 12 * 3; i++) {
+        vertecies[i].pos = TRE::vec3{ g_vertex_buffer_data[i * 3], g_vertex_buffer_data[i * 3 + 1], g_vertex_buffer_data[i * 3 + 2] };
+        vertecies[i].tex = TRE::vec2{ g_uv_buffer_data[2 * i], g_uv_buffer_data[2 * i + 1] };
+    }
+    BufferHandle vertexIndexBuffer = backend.CreateBuffer(
+        { sizeof(vertecies), BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER },
+        vertecies);
+#endif
     // TRE::Image image("Assets/box1.jpeg");
     /*uint32 red = Color(228, 3, 3).hex;
     uint32 orange = Color(255, 140, 0).hex;
@@ -203,6 +238,13 @@ int main()
 
     GraphicsPipeline graphicsPipeline;
     GraphicsState state;
+
+    auto& depthStencilState = state.GetDepthStencilState();
+    depthStencilState.depthTestEnable = true;
+    depthStencilState.depthWriteEnable = true;
+    depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+
+    state.GetRasterizationState().cullMode = VK_CULL_MODE_NONE;
 
     graphicsPipeline.GetShaderProgram().Create(backend,
         { 
@@ -279,7 +321,9 @@ int main()
         printFPS();
     }
     
+#if !defined(CUBE)
     delete[] data;
+#endif
     getchar();
 }
 

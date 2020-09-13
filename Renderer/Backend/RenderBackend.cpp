@@ -144,9 +144,7 @@ Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo
     imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, memRequirements.alignment);
     vkBindImageMemory(renderDevice.GetDevice(), apiImage, imageMemory.memory, imageMemory.offset);
 
-    ImageHandle ret(objectsPool.images.Allocate(apiImage, createInfo, imageMemory));
-
-    // TODO: add layout trasnisioning here: using staging manager:
+    ImageHandle ret = ImageHandle(objectsPool.images.Allocate(apiImage, createInfo, imageMemory));
 
     if (data) {
         if (memUsage == MemoryUsage::GPU_ONLY) {
@@ -155,6 +153,8 @@ Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo
             // TODO: add uploading directly from GPU
             ASSERTF(true, "Not supported!");
         }
+    } else {
+        // TODO: add layout trasnisioning here: using staging manager:
     }
 
     return ret;

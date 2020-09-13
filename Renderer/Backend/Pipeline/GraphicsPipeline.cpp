@@ -5,7 +5,6 @@
 
 TRE_NS_START
 
-
 void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, const VertexInput& vertexInput, GraphicsState& state)
 {
     if (state.viewportState.viewportCount == 0) {

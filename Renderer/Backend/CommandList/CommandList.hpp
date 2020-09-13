@@ -10,6 +10,7 @@ TRE_NS_START
 namespace Renderer
 {
 	class Buffer;
+	class Image;
 	class ImageView;
 	class Sampler;
 	class RenderContext;
@@ -68,6 +69,16 @@ namespace Renderer
 		void SetSampler(uint32 set, uint32 binding, const Sampler& sampler);
 
 		void SetTexture(uint32 set, uint32 binding, const ImageView& texture, const Sampler& sampler);
+
+		void Barrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage,
+			VkAccessFlags dstAccess);
+
+		void BufferBarrier(const Buffer& buffer, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess,
+			VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
+
+		void ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout,
+			VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage,
+			VkAccessFlags dstAccess);
 
 		FORCEINLINE VkCommandBuffer GetAPIObject() const { return commandBuffer; }
 	private:

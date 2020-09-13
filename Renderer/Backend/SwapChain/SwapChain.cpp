@@ -3,6 +3,7 @@
 #include <Renderer/Window/Window.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 #include <Renderer/Backend/RenderContext/RenderContext.hpp>
+#include <Renderer/Backend/Images/ImageHelper.hpp>
 
 TRE_NS_START
 
@@ -131,6 +132,10 @@ void Renderer::Swapchain::CleanupSwapchain()
         vkDestroyFramebuffer(device, swapchainData.swapChainFramebuffers[i], NULL);
         vkDestroyImageView(device, swapchainData.swapChainImageViews[i], NULL);
     }
+
+    vkDestroyImageView(device, swapchainData.depthStencilIamgeView, NULL);
+    vkDestroyImage(device, swapchainData.depthStencilImage, NULL);
+    this->renderDevice.FreeDedicatedMemory(swapchainData.depthStencilImageMemory);
 }
 
 void Renderer::Swapchain::RecreateSwapchain()
@@ -187,36 +192,22 @@ void Renderer::Swapchain::CreateSyncObjects()
 
 void Renderer::Swapchain::CreateSwapchainResources()
 {
+    this->CreateDepthResources();
+
     for (size_t i = 0; i < imagesCount; i++) {
         // Create Image view:
-        VkImageViewCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        createInfo.image = swapchainData.swapChainImages[i];
-        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = swapchainData.swapChainImageFormat;
-        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        createInfo.subresourceRange.baseMipLevel = 0;
-        createInfo.subresourceRange.levelCount = 1;
-        createInfo.subresourceRange.baseArrayLayer = 0;
-        createInfo.subresourceRange.layerCount = 1;
-
-        if (vkCreateImageView(renderDevice.GetDevice(), &createInfo, NULL, &swapchainData.swapChainImageViews[i]) != VK_SUCCESS) {
-            ASSERTF(true, "Failed to create image views!");
-        }
+        swapchainData.swapChainImageViews[i] = CreateImageView(swapchainData.swapChainImages[i], swapchainData.swapChainImageFormat);
 
         // Create framebuffers:
         VkImageView attachments[] = {
-            swapchainData.swapChainImageViews[i]
+            swapchainData.swapChainImageViews[i],
+            swapchainData.depthStencilIamgeView
         };
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass      = renderPass;
-        framebufferInfo.attachmentCount = 1;
+        framebufferInfo.attachmentCount = 2;
         framebufferInfo.pAttachments    = attachments;
         framebufferInfo.width           = swapchainData.swapChainExtent.width;
         framebufferInfo.height          = swapchainData.swapChainExtent.height;
@@ -230,6 +221,20 @@ void Renderer::Swapchain::CreateSwapchainResources()
 
 void Renderer::Swapchain::CreateSwapchainRenderPass()
 {
+    VkAttachmentDescription depthAttachment{};
+    depthAttachment.format = FindDepthFormat();
+    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference depthAttachmentRef{};
+    depthAttachmentRef.attachment = 1;
+    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
     VkAttachmentDescription colorAttachment{};
     colorAttachment.format = swapchainData.swapChainImageFormat;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -248,6 +253,7 @@ void Renderer::Swapchain::CreateSwapchainRenderPass()
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
+    subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
     VkSubpassDependency dependency{};
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -257,18 +263,28 @@ void Renderer::Swapchain::CreateSwapchainRenderPass()
     dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
+    VkAttachmentDescription attachments[] = { colorAttachment, depthAttachment};
+
     VkRenderPassCreateInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = 1;
-    renderPassInfo.pAttachments = &colorAttachment;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
+    renderPassInfo.attachmentCount  = 2;
+    renderPassInfo.pAttachments     = attachments;
+    renderPassInfo.subpassCount     = 1;
+    renderPassInfo.pSubpasses       = &subpass;
+    renderPassInfo.dependencyCount  = 1;
+    renderPassInfo.pDependencies    = &dependency;
 
     if (vkCreateRenderPass(renderDevice.GetDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
         throw std::runtime_error("failed to create render pass!");
     }
+}
+
+void Renderer::Swapchain::CreateDepthResources()
+{
+    VkFormat depthFormat = FindDepthFormat();
+    swapchainData.depthStencilImage = CreateImage(depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    swapchainData.depthStencilImageMemory = renderDevice.AllocateDedicatedMemory(swapchainData.depthStencilImage); // alocate and bind memory
+    swapchainData.depthStencilIamgeView = this->CreateImageView(swapchainData.depthStencilImage, depthFormat);
 }
 
 VkSurfaceFormatKHR Renderer::Swapchain::ChooseSwapSurfaceFormat(const TRE::Vector<VkSurfaceFormatKHR>& availableFormats)
@@ -316,6 +332,85 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 VkFramebuffer Renderer::Swapchain::GetCurrentFramebuffer() const 
 { 
     return swapchainData.swapChainFramebuffers[renderContext.GetCurrentImageIndex()]; 
+}
+
+VkFormat Renderer::Swapchain::FindSupportedFormat(const TRE::Vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+{
+    for (VkFormat format : candidates) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(renderDevice.GetGPU(), format, &props);
+
+        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+            return format;
+        } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+            return format;
+        }
+    }
+
+    ASSERTF(true, "Failed to find supported format!");
+    return VK_FORMAT_UNDEFINED;
+}
+
+VkFormat Renderer::Swapchain::FindDepthFormat()
+{
+    return this->FindSupportedFormat(
+        { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+    );
+}
+
+VkImageView Renderer::Swapchain::CreateImageView(VkImage image, VkFormat format)
+{
+    VkImageView outView;
+
+    // Create Image view:
+    VkImageViewCreateInfo createInfo{};
+    createInfo.sType        = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    createInfo.image        = image;
+    createInfo.viewType     = VK_IMAGE_VIEW_TYPE_2D;
+    createInfo.format       = format;
+    createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.subresourceRange.aspectMask      = FormatToAspectMask(format);
+    createInfo.subresourceRange.baseMipLevel    = 0;
+    createInfo.subresourceRange.levelCount      = 1;
+    createInfo.subresourceRange.baseArrayLayer  = 0;
+    createInfo.subresourceRange.layerCount      = 1;
+
+    if (vkCreateImageView(renderDevice.GetDevice(), &createInfo, NULL, &outView) != VK_SUCCESS) {
+        ASSERTF(true, "Failed to create image views!");
+    }
+
+    return outView;
+}
+
+VkImage Renderer::Swapchain::CreateImage(VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage)
+{
+    VkImage outImage;
+
+    VkImageCreateInfo imageInfo{};
+    imageInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType     = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width  = swapchainData.swapChainExtent.width;
+    imageInfo.extent.height = swapchainData.swapChainExtent.height;
+    imageInfo.extent.depth  = 1;
+    imageInfo.mipLevels     = 1;
+    imageInfo.arrayLayers   = 1;
+    imageInfo.format        = format;
+    imageInfo.tiling        = tiling;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.usage         = usage;
+    imageInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateImage(renderDevice.GetDevice(), &imageInfo, NULL, &outImage) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create image!");
+    }
+
+    return outImage;
 }
 
 /*void Renderer::Swapchain::BuildImageOwnershipCmd(const RenderDevice& renderDevice, RenderContext& ctx, uint32 imageIndex)
