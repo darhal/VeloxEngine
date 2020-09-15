@@ -194,6 +194,7 @@
     <ClInclude Include="Backend\CommandList\CommandList.hpp" />
     <ClInclude Include="Backend\CommandList\CommandPool.hpp" />
     <ClInclude Include="Backend\Descriptors\DescriptorSetAlloc.hpp" />
+    <ClInclude Include="Backend\RenderPass\Framebuffer.hpp" />
     <ClInclude Include="cube.hpp" />
     <ClInclude Include="Backend\Images\Image.hpp" />
     <ClInclude Include="Backend\Images\ImageHelper.hpp" />

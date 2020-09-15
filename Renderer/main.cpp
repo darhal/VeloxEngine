@@ -244,7 +244,7 @@ int main()
     depthStencilState.depthWriteEnable = true;
     depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
 
-    state.GetRasterizationState().cullMode = VK_CULL_MODE_NONE;
+    // state.GetRasterizationState().cullMode = VK_CULL_MODE_NONE;
 
     graphicsPipeline.GetShaderProgram().Create(backend,
         { 
