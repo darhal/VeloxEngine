@@ -14,11 +14,11 @@ namespace Renderer
 	class Framebuffer
 	{
 	public:
-
+		Framebuffer(const RenderPass& rp, const RenderPassInfo& info);
 	private:
+		RenderPassInfo renderPassInfo;
 		VkFramebuffer framebuffer;
 		const RenderPass& renderPass;
-		RenderPassInfo renderPassInfo;
 		uint32 width;
 		uint32 height;
 	};

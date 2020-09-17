@@ -10,6 +10,16 @@ namespace Renderer
 	class ImageView;
 	class RenderBackend;
 
+	enum RenderPassOp
+	{
+		RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT = 1 << 0,
+		RENDER_PASS_OP_LOAD_DEPTH_STENCIL_BIT = 1 << 1,
+		RENDER_PASS_OP_STORE_DEPTH_STENCIL_BIT = 1 << 2,
+		RENDER_PASS_OP_DEPTH_STENCIL_READ_ONLY_BIT = 1 << 3,
+		RENDER_PASS_OP_ENABLE_TRANSIENT_STORE_BIT = 1 << 4,
+		RENDER_PASS_OP_ENABLE_TRANSIENT_LOAD_BIT = 1 << 5
+	};
+
 	struct RenderPassInfo
 	{
 		const ImageView* colorAttachments[MAX_ATTACHMENTS];
@@ -20,10 +30,12 @@ namespace Renderer
 		uint32 loadAttachments = 0;
 		uint32 storeAttachments = 0;
 
+		uint32 opFlags = 0;
+
 		VkRect2D renderArea = { { 0, 0 }, { UINT32_MAX, UINT32_MAX } };
 
-		VkClearColorValue clear_color[MAX_ATTACHMENTS] = {};
-		VkClearDepthStencilValue clear_depth_stencil = { 1.0f, 0 };
+		VkClearColorValue clearColor[MAX_ATTACHMENTS] = {};
+		VkClearDepthStencilValue clearDepthStencil = { 1.0f, 0 };
 
 		enum class DepthStencil
 		{
@@ -43,8 +55,8 @@ namespace Renderer
 			DepthStencil depth_stencil_mode = DepthStencil::READ_WRITE;
 		};
 
-		// If 0/nullptr, assume a default subpass.
-		const Subpass* subpasses = NULL;
+		// If 0/NULL, assume a default subpass.
+		Subpass* subpasses = NULL;
 		uint32 subpassesCount = 0;
 	};
 
@@ -65,6 +77,9 @@ namespace Renderer
 	private:
 		VkRenderPass renderPass;
 		std::vector<SubpassInfo> subpassesInfo;
+
+		VkFormat colorAttachmentsFormat[MAX_ATTACHMENTS] = {};
+		VkFormat depthStencilFormat;
 	};
 }
 

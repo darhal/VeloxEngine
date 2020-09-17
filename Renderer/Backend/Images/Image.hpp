@@ -17,6 +17,7 @@ namespace Renderer
 
 		const ImageViewCreateInfo& GetInfo() const { return info; }
 
+		const Image* GetImage() const { return info.image; }
 	private:
 		ImageView() = default;
 	private:

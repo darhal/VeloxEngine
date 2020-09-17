@@ -485,6 +485,8 @@
     <ClCompile Include="Backend\RenderContext\RenderContext.cpp" />
     <ClCompile Include="Backend\Pipeline\GraphicsPipeline.cpp" />
     <ClCompile Include="Backend\RenderDevice\RenderDevice.cpp" />
+    <ClCompile Include="Backend\RenderPass\Framebuffer.cpp" />
+    <ClCompile Include="Backend\RenderPass\RenderPass.cpp" />
     <ClCompile Include="Backend\ShaderProgram\ShaderReflect\spirv_reflect.c" />
     <ClCompile Include="Backend\Swapchain\Swapchain.cpp" />
     <ClCompile Include="Backend\WindowSurface\WindowSurface.cpp" />
