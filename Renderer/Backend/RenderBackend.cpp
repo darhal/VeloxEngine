@@ -7,7 +7,10 @@
 
 TRE_NS_START
 
-Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) : stagingManager{ &renderDevice.internal }, renderContext(&renderDevice)
+Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) : 
+    stagingManager{ &renderDevice.internal }, 
+    renderContext(&renderDevice),
+    framebufferAllocator(&renderDevice)
 {
     renderDevice.internal.renderContext = &renderContext.internal;
     renderContext.internal.renderDevice = &renderDevice.internal;
@@ -300,7 +303,7 @@ Renderer::CommandBufferHandle Renderer::RenderBackend::RequestCommandBuffer(Queu
 {
     PerFrame& frame = Frame();
     VkCommandBuffer buffer = frame.commandPools[0][(uint32)type].RequestCommandBuffer();
-    CommandBufferHandle handle(objectsPool.commandBuffers.Allocate(&renderContext, buffer, CommandBuffer::Type::GENERIC));
+    CommandBufferHandle handle(objectsPool.commandBuffers.Allocate(this, buffer, CommandBuffer::Type::GENERIC));
     return handle;
 }
 
@@ -332,5 +335,86 @@ void Renderer::RenderBackend::CreateShaderProgram(const std::initializer_list<Sh
     shaderProgramOut->Create(*this, shaderStages);
 }
 
+const Renderer::RenderPass& Renderer::RenderBackend::RequestRenderPass(const RenderPassInfo& info, bool compatible)
+{
+    Hasher h;
+    VkFormat formats[MAX_ATTACHMENTS];
+    VkFormat depthStencilFormat;
+    uint32 lazy = 0;
+    uint32 optimal = 0;
+
+    for (uint32 i = 0; i < info.colorAttachmentCount; i++) {
+        ASSERT(!info.colorAttachments[i]);
+
+        formats[i] = info.colorAttachments[i]->GetInfo().format;
+
+        if (info.colorAttachments[i]->GetImage()->GetInfo().domain == ImageDomain::TRANSIENT) {
+            lazy |= 1u << i;
+        }
+
+        if (info.colorAttachments[i]->GetImage()->GetInfo().layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+            optimal |= 1u << i;
+        }
+    }
+
+    if (info.depthStencil) {
+        if (info.depthStencil->GetImage()->GetInfo().domain == ImageDomain::TRANSIENT)
+            lazy |= 1u << info.colorAttachmentCount;
+        if (info.depthStencil->GetImage()->GetInfo().layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+            optimal |= 1u << info.colorAttachmentCount;
+    }
+
+    h.u32(info.baseLayer);
+    h.u32(info.layersCount);
+    h.u32(info.subpassesCount);
+
+    for (unsigned i = 0; i < info.subpassesCount; i++) {
+        h.u32(info.subpasses[i].colorAttachmentsCount);
+        h.u32(info.subpasses[i].inputAttachmentsCount);
+        h.u32(info.subpasses[i].resolveAttachmentsCount);
+        h.u32(static_cast<uint32_t>(info.subpasses[i].depth_stencil_mode));
+
+        for (unsigned j = 0; j < info.subpasses[i].colorAttachmentsCount; j++)
+            h.u32(info.subpasses[i].colorAttachments[j]);
+        for (unsigned j = 0; j < info.subpasses[i].inputAttachmentsCount; j++)
+            h.u32(info.subpasses[i].inputAttachments[j]);
+        for (unsigned j = 0; j < info.subpasses[i].resolveAttachmentsCount; j++)
+            h.u32(info.subpasses[i].resolveAttachments[j]);
+    }
+
+    depthStencilFormat = info.depthStencil ? info.depthStencil->GetInfo().format : VK_FORMAT_UNDEFINED;
+    h.Data(formats, info.colorAttachmentCount * sizeof(VkFormat));
+    h.u32(info.colorAttachmentCount);
+    h.u32(depthStencilFormat);
+
+    // Compatible render passes do not care about load/store, or image layouts.
+    if (!compatible) {
+        h.u32(info.opFlags);
+        h.u32(info.clearAttachments);
+        h.u32(info.loadAttachments);
+        h.u32(info.storeAttachments);
+        h.u32(optimal);
+    }
+
+    // Lazy flag can change external subpass dependencies, which is not compatible.
+    h.u32(lazy);
+
+    Hash hash = h.Get();
+    auto rp = renderPasses.find(hash);
+
+    if (rp != renderPasses.end()) {
+        return rp->second;
+    }
+
+    auto rp = renderPasses.emplace(hash, RenderPass(renderDevice, info));
+    rp->second.hash = h.Get();
+    return rp->second;
+}
+
+const Renderer::Framebuffer& Renderer::RenderBackend::RequestFramebuffer(const RenderPassInfo& info)
+{
+    const RenderPass& rp = this->RequestRenderPass(info);
+    return framebufferAllocator.RequestFramebuffer(rp, info);
+}
 
 TRE_NS_END

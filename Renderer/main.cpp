@@ -127,6 +127,7 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 
     currentCmdBuff->Begin();
 
+    // TODO: Tommrow we should test the new begin render pass function
     currentCmdBuff->BeginRenderPass({ 0.051f, 0.051f, 0.051f, 0.0f });
     currentCmdBuff->BindPipeline(graphicsPipeline);
     currentCmdBuff->SetViewport({ 0.f, 0.f, (float)swapChainData.swapChainExtent.width, (float)swapChainData.swapChainExtent.height, 0.f, 1.f });

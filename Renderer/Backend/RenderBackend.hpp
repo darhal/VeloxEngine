@@ -18,6 +18,9 @@
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 #include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/Images/Sampler.hpp>
+#include <Renderer/Backend/RenderPass/Framebuffer.hpp>
+#include <Renderer/Backend/RenderPass/FramebufferAllocator.hpp>
+#include <Renderer/Backend/RenderPass/RenderPass.hpp>
 
 TRE_NS_START
 
@@ -41,6 +44,7 @@ namespace Renderer
 			ObjectPool<ImageView>	  imageViews;
 			ObjectPool<Sampler>		  samplers;
 		};
+
 	public:
 		RenderBackend(TRE::Window* wnd);
 
@@ -78,6 +82,11 @@ namespace Renderer
 
 		DescriptorSetAllocator* RequestDescriptorSetAllocator(const DescriptorSetLayout& layout);
 
+		// Render pass and framebuffer functionalities:
+		const Framebuffer& RequestFramebuffer(const RenderPassInfo& info);
+
+		const RenderPass& RequestRenderPass(const RenderPassInfo& info, bool compatible = true);
+
 		FORCEINLINE MemoryAllocator& GetContextAllocator() { return gpuMemoryAllocator; }
 
 		FORCEINLINE StagingManager& GetStagingManager() { return stagingManager; }
@@ -100,6 +109,8 @@ namespace Renderer
 		StagingManager	stagingManager;
 
 		std::unordered_map<Hash, DescriptorSetAllocator> descriptorSetAllocators;
+		std::unordered_map<Hash, RenderPass>			 renderPasses;
+		FramebufferAllocator							 framebufferAllocator;
 
 		PerFrame		perFrame[MAX_FRAMES];
 		HandlePool		objectsPool;

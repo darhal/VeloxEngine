@@ -8,7 +8,7 @@ TRE_NS_START
 namespace Renderer
 {
 	class ImageView;
-	class RenderBackend;
+	class RenderDevice;
 
 	enum RenderPassOp
 	{
@@ -29,6 +29,8 @@ namespace Renderer
 		uint32 clearAttachments = 0;
 		uint32 loadAttachments = 0;
 		uint32 storeAttachments = 0;
+		uint32 baseLayer = 0;
+		uint32 layersCount = 1;
 
 		uint32 opFlags = 0;
 
@@ -60,7 +62,7 @@ namespace Renderer
 		uint32 subpassesCount = 0;
 	};
 
-	class RenderPass
+	class RenderPass : public Hashable
 	{
 	public:
 		struct SubpassInfo
@@ -73,13 +75,19 @@ namespace Renderer
 			uint32 samples;
 		};
 
-		RenderPass(const RenderBackend& backend, const RenderPassInfo& info);
+		RenderPass(const RenderDevice& device, const RenderPassInfo& info);
+
+		VkRenderPass GetAPIObject() const { return renderPass; }
+	private:
+		void SetupRenderPass(const VkRenderPassCreateInfo& createInfo);
 	private:
 		VkRenderPass renderPass;
 		std::vector<SubpassInfo> subpassesInfo;
 
 		VkFormat colorAttachmentsFormat[MAX_ATTACHMENTS] = {};
 		VkFormat depthStencilFormat;
+
+		friend class RenderBackend;
 	};
 }
 

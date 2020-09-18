@@ -8,6 +8,7 @@
 #include <Renderer/Core/Allocators/StackAllocator.hpp>
 #include <Renderer/Core/Hash/Hash.hpp>
 #include <Renderer/Core/Handle/Handle.hpp>
+#include <Renderer/Core/Hash/Hashable.hpp>
 #include <vector>
 #include <array>
 
@@ -65,6 +66,8 @@ namespace Renderer
 
 	using Hash = Utils::Hash;
 	using Hasher = Utils::Hasher;
+
+	using Hashable = Utils::Hashable;
 
 	typedef VkDeviceSize DeviceSize;
 

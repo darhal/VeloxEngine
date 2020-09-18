@@ -1,5 +1,5 @@
 #include "CommandList.hpp"
-#include <Renderer/Backend/RenderContext/RenderContext.hpp>
+#include <Renderer/Backend/RenderBackend.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 #include <Renderer/Backend/Pipeline/GraphicsPipeline.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
@@ -9,8 +9,8 @@
 
 TRE_NS_START
 
-Renderer::CommandBuffer::CommandBuffer(RenderContext* renderContext, VkCommandBuffer buffer, Type type) :
-    renderContext(renderContext), commandBuffer(buffer), type(type), allocatedSets{}, dirtySets{}
+Renderer::CommandBuffer::CommandBuffer(RenderBackend* backend, VkCommandBuffer buffer, Type type) :
+    renderBackend(backend), commandBuffer(buffer), type(type), allocatedSets{}, dirtySets{}
 {
 }
 
@@ -50,14 +50,52 @@ void Renderer::CommandBuffer::BeginRenderPass(VkClearColorValue clearColor)
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass        = renderContext->GetSwapchain().GetRenderPass();
-    renderPassInfo.framebuffer       = renderContext->GetSwapchain().GetCurrentFramebuffer();
+    renderPassInfo.renderPass        = renderBackend->GetRenderContext().GetSwapchain().GetRenderPass();
+    renderPassInfo.framebuffer       = renderBackend->GetRenderContext().GetSwapchain().GetCurrentFramebuffer();
     renderPassInfo.renderArea.offset = { 0, 0 };
-    renderPassInfo.renderArea.extent = renderContext->GetSwapchain().GetExtent();
+    renderPassInfo.renderArea.extent = renderBackend->GetRenderContext().GetSwapchain().GetExtent();
     renderPassInfo.clearValueCount   = 2;
     renderPassInfo.pClearValues      = clearValue;
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubpassContents contents)
+{
+    renderPass = &renderBackend->RequestRenderPass(info, false);
+    framebuffer = &renderBackend->RequestFramebuffer(info);
+
+    this->InitViewportScissor(info, framebuffer);
+
+
+    VkClearValue clearValues[MAX_ATTACHMENTS + 1];
+    uint32 clearValuesCount = 0;
+
+    for (unsigned i = 0; i < info.colorAttachmentCount; i++) {
+        ASSERT(!info.colorAttachments[i]);
+
+        if (info.clearAttachments & (1u << i)) {
+            clearValues[i].color = info.clearColor[i];
+            clearValuesCount = i + 1;
+        }
+    }
+
+    if (info.depthStencil && (info.opFlags & RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT) != 0) {
+        clearValues[info.colorAttachmentCount].depthStencil = info.clearDepthStencil;
+        clearValuesCount = info.colorAttachmentCount + 1;
+    }
+
+    VkRenderPassBeginInfo beginInfo;
+    beginInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    beginInfo.pNext             = NULL;
+    beginInfo.renderPass        = renderPass->GetAPIObject();
+    beginInfo.framebuffer       = framebuffer->GetAPIObject();
+    beginInfo.renderArea        = scissor;
+    beginInfo.clearValueCount   = clearValuesCount;
+    beginInfo.pClearValues      = clearValues;
+
+    vkCmdBeginRenderPass(commandBuffer, &beginInfo, contents);
+    this->SetViewport(viewport);
 }
 
 void Renderer::CommandBuffer::EndRenderPass()
@@ -190,7 +228,7 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
     }
 
     printf("Updating descriptor sets: writting count:%u\n", writeCount);
-    vkUpdateDescriptorSets(renderContext->GetRenderDevice()->GetDevice(), writeCount, writes, 0, NULL);
+    vkUpdateDescriptorSets(renderBackend->GetRenderDevice().GetDevice(), writeCount, writes, 0, NULL);
 }
 
 void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
@@ -240,6 +278,18 @@ void Renderer::CommandBuffer::FlushDescriptorSets()
             this->FlushDescriptorSet(set);
         }
     }
+}
+
+void Renderer::CommandBuffer::InitViewportScissor(const RenderPassInfo& info, const Framebuffer* fb)
+{
+    VkRect2D rect = info.renderArea;
+    rect.offset.x = TRE::Math::Min(fb->GetWidth(), uint32_t(rect.offset.x));
+    rect.offset.y = TRE::Math::Min(fb->GetHeight(), uint32_t(rect.offset.y));
+    rect.extent.width = TRE::Math::Min(fb->GetWidth() - rect.offset.x, rect.extent.width);
+    rect.extent.height = TRE::Math::Min(fb->GetHeight() - rect.offset.y, rect.extent.height);
+
+    viewport = { 0.0f, 0.0f, float(fb->GetWidth()), float(fb->GetHeight()), 0.0f, 1.0f };
+    scissor = rect;
 }
 
 TRE_NS_END

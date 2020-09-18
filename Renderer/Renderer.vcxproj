@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -195,6 +195,8 @@
     <ClInclude Include="Backend\CommandList\CommandPool.hpp" />
     <ClInclude Include="Backend\Descriptors\DescriptorSetAlloc.hpp" />
     <ClInclude Include="Backend\RenderPass\Framebuffer.hpp" />
+    <ClInclude Include="Backend\RenderPass\FramebufferAllocator.hpp" />
+    <ClInclude Include="Core\Hash\Hashable.hpp" />
     <ClInclude Include="cube.hpp" />
     <ClInclude Include="Backend\Images\Image.hpp" />
     <ClInclude Include="Backend\Images\ImageHelper.hpp" />
@@ -486,6 +488,7 @@
     <ClCompile Include="Backend\Pipeline\GraphicsPipeline.cpp" />
     <ClCompile Include="Backend\RenderDevice\RenderDevice.cpp" />
     <ClCompile Include="Backend\RenderPass\Framebuffer.cpp" />
+    <ClCompile Include="Backend\RenderPass\FramebufferAllocator.cpp" />
     <ClCompile Include="Backend\RenderPass\RenderPass.cpp" />
     <ClCompile Include="Backend\ShaderProgram\ShaderReflect\spirv_reflect.c" />
     <ClCompile Include="Backend\Swapchain\Swapchain.cpp" />

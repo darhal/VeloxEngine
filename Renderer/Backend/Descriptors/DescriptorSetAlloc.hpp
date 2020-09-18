@@ -27,6 +27,8 @@ namespace Renderer
 		std::pair<VkDescriptorSet, bool> Find(Hash hash);
 
 		void Free(VkDescriptorSet set);
+
+		const DescriptorSetLayout& GetDescriptorSetLayout() const { return descriptorSetLayout; }
 	private:
 		void AllocatePool();
 	private:

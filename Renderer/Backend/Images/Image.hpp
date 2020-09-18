@@ -36,6 +36,10 @@ namespace Renderer
 
 		const ImageCreateInfo& GetInfo() const { return info; }
 
+
+		uint32 GetWidth(uint32 lod = 0) const { return TRE::Math::Max(1u, info.width >> lod); }
+
+		uint32 GetHeight(uint32 lod = 0) const { return TRE::Math::Max(1u, info.width >> lod); }
 	private:
 		Image() = default;
 	private:

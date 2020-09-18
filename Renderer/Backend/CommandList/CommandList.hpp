@@ -13,9 +13,12 @@ namespace Renderer
 	class Image;
 	class ImageView;
 	class Sampler;
-	class RenderContext;
+	class RenderBackend;
 	class GraphicsPipeline;
 	class DescriptorSetLayout;
+	class RenderPass;
+	class Framebuffer;
+	struct RenderPassInfo;
 
 	struct DescriptorSetDirty
 	{
@@ -35,7 +38,7 @@ namespace Renderer
 			MAX
 		};
 	public:
-		CommandBuffer(RenderContext* renderContext, VkCommandBuffer buffer, Type type);
+		CommandBuffer(RenderBackend* backend, VkCommandBuffer buffer, Type type);
 
 		void Begin();
 
@@ -46,6 +49,8 @@ namespace Renderer
 		void SetScissor(const VkRect2D& scissor);
 
 		void BeginRenderPass(VkClearColorValue clearColor);
+
+		void BeginRenderPass(const RenderPassInfo& info, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
 		void EndRenderPass();
 
@@ -87,11 +92,20 @@ namespace Renderer
 		void FlushDescriptorSet(uint32 set);
 
 		void FlushDescriptorSets();
+
+		void InitViewportScissor(const RenderPassInfo& info, const Framebuffer* fb);
 	private:
 		ResouceBindings bindings;
 		DescriptorSetDirty dirtySets;
-		RenderContext* renderContext;
+		RenderBackend* renderBackend;
+
 		const GraphicsPipeline* pipeline;
+		const RenderPass* renderPass;
+		const Framebuffer* framebuffer;
+
+		VkRect2D scissor;
+		VkViewport viewport;
+
 		VkDescriptorSet allocatedSets[MAX_DESCRIPTOR_SET];
 		VkCommandBuffer commandBuffer;
 		Type type;
