@@ -16,8 +16,9 @@ namespace Renderer
 
 			T* Allocate(size_t count = 1)
 			{
-				ASSERTF(count == 0, "Can't allocate 0 element");
-
+				if (count == 0)
+					return NULL;
+			
 				if (offset + count > N)
 					return NULL;
 

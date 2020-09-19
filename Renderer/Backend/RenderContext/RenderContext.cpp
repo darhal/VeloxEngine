@@ -4,11 +4,12 @@
 #include <Renderer/Backend/RenderInstance/RenderInstance.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
+#include <Renderer/Backend/RenderBackend.hpp>
 #include <unordered_set>
 
 TRE_NS_START
 
-Renderer::RenderContext::RenderContext(RenderDevice* renderDevice) : internal{ 0 }, renderDevice(renderDevice), swapchain(*renderDevice, *this)
+Renderer::RenderContext::RenderContext(RenderBackend& backend) : internal{ 0 }, renderDevice(&backend.GetRenderDevice()), swapchain(backend)
 {
     internal.numFramesInFlight = NUM_FRAMES;
     internal.currentFrame = 0;

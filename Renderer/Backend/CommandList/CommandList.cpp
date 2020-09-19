@@ -62,8 +62,8 @@ void Renderer::CommandBuffer::BeginRenderPass(VkClearColorValue clearColor)
 
 void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubpassContents contents)
 {
-    renderPass = &renderBackend->RequestRenderPass(info, false);
-    framebuffer = &renderBackend->RequestFramebuffer(info);
+    renderPass = &renderBackend->RequestRenderPass(info);
+    framebuffer = &renderBackend->RequestFramebuffer(info, renderPass);
     this->InitViewportScissor(info, framebuffer);
 
     VkClearValue clearValues[MAX_ATTACHMENTS + 1];
@@ -94,6 +94,7 @@ void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubp
 
     vkCmdBeginRenderPass(commandBuffer, &beginInfo, contents);
     this->SetViewport(viewport);
+    this->SetScissor(scissor);
 }
 
 void Renderer::CommandBuffer::EndRenderPass()
@@ -194,7 +195,7 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
     uint32 writeCount = 0;
 
     for (uint32 binding = 0; binding < MAX_DESCRIPTOR_BINDINGS; binding++) {
-        if (dirtySets.dirtyBindings[set] & (1u << binding)) {
+        //if (dirtySets.dirtyBindings[set] & (1u << binding)) {
             if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) {
                 writes[writeCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 writes[writeCount].pNext            = NULL;
@@ -222,7 +223,7 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
 
                 writeCount++;
             }
-        }
+        //}
     }
 
     printf("Updating descriptor sets: writting count:%u\n", writeCount);
@@ -287,7 +288,7 @@ void Renderer::CommandBuffer::InitViewportScissor(const RenderPassInfo& info, co
     rect.extent.height = TRE::Math::Min(fb->GetHeight() - rect.offset.y, rect.extent.height);
 
     viewport = { 0.0f, 0.0f, float(fb->GetWidth()), float(fb->GetHeight()), 0.0f, 1.0f };
-    scissor = rect;
+    scissor  = rect;
 }
 
 TRE_NS_END

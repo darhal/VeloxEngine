@@ -121,7 +121,19 @@ Renderer::RenderPass::RenderPass(const RenderDevice& device, const RenderPassInf
 			}
 
 			implicit_transitions |= 1u << i;
-		} else if (0) { // Probably handle swapchain images ?
+		} else if (image->IsSwapchainImage()) { // Probably handle swapchain images ?
+			if (att.loadOp == VK_ATTACHMENT_LOAD_OP_LOAD)
+				att.initialLayout = image->GetSwapchainLayout();
+			else
+				att.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+			att.finalLayout = image->GetSwapchainLayout();
+
+			// If we transition from PRESENT_SRC_KHR, this came from an implicit external subpass dependency
+			// which happens in BOTTOM_OF_PIPE. To properly transition away from it, we must wait for BOTTOM_OF_PIPE,
+			// without any memory barriers, since memory has been made available in the implicit barrier.
+			if (att.loadOp == VK_ATTACHMENT_LOAD_OP_LOAD)
+				implicit_bottom_of_pipe |= 1u << i;
 			implicit_transitions |= 1u << i;
 		} else {
 			att.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;//image->GetInfo().layout;
@@ -292,11 +304,11 @@ Renderer::RenderPass::RenderPass(const RenderDevice& device, const RenderPassInf
 
 			// Sanity check.
 			if (color || resolve)
-				ASSERT(!depth);
+				ASSERT(depth);
 			if (depth)
-				ASSERT(!color && !resolve);
+				ASSERT(color || resolve);
 			if (resolve)
-				ASSERT(!color && !depth);
+				ASSERT(color || depth);
 
 			if (!color && !input && !depth && !resolve) {
 				if (used)
@@ -455,7 +467,7 @@ Renderer::RenderPass::RenderPass(const RenderDevice& device, const RenderPassInf
 		// If we don't have a specific layout we need to end up in, just
 		// use the last one.
 		// Assert that we actually use all the attachments we have ...
-		ASSERT(used);
+		ASSERT(!used);
 		if (attachments[attachment].finalLayout == VK_IMAGE_LAYOUT_UNDEFINED) {
 			ASSERT(current_layout == VK_IMAGE_LAYOUT_UNDEFINED);
 			attachments[attachment].finalLayout = current_layout;
@@ -490,7 +502,7 @@ Renderer::RenderPass::RenderPass(const RenderDevice& device, const RenderPassInf
 
 	// Add external subpass dependencies.
 	for (uint32 subpass = 0;  subpass < 32; subpass++){
-		if (subpass & (external_color_dependencies | external_depth_dependencies | external_input_dependencies)) {
+		if ((1u << subpass) & (external_color_dependencies | external_depth_dependencies | external_input_dependencies)) {
 			externalDependencies.emplace_back();
 			auto& dep = externalDependencies.back();
 			dep.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -526,7 +538,7 @@ Renderer::RenderPass::RenderPass(const RenderDevice& device, const RenderPassInf
 
 	// Queue up self-dependencies (COLOR | DEPTH) -> INPUT.
 	for (uint32 subpass = 0; subpass < 32; subpass++) {
-		if (subpass & (external_color_dependencies | external_depth_dependencies | external_input_dependencies)) {
+		if ((1u << subpass) & (color_self_dependencies | depth_self_dependencies)) {
 			externalDependencies.emplace_back();
 			auto& dep = externalDependencies.back();
 			dep.srcSubpass = subpass;

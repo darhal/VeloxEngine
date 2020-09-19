@@ -10,12 +10,13 @@ TRE_NS_START
 namespace Renderer
 {
 	class Swapchain;
+	class RenderBackend;
 	class RenderDevice;
 
 	class RENDERER_API RenderContext
 	{
 	public:
-		RenderContext(RenderDevice* renderDevice = NULL);
+		RenderContext(RenderBackend& backend);
 
 		void CreateRenderContext(TRE::Window* wnd, const Internal::RenderInstance& instance);
 
@@ -50,6 +51,5 @@ namespace Renderer
 		friend class RenderBackend;
 	};
 }
-
 
 TRE_NS_END

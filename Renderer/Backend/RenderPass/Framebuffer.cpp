@@ -19,7 +19,10 @@ Renderer::Framebuffer::Framebuffer(const RenderDevice& device, const RenderPass&
 	viewsCount = SetupRawViews(views, info);
 	uint32 num_layers = info.layersCount > 1 ? (info.layersCount + info.baseLayer) : 1;
 
-	VkFramebufferCreateInfo fb_info = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+	VkFramebufferCreateInfo fb_info;
+	fb_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	fb_info.pNext = NULL;
+	fb_info.flags = 0;
 	fb_info.renderPass = rp.GetAPIObject();
 	fb_info.attachmentCount = viewsCount;
 	fb_info.pAttachments = views;
@@ -46,7 +49,7 @@ void Renderer::Framebuffer::ComputeDimensions(const RenderPassInfo& info, uint32
 	if (info.depthStencil) {
 		uint32 lod = info.depthStencil->GetInfo().baseLevel;
 		width = TRE::Math::Min(width, info.depthStencil->GetImage()->GetWidth(lod));
-		height = TRE::Math::Min(height, info.depthStencil->GetImage()->GetWidth(lod));
+		height = TRE::Math::Min(height, info.depthStencil->GetImage()->GetHeight(lod));
 	}
 }
 

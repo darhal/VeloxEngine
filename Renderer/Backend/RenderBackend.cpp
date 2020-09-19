@@ -10,8 +10,9 @@ TRE_NS_START
 
 Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) : 
     stagingManager{ &renderDevice.internal }, 
-    renderContext(&renderDevice),
-    framebufferAllocator(&renderDevice)
+    renderContext(*this),
+    framebufferAllocator(&renderDevice),
+    transientAttachmentAllocator(*this, true)
 {
     renderDevice.internal.renderContext = &renderContext.internal;
     renderContext.internal.renderDevice = &renderDevice.internal;
@@ -263,13 +264,13 @@ Renderer::BufferHandle Renderer::RenderBackend::CreateBuffer(const BufferInfo& c
     return ret;
 }
 
-Renderer::RingBufferHandle Renderer::RenderBackend::CreateRingBuffer(const BufferInfo& createInfo, const void* data)
+Renderer::RingBufferHandle Renderer::RenderBackend::CreateRingBuffer(const BufferInfo& createInfo, const uint32 ringSize, const void* data)
 {
     BufferInfo info = createInfo;
     const DeviceSize alignment = this->renderDevice.internal.gpuProperties.limits.minUniformBufferOffsetAlignment;
     const DeviceSize padding = (alignment - (info.size % alignment)) % alignment;
     const DeviceSize alignedSize = info.size + padding;
-    info.size = alignedSize * NUM_FRAMES - padding;
+    info.size = alignedSize * ringSize - padding;
 
     MemoryView bufferMemory;
     VkBuffer apiBuffer;
@@ -277,7 +278,7 @@ Renderer::RingBufferHandle Renderer::RenderBackend::CreateRingBuffer(const Buffe
     // Removing padding from total size, as we dont need the last bytes for alignement
     // alignedSize * NUM_FRAMES - padding, data, usage, memoryUsage, queueFamilies
     this->CreateBufferInternal(apiBuffer, bufferMemory, info);
-    RingBufferHandle ret(objectsPool.ringBuffers.Allocate(apiBuffer, info, bufferMemory, (uint32)alignedSize, NUM_FRAMES));
+    RingBufferHandle ret(objectsPool.ringBuffers.Allocate(apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
 
     if (data) {
         if (info.domain == MemoryUsage::CPU_ONLY || info.domain == MemoryUsage::CPU_CACHED || info.domain == MemoryUsage::CPU_COHERENT) {
@@ -346,7 +347,6 @@ const Renderer::RenderPass& Renderer::RenderBackend::RequestRenderPass(const Ren
 
     for (uint32 i = 0; i < info.colorAttachmentCount; i++) {
         ASSERT(!info.colorAttachments[i]);
-
         formats[i] = info.colorAttachments[i]->GetInfo().format;
 
         if (info.colorAttachments[i]->GetImage()->GetInfo().domain == ImageDomain::TRANSIENT) {
@@ -356,6 +356,9 @@ const Renderer::RenderPass& Renderer::RenderBackend::RequestRenderPass(const Ren
         if (info.colorAttachments[i]->GetImage()->GetInfo().layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
             optimal |= 1u << i;
         }
+        
+        // This can change external subpass dependencies, so it must always be hashed.
+        h.u32(info.colorAttachments[i]->GetImage()->GetSwapchainLayout());
     }
 
     if (info.depthStencil) {
@@ -408,14 +411,57 @@ const Renderer::RenderPass& Renderer::RenderBackend::RequestRenderPass(const Ren
     }
 
     auto rp2 = renderPasses.emplace(hash, RenderPass(renderDevice, info));
-    rp->second.hash = h.Get();
+    printf("Creating render pass ID: %llu.\n", hash);
+    rp2.first->second.hash = h.Get();
     return rp2.first->second;
 }
 
-const Renderer::Framebuffer& Renderer::RenderBackend::RequestFramebuffer(const RenderPassInfo& info)
+const Renderer::Framebuffer& Renderer::RenderBackend::RequestFramebuffer(const RenderPassInfo& info, const RenderPass* rp)
 {
-    const RenderPass& rp = this->RequestRenderPass(info);
-    return framebufferAllocator.RequestFramebuffer(rp, info);
+    if (!rp) {
+        rp = &this->RequestRenderPass(info);
+    }
+
+    return framebufferAllocator.RequestFramebuffer(*rp, info);
+}
+
+Renderer::RenderPassInfo Renderer::RenderBackend::GetSwapchainRenderPass(SwapchainRenderPass style)
+{
+    RenderPassInfo info;
+    info.colorAttachmentCount = 1;
+    info.colorAttachments[0] = renderContext.GetSwapchain().GetSwapchainImage(renderContext.GetCurrentImageIndex())->GetView();
+    info.clearColor[0] = { 0.051f, 0.051f, 0.051f, 0.0f };
+    info.clearAttachments = 1u << 0;
+    info.storeAttachments = 1u << 0;
+
+    switch (style) {
+    case SwapchainRenderPass::DEPTH:
+    {
+        info.opFlags |= RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT;
+        info.depthStencil =
+            &GetTransientAttachment(renderContext.GetSwapchain().GetExtent().width,
+                renderContext.GetSwapchain().GetExtent().height, renderContext.GetSwapchain().FindSupportedDepthFormat());
+        break;
+    }
+
+    case SwapchainRenderPass::DEPTH_STENCIL:
+    {
+        info.opFlags |= RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT;
+        info.depthStencil =
+            &GetTransientAttachment(renderContext.GetSwapchain().GetExtent().width,
+                renderContext.GetSwapchain().GetExtent().height, renderContext.GetSwapchain().FindSupportedDepthStencilFormat());
+        break;
+    }
+    default:
+        break;
+    }
+
+    return info;
+}
+
+Renderer::ImageView& Renderer::RenderBackend::GetTransientAttachment(uint32 width, uint32 height, VkFormat format, uint32 index, uint32 samples, uint32 layers)
+{
+    return transientAttachmentAllocator.RequestAttachment(width, height, format, index, samples, layers);
 }
 
 TRE_NS_END

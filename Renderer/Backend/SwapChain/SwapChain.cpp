@@ -1,15 +1,13 @@
 #include "Swapchain.hpp"
 #include <Renderer/Backend/Common/Utils.hpp>
 #include <Renderer/Window/Window.hpp>
-#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Backend/RenderContext/RenderContext.hpp>
-#include <Renderer/Backend/Images/ImageHelper.hpp>
+#include <Renderer/Backend/RenderBackend.hpp>
+#include <Renderer/Backend/Images/Image.hpp>
 
 TRE_NS_START
 
-Renderer::Swapchain::Swapchain(const RenderDevice& renderDevice, RenderContext& renderContext) :
-    renderDevice(renderDevice),
-    renderContext(renderContext)
+Renderer::Swapchain::Swapchain(RenderBackend& backend) :
+    renderBackend(backend)
 {
 }
 
@@ -39,20 +37,22 @@ Renderer::Swapchain::SwapchainSupportDetails Renderer::Swapchain::QuerySwapchain
 
 void Renderer::Swapchain::CreateSwapchain()
 {
-    ASSERT(renderDevice.GetDevice() == VK_NULL_HANDLE);
-    ASSERT(renderContext.GetSurface() == VK_NULL_HANDLE);
+    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
+    RenderContext& renderContext = renderBackend.GetRenderContext();
+
+    ASSERT(renderBackend.GetRenderDevice().GetDevice() == VK_NULL_HANDLE);
+    ASSERT(renderBackend.GetRenderContext().GetSurface() == VK_NULL_HANDLE);
 
     uint32 width = renderContext.GetWindow()->getSize().x;
     uint32 height = renderContext.GetWindow()->getSize().y;
     VkSwapchainKHR oldSwapchain = swapchain;
 
-    swapchainData.swapChainExtent = VkExtent2D{ width, height };
-    
-    supportDetails                           = QuerySwapchainSupport(renderDevice.GetGPU(), renderContext.GetSurface());
-    VkSurfaceFormatKHR surfaceFormat         = ChooseSwapSurfaceFormat(supportDetails.formats);
-    VkPresentModeKHR presentMode             = ChooseSwapPresentMode(supportDetails.presentModes);
-    VkExtent2D extent                        = ChooseSwapExtent(supportDetails.capabilities, swapchainData.swapChainExtent);
-    imagesCount                              = supportDetails.capabilities.minImageCount + 1;
+    swapchainData.swapChainExtent    = VkExtent2D{ width, height };
+    supportDetails                   = QuerySwapchainSupport(renderDevice.GetGPU(), renderContext.GetSurface());
+    VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(supportDetails.formats);
+    VkPresentModeKHR presentMode     = ChooseSwapPresentMode(supportDetails.presentModes);
+    VkExtent2D extent                = ChooseSwapExtent(supportDetails.capabilities, swapchainData.swapChainExtent);
+    imagesCount                      = supportDetails.capabilities.minImageCount + 1;
 
     if (supportDetails.capabilities.maxImageCount > 0 && imagesCount > supportDetails.capabilities.maxImageCount) {
         imagesCount = supportDetails.capabilities.maxImageCount;
@@ -97,18 +97,22 @@ void Renderer::Swapchain::CreateSwapchain()
 
     if (oldSwapchain == VK_NULL_HANDLE) {
         CreateSyncObjects();
-        CreateSwapchainRenderPass();
+        // CreateSwapchainRenderPass();
         // CreateCommandPool(renderDevice, ctx);
         // CreateCommandBuffers(renderDevice, ctx);
     } else {
         vkDestroySwapchainKHR(renderDevice.GetDevice(), oldSwapchain, NULL);
     }
 
-    CreateSwapchainResources();
+    // CreateSwapchainResources();
+    CreateSwapchainResources(swapchainData.swapChainImages);
 }
 
 void Renderer::Swapchain::DestroySwapchain()
 {
+    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
+    RenderContext& renderContext = renderBackend.GetRenderContext();
+
     CleanupSwapchain();
 
     vkDestroySwapchainKHR(renderDevice.GetDevice(), swapchain, NULL);
@@ -126,20 +130,24 @@ void Renderer::Swapchain::DestroySwapchain()
 
 void Renderer::Swapchain::CleanupSwapchain()
 {
+    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
     VkDevice device = renderDevice.GetDevice();
 
-    for (size_t i = 0; i < imagesCount; i++) {
+    /*for (size_t i = 0; i < imagesCount; i++) {
         vkDestroyFramebuffer(device, swapchainData.swapChainFramebuffers[i], NULL);
         vkDestroyImageView(device, swapchainData.swapChainImageViews[i], NULL);
-    }
+    }*/
 
-    vkDestroyImageView(device, swapchainData.depthStencilIamgeView, NULL);
+    /*vkDestroyImageView(device, swapchainData.depthStencilIamgeView, NULL);
     vkDestroyImage(device, swapchainData.depthStencilImage, NULL);
-    this->renderDevice.FreeDedicatedMemory(swapchainData.depthStencilImageMemory);
+    renderDevice.FreeDedicatedMemory(swapchainData.depthStencilImageMemory);*/
 }
 
 void Renderer::Swapchain::RecreateSwapchain()
 {
+    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
+    RenderContext& renderContext = renderBackend.GetRenderContext();
+
     vkDeviceWaitIdle(renderDevice.GetDevice());
     CleanupSwapchain();
 
@@ -165,6 +173,9 @@ void Renderer::Swapchain::UpdateSwapchain()
 
 void Renderer::Swapchain::CreateSyncObjects()
 {
+    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
+    RenderContext& renderContext = renderBackend.GetRenderContext();
+
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -192,6 +203,8 @@ void Renderer::Swapchain::CreateSyncObjects()
 
 void Renderer::Swapchain::CreateSwapchainResources()
 {
+    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
+
     this->CreateDepthResources();
 
     for (size_t i = 0; i < imagesCount; i++) {
@@ -219,10 +232,45 @@ void Renderer::Swapchain::CreateSwapchainResources()
     }
 }
 
+void Renderer::Swapchain::CreateSwapchainResources(const VkImage* images)
+{
+    VkFormat format = swapchainData.swapChainImageFormat;
+    const auto info = ImageCreateInfo::RenderTarget(swapchainData.swapChainExtent.width, swapchainData.swapChainExtent.height, format);
+
+    for (uint32 i = 0; i < imagesCount; i++) {
+        VkImageViewCreateInfo view_info = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+        view_info.image = images[i];
+        view_info.format = swapchainData.swapChainImageFormat;
+        view_info.components.r = VK_COMPONENT_SWIZZLE_R;
+        view_info.components.g = VK_COMPONENT_SWIZZLE_G;
+        view_info.components.b = VK_COMPONENT_SWIZZLE_B;
+        view_info.components.a = VK_COMPONENT_SWIZZLE_A;
+        view_info.subresourceRange.aspectMask = FormatToAspectMask(format);
+        view_info.subresourceRange.baseMipLevel = 0;
+        view_info.subresourceRange.baseArrayLayer = 0;
+        view_info.subresourceRange.levelCount = 1;
+        view_info.subresourceRange.layerCount = 1;
+        view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+
+        VkImageView image_view;
+        vkCreateImageView(renderBackend.GetRenderDevice().GetDevice(), &view_info, NULL, &image_view);
+
+        swapchainData.swapchainImages[i] = ImageHandle(renderBackend.objectsPool.images.Allocate(renderBackend, images[i], image_view, info, VK_IMAGE_VIEW_TYPE_2D));
+        swapchainData.swapchainImages[i]->SetSwapchainLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    }
+}
+
+Renderer::ImageHandle Renderer::Swapchain::GetSwapchainImage(uint32 i)
+{
+    return swapchainData.swapchainImages[i];
+}
+
 void Renderer::Swapchain::CreateSwapchainRenderPass()
 {
+    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
+
     VkAttachmentDescription depthAttachment{};
-    depthAttachment.format = FindDepthFormat();
+    depthAttachment.format = FindSupportedDepthStencilFormat();
     depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -281,9 +329,9 @@ void Renderer::Swapchain::CreateSwapchainRenderPass()
 
 void Renderer::Swapchain::CreateDepthResources()
 {
-    VkFormat depthFormat = FindDepthFormat();
+    VkFormat depthFormat = FindSupportedDepthStencilFormat();
     swapchainData.depthStencilImage = CreateImage(depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
-    swapchainData.depthStencilImageMemory = renderDevice.AllocateDedicatedMemory(swapchainData.depthStencilImage); // alocate and bind memory
+    swapchainData.depthStencilImageMemory = renderBackend.GetRenderDevice().AllocateDedicatedMemory(swapchainData.depthStencilImage); // alocate and bind memory
     swapchainData.depthStencilIamgeView = this->CreateImageView(swapchainData.depthStencilImage, depthFormat);
 }
 
@@ -331,14 +379,15 @@ VkExtent2D Renderer::Swapchain::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR&
 
 VkFramebuffer Renderer::Swapchain::GetCurrentFramebuffer() const 
 { 
+    RenderContext& renderContext = renderBackend.GetRenderContext();
     return swapchainData.swapChainFramebuffers[renderContext.GetCurrentImageIndex()]; 
 }
 
-VkFormat Renderer::Swapchain::FindSupportedFormat(const TRE::Vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+VkFormat Renderer::Swapchain::FindSupportedFormat(const std::initializer_list<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
 {
     for (VkFormat format : candidates) {
         VkFormatProperties props;
-        vkGetPhysicalDeviceFormatProperties(renderDevice.GetGPU(), format, &props);
+        vkGetPhysicalDeviceFormatProperties(renderBackend.GetRenderDevice().GetGPU(), format, &props);
 
         if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
             return format;
@@ -351,10 +400,19 @@ VkFormat Renderer::Swapchain::FindSupportedFormat(const TRE::Vector<VkFormat>& c
     return VK_FORMAT_UNDEFINED;
 }
 
-VkFormat Renderer::Swapchain::FindDepthFormat()
+VkFormat Renderer::Swapchain::FindSupportedDepthStencilFormat()
 {
     return this->FindSupportedFormat(
-        { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+        { VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT },
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+    );
+}
+
+VkFormat Renderer::Swapchain::FindSupportedDepthFormat()
+{
+    return this->FindSupportedFormat(
+        { VK_FORMAT_D32_SFLOAT, VK_FORMAT_X8_D24_UNORM_PACK32, VK_FORMAT_D16_UNORM },
         VK_IMAGE_TILING_OPTIMAL,
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
     );
@@ -380,7 +438,7 @@ VkImageView Renderer::Swapchain::CreateImageView(VkImage image, VkFormat format)
     createInfo.subresourceRange.baseArrayLayer  = 0;
     createInfo.subresourceRange.layerCount      = 1;
 
-    if (vkCreateImageView(renderDevice.GetDevice(), &createInfo, NULL, &outView) != VK_SUCCESS) {
+    if (vkCreateImageView(renderBackend.GetRenderDevice().GetDevice(), &createInfo, NULL, &outView) != VK_SUCCESS) {
         ASSERTF(true, "Failed to create image views!");
     }
 
@@ -406,7 +464,7 @@ VkImage Renderer::Swapchain::CreateImage(VkFormat format, VkImageTiling tiling, 
     imageInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateImage(renderDevice.GetDevice(), &imageInfo, NULL, &outImage) != VK_SUCCESS) {
+    if (vkCreateImage(renderBackend.GetRenderDevice().GetDevice(), &imageInfo, NULL, &outImage) != VK_SUCCESS) {
         throw std::runtime_error("failed to create image!");
     }
 

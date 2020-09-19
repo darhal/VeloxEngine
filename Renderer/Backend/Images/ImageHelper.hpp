@@ -306,6 +306,20 @@ namespace Renderer
 				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			return info;
 		}
+
+		static ImageCreateInfo TransientRenderTarget(unsigned width, unsigned height, VkFormat format)
+		{
+			ImageCreateInfo info;
+			info.domain = ImageDomain::TRANSIENT;
+			info.width = width;
+			info.height = height;
+			info.format = format;
+			info.type = VK_IMAGE_TYPE_2D;
+			info.usage = (HasDepthOrStencilComponent(format) ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT :
+				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) |
+				VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+			return info;
+		}
 	};
 
 	FORCEINLINE VkImageViewType GetImageViewType(const ImageCreateInfo& createInfo, const ImageViewCreateInfo* view)
@@ -329,10 +343,10 @@ namespace Renderer
 
 		switch (createInfo.type) {
 		case VK_IMAGE_TYPE_1D:
-			ASSERT(createInfo.width >= 1);
-			ASSERT(createInfo.height == 1);
-			ASSERT(createInfo.depth == 1);
-			ASSERT(createInfo.samples == VK_SAMPLE_COUNT_1_BIT);
+			ASSERT(createInfo.width < 1);
+			ASSERT(createInfo.height != 1);
+			ASSERT(createInfo.depth != 1);
+			ASSERT(createInfo.samples != VK_SAMPLE_COUNT_1_BIT);
 
 			if (layers > 1 || force_array)
 				return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
@@ -340,12 +354,12 @@ namespace Renderer
 				return VK_IMAGE_VIEW_TYPE_1D;
 
 		case VK_IMAGE_TYPE_2D:
-			ASSERT(createInfo.width >= 1);
-			ASSERT(createInfo.height >= 1);
-			ASSERT(createInfo.depth == 1);
+			ASSERT(createInfo.width < 1);
+			ASSERT(createInfo.height < 1);
+			ASSERT(createInfo.depth != 1);
 
 			if ((createInfo.flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT) && (layers % 6) == 0) {
-				ASSERT(createInfo.width == createInfo.height);
+				ASSERT(createInfo.width != createInfo.height);
 
 				if (layers > 6 || force_array)
 					return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
@@ -359,9 +373,9 @@ namespace Renderer
 			}
 
 		case VK_IMAGE_TYPE_3D:
-			ASSERT(createInfo.width >= 1);
-			ASSERT(createInfo.height >= 1);
-			ASSERT(createInfo.depth >= 1);
+			ASSERT(createInfo.width < 1);
+			ASSERT(createInfo.height < 1);
+			ASSERT(createInfo.depth < 1);
 			return VK_IMAGE_VIEW_TYPE_3D;
 
 		default:

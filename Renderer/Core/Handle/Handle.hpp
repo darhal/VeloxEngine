@@ -63,6 +63,16 @@ namespace Renderer
 			{
 				return data;
 			}
+
+			operator T*() const
+			{
+				return data;
+			}
+
+			operator T*()
+			{
+				return data;
+			}
 		private:
 			T* data = NULL;
 		};

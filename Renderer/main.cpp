@@ -88,7 +88,7 @@ const std::vector<uint16_t> indices = {
 
 #define CUBE
 
-void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBufferHandle buffer)
+void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBufferHandle buffer, const glm::vec3& pos = glm::vec3(0.f))
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -98,10 +98,12 @@ void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingB
 
     MVP mvp{};
 
-    mvp.model   = glm::rotate(glm::mat4(1.0f), time * TRE::Math::ToRad(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 #if defined(CUBE)
-    mvp.model   =  glm::scale(mvp.model, glm::vec3(0.5f, 0.5f, 0.5f));
+    mvp.model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
 #endif
+    mvp.model   = glm::translate(mvp.model, pos);
+    mvp.model   = glm::rotate(mvp.model, time * TRE::Math::ToRad(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
     mvp.view    = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     mvp.proj    = glm::perspective<float>(TRE::Math::ToRad(45.0f), swapchainData.swapChainExtent.width / (float)swapchainData.swapChainExtent.height, 0.1f, 10.f);
     // mvp.proj    = glm::ortho(0, 1, 0, 1, 0, 1);
@@ -120,18 +122,16 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     // VkDescriptorSet descriptorSet,
     const TRE::Renderer::RingBufferHandle uniformBuffer,
     const TRE::Renderer::ImageViewHandle texture,
+    const TRE::Renderer::ImageViewHandle texture2,
     const TRE::Renderer::SamplerHandle sampler)
 {
-    const TRE::Renderer::Swapchain::SwapchainData& swapChainData = backend.GetRenderContext().GetSwapchain().GetSwapchainData();
-    TRE::Renderer::CommandBufferHandle currentCmdBuff = backend.RequestCommandBuffer(TRE::Renderer::QueueTypes::GRAPHICS_ONLY);
+    using namespace TRE::Renderer;
+    CommandBufferHandle currentCmdBuff = backend.RequestCommandBuffer(QueueTypes::GRAPHICS_ONLY);
+    updateMVP(backend, uniformBuffer);
 
     currentCmdBuff->Begin();
-
-    // TODO: Tommrow we should test the new begin render pass function
-    currentCmdBuff->BeginRenderPass({ 0.051f, 0.051f, 0.051f, 0.0f });
     currentCmdBuff->BindPipeline(graphicsPipeline);
-    currentCmdBuff->SetViewport({ 0.f, 0.f, (float)swapChainData.swapChainExtent.width, (float)swapChainData.swapChainExtent.height, 0.f, 1.f });
-    currentCmdBuff->SetScissor({ {0, 0}, swapChainData.swapChainExtent });
+    currentCmdBuff->BeginRenderPass(backend.GetSwapchainRenderPass(SwapchainRenderPass::DEPTH));
 
     currentCmdBuff->BindVertexBuffer(*vertexIndexBuffer);
 #if !defined(CUBE)
@@ -140,12 +140,21 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 
     currentCmdBuff->SetUniformBuffer(0, 0, *uniformBuffer, uniformBuffer->GetCurrentOffset());
     currentCmdBuff->SetTexture(0, 1, *texture, *sampler);
-
 #if !defined(CUBE)
     currentCmdBuff->DrawIndexed(indices.size());
 #else
     currentCmdBuff->Draw(36);
 #endif
+
+    /*updateMVP(backend, uniformBuffer, {0.f, 1.5f, 0.f});
+    currentCmdBuff->SetUniformBuffer(0, 0, *uniformBuffer, uniformBuffer->GetCurrentOffset());
+    // currentCmdBuff->SetTexture(0, 1, *texture2, *sampler);
+    currentCmdBuff->Draw(36);
+
+    updateMVP(backend, uniformBuffer, { -0.f, -1.5f, 0.f });
+    currentCmdBuff->SetUniformBuffer(0, 0, *uniformBuffer, uniformBuffer->GetCurrentOffset());
+    currentCmdBuff->SetTexture(0, 1, *texture2, *sampler);
+    currentCmdBuff->Draw(36);*/
     
     currentCmdBuff->EndRenderPass();
     currentCmdBuff->End();
@@ -169,8 +178,8 @@ void printFPS() {
 
 int main()
 {
-    const unsigned int SCR_WIDTH = 640;//1920 / 2;
-    const unsigned int SCR_HEIGHT = 480;//1080 / 2;
+    const unsigned int SCR_WIDTH = 640; //1920 / 2;
+    const unsigned int SCR_HEIGHT = 480; //1080 / 2;
 
     using namespace TRE::Renderer;
     using namespace TRE;
@@ -212,11 +221,21 @@ int main()
         ~0u, 0u, ~0u, 0u,
     };
 
+    const uint32 checkerboard2[] = {
+        0u, 0u, 0u, 0u,
+        ~0u, ~0u, ~0u, ~0u,
+        0u, 0u, 0u, 0u,
+        ~0u, ~0u, ~0u, ~0u,
+    };
+
     ImageHandle texture = backend.CreateImage(ImageCreateInfo::Texture2D(4, 4), checkerboard);
     ImageViewHandle textureView = backend.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
     SamplerHandle sampler = backend.CreateSampler(SamplerInfo::Sampler2D());
 
-    RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)));
+    ImageHandle texture2 = backend.CreateImage(ImageCreateInfo::Texture2D(4, 4), checkerboard2);
+    ImageViewHandle textureView2 = backend.CreateImageView(ImageViewCreateInfo::ImageView(texture2, VK_IMAGE_VIEW_TYPE_2D));
+
+    RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 10);
 
     GraphicsPipeline graphicsPipeline;
     GraphicsState state;
@@ -225,6 +244,8 @@ int main()
     depthStencilState.depthTestEnable = true;
     depthStencilState.depthWriteEnable = true;
     depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+
+    state.GetRasterizationState().cullMode = VK_CULL_MODE_NONE;
 
     graphicsPipeline.GetShaderProgram().Create(backend,
         { 
@@ -239,18 +260,10 @@ int main()
         { offsetof(Vertex, pos), offsetof(Vertex, color), offsetof(Vertex, tex) }
     );
 
-    graphicsPipeline.SetRenderPass(backend.GetRenderContext().GetSwapchain().GetRenderPass());
+    const RenderPass& rp = backend.RequestRenderPass(backend.GetSwapchainRenderPass(SwapchainRenderPass::DEPTH));
+    graphicsPipeline.SetRenderPass(rp.GetAPIObject());
+    // graphicsPipeline.SetRenderPass(backend.GetRenderContext().GetSwapchain().GetRenderPass());
     graphicsPipeline.Create(backend.GetRenderContext(), state);
-
-
-    /*RenderPassInfo passInfo;
-    passInfo.colorAttachments[0]  = backend.GetRenderContext().GetSwapchain();
-	passInfo.depthStencil         = NULL;
-    passInfo.colorAttachmentCount = 1;
-    passInfo.clearAttachments     = 1 << 0;
-    passInfo.storeAttachments     = 1 << 0;
-    passInfo.clearColor[0]        = VkClearColorValue{ 0.051f, 0.051f, 0.051f, 0.0f };
-    passInfo.opFlags              = RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT;*/
 
     INIT_BENCHMARK;
 
@@ -265,32 +278,9 @@ int main()
         }
 
         backend.BeginFrame();
-
-        /*if (time(NULL) != lasttime) {
-            lasttime = time(NULL);
-            srand(lasttime);
-
-            for (uint32 i = 0; i < 4; i++) {
-                float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-                float g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-                float b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-                // float a = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-
-                vertices[i].color = TRE::vec3{ r, g, b };
-            }
-
-            memcpy(data, vertices.data(), vertexSize);
-            backend.GetRenderContext().GetStagingManager().Stage(vertexIndexBuffer.GetAPIObject(), (void*)data, vertexSize);
-        }*/
-
-
-        /*TRE::Renderer::Internal::EditBuffer(renderDevice, staginVertexBuffer, vertexSize, vertices.data());
-        engine.GetRenderContext().TransferBuffers(1, &transferInfo[0]);*/
-
-        updateMVP(backend, uniformBuffer);
-        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer, uniformBuffer, textureView, sampler);
-
+        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer, uniformBuffer, textureView, textureView2, sampler);
         backend.EndFrame();
+
         printFPS();
     }
     

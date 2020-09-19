@@ -13,8 +13,8 @@
 #endif
 
 #if not defined(_DEBUG) || defined(NDEBUG)
-	#define ASSERTF(condition, ...) ;
-	#define ASSERT(condition) ;
+	#define ASSERTF(condition, ...) {};
+	#define ASSERT(condition) {};
 #else
 	#include <Engine/Core/Misc/Utils/Logging.hpp>
 

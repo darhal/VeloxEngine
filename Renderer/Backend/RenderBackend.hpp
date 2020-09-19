@@ -21,6 +21,7 @@
 #include <Renderer/Backend/RenderPass/FramebufferAllocator.hpp>
 #include <Renderer/Backend/RenderPass/RenderPass.hpp>
 #include <Renderer/Backend/Images/ImageHelper.hpp>
+#include <Renderer/Backend/RenderPass/AttachmentAllocator.hpp>
 
 TRE_NS_START
 
@@ -70,7 +71,7 @@ namespace Renderer
 
 		BufferHandle CreateBuffer(const BufferInfo& createInfo, const void* data = NULL);
 
-		RingBufferHandle CreateRingBuffer(const BufferInfo& createInfo, const void* data = NULL);
+		RingBufferHandle CreateRingBuffer(const BufferInfo& createInfo, const uint32 ringSize = NUM_FRAMES, const void* data = NULL);
 
 		SamplerHandle CreateSampler(const SamplerInfo& createInfo);
 	
@@ -83,9 +84,13 @@ namespace Renderer
 		DescriptorSetAllocator* RequestDescriptorSetAllocator(const DescriptorSetLayout& layout);
 
 		// Render pass and framebuffer functionalities:
-		const Framebuffer& RequestFramebuffer(const RenderPassInfo& info);
+		const Framebuffer& RequestFramebuffer(const RenderPassInfo& info, const RenderPass* rp = NULL);
 
-		const RenderPass& RequestRenderPass(const RenderPassInfo& info, bool compatible = true);
+		const RenderPass& RequestRenderPass(const RenderPassInfo& info, bool compatible = false);
+
+		RenderPassInfo GetSwapchainRenderPass(SwapchainRenderPass style);
+
+		ImageView& GetTransientAttachment(uint32 width, uint32 height, VkFormat format, uint32 index = 0, uint32 samples = 1, uint32 layers = 1);
 
 		FORCEINLINE MemoryAllocator& GetContextAllocator() { return gpuMemoryAllocator; }
 
@@ -111,11 +116,13 @@ namespace Renderer
 		std::unordered_map<Hash, DescriptorSetAllocator> descriptorSetAllocators;
 		std::unordered_map<Hash, RenderPass>			 renderPasses;
 		FramebufferAllocator							 framebufferAllocator;
+		AttachmentAllocator								 transientAttachmentAllocator;
 
 		PerFrame		perFrame[MAX_FRAMES];
 		HandlePool		objectsPool;
 
 		friend class Image;
+		friend class Swapchain;
 	};
 };
 

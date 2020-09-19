@@ -3,13 +3,20 @@
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
+#include <Renderer/Backend/Images/ImageHelper.hpp>
 
 TRE_NS_START
 
 namespace Renderer
 {
-    class RenderDevice;
-    class RenderContext;
+    class RenderBackend;
+
+    enum class SwapchainRenderPass
+    {
+        COLOR_ONLY,
+        DEPTH,
+        DEPTH_STENCIL
+    };
 
     class RENDERER_API Swapchain
     {
@@ -32,6 +39,9 @@ namespace Renderer
             VkImageView						swapChainImageViews[MAX_IMAGES_COUNT];
             VkFramebuffer					swapChainFramebuffers[MAX_IMAGES_COUNT];
 
+            // second version
+            ImageHandle                     swapchainImages[MAX_IMAGES_COUNT];
+
             // Depth/Stencil resources:
             VkImage                         depthStencilImage;
             VkImageView                     depthStencilIamgeView;
@@ -49,13 +59,17 @@ namespace Renderer
             TRE::Vector<VkPresentModeKHR>       presentModes;
         };
     public:
-        Swapchain(const RenderDevice& renderDevice, RenderContext& renderContext);
+        Swapchain(RenderBackend& backend);
 
         static SwapchainSupportDetails QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 
         void CreateSwapchain();
 
         void CreateSwapchainResources();
+
+        void CreateSwapchainResources(const VkImage* images);
+
+        ImageHandle GetSwapchainImage(uint32 i);
 
         void DestroySwapchain();
 
@@ -92,11 +106,12 @@ namespace Renderer
         FORCEINLINE const VkExtent2D& GetExtent() const { return swapchainData.swapChainExtent; }
 
         FORCEINLINE VkFormat GetFormat() const { return swapchainData.swapChainImageFormat; }
-
     private:
-        VkFormat FindSupportedFormat(const TRE::Vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+        VkFormat FindSupportedFormat(const std::initializer_list<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
-        VkFormat FindDepthFormat();
+        VkFormat FindSupportedDepthStencilFormat();
+
+        VkFormat FindSupportedDepthFormat();
 
         VkImageView CreateImageView(VkImage image, VkFormat format);
 
@@ -105,14 +120,14 @@ namespace Renderer
         SwapchainData           swapchainData;
         SwapchainSupportDetails supportDetails;
 
-        const RenderDevice&     renderDevice;
-        RenderContext&          renderContext;
+        RenderBackend&          renderBackend;
         VkSwapchainKHR          swapchain;
         VkRenderPass            renderPass;
         uint32                  imagesCount;
 
         bool					framebufferResized;
 
+        friend class RenderBackend;
         friend class RenderContext;
     };
 
