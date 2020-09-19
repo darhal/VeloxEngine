@@ -1,5 +1,6 @@
 #include "Framebuffer.hpp"
 #include <Renderer/Backend/RenderBackend.hpp>
+#include <Renderer/Backend/Images/Image.hpp>
 
 TRE_NS_START
 
@@ -11,24 +12,17 @@ Renderer::Framebuffer::Framebuffer(const RenderDevice& device, const RenderPass&
 	width(0),
 	height(0)
 {
-	ComputeDimensions(info, width, height);
-
 	VkImageView views[MAX_ATTACHMENTS + 1];
 	uint32 viewsCount = 0;
 
+	ComputeDimensions(info, width, height);
 	viewsCount = SetupRawViews(views, info);
+	uint32 num_layers = info.layersCount > 1 ? (info.layersCount + info.baseLayer) : 1;
 
 	VkFramebufferCreateInfo fb_info = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-	VkFramebufferAttachmentsCreateInfoKHR attachments_info = { VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENTS_CREATE_INFO_KHR };
 	fb_info.renderPass = rp.GetAPIObject();
 	fb_info.attachmentCount = viewsCount;
-
-	unsigned num_layers = info.layersCount > 1 ? (info.layersCount + info.baseLayer) : 1;
-	VkFormat view_formats[MAX_ATTACHMENTS][2];
-	VkFramebufferAttachmentImageInfoKHR image_infos[MAX_ATTACHMENTS + 1];
-
 	fb_info.pAttachments = views;
-
 	fb_info.width = width;
 	fb_info.height = height;
 	fb_info.layers = num_layers;

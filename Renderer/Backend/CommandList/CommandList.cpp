@@ -64,9 +64,7 @@ void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubp
 {
     renderPass = &renderBackend->RequestRenderPass(info, false);
     framebuffer = &renderBackend->RequestFramebuffer(info);
-
     this->InitViewportScissor(info, framebuffer);
-
 
     VkClearValue clearValues[MAX_ATTACHMENTS + 1];
     uint32 clearValuesCount = 0;
@@ -139,7 +137,7 @@ void Renderer::CommandBuffer::BindDescriptorSet(const GraphicsPipeline& pipeline
     vkCmdBindDescriptorSets(commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         pipeline.GetPipelineLayout().GetAPIObject(),
-        0, descriptors.size(), descriptors.begin(), dyncOffsets.size(), dyncOffsets.begin());
+        0, (uint32)descriptors.size(), descriptors.begin(), (uint32)dyncOffsets.size(), dyncOffsets.begin());
 }
 
 void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range)
@@ -149,7 +147,7 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
 
     auto& b = bindings.bindings[set][binding];
     b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetAPIObject(), 0, range };
-    b.dynamicOffset = offset;
+    b.dynamicOffset   = (uint32)offset;
 
     dirtySets.dirtySets |= (1u << set);
     dirtySets.dirtyBindings[set] |= (1u << binding);

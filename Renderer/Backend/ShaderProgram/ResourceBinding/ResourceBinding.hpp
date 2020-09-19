@@ -16,7 +16,7 @@ namespace Renderer
 			// VkBufferView buffer_view;
 		} resource;
 
-		VkDeviceSize dynamicOffset;
+		uint32 dynamicOffset;
 	};
 
 	struct ResouceBindings

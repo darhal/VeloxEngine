@@ -8,6 +8,8 @@ TRE_NS_START
 
 namespace Renderer
 {
+	class RenderBackend;
+
 	class ImageView
 	{
 	public:
@@ -32,10 +34,11 @@ namespace Renderer
 	public:
 		Image(VkImage image, const ImageCreateInfo& info, const MemoryView& memory);
 
+		Image(RenderBackend& renderBackend, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType);
+
 		VkImage GetAPIObject() const { return apiImage; }
 
 		const ImageCreateInfo& GetInfo() const { return info; }
-
 
 		uint32 GetWidth(uint32 lod = 0) const { return TRE::Math::Max(1u, info.width >> lod); }
 
@@ -46,6 +49,7 @@ namespace Renderer
 		ImageCreateInfo info;
 		MemoryView imageMemory;
 		VkImage apiImage;
+		ImageViewHandle defaultView;
 
 		friend class RenderBackend;
 		friend class StagingManager;

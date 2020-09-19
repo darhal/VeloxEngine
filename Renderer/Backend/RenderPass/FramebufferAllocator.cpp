@@ -31,8 +31,8 @@ Renderer::Framebuffer& Renderer::FramebufferAllocator::RequestFramebuffer(const 
 	}
 
 	h.u32(info.baseLayer);
-	auto fb = framebufferCache.emplace(hash, Framebuffer(*renderDevice, renderPass, info));
-	return fb->second;
+	auto fb2 = framebufferCache.emplace(hash, Framebuffer(*renderDevice, renderPass, info));
+	return fb2.first->second;
 }
 
 void Renderer::FramebufferAllocator::Clear()

@@ -4,6 +4,7 @@
 #include <Renderer/Backend/RenderContext/RenderContext.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 #include <Renderer/Backend/SwapChain/SwapChain.hpp>
+#include <Renderer/Backend/Images/Image.hpp>
 
 TRE_NS_START
 
@@ -131,7 +132,7 @@ Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo
     }
 
     if (info.sharingMode == VK_SHARING_MODE_CONCURRENT) {
-        info.queueFamilyIndexCount = queueFamilyIndices.GetElementCount();
+        info.queueFamilyIndexCount = (uint32)queueFamilyIndices.GetElementCount();
         info.pQueueFamilyIndices = queueFamilyIndices.GetData();
     }
 
@@ -226,7 +227,7 @@ bool Renderer::RenderBackend::CreateBufferInternal(VkBuffer& outBuffer, MemoryVi
     bufferInfo.flags = 0;
 
     if (bufferInfo.sharingMode == VK_SHARING_MODE_CONCURRENT) {
-        bufferInfo.queueFamilyIndexCount = queueFamilyIndices.GetElementCount();
+        bufferInfo.queueFamilyIndexCount = (uint32)queueFamilyIndices.GetElementCount();
         bufferInfo.pQueueFamilyIndices = queueFamilyIndices.GetData();
     }
 
@@ -276,7 +277,7 @@ Renderer::RingBufferHandle Renderer::RenderBackend::CreateRingBuffer(const Buffe
     // Removing padding from total size, as we dont need the last bytes for alignement
     // alignedSize * NUM_FRAMES - padding, data, usage, memoryUsage, queueFamilies
     this->CreateBufferInternal(apiBuffer, bufferMemory, info);
-    RingBufferHandle ret(objectsPool.ringBuffers.Allocate(apiBuffer, info, bufferMemory, alignedSize, NUM_FRAMES));
+    RingBufferHandle ret(objectsPool.ringBuffers.Allocate(apiBuffer, info, bufferMemory, (uint32)alignedSize, NUM_FRAMES));
 
     if (data) {
         if (info.domain == MemoryUsage::CPU_ONLY || info.domain == MemoryUsage::CPU_CACHED || info.domain == MemoryUsage::CPU_COHERENT) {
@@ -406,9 +407,9 @@ const Renderer::RenderPass& Renderer::RenderBackend::RequestRenderPass(const Ren
         return rp->second;
     }
 
-    auto rp = renderPasses.emplace(hash, RenderPass(renderDevice, info));
+    auto rp2 = renderPasses.emplace(hash, RenderPass(renderDevice, info));
     rp->second.hash = h.Get();
-    return rp->second;
+    return rp2.first->second;
 }
 
 const Renderer::Framebuffer& Renderer::RenderBackend::RequestFramebuffer(const RenderPassInfo& info)

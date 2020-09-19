@@ -13,6 +13,8 @@
 #include <Engine/Core/Misc/Defines/PlatformInclude.hpp>
 #include <Engine/Core/Misc/Defines/Debug.hpp>
 
+#pragma warning(disable:4251) // This is to avoid the spam of warning bcuz of std classes, more concrete solution must be found in the future
+
 // #undef DEBUG
 // #define DEBUG
 

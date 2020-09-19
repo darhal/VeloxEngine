@@ -103,7 +103,7 @@ void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingB
     mvp.model   =  glm::scale(mvp.model, glm::vec3(0.5f, 0.5f, 0.5f));
 #endif
     mvp.view    = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    mvp.proj    = glm::perspective<float>(TRE::Math::ToRad(45.0f), swapchainData.swapChainExtent.width / (float)swapchainData.swapChainExtent.height, 0.1, 10.f);
+    mvp.proj    = glm::perspective<float>(TRE::Math::ToRad(45.0f), swapchainData.swapChainExtent.width / (float)swapchainData.swapChainExtent.height, 0.1f, 10.f);
     // mvp.proj    = glm::ortho(0, 1, 0, 1, 0, 1);
     mvp.proj[1][1] *= -1;
     
@@ -169,19 +169,6 @@ void printFPS() {
 
 int main()
 {
-    /*uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-    std::vector<VkExtensionProperties> extensions(extensionCount);
-    std::vector<const char*> extensionsNames(extensionCount);
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
-
-    int i = 0;
-    std::cout << "available extensions:\n";
-    for (const auto& extension : extensions) {
-        std::cout << '\t' << extension.extensionName << '\n';
-        extensionsNames[i++] = extension.extensionName;
-    }*/
-
     const unsigned int SCR_WIDTH = 640;//1920 / 2;
     const unsigned int SCR_HEIGHT = 480;//1080 / 2;
 
@@ -218,14 +205,6 @@ int main()
         { sizeof(vertecies), BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER },
         vertecies);
 #endif
-    // TRE::Image image("Assets/box1.jpeg");
-    /*uint32 red = Color(228, 3, 3).hex;
-    uint32 orange = Color(255, 140, 0).hex;
-    uint32 yellow = Color(255, 237, 0).hex;
-    uint32 green = Color(0, 128, 38).hex;
-    uint32 blue = Color(0, 77, 255).hex;
-    uint32 purple = Color(117, 7, 135).hex;*/
-
     const uint32 checkerboard[] = {
         0u, ~0u, 0u, ~0u,
         ~0u, 0u, ~0u, 0u,
@@ -237,6 +216,8 @@ int main()
     ImageViewHandle textureView = backend.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
     SamplerHandle sampler = backend.CreateSampler(SamplerInfo::Sampler2D());
 
+    RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)));
+
     GraphicsPipeline graphicsPipeline;
     GraphicsState state;
 
@@ -244,8 +225,6 @@ int main()
     depthStencilState.depthTestEnable = true;
     depthStencilState.depthWriteEnable = true;
     depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
-
-    // state.GetRasterizationState().cullMode = VK_CULL_MODE_NONE;
 
     graphicsPipeline.GetShaderProgram().Create(backend,
         { 
@@ -263,22 +242,15 @@ int main()
     graphicsPipeline.SetRenderPass(backend.GetRenderContext().GetSwapchain().GetRenderPass());
     graphicsPipeline.Create(backend.GetRenderContext(), state);
 
-    
-    RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)));
 
-    for (uint32 i = 0; i < 4; i++) {
-        float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-        float g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-        float b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-
-        //float r = sin(TRE::Math::ToRad((double)i));
-        //float g = cos(TRE::Math::ToRad((double)i));
-        //vertices[0].pos = TRE::vec3{ r, vertices[0].pos.y, 0 };
-        //vertices[1].pos = TRE::vec3{ vertices[1].pos.x, g, 0 };
-
-        vertices[i].color = TRE::vec3{ r, g, b };
-    }
-
+    /*RenderPassInfo passInfo;
+    passInfo.colorAttachments[0]  = backend.GetRenderContext().GetSwapchain();
+	passInfo.depthStencil         = NULL;
+    passInfo.colorAttachmentCount = 1;
+    passInfo.clearAttachments     = 1 << 0;
+    passInfo.storeAttachments     = 1 << 0;
+    passInfo.clearColor[0]        = VkClearColorValue{ 0.051f, 0.051f, 0.051f, 0.0f };
+    passInfo.opFlags              = RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT;*/
 
     INIT_BENCHMARK;
 

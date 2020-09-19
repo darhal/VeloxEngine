@@ -16,11 +16,11 @@
 #include <Renderer/Backend/CommandList/CommandList.hpp>
 #include <Renderer/Backend/Descriptors/DescriptorSetAlloc.hpp>
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
-#include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/Images/Sampler.hpp>
 #include <Renderer/Backend/RenderPass/Framebuffer.hpp>
 #include <Renderer/Backend/RenderPass/FramebufferAllocator.hpp>
 #include <Renderer/Backend/RenderPass/RenderPass.hpp>
+#include <Renderer/Backend/Images/ImageHelper.hpp>
 
 TRE_NS_START
 
@@ -114,6 +114,8 @@ namespace Renderer
 
 		PerFrame		perFrame[MAX_FRAMES];
 		HandlePool		objectsPool;
+
+		friend class Image;
 	};
 };
 

@@ -594,7 +594,7 @@ Renderer::RenderPass::RenderPass(const RenderDevice& device, const RenderPassInf
 	}
 
 	if (!externalDependencies.empty()) {
-		rp_info.dependencyCount = externalDependencies.size();
+		rp_info.dependencyCount = (uint32)externalDependencies.size();
 		rp_info.pDependencies = externalDependencies.data();
 	}
 

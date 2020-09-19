@@ -6,7 +6,7 @@ Renderer::MemoryAllocator::AllocKey Renderer::MemoryAllocator::AllocPool::Alloca
 {
 	Chunk* chunk = GetLatestChunk(TOTAL_MEM_SIZE);
 	uint32 chunkId = uint32(chunks.size() - 1);
-	BindingInfo bindInfo{ UINT64_MAX, size, 0, alignment };
+	BindingInfo bindInfo{ UINT64_MAX, size, 0, (uint32)alignment };
 
 	if (FindFreeBinding(*chunk, alignment, bindInfo)) {
 		// Everything is done in the find free binding function
