@@ -291,5 +291,11 @@ void Renderer::CommandBuffer::InitViewportScissor(const RenderPassInfo& info, co
     scissor  = rect;
 }
 
+void Renderer::CommandBufferDeleter::operator()(CommandBuffer* cmd)
+{
+    cmd->renderBackend->GetObjectsPool().commandBuffers.Free(cmd);
+}
+
 TRE_NS_END
+
 

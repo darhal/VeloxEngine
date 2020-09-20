@@ -17,9 +17,6 @@ namespace Renderer
 	struct ImageCreateInfo;
 	struct ImageViewCreateInfo;
 
-	using ImageHandle = Handle<Image>;
-	using ImageViewHandle = Handle<ImageView>;
-
 	enum ImageMiscFlagBits
 	{
 		IMAGE_MISC_GENERATE_MIPS_BIT = 1 << 0,
@@ -252,10 +249,10 @@ namespace Renderer
 		ImageViewMiscFlags misc = 0;
 		VkComponentMapping swizzle = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
 
-		static ImageViewCreateInfo ImageView(ImageHandle imageHandle, VkImageViewType viewType)
+		static ImageViewCreateInfo ImageView(Image* img, VkImageViewType viewType)
 		{
 			ImageViewCreateInfo info;
-			info.image = imageHandle.Get();
+			info.image = img;
 			info.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			return info;
 		}

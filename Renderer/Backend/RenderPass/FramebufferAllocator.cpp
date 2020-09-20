@@ -17,11 +17,11 @@ Renderer::Framebuffer& Renderer::FramebufferAllocator::RequestFramebuffer(const 
 
 	for (unsigned i = 0; i < info.colorAttachmentCount; i++) {
 		ASSERT(!info.colorAttachments[i]);
-		h.u64(uint64(info.colorAttachments[i]));
+		h.u64(uint64(info.colorAttachments[i])); // this caused a bug!
 	}
 
 	if (info.depthStencil)
-		h.u64(uint64(info.depthStencil));
+		h.u64(uint64(info.depthStencil)); // this caused a bug !
 
 	h.u32(info.baseLayer);
 	auto hash = h.Get();
@@ -29,6 +29,7 @@ Renderer::Framebuffer& Renderer::FramebufferAllocator::RequestFramebuffer(const 
 	auto fb = framebufferCache.find(hash);
 
 	if (fb != framebufferCache.end()) {
+		// printf("Getting framebuffer ID: %llu.\n", hash);
 		return fb->second;
 	}
 
@@ -39,6 +40,7 @@ Renderer::Framebuffer& Renderer::FramebufferAllocator::RequestFramebuffer(const 
 
 void Renderer::FramebufferAllocator::Clear()
 {
+	framebufferCache.clear();
 }
 
 

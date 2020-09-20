@@ -5,6 +5,7 @@
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/Images/ImageHelper.hpp>
+#include <Renderer/Backend/Images/Image.hpp>
 
 TRE_NS_START
 
@@ -19,6 +20,8 @@ namespace Renderer
 		AttachmentAllocator(RenderBackend& backend, bool transient);
 
 		ImageView& RequestAttachment(uint32 width, uint32 height, VkFormat format, uint32 index = 0, uint32 samples = 1, uint32 layers = 1);
+
+		void Clear();
 	private:
 		RenderBackend& renderBackend;
 		std::unordered_map<Hash, ImageHandle> attachments;

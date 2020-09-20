@@ -26,7 +26,12 @@ namespace Renderer
 		uint8 dirtySets;
 	};
 
-	class CommandBuffer
+	struct CommandBufferDeleter
+	{
+		void operator()(class CommandBuffer* cmd);
+	};
+
+	class CommandBuffer : public Utils::RefCounterEnabled<CommandBuffer, CommandBufferDeleter, HandleCounter>
 	{
 	public:
 		enum class Type
@@ -38,6 +43,8 @@ namespace Renderer
 			MAX
 		};
 	public:
+		friend struct CommandBufferDeleter;
+
 		CommandBuffer(RenderBackend* backend, VkCommandBuffer buffer, Type type);
 
 		void Begin();

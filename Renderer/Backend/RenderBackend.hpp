@@ -34,6 +34,17 @@ namespace Renderer
 		{
 			CommandPool commandPools[MAX_THREADS][(uint32)QueueTypes::MAX];
 			StackAlloc<VkCommandBuffer, 32> submissions[(uint32)QueueTypes::MAX];
+
+			TRE::Vector<VkPipeline>       destroyedPipelines;
+			TRE::Vector<VkFramebuffer>    destroyedFramebuffers;
+			TRE::Vector<VkImage>	      destroyedImages;
+			TRE::Vector<VkImageView>      destroyedImageViews;
+			TRE::Vector<VkBuffer>		  destroyedBuffers;
+			TRE::Vector<VkBufferView>	  destroyedBufferViews;
+			TRE::Vector<VkRenderPass>	  destroyedRenderPasses;
+			TRE::Vector<VkDescriptorPool> destroyedDescriptorPool;
+
+			bool shouldDestroy = false;
 		};
 
 		struct HandlePool
@@ -92,17 +103,31 @@ namespace Renderer
 
 		ImageView& GetTransientAttachment(uint32 width, uint32 height, VkFormat format, uint32 index = 0, uint32 samples = 1, uint32 layers = 1);
 
+		void DestroyPendingObjects(PerFrame& frame);
+
+		void DestroyImage(VkImage image);
+
+		void DestroyImageView(VkImageView view);
+
+		void DestroyFramebuffer(VkFramebuffer fb);
+
 		FORCEINLINE MemoryAllocator& GetContextAllocator() { return gpuMemoryAllocator; }
 
 		FORCEINLINE StagingManager& GetStagingManager() { return stagingManager; }
 
 		FORCEINLINE ObjectPool<CommandBuffer>& GetCommandBufferPool() { return objectsPool.commandBuffers; }
-	private:
-		void Init();
 
+		FORCEINLINE HandlePool& GetObjectsPool() { return objectsPool; }
+	private:
 		FORCEINLINE const PerFrame& Frame() const { return perFrame[renderContext.GetCurrentFrame()]; }
 
 		FORCEINLINE PerFrame& Frame() { return perFrame[renderContext.GetCurrentFrame()]; }
+
+		FORCEINLINE const PerFrame& PreviousFrame() const { return perFrame[renderContext.GetPreviousFrame()]; }
+
+		FORCEINLINE PerFrame& PreviousFrame() { return perFrame[renderContext.GetPreviousFrame()]; }
+
+		void Init();
 
 		void ClearFrame();
 	private:

@@ -3,17 +3,24 @@
 
 TRE_NS_START
 
-Renderer::ImageView::ImageView(VkImageView view, const ImageViewCreateInfo& info) : 
-	info(info), apiImageView(view)
+Renderer::ImageView::ImageView(RenderBackend& backend, VkImageView view, const ImageViewCreateInfo& info) :
+	backend(backend), info(info), apiImageView(view)
 {
 }
 
-Renderer::Image::Image(VkImage image, const ImageCreateInfo& info, const MemoryView& memory) : 
-	info(info), imageMemory(memory), apiImage(image), swapchainLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+Renderer::ImageView::~ImageView()
+{
+	printf("Destroying image view!\n");
+	backend.DestroyImageView(apiImageView);
+}
+
+Renderer::Image::Image(RenderBackend& backend, VkImage image, const ImageCreateInfo& info, const MemoryView& memory) :
+	backend(backend), info(info), imageMemory(memory), apiImage(image), swapchainLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 {
 }
 
-Renderer::Image::Image(RenderBackend& renderBackend, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType) :
+Renderer::Image::Image(RenderBackend& backend, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType) :
+	backend(backend),
 	apiImage(image),
 	info(createInfo),
 	imageMemory{}, swapchainLayout(VK_IMAGE_LAYOUT_UNDEFINED)
@@ -28,16 +35,19 @@ Renderer::Image::Image(RenderBackend& renderBackend, VkImage image, VkImageView 
 		info.baseLayer = 0;
 		info.layers = createInfo.layers;
 
-		this->defaultView = ImageViewHandle(renderBackend.objectsPool.imageViews.Allocate(defaultView, info));
+		this->defaultView = ImageViewHandle(backend.objectsPool.imageViews.Allocate(backend, defaultView, info));
 	}
 }
 
 Renderer::Image::~Image()
 {
-	// TODO: !
+	if (apiImage != VK_NULL_HANDLE && !IsSwapchainImage()) {
+		backend.DestroyImage(apiImage);
+		printf("Destroying image!\n");
+	}
 }
 
-void Renderer::Image::CreateDefaultView(RenderBackend& renderBackend, VkImageViewType viewType)
+void Renderer::Image::CreateDefaultView(VkImageViewType viewType)
 {
 	VkImageViewCreateInfo vkViewInfo = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
 	vkViewInfo.image = apiImage;
@@ -63,8 +73,21 @@ void Renderer::Image::CreateDefaultView(RenderBackend& renderBackend, VkImageVie
 	imageViewInfo.layers = info.layers;
 
 	VkImageView imageView;
-	vkCreateImageView(renderBackend.GetRenderDevice().GetDevice(), &vkViewInfo, NULL, &imageView);
-	this->defaultView = ImageViewHandle(renderBackend.objectsPool.imageViews.Allocate(imageView, imageViewInfo));
+	vkCreateImageView(backend.GetRenderDevice().GetDevice(), &vkViewInfo, NULL, &imageView);
+	this->defaultView = ImageViewHandle(backend.objectsPool.imageViews.Allocate(backend, imageView, imageViewInfo));
 }
 
+void Renderer::ImageViewDeleter::operator()(ImageView* view)
+{
+	view->backend.GetObjectsPool().imageViews.Free(view);
+}
+
+void Renderer::ImageDeleter::operator()(Image* img)
+{
+	img->backend.GetObjectsPool().images.Free(img);
+}
+
+
 TRE_NS_END
+
+

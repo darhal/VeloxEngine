@@ -22,7 +22,7 @@ namespace Renderer
 
 	typedef BufferInfo BufferCreateInfo;
 
-	class Buffer
+	class Buffer : public NoRefCount
 	{
 	public:
 		static uint32 FindMemoryType(const Internal::RenderDevice& renderDevice, uint32 typeFilter, VkMemoryPropertyFlags properties);

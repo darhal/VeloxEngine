@@ -86,7 +86,16 @@ std::pair<VkDescriptorSet, bool> Renderer::DescriptorSetAllocator::Find(Hash has
 
 void Renderer::DescriptorSetAllocator::Free(VkDescriptorSet set)
 {
-    emptyDescriptors.push_back(set);
+    emptyDescriptors.emplace_back(set);
+}
+
+void Renderer::DescriptorSetAllocator::Clear()
+{
+    for (auto& desc : descriptorCache) {
+        emptyDescriptors.emplace_back(desc.second);
+    }
+
+    descriptorCache.clear();
 }
 
 TRE_NS_END

@@ -61,10 +61,15 @@ namespace Renderer
 	template<typename T>
 	using Handle = Utils::Handle<T>;
 
+	using HandleCounter = Utils::SingleThreadRefCounter;
+
+	using NoRefCount = Utils::RefCounterEnabled<void, void, void>;
+
 	template<typename T, size_t S>
 	using StackAlloc = Utils::StackAllocator<T, S>;
 
 	using Hash = Utils::Hash;
+
 	using Hasher = Utils::Hasher;
 
 	using Hashable = Utils::Hashable;
@@ -274,6 +279,7 @@ namespace Renderer
 
 			// Swap chain current frame and current buffer and images count
 			uint32							currentImage;
+			uint32							previousFrame;
 			uint32							currentFrame;
 			uint32							numFramesInFlight;
 			

@@ -130,15 +130,15 @@ void Renderer::Swapchain::DestroySwapchain()
 
 void Renderer::Swapchain::CleanupSwapchain()
 {
-    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
+    /*const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
     VkDevice device = renderDevice.GetDevice();
 
-    /*for (size_t i = 0; i < imagesCount; i++) {
+    for (size_t i = 0; i < imagesCount; i++) {
         vkDestroyFramebuffer(device, swapchainData.swapChainFramebuffers[i], NULL);
         vkDestroyImageView(device, swapchainData.swapChainImageViews[i], NULL);
-    }*/
+    }
 
-    /*vkDestroyImageView(device, swapchainData.depthStencilIamgeView, NULL);
+    vkDestroyImageView(device, swapchainData.depthStencilIamgeView, NULL);
     vkDestroyImage(device, swapchainData.depthStencilImage, NULL);
     renderDevice.FreeDedicatedMemory(swapchainData.depthStencilImageMemory);*/
 }
@@ -257,6 +257,8 @@ void Renderer::Swapchain::CreateSwapchainResources(const VkImage* images)
 
         swapchainData.swapchainImages[i] = ImageHandle(renderBackend.objectsPool.images.Allocate(renderBackend, images[i], image_view, info, VK_IMAGE_VIEW_TYPE_2D));
         swapchainData.swapchainImages[i]->SetSwapchainLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+        printf("Image view handle: %llu\n", swapchainData.swapchainImages[i]);
     }
 }
 

@@ -129,6 +129,7 @@ void Renderer::RenderContext::EndFrame(const RenderDevice& renderDevice, const V
         ASSERTF(true, "Failed to present swap chain image!");
     }
 
+    internal.previousFrame = internal.currentFrame;
     internal.currentFrame = (currentFrame + 1) % internal.numFramesInFlight;
 }
 

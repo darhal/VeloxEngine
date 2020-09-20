@@ -4,6 +4,7 @@
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
 #include <Renderer/Backend/Images/ImageHelper.hpp>
+#include <Renderer/Backend/Images/Image.hpp>
 
 TRE_NS_START
 

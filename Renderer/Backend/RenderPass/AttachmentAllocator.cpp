@@ -40,8 +40,13 @@ Renderer::ImageView& Renderer::AttachmentAllocator::RequestAttachment(uint32 wid
 	imageInfo.layers = layers;
 
 	auto iv2 = attachments.emplace(hash, renderBackend.CreateImage(imageInfo));
-	iv2.first->second->CreateDefaultView(renderBackend, GetImageViewType(imageInfo, NULL));
+	iv2.first->second->CreateDefaultView(GetImageViewType(imageInfo, NULL));
 	return *iv2.first->second->GetView();
+}
+
+void Renderer::AttachmentAllocator::Clear()
+{
+	attachments.clear();
 }
 
 TRE_NS_END

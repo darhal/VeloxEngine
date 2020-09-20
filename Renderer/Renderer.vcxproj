@@ -197,6 +197,7 @@
     <ClInclude Include="Backend\RenderPass\AttachmentAllocator.hpp" />
     <ClInclude Include="Backend\RenderPass\Framebuffer.hpp" />
     <ClInclude Include="Backend\RenderPass\FramebufferAllocator.hpp" />
+    <ClInclude Include="Backend\SwapChain\Swapchain.hpp" />
     <ClInclude Include="Core\Hash\Hashable.hpp" />
     <ClInclude Include="cube.hpp" />
     <ClInclude Include="Backend\Images\Image.hpp" />
@@ -217,7 +218,6 @@
     <ClInclude Include="Backend\Descriptors\DescriptorSetLayout.hpp" />
     <ClInclude Include="Backend\Pipeline\GraphicsPipeline.hpp" />
     <ClInclude Include="Backend\RenderDevice\RenderDevice.hpp" />
-    <ClInclude Include="Backend\SwapChain\SwapChain.hpp" />
     <ClInclude Include="Backend\WindowSurface\WindowSurface.hpp" />
     <ClInclude Include="Core\Allocators\StackAllocator.hpp" />
     <ClInclude Include="Core\Handle\Handle.hpp" />

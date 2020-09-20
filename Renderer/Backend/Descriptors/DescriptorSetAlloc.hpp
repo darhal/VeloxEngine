@@ -28,6 +28,8 @@ namespace Renderer
 
 		void Free(VkDescriptorSet set);
 
+		void Clear();
+
 		const DescriptorSetLayout& GetDescriptorSetLayout() const { return descriptorSetLayout; }
 	private:
 		void AllocatePool();

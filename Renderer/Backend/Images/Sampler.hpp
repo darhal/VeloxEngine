@@ -77,7 +77,7 @@ namespace Renderer
 
     typedef SamplerInfo SamplerCreateInfo;
 
-	class Sampler
+	class Sampler : public NoRefCount
 	{
 	public:
         Sampler(VkSampler sampler, const SamplerInfo& info);

@@ -160,7 +160,6 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     currentCmdBuff->End();
 
     backend.Submit(currentCmdBuff);
-    backend.GetCommandBufferPool().Free(currentCmdBuff.Get());
 }
 
 void printFPS() {

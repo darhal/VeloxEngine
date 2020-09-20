@@ -52,6 +52,7 @@ void Renderer::RenderBackend::ClearFrame()
     }
 
     // objectsPool.commandBuffers.Clear();
+    this->DestroyPendingObjects(frame);
 }
 
 Renderer::RenderBackend::~RenderBackend()
@@ -149,7 +150,7 @@ Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo
     imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, memRequirements.alignment);
     vkBindImageMemory(renderDevice.GetDevice(), apiImage, imageMemory.memory, imageMemory.offset);
 
-    ImageHandle ret = ImageHandle(objectsPool.images.Allocate(apiImage, createInfo, imageMemory));
+    ImageHandle ret = ImageHandle(objectsPool.images.Allocate(*this, apiImage, createInfo, imageMemory));
 
     if (data) {
         if (memUsage == MemoryUsage::GPU_ONLY) {
@@ -204,7 +205,7 @@ Renderer::ImageViewHandle Renderer::RenderBackend::CreateImageView(const ImageVi
     VkImageView apiImageView;
     vkCreateImageView(renderDevice.GetDevice(), &viewInfo, NULL, &apiImageView);
 
-    ImageViewHandle ret(objectsPool.imageViews.Allocate(apiImageView, info));
+    ImageViewHandle ret(objectsPool.imageViews.Allocate(*this, apiImageView, info));
     return ret;
 }
 
@@ -462,6 +463,58 @@ Renderer::RenderPassInfo Renderer::RenderBackend::GetSwapchainRenderPass(Swapcha
 Renderer::ImageView& Renderer::RenderBackend::GetTransientAttachment(uint32 width, uint32 height, VkFormat format, uint32 index, uint32 samples, uint32 layers)
 {
     return transientAttachmentAllocator.RequestAttachment(width, height, format, index, samples, layers);
+}
+
+void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
+{
+    if (!frame.shouldDestroy)
+        return;
+
+    VkDevice dev = renderDevice.GetDevice();
+
+    for (auto& fb : frame.destroyedFramebuffers)
+        vkDestroyFramebuffer(dev, fb, NULL);
+
+    for (auto& view : frame.destroyedImageViews)
+        vkDestroyImageView(dev, view, NULL);
+
+    for (auto& img : frame.destroyedImages)
+        vkDestroyImage(dev, img, NULL);
+
+    // Temporarily here!
+    // TODO: this leaks memory and all these allocators must be adjusted!
+    framebufferAllocator.Clear();
+    transientAttachmentAllocator.Clear();
+    /*for (auto alloc : descriptorSetAllocators) {
+        alloc.second.Clear();
+    }*/
+
+
+    frame.destroyedFramebuffers.Clear();
+    frame.destroyedImageViews.Clear();
+    frame.destroyedImages.Clear();
+    frame.shouldDestroy = false;
+}
+
+void Renderer::RenderBackend::DestroyImage(VkImage image)
+{
+    PerFrame& frame = this->Frame();
+    frame.destroyedImages.EmplaceBack(image);
+    frame.shouldDestroy = true;
+}
+
+void Renderer::RenderBackend::DestroyImageView(VkImageView view)
+{
+    PerFrame& frame = this->Frame();
+    frame.destroyedImageViews.EmplaceBack(view);
+    frame.shouldDestroy = true;
+}
+
+void Renderer::RenderBackend::DestroyFramebuffer(VkFramebuffer fb)
+{
+    PerFrame& frame = this->Frame();
+    frame.destroyedFramebuffers.EmplaceBack(fb);
+    frame.shouldDestroy = true;
 }
 
 TRE_NS_END

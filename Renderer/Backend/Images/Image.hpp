@@ -10,10 +10,24 @@ namespace Renderer
 {
 	class RenderBackend;
 
-	class ImageView
+	struct ImageViewDeleter
+	{
+		void operator()(ImageView* view);
+	};
+
+	struct ImageDeleter
+	{
+		void operator()(Image* img);
+	};
+
+	class ImageView : public Utils::RefCounterEnabled<ImageView, ImageViewDeleter, HandleCounter>
 	{
 	public:
-		ImageView(VkImageView view, const ImageViewCreateInfo& info);
+		friend struct ImageViewDeleter;
+
+		ImageView(RenderBackend& backend, VkImageView view, const ImageViewCreateInfo& info);
+
+		~ImageView();
 
 		FORCEINLINE VkImageView GetAPIObject() const { return apiImageView; }
 
@@ -23,22 +37,27 @@ namespace Renderer
 	private:
 		ImageView() = default;
 	private:
+		RenderBackend&	    backend;
 		ImageViewCreateInfo info;
 		VkImageView			apiImageView;
 
 		friend class RenderBackend;
 	};
 
-	class Image
+	using ImageViewHandle = Handle<ImageView>;
+
+	class Image : public Utils::RefCounterEnabled<Image, ImageDeleter, HandleCounter>
 	{
 	public:
-		Image(VkImage image, const ImageCreateInfo& info, const MemoryView& memory);
+		friend struct ImageDeleter;
 
-		Image(RenderBackend& renderBackend, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType);
+		Image(RenderBackend& backend, VkImage image, const ImageCreateInfo& info, const MemoryView& memory);
+
+		Image(RenderBackend& backend, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType);
 
 		~Image();
 
-		void CreateDefaultView(RenderBackend& renderBackend, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
+		void CreateDefaultView(VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
 
 		FORCEINLINE VkImage GetAPIObject() const { return apiImage; }
 
@@ -58,6 +77,7 @@ namespace Renderer
 	private:
 		Image() = default;
 	private:
+		RenderBackend& backend;
 		ImageCreateInfo info;
 		MemoryView imageMemory;
 		VkImage apiImage;
@@ -67,6 +87,8 @@ namespace Renderer
 		friend class RenderBackend;
 		friend class StagingManager;
 	};
+
+	using ImageHandle = Handle<Image>;
 }
 
 TRE_NS_END

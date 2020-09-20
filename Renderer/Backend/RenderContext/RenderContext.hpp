@@ -28,6 +28,8 @@ namespace Renderer
 
 		FORCEINLINE uint32 GetCurrentFrame() const { return internal.currentFrame; }
 
+		FORCEINLINE uint32 GetPreviousFrame() const { return internal.previousFrame; }
+
 		FORCEINLINE uint32 GetNumFrames() const { return internal.numFramesInFlight; }
 
 		FORCEINLINE Window* GetWindow() const { return internal.window; }
