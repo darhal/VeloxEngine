@@ -4,6 +4,7 @@
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/Descriptors/DescriptorSetLayout.hpp>
 #include <unordered_map>
+#include <Renderer/Core/Hashmap/TemporaryHashmap.hpp>
 
 TRE_NS_START
 
@@ -21,28 +22,36 @@ namespace Renderer
 
 		void Init();
 
-		VkDescriptorSet Allocate();
-
 		// @return: Descriptor potentially cached, bool: true cache found, false otherwise
 		std::pair<VkDescriptorSet, bool> Find(Hash hash);
 
-		void Free(VkDescriptorSet set);
-
 		void Clear();
 
-		const DescriptorSetLayout& GetDescriptorSetLayout() const { return descriptorSetLayout; }
+		void BeginFrame();
+
+		FORCEINLINE const DescriptorSetLayout& GetDescriptorSetLayout() const { return descriptorSetLayout; }
 	private:
 		void AllocatePool();
+
+		struct DescriptorSetNode : Utils::HashmapNode<DescriptorSetNode>, Utils::ListNode<DescriptorSetNode>
+		{
+			explicit DescriptorSetNode(VkDescriptorSet set_)
+				: set(set_)
+			{
+			}
+
+			VkDescriptorSet set;
+		};
+
 	private:
 		RenderDevice* renderDevice;
 		const DescriptorSetLayout& descriptorSetLayout;
 
-		std::vector<VkDescriptorPool> descriptorSetPools;
-		std::vector<VkDescriptorSet> emptyDescriptors;
-		std::unordered_map<Hash, VkDescriptorSet> descriptorCache;
-
+		std::vector<VkDescriptorPool> descriptorSetPools;		
+		Utils::TemporaryHashmap<DescriptorSetNode, DESCRIPTOR_RING_SIZE, true> descriptorCache;
 		VkDescriptorPoolSize poolSize[MAX_DESCRIPTOR_TYPES];
 		uint32 poolSizeCount;
+		bool shouldBegin;
 	};
 }
 

@@ -4,7 +4,7 @@
 TRE_NS_START
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator(RenderDevice* renderDevice, const DescriptorSetLayout& layout) : 
-	renderDevice(renderDevice), descriptorSetLayout(layout), poolSizeCount(0)
+	renderDevice(renderDevice), descriptorSetLayout(layout), poolSizeCount(0), shouldBegin(false)
 {
     // this->Init();
 }
@@ -12,7 +12,7 @@ Renderer::DescriptorSetAllocator::DescriptorSetAllocator(RenderDevice* renderDev
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator(const std::pair<RenderDevice*, const DescriptorSetLayout&>& renderDeviceLayoutPair) :
     renderDevice(renderDeviceLayoutPair.first), 
     descriptorSetLayout(renderDeviceLayoutPair.second), 
-    poolSizeCount(0)
+    poolSizeCount(0), shouldBegin(false)
 {
 }
 
@@ -21,7 +21,7 @@ void Renderer::DescriptorSetAllocator::Init()
     const VkDescriptorSetLayoutBinding* const bindings = descriptorSetLayout.GetDescriptorSetLayoutBindings() ;
 
     for (uint32 i = 0; i < descriptorSetLayout.GetBindingsCount(); i++) {
-        poolSize[i] = VkDescriptorPoolSize{ bindings[i].descriptorType, bindings[i].descriptorCount };
+        poolSize[i] = VkDescriptorPoolSize { bindings[i].descriptorType, bindings[i].descriptorCount };
         poolSizeCount++;
     }
 
@@ -38,12 +38,13 @@ void Renderer::DescriptorSetAllocator::AllocatePool()
     VkDescriptorPool pool;
 
     if (vkCreateDescriptorPool(renderDevice->GetDevice(), &poolInfo, NULL, &pool) != VK_SUCCESS) {
-        ASSERTF(true, "failed to create descriptor pool!");
+        ASSERTF(true, "Failed to create descriptor pool!");
     }
 
     descriptorSetPools.emplace_back(pool);
 
     VkDescriptorSetLayout layouts[MAX_SETS_PER_POOL];
+    VkDescriptorSet sets[MAX_SETS_PER_POOL];
     std::fill(std::begin(layouts), std::end(layouts), descriptorSetLayout.GetAPIObject());
 
     VkDescriptorSetAllocateInfo allocInfo;
@@ -53,49 +54,52 @@ void Renderer::DescriptorSetAllocator::AllocatePool()
     allocInfo.descriptorSetCount = MAX_SETS_PER_POOL;
     allocInfo.pSetLayouts        = layouts;
 
-    emptyDescriptors.resize(MAX_SETS_PER_POOL);
-
-    if (vkAllocateDescriptorSets(renderDevice->GetDevice(), &allocInfo, emptyDescriptors.data()) != VK_SUCCESS) {
-        ASSERTF(true, "failed to allocate descriptor sets!");
-    }
-}
-
-VkDescriptorSet Renderer::DescriptorSetAllocator::Allocate()
-{
-    if (emptyDescriptors.size() == 0) {
-        this->AllocatePool();
+    if (vkAllocateDescriptorSets(renderDevice->GetDevice(), &allocInfo, sets) != VK_SUCCESS) {
+        ASSERTF(true, "Failed to allocate descriptor sets!");
     }
 
-    VkDescriptorSet descriptorSet = emptyDescriptors.back();
-    emptyDescriptors.pop_back();
-    return descriptorSet;
+    for (auto set : sets) {
+        descriptorCache.MakeEmpty(set);
+    }
 }
 
 std::pair<VkDescriptorSet, bool> Renderer::DescriptorSetAllocator::Find(Hash hash)
 {
-    const auto& ret = descriptorCache.emplace(std::pair<Hash, VkDescriptorSet>(hash, VK_NULL_HANDLE));
-
-    if (!ret.second) { // Insertion didn't happen
-        return std::make_pair(ret.first->second, true);
+    if (shouldBegin) {
+        descriptorCache.BeginFrame();
+        shouldBegin = false;
     }
 
-    ret.first->second = this->Allocate();
-    emptyDescriptors.pop_back();
-    return std::make_pair(ret.first->second, false);
-}
+    auto* node = descriptorCache.Request(hash);
+    if (node) {
+        return { node->set, true };
+    }
 
-void Renderer::DescriptorSetAllocator::Free(VkDescriptorSet set)
-{
-    emptyDescriptors.emplace_back(set);
+    node = descriptorCache.RequestEmpty(hash);
+    if (node) {
+        return { node->set, false };
+    }
+
+    this->AllocatePool();
+    return { descriptorCache.RequestEmpty(hash)->set, false };
 }
 
 void Renderer::DescriptorSetAllocator::Clear()
 {
-    for (auto& desc : descriptorCache) {
-        emptyDescriptors.emplace_back(desc.second);
+    descriptorCache.Clear();
+
+    for (auto& pool : descriptorSetPools) {
+        vkResetDescriptorPool(renderDevice->GetDevice(), pool, 0);
+        vkDestroyDescriptorPool(renderDevice->GetDevice(), pool, NULL);
     }
 
-    descriptorCache.clear();
+    descriptorSetPools.clear();
+}
+
+void Renderer::DescriptorSetAllocator::BeginFrame()
+{
+    shouldBegin = true;
+    descriptorCache.BeginFrame();
 }
 
 TRE_NS_END

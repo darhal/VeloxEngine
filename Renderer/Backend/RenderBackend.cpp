@@ -69,6 +69,12 @@ Renderer::RenderBackend::~RenderBackend()
 void Renderer::RenderBackend::BeginFrame()
 {
     renderContext.BeginFrame(renderDevice, stagingManager);
+    framebufferAllocator.BeginFrame();
+    transientAttachmentAllocator.BeginFrame();
+
+    for (auto& allocator : descriptorSetAllocators)
+        allocator.second.BeginFrame();
+
     this->ClearFrame();
 }
 
@@ -412,7 +418,7 @@ const Renderer::RenderPass& Renderer::RenderBackend::RequestRenderPass(const Ren
     }
 
     auto rp2 = renderPasses.emplace(hash, RenderPass(renderDevice, info));
-    printf("Creating render pass ID: %llu.\n", hash);
+    // printf("Creating render pass ID: %llu.\n", hash);
     rp2.first->second.hash = h.Get();
     return rp2.first->second;
 }
@@ -480,15 +486,6 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
 
     for (auto& img : frame.destroyedImages)
         vkDestroyImage(dev, img, NULL);
-
-    // Temporarily here!
-    // TODO: this leaks memory and all these allocators must be adjusted!
-    framebufferAllocator.Clear();
-    transientAttachmentAllocator.Clear();
-    /*for (auto alloc : descriptorSetAllocators) {
-        alloc.second.Clear();
-    }*/
-
 
     frame.destroyedFramebuffers.Clear();
     frame.destroyedImageViews.Clear();

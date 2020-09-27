@@ -49,7 +49,11 @@ namespace Renderer
 			void Clear()
 			{
 				empty.clear();
-				memory.clear();
+				// memory.clear();
+
+				for (T* chunk : memory) {
+					AlignedFree(chunk);
+				}
 			}
 		protected:
 			struct AlignedAllocDeleter
@@ -61,7 +65,8 @@ namespace Renderer
 			};
 
 			std::vector<T*> empty;
-			std::vector<std::unique_ptr<T, AlignedAllocDeleter>> memory;
+			// std::vector<std::unique_ptr<T, AlignedAllocDeleter>> memory;
+			std::vector<T*> memory;
 		};
 	}
 }

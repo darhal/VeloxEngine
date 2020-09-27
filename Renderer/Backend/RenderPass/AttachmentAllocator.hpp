@@ -6,13 +6,13 @@
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/Images/ImageHelper.hpp>
 #include <Renderer/Backend/Images/Image.hpp>
+#include <Renderer/Core/Hashmap/TemporaryHashmap.hpp>
 
 TRE_NS_START
 
 namespace Renderer
 {
 	class RenderBackend;
-	class ImageView;
 
 	class RENDERER_API AttachmentAllocator
 	{
@@ -22,9 +22,18 @@ namespace Renderer
 		ImageView& RequestAttachment(uint32 width, uint32 height, VkFormat format, uint32 index = 0, uint32 samples = 1, uint32 layers = 1);
 
 		void Clear();
+
+		void BeginFrame();
 	private:
+		struct AttachmentNode : Utils::HashmapNode<AttachmentNode>, Utils::ListNode<AttachmentNode>
+		{
+			explicit AttachmentNode(ImageHandle handle) : handle(std::move(handle)) {};
+			
+			ImageHandle handle;
+		};
+
 		RenderBackend& renderBackend;
-		std::unordered_map<Hash, ImageHandle> attachments;
+		Utils::TemporaryHashmap<AttachmentNode, FRAMEBUFFER_RING_SIZE, false> attachments;
 		bool transient;
 	};
 }

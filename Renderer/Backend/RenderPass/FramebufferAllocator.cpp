@@ -26,7 +26,7 @@ Renderer::Framebuffer& Renderer::FramebufferAllocator::RequestFramebuffer(const 
 	h.u32(info.baseLayer);
 	auto hash = h.Get();
 
-	auto fb = framebufferCache.find(hash);
+	/*auto fb = framebufferCache.find(hash);
 
 	if (fb != framebufferCache.end()) {
 		// printf("Getting framebuffer ID: %llu.\n", hash);
@@ -35,12 +35,20 @@ Renderer::Framebuffer& Renderer::FramebufferAllocator::RequestFramebuffer(const 
 
 	auto fb2 = framebufferCache.emplace(hash, Framebuffer(*renderDevice, renderPass, info));
 	printf("Creating framebuffer ID: %llu.\n", hash);
-	return fb2.first->second;
+	return fb2.first->second;*/
+
+	FramebufferNode* node = framebufferCache.RequestEmplace(hash, *renderDevice, renderPass, info);
+	return *node;
+}
+
+void Renderer::FramebufferAllocator::BeginFrame()
+{
+	framebufferCache.BeginFrame();
 }
 
 void Renderer::FramebufferAllocator::Clear()
 {
-	framebufferCache.clear();
+	framebufferCache.Clear();
 }
 
 

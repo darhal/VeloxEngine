@@ -21,10 +21,10 @@ Renderer::ImageView& Renderer::AttachmentAllocator::RequestAttachment(uint32 wid
 	h.u32(layers);
 
 	auto hash = h.Get();
-	auto iv = attachments.find(hash);
+	auto iv = attachments.Request(hash);
 
-	if (iv != attachments.end()) {
-		return *iv->second->GetView();
+	if (iv != NULL) {
+		return *iv->handle->GetView();
 	}
 
 	ImageCreateInfo imageInfo;
@@ -39,14 +39,20 @@ Renderer::ImageView& Renderer::AttachmentAllocator::RequestAttachment(uint32 wid
 	imageInfo.samples = static_cast<VkSampleCountFlagBits>(samples);
 	imageInfo.layers = layers;
 
-	auto iv2 = attachments.emplace(hash, renderBackend.CreateImage(imageInfo));
-	iv2.first->second->CreateDefaultView(GetImageViewType(imageInfo, NULL));
-	return *iv2.first->second->GetView();
+	auto iv2 = attachments.Emplace(hash, renderBackend.CreateImage(imageInfo));
+	iv2->handle->CreateDefaultView(GetImageViewType(imageInfo, NULL));
+	// printf("Creating image! %llu\n", iv2->handle);
+	return *iv2->handle->GetView();
 }
 
 void Renderer::AttachmentAllocator::Clear()
 {
-	attachments.clear();
+	attachments.Clear();
+}
+
+void Renderer::AttachmentAllocator::BeginFrame()
+{
+	attachments.BeginFrame();
 }
 
 TRE_NS_END

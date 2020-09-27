@@ -10,7 +10,7 @@ Renderer::ImageView::ImageView(RenderBackend& backend, VkImageView view, const I
 
 Renderer::ImageView::~ImageView()
 {
-	printf("Destroying image view!\n");
+	// printf("Destroying image view!\n");
 	backend.DestroyImageView(apiImageView);
 }
 
@@ -43,7 +43,7 @@ Renderer::Image::~Image()
 {
 	if (apiImage != VK_NULL_HANDLE && !IsSwapchainImage()) {
 		backend.DestroyImage(apiImage);
-		printf("Destroying image!\n");
+		// printf("Destroying image!\n");
 	}
 }
 

@@ -55,6 +55,9 @@ namespace Renderer
 	// Renderpass and framebuffers:
 	CONSTEXPR static uint32 MAX_ATTACHMENTS			= 8;
 
+	CONSTEXPR static uint32 DESCRIPTOR_RING_SIZE	= 8;
+	CONSTEXPR static uint32 FRAMEBUFFER_RING_SIZE	= 8;
+
 	template<typename T>
 	using ObjectPool = Utils::ObjectPool<T>;
 

@@ -13,6 +13,8 @@ namespace Renderer
 		{
 		public:
 			FORCEINLINE Hash GetHash() const { return hash; }
+
+			// FORCEINLINE void SetHash(Hash h) { hash = h; }
 		protected:
 			Hash hash;
 		};

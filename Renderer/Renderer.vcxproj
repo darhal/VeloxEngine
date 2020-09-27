@@ -198,7 +198,9 @@
     <ClInclude Include="Backend\RenderPass\Framebuffer.hpp" />
     <ClInclude Include="Backend\RenderPass\FramebufferAllocator.hpp" />
     <ClInclude Include="Backend\SwapChain\Swapchain.hpp" />
+    <ClInclude Include="Core\Hashmap\TemporaryHashmap.hpp" />
     <ClInclude Include="Core\Hash\Hashable.hpp" />
+    <ClInclude Include="Core\List\List.hpp" />
     <ClInclude Include="cube.hpp" />
     <ClInclude Include="Backend\Images\Image.hpp" />
     <ClInclude Include="Backend\Images\ImageHelper.hpp" />

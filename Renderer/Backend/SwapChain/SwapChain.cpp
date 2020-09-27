@@ -258,7 +258,7 @@ void Renderer::Swapchain::CreateSwapchainResources(const VkImage* images)
         swapchainData.swapchainImages[i] = ImageHandle(renderBackend.objectsPool.images.Allocate(renderBackend, images[i], image_view, info, VK_IMAGE_VIEW_TYPE_2D));
         swapchainData.swapchainImages[i]->SetSwapchainLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-        printf("Image view handle: %llu\n", swapchainData.swapchainImages[i]);
+        // printf("Image view handle: %llu\n", swapchainData.swapchainImages[i]);
     }
 }
 
