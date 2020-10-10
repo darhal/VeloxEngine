@@ -129,6 +129,33 @@ void Renderer::RenderDevice::FreeDedicatedMemory(VkDeviceMemory memory) const
     vkFreeMemory(internal.device, memory, NULL);
 }
 
+VkSampleCountFlagBits Renderer::RenderDevice::GetUsableSampleCount(uint32 sampleCount) const
+{
+    ASSERT(~(sampleCount - 1) == 0);
+
+    VkSampleCountFlags counts = internal.gpuProperties.limits.framebufferColorSampleCounts& internal.gpuProperties.limits.framebufferDepthSampleCounts;
+
+    while (!(counts & sampleCount)) {
+        sampleCount >>= 1;
+    }
+
+    return VkSampleCountFlagBits(sampleCount);
+}
+
+VkSampleCountFlagBits Renderer::RenderDevice::GetMaxUsableSampleCount() const
+{
+    VkSampleCountFlags counts = internal.gpuProperties.limits.framebufferColorSampleCounts & internal.gpuProperties.limits.framebufferDepthSampleCounts;
+
+    if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
+    if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
+    if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
+    if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
+    if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
+    if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
+
+    return VK_SAMPLE_COUNT_1_BIT;
+}
+
 VkPhysicalDevice Renderer::RenderDevice::PickGPU(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx, FPN_RankGPU p_pick_func)
 {
     ASSERT(ctx.surface == NULL);
@@ -165,7 +192,10 @@ bool Renderer::RenderDevice::IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR
     Renderer::Swapchain::SwapchainSupportDetails swapChainSupport = Renderer::Swapchain::QuerySwapchainSupport(gpu, surface);
     swapChainAdequate = !swapChainSupport.formats.IsEmpty() && !swapChainSupport.presentModes.IsEmpty();
 
-	return indices.IsComplete() && swapChainAdequate;
+    VkPhysicalDeviceFeatures supportedFeatures;
+    vkGetPhysicalDeviceFeatures(gpu, &supportedFeatures);
+
+	return indices.IsComplete() && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 }
 
 Renderer::Internal::QueueFamilyIndices Renderer::RenderDevice::FindQueueFamilies(VkPhysicalDevice p_gpu, VkSurfaceKHR p_surface)

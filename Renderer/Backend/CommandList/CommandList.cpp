@@ -186,6 +186,91 @@ void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const Image
     this->SetSampler(set, binding, sampler);
 }
 
+void Renderer::CommandBuffer::GenerateMipmap(const Image& image)
+{
+    // https://vulkan-tutorial.com/Generating_Mipmaps
+    // https://vulkan-tutorial.com/code/28_mipmapping.cpp
+
+    const auto& info = image.GetInfo();
+    VkOffset3D size = { uint32(info.width), uint32(info.height), uint32(info.depth) }; 
+    const VkOffset3D origin = { 0, 0, 0 };
+
+    ASSERT(info.layout != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+    VkImageMemoryBarrier imgBarrier;
+    imgBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    imgBarrier.pNext = NULL;
+    imgBarrier.image = image.GetAPIObject();
+    imgBarrier.subresourceRange = { FormatToAspectMask(info.format), 0, 1, 0, info.layers };
+    imgBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    imgBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    imgBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    imgBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    imgBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imgBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+    for (unsigned i = 1; i < info.levels; i++) {
+        VkOffset3D srcSize = size;
+        size.x = TRE::Math::Max(size.x >> 1, 1);
+        size.y = TRE::Math::Max(size.y >> 1, 1);
+        size.z = TRE::Math::Max(size.z >> 1, 1);
+
+        this->BlitImage(image, image,
+            origin, size, origin, srcSize, i, i - 1, 0, 0, info.layers, VK_FILTER_LINEAR);
+
+        imgBarrier.subresourceRange.baseMipLevel = i;
+        this->Barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            0, NULL, 0, NULL, 1, &imgBarrier);
+    }
+}
+
+void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, const VkOffset3D& dstOffset, const VkOffset3D& dstExtent, 
+    const VkOffset3D& srcOffset, const VkOffset3D& srcExtent, uint32 dstLevel, uint32 srcLevel, uint32 dstBaseLayer, uint32 srcBaseLayer, 
+    uint32 numLayers, VkFilter filter)
+{
+    const auto AddOffset = [](const VkOffset3D& a, const VkOffset3D& b) -> VkOffset3D
+    {
+        return { a.x + b.x, a.y + b.y, a.z + b.z };
+    };
+
+    const VkImageBlit blit = {
+        { FormatToAspectMask(src.GetInfo().format), srcLevel, srcBaseLayer, numLayers },
+        { srcOffset, AddOffset(srcOffset, srcExtent) },
+        { FormatToAspectMask(dst.GetInfo().format), dstLevel, dstBaseLayer, numLayers },
+        { dstOffset, AddOffset(dstOffset, dstExtent) },
+    };
+
+    vkCmdBlitImage(commandBuffer,
+        src.GetAPIObject(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        dst.GetAPIObject(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1, &blit,
+        filter);
+}
+
+void Renderer::CommandBuffer::Barrier(VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages, uint32 barriers, const VkMemoryBarrier* globals, uint32 bufferBarriers, const VkBufferMemoryBarrier* buffers, uint32 imageBarriers, const VkImageMemoryBarrier* images)
+{
+    vkCmdPipelineBarrier(commandBuffer, srcStages, dstStages, 0, barriers, globals, bufferBarriers, buffers, imageBarriers, images);
+}
+
+void Renderer::CommandBuffer::ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess)
+{
+    ASSERT(image.GetInfo().domain == ImageDomain::TRANSIENT);
+
+    VkImageMemoryBarrier barrier;
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.pNext = NULL;
+    barrier.image = image.GetAPIObject();
+    barrier.srcAccessMask = srcAccess;
+    barrier.dstAccessMask = dstAccess;
+    barrier.oldLayout = oldLayout;
+    barrier.newLayout = newLayout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.subresourceRange = { FormatToAspectMask(image.GetInfo().format), 0, image.GetInfo().levels, 0, image.GetInfo().layers };
+
+    vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, NULL, 0, NULL, 1 & barrier);
+}
+
 void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings)
 {
     ASSERT(set >= MAX_DESCRIPTOR_SET);

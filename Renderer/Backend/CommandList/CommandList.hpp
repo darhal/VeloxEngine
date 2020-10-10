@@ -82,6 +82,19 @@ namespace Renderer
 
 		void SetTexture(uint32 set, uint32 binding, const ImageView& texture, const Sampler& sampler);
 
+		void GenerateMipmap(const Image& image);
+
+		void BlitImage(const Image& dst, const Image& src,
+			const VkOffset3D& dstOffset,
+			const VkOffset3D& dstExtent, const VkOffset3D& srcOffset, const VkOffset3D& srcExtent,
+			uint32 dstLevel, uint32 srcLevel, uint32 dstBaseLayer, uint32 srcBaseLayer,
+			uint32 numLayers, VkFilter filter = VK_FILTER_LINEAR);
+
+		void Barrier(VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages,
+			uint32 barriers, const VkMemoryBarrier* globals,
+			uint32 bufferBarriers, const VkBufferMemoryBarrier* buffers,
+			uint32 imageBarriers, const VkImageMemoryBarrier* images);
+
 		void Barrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage,
 			VkAccessFlags dstAccess);
 

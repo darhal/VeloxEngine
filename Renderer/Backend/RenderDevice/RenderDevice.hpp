@@ -25,6 +25,10 @@ namespace Renderer
 
 		void FreeDedicatedMemory(VkDeviceMemory memory) const;
 
+		VkSampleCountFlagBits GetUsableSampleCount(uint32 sampleCount = 4) const;
+
+		VkSampleCountFlagBits GetMaxUsableSampleCount() const;
+
 		FORCEINLINE VkDevice GetDevice() const { return internal.device; }
 
 		FORCEINLINE VkPhysicalDevice GetGPU() const { return internal.gpu; }

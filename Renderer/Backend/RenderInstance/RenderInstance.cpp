@@ -132,8 +132,12 @@ void Renderer::RenderInstance::DestroyDebugUtilsMessengerEXT(VkInstance instance
 
 VkBool32 Renderer::RenderInstance::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
-    fprintf(stderr, "[VALIDATION LAYER]: %s\n", pCallbackData->pMessage);
-    // ASSERT(true);
+    if ((VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT & messageType) ||
+        (VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT & messageType)) {
+        fprintf(stderr, "[VALIDATION LAYER]: %s\n", pCallbackData->pMessage);
+        ASSERT(true);
+    }
+
     return VK_FALSE;
 }
 

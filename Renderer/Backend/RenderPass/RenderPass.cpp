@@ -251,14 +251,14 @@ Renderer::RenderPass::RenderPass(const RenderDevice& device, const RenderPassInf
 
 		if (subpass.pResolveAttachments) {
 			for (uint32 j = 0; j < subpass.colorAttachmentCount; j++) {
-				auto att = subpassInfos[i].inputAttachments[j];
+				auto att = subpassInfos[i].resolveAttachments[j];
 				ASSERT(!(att == VK_ATTACHMENT_UNUSED || (att < attachmentsCount)));
 				resolves[j].attachment = att;
 				resolves[j].layout = VK_IMAGE_LAYOUT_UNDEFINED;
 			}
 		}
 
-		if (info.depthStencil && subpassInfos[i].depth_stencil_mode != RenderPassInfo::DepthStencil::NONE) {
+		if (info.depthStencil && subpassInfos[i].depthStencilMode != RenderPassInfo::DepthStencil::NONE) {
 			depth->attachment = info.colorAttachmentCount;
 			// Fill in later.
 			depth->layout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -399,8 +399,8 @@ Renderer::RenderPass::RenderPass(const RenderDevice& device, const RenderPassInf
 				color_attachment_read_write |= 1u << subpass;
 			} else if (depth && input) // Depends on the depth mode
 			{
-				ASSERT(subpassInfos[subpass].depth_stencil_mode == RenderPassInfo::DepthStencil::NONE);
-				if (subpassInfos[subpass].depth_stencil_mode == RenderPassInfo::DepthStencil::READ_WRITE) {
+				ASSERT(subpassInfos[subpass].depthStencilMode == RenderPassInfo::DepthStencil::NONE);
+				if (subpassInfos[subpass].depthStencilMode == RenderPassInfo::DepthStencil::READ_WRITE) {
 					depth_self_dependencies |= 1u << subpass;
 					current_layout = VK_IMAGE_LAYOUT_GENERAL;
 					depth_stencil_attachment_write |= 1u << subpass;
@@ -426,7 +426,7 @@ Renderer::RenderPass::RenderPass(const RenderDevice& device, const RenderPassInf
 				used = true;
 				last_subpass_for_attachment[attachment] = subpass;
 			} else if (depth) {
-				if (subpassInfos[subpass].depth_stencil_mode == RenderPassInfo::DepthStencil::READ_WRITE) {
+				if (subpassInfos[subpass].depthStencilMode == RenderPassInfo::DepthStencil::READ_WRITE) {
 					depth_stencil_attachment_write |= 1u << subpass;
 					if (current_layout != VK_IMAGE_LAYOUT_GENERAL)
 						current_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;

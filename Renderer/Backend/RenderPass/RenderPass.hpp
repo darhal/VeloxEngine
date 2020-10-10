@@ -54,7 +54,7 @@ namespace Renderer
 			uint32 colorAttachmentsCount = 0;
 			uint32 inputAttachmentsCount = 0;
 			uint32 resolveAttachmentsCount = 0;
-			DepthStencil depth_stencil_mode = DepthStencil::READ_WRITE;
+			DepthStencil depthStencilMode = DepthStencil::READ_WRITE;
 		};
 
 		// If 0/NULL, assume a default subpass.

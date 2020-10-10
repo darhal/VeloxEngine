@@ -88,6 +88,35 @@ const std::vector<uint16_t> indices = {
 
 #define CUBE
 
+TRE::Renderer::RenderPassInfo GetRenderPass(TRE::Renderer::RenderBackend& backend, TRE::Renderer::RenderPassInfo::Subpass& subpass)
+{
+    using namespace TRE::Renderer;
+    RenderPassInfo rpi = backend.GetSwapchainRenderPass(SwapchainRenderPass::DEPTH);
+
+    if (backend.GetMSAASamplerCount() != 1) {
+        rpi.colorAttachments[1] = &backend.GetTransientAttachment(
+            backend.GetRenderContext().GetSwapchain().GetExtent().width,
+            backend.GetRenderContext().GetSwapchain().GetExtent().height,
+            backend.GetRenderContext().GetSwapchain().GetFormat(),
+            0, backend.GetMSAASamplerCount());
+
+        rpi.clearAttachments = 1u << 1;
+        rpi.storeAttachments = 1u << 1;
+        rpi.clearColor[1] = { 0.051f, 0.051f, 0.051f, 0.0f };
+
+        subpass.colorAttachmentsCount = 1;
+        subpass.colorAttachments[0] = 1;
+        subpass.resolveAttachmentsCount = 1;
+        subpass.resolveAttachments[0] = 0;
+
+        rpi.subpasses = &subpass;
+        rpi.subpassesCount = 1;
+        rpi.colorAttachmentCount = 2;
+    }
+
+    return rpi;
+}
+
 void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBufferHandle buffer, const glm::vec3& pos = glm::vec3(0.f))
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
@@ -131,7 +160,10 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 
     currentCmdBuff->Begin();
     currentCmdBuff->BindPipeline(graphicsPipeline);
-    currentCmdBuff->BeginRenderPass(backend.GetSwapchainRenderPass(SwapchainRenderPass::DEPTH));
+
+
+    RenderPassInfo::Subpass subpass;
+    currentCmdBuff->BeginRenderPass(GetRenderPass(backend, subpass));
 
     currentCmdBuff->BindVertexBuffer(*vertexIndexBuffer);
 #if !defined(CUBE)
@@ -186,6 +218,8 @@ int main()
     Event ev;
     Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
     RenderBackend backend{ &window };
+    backend.SetSamplerCount(16);
+    printf("MSAA: x%d\n", backend.GetMSAASamplerCount());
 
     uint32 queueFamilies = QueueFamilyFlag::NONE;
 
@@ -246,6 +280,8 @@ int main()
 
     state.GetRasterizationState().cullMode = VK_CULL_MODE_NONE;
 
+    state.GetMultisampleState().rasterizationSamples = VkSampleCountFlagBits(backend.GetMSAASamplerCount());
+
     graphicsPipeline.GetShaderProgram().Create(backend,
         { 
             {"shaders/vert.spv", ShaderProgram::VERTEX_SHADER}, 
@@ -259,7 +295,9 @@ int main()
         { offsetof(Vertex, pos), offsetof(Vertex, color), offsetof(Vertex, tex) }
     );
 
-    const RenderPass& rp = backend.RequestRenderPass(backend.GetSwapchainRenderPass(SwapchainRenderPass::DEPTH));
+
+    RenderPassInfo::Subpass subpass;
+    const RenderPass& rp = backend.RequestRenderPass(GetRenderPass(backend, subpass));
     graphicsPipeline.SetRenderPass(rp.GetAPIObject());
     // graphicsPipeline.SetRenderPass(backend.GetRenderContext().GetSwapchain().GetRenderPass());
     graphicsPipeline.Create(backend.GetRenderContext(), state);

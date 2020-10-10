@@ -74,6 +74,8 @@ namespace Renderer
 		FORCEINLINE const RenderContext& GetRenderContext() const { return renderContext; }
 		FORCEINLINE const RenderDevice& GetRenderDevice() const { return renderDevice; }
 
+		void SetSamplerCount(uint32 msaaSamplerCount = 1);
+
 		ImageHandle CreateImage(const ImageCreateInfo& createInfo, const void* data = NULL);
 
 		ImageViewHandle CreateImageView(const ImageViewCreateInfo& createInfo);
@@ -111,6 +113,8 @@ namespace Renderer
 
 		void DestroyFramebuffer(VkFramebuffer fb);
 
+		FORCEINLINE uint32 GetMSAASamplerCount() const { return msaaSamplerCount; }
+
 		FORCEINLINE MemoryAllocator& GetContextAllocator() { return gpuMemoryAllocator; }
 
 		FORCEINLINE StagingManager& GetStagingManager() { return stagingManager; }
@@ -145,6 +149,8 @@ namespace Renderer
 
 		PerFrame		perFrame[MAX_FRAMES];
 		HandlePool		objectsPool;
+
+		uint32 msaaSamplerCount;
 
 		friend class Image;
 		friend class Swapchain;

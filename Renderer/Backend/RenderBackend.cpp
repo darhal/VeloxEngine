@@ -12,7 +12,8 @@ Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) :
     stagingManager{ &renderDevice.internal }, 
     renderContext(*this),
     framebufferAllocator(&renderDevice),
-    transientAttachmentAllocator(*this, true)
+    transientAttachmentAllocator(*this, true),
+    msaaSamplerCount(1)
 {
     renderDevice.internal.renderContext = &renderContext.internal;
     renderContext.internal.renderDevice = &renderDevice.internal;
@@ -83,6 +84,11 @@ void Renderer::RenderBackend::EndFrame()
     const PerFrame& frame = this->Frame();
     const auto& submissions = frame.submissions[(uint32)QueueTypes::GRAPHICS_ONLY];
     renderContext.EndFrame(renderDevice, submissions.GetData(), (uint32)submissions.GetElementCount());
+}
+
+void Renderer::RenderBackend::SetSamplerCount(uint32 msaaSamplerCount)
+{
+    this->msaaSamplerCount = renderDevice.GetUsableSampleCount(msaaSamplerCount);
 }
 
 Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo& createInfo, const void* data)
@@ -383,7 +389,7 @@ const Renderer::RenderPass& Renderer::RenderBackend::RequestRenderPass(const Ren
         h.u32(info.subpasses[i].colorAttachmentsCount);
         h.u32(info.subpasses[i].inputAttachmentsCount);
         h.u32(info.subpasses[i].resolveAttachmentsCount);
-        h.u32(static_cast<uint32_t>(info.subpasses[i].depth_stencil_mode));
+        h.u32(static_cast<uint32_t>(info.subpasses[i].depthStencilMode));
 
         for (unsigned j = 0; j < info.subpasses[i].colorAttachmentsCount; j++)
             h.u32(info.subpasses[i].colorAttachments[j]);
@@ -447,7 +453,7 @@ Renderer::RenderPassInfo Renderer::RenderBackend::GetSwapchainRenderPass(Swapcha
         info.opFlags |= RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT;
         info.depthStencil =
             &GetTransientAttachment(renderContext.GetSwapchain().GetExtent().width,
-                renderContext.GetSwapchain().GetExtent().height, renderContext.GetSwapchain().FindSupportedDepthFormat());
+                renderContext.GetSwapchain().GetExtent().height, renderContext.GetSwapchain().FindSupportedDepthFormat(), 0, msaaSamplerCount);
         break;
     }
 
@@ -456,7 +462,7 @@ Renderer::RenderPassInfo Renderer::RenderBackend::GetSwapchainRenderPass(Swapcha
         info.opFlags |= RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT;
         info.depthStencil =
             &GetTransientAttachment(renderContext.GetSwapchain().GetExtent().width,
-                renderContext.GetSwapchain().GetExtent().height, renderContext.GetSwapchain().FindSupportedDepthStencilFormat());
+                renderContext.GetSwapchain().GetExtent().height, renderContext.GetSwapchain().FindSupportedDepthStencilFormat(), 0, msaaSamplerCount);
         break;
     }
     default:
