@@ -2,6 +2,7 @@
 
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/Images/Image.hpp>
 
 TRE_NS_START
 
@@ -25,7 +26,7 @@ namespace Renderer
         VkBorderColor           borderColor;
         VkBool32                unnormalizedCoordinates;
 
-        static FORCEINLINE SamplerInfo Sampler2D()
+        static FORCEINLINE SamplerInfo Sampler2D(Image* img = NULL)
         {
             SamplerInfo info;
             info.magFilter = VK_FILTER_NEAREST;
@@ -45,7 +46,7 @@ namespace Renderer
             info.compareOp = VK_COMPARE_OP_ALWAYS;
 
             info.minLod = 0.0f;
-            info.maxLod = 0.0f;
+            info.maxLod = img ? (float)img->GetInfo().levels : 0.0f;
 
             info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
             info.unnormalizedCoordinates = VK_FALSE;

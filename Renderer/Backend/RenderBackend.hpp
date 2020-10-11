@@ -43,6 +43,7 @@ namespace Renderer
 			TRE::Vector<VkBufferView>	  destroyedBufferViews;
 			TRE::Vector<VkRenderPass>	  destroyedRenderPasses;
 			TRE::Vector<VkDescriptorPool> destroyedDescriptorPool;
+			TRE::Vector<VkDeviceMemory>	  freedMemory;
 
 			bool shouldDestroy = false;
 		};
@@ -112,6 +113,8 @@ namespace Renderer
 		void DestroyImageView(VkImageView view);
 
 		void DestroyFramebuffer(VkFramebuffer fb);
+
+		void FreeMemory(VkDeviceMemory memory);
 
 		FORCEINLINE uint32 GetMSAASamplerCount() const { return msaaSamplerCount; }
 

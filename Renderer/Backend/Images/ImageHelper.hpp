@@ -278,14 +278,19 @@ namespace Renderer
 		// const DeviceAllocation** memory_aliases = nullptr;
 		// uint32 num_memory_aliases = 0;
 
-		static ImageCreateInfo Texture2D(uint32 width, uint32 height, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB, VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+		static ImageCreateInfo Texture2D(uint32 width, uint32 height, bool mipmap = true,
+			VkFormat format = VK_FORMAT_R8G8B8A8_SRGB, VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 		{
 			ImageCreateInfo info;
 			info.width = width;
 			info.height = height;
-			info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+			info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 			info.format = format;
 			info.layout = layout;
+
+			if (mipmap)
+				info.levels = static_cast<uint32>(std::floor(std::log2(TRE::Math::Max(width, height)))) + 1;
+
 			return info;
 		}
 

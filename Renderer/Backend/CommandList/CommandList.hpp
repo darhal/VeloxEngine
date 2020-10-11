@@ -82,6 +82,11 @@ namespace Renderer
 
 		void SetTexture(uint32 set, uint32 binding, const ImageView& texture, const Sampler& sampler);
 
+		// Prepare an image to have its mipmap generated.
+		// Puts the top level into TRANSFER_SRC_OPTIMAL, and the all the remaining levels are set to TRANSFER_DST_OPTIMAL
+		void PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess,
+			bool needTopLevelBarrier = true);
+
 		void GenerateMipmap(const Image& image);
 
 		void BlitImage(const Image& dst, const Image& src,

@@ -201,6 +201,7 @@
     <ClInclude Include="Core\Hashmap\TemporaryHashmap.hpp" />
     <ClInclude Include="Core\Hash\Hashable.hpp" />
     <ClInclude Include="Core\List\List.hpp" />
+    <ClInclude Include="Core\Logs\Logs.hpp" />
     <ClInclude Include="cube.hpp" />
     <ClInclude Include="Backend\Images\Image.hpp" />
     <ClInclude Include="Backend\Images\ImageHelper.hpp" />
@@ -469,6 +470,7 @@
     <ClInclude Include="glm\vector_relational.hpp" />
     <ClInclude Include="Backend\Pipeline\GraphicsState\GraphicsState.hpp" />
     <ClInclude Include="Misc\Color\Color.hpp" />
+    <ClInclude Include="Misc\stb_image.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="Backend\RenderInstance\RenderInstance.hpp" />
     <ClInclude Include="Backend\RenderBackend.hpp" />

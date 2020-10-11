@@ -240,7 +240,7 @@ Renderer::Internal::QueueFamilyIndices Renderer::RenderDevice::FindQueueFamilies
         indices.queueFamilies[Internal::QFT_TRANSFER] = indices.queueFamilies[Internal::QFT_GRAPHICS];
     }
 
-    printf("Complete! (Graphics: %d | Transfer: %d)\n", indices.queueFamilies[Internal::QFT_GRAPHICS], indices.queueFamilies[Internal::QFT_TRANSFER]);
+    // printf("Complete! (Graphics: %d | Transfer: %d)\n", indices.queueFamilies[Internal::QFT_GRAPHICS], indices.queueFamilies[Internal::QFT_TRANSFER]);
     return indices;
 }
 

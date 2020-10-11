@@ -186,16 +186,52 @@ void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const Image
     this->SetSampler(set, binding, sampler);
 }
 
+void Renderer::CommandBuffer::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
+{
+    auto& info = image.GetInfo();
+    VkImageMemoryBarrier barriers[2] = {};
+    ASSERT(info.levels <= 1);
+
+    for (uint32 i = 0; i < 2; i++) {
+        barriers[i].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barriers[i].image = image.GetAPIObject();
+        barriers[i].subresourceRange.aspectMask = FormatToAspectMask(info.format);
+        barriers[i].subresourceRange.layerCount = info.layers;
+        barriers[i].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barriers[i].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+        if (i == 0) {
+            barriers[i].oldLayout = baseLevelLayout;
+            barriers[i].newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            barriers[i].srcAccessMask = srcAccess;
+            barriers[i].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+            barriers[i].subresourceRange.baseMipLevel = 0;
+            barriers[i].subresourceRange.levelCount = 1;
+        } else {
+            barriers[i].oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            barriers[i].newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barriers[i].srcAccessMask = 0;
+            barriers[i].dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barriers[i].subresourceRange.baseMipLevel = 1;
+            barriers[i].subresourceRange.levelCount = info.levels - 1;
+        }
+    }
+
+    this->Barrier(srcStage, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, NULL, 0, NULL,
+        needTopLevelBarrier ? 2 : 1,
+        needTopLevelBarrier ? barriers : barriers + 1);
+}
+
 void Renderer::CommandBuffer::GenerateMipmap(const Image& image)
 {
     // https://vulkan-tutorial.com/Generating_Mipmaps
     // https://vulkan-tutorial.com/code/28_mipmapping.cpp
 
     const auto& info = image.GetInfo();
-    VkOffset3D size = { uint32(info.width), uint32(info.height), uint32(info.depth) }; 
+    VkOffset3D size = { int32(info.width), int32(info.height), int32(info.depth) }; 
     const VkOffset3D origin = { 0, 0, 0 };
 
-    ASSERT(info.layout != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    // ASSERT(info.layout != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
     VkImageMemoryBarrier imgBarrier;
     imgBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -209,7 +245,7 @@ void Renderer::CommandBuffer::GenerateMipmap(const Image& image)
     imgBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     imgBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
-    for (unsigned i = 1; i < info.levels; i++) {
+    for (uint32 i = 1; i < info.levels; i++) {
         VkOffset3D srcSize = size;
         size.x = TRE::Math::Max(size.x >> 1, 1);
         size.y = TRE::Math::Max(size.y >> 1, 1);
@@ -268,7 +304,7 @@ void Renderer::CommandBuffer::ImageBarrier(const Image& image, VkImageLayout old
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.subresourceRange = { FormatToAspectMask(image.GetInfo().format), 0, image.GetInfo().levels, 0, image.GetInfo().layers };
 
-    vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, NULL, 0, NULL, 1 & barrier);
+    vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, NULL, 0, NULL, 1, &barrier);
 }
 
 void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings)

@@ -12,6 +12,7 @@
 #include <Engine/Core/Misc/Defines/Common.hpp>
 #include <Engine/Core/Misc/Defines/PlatformInclude.hpp>
 #include <Engine/Core/Misc/Defines/Debug.hpp>
+#include <Renderer/Core/Logs/Logs.hpp>
 
 #pragma warning(disable:4251) // This is to avoid the spam of warning bcuz of std classes, more concrete solution must be found in the future
 

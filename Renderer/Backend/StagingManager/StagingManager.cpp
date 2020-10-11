@@ -1,6 +1,7 @@
 #include "StagingManager.hpp"
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Images/Image.hpp>
+#include <Renderer/Backend/CommandList/CommandList.hpp>
 
 TRE_NS_START
 
@@ -115,53 +116,6 @@ namespace Renderer
 		stage->offset += size;
 	}
 
-	void StagingManager::Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment)
-	{
-		if (size > MAX_UPLOAD_BUFFER_SIZE) {
-			ASSERTF(true, "Can't allocate %d MB in GPU transfer buffer", (uint32)(size / (1024 * 1024)));
-		}
-
-		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-		DeviceSize newOffset = stage->offset + size;
-		DeviceSize padding = (alignment - (newOffset % alignment)) % alignment;
-		stage->offset += padding;
-
-		if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {
-			Flush();
-		}
-
-		stage = &stagingBuffers[currentBuffer];
-		if (stage->submitted) {
-			Wait(*stage);
-		}
-
-		uint8* stageBufferData = stage->data + stage->offset;
-		memcpy(stageBufferData, data, size);
-
-		const ImageCreateInfo& info = dstImage.GetInfo();
-		ChangeImageLayout(stage->transferCmdBuff, dstImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-		VkBufferImageCopy imageCopy;
-		imageCopy.bufferOffset		= stage->offset;
-		imageCopy.bufferRowLength	= 0;
-		imageCopy.bufferImageHeight = 0;
-		imageCopy.imageSubresource	= { VK_IMAGE_ASPECT_COLOR_BIT , 0, 0, 1};
-		imageCopy.imageOffset		= { 0, 0, 0 };
-		imageCopy.imageExtent		= { info.width, info.height, info.depth };
-
-		vkCmdCopyBufferToImage(
-			stage->transferCmdBuff,
-			stage->apiBuffer,
-			dstImage.apiImage,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			1, &imageCopy
-		);
-
-		// Manage layer trasnitioning :
-		ChangeImageLayout(stage->transferCmdBuff, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, info.layout);
-		stage->offset += size;
-	}
-
 	void* StagingManager::Stage(const DeviceSize size, const DeviceSize alignment, VkCommandBuffer& commandBuffer, VkBuffer& buffer, DeviceSize& bufferOffset)
 	{
 		if (size > MAX_UPLOAD_BUFFER_SIZE) {
@@ -192,6 +146,66 @@ namespace Renderer
 		return data;
 	}
 
+	void StagingManager::Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment)
+	{
+		if (size > MAX_UPLOAD_BUFFER_SIZE) {
+			ASSERTF(true, "Can't allocate %d MB in GPU transfer buffer", (uint32)(size / (1024 * 1024)));
+		}
+
+		StagingBuffer* stage = &stagingBuffers[currentBuffer];
+		DeviceSize newOffset = stage->offset + size;
+		DeviceSize padding = (alignment - (newOffset % alignment)) % alignment;
+		stage->offset += padding;
+
+		if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {
+			Flush();
+		}
+
+		stage = &stagingBuffers[currentBuffer];
+		if (stage->submitted) {
+			Wait(*stage);
+		}
+
+		uint8* stageBufferData = stage->data + stage->offset;
+		memcpy(stageBufferData, data, size);
+
+		const ImageCreateInfo& info = dstImage.GetInfo();
+		ChangeImageLayout(stage->transferCmdBuff, dstImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		VkBufferImageCopy imageCopy;
+		imageCopy.bufferOffset = stage->offset;
+		imageCopy.bufferRowLength = 0;
+		imageCopy.bufferImageHeight = 0;
+		imageCopy.imageSubresource = { FormatToAspectMask(info.format) , 0, 0, 1 };
+		imageCopy.imageOffset = { 0, 0, 0 };
+		imageCopy.imageExtent = { info.width, info.height, info.depth };
+
+		vkCmdCopyBufferToImage(
+			stage->transferCmdBuff,
+			stage->apiBuffer,
+			dstImage.apiImage,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1, &imageCopy
+		);
+		
+		if (info.levels != 1) { // generate mipmaps:
+			this->PrepareGenerateMipmapBarrier(dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+
+			this->GenerateMipmap(dstImage);
+
+			// Manage layer trasnitioning :
+			this->ImageBarrier(dstImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, info.layout,
+				VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, // TODO: change stages they are not specific!
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT);
+		} else {
+			// Manage layer trasnitioning :
+			ChangeImageLayout(stage->transferCmdBuff, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, info.layout);
+		}
+
+		stage->offset += size;
+	}
+
 	void StagingManager::ChangeImageLayout(Image& image, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
 		StagingBuffer& stage = stagingBuffers[currentBuffer];
@@ -202,8 +216,8 @@ namespace Renderer
 		barrier.sType				= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		barrier.oldLayout			= oldLayout;
 		barrier.newLayout			= newLayout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;  // TODO: make it a param
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;  // TODO: make it a param
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image				= image.GetAPIObject();
 		barrier.srcAccessMask		= ImageUsageToPossibleAccess(image.GetInfo().usage); // TODO: some doubt there
 		barrier.dstAccessMask		= ImageUsageToPossibleAccess(image.GetInfo().usage); // TODO: same doubt
@@ -222,6 +236,31 @@ namespace Renderer
 			0, NULL,
 			1, &barrier
 		);
+	}
+
+	void StagingManager::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
+	{
+		StagingBuffer* stage = &stagingBuffers[currentBuffer];
+		CommandBuffer cmd(NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
+
+		cmd.PrepareGenerateMipmapBarrier(image, baseLevelLayout, srcStage, srcAccess, needTopLevelBarrier);
+	}
+
+	void StagingManager::GenerateMipmap(const Image& image)
+	{
+		StagingBuffer* stage = &stagingBuffers[currentBuffer];
+		CommandBuffer cmd(NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
+
+		cmd.GenerateMipmap(image);
+	}
+
+	void StagingManager::ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags srcStage, 
+		VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess)
+	{
+		StagingBuffer* stage = &stagingBuffers[currentBuffer];
+		CommandBuffer cmd(NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
+
+		cmd.ImageBarrier(image, oldLayout, newLayout, srcStage, srcAccess, dstStage, dstAccess);
 	}
 
 	StagingBuffer* StagingManager::PrepareFlush()
@@ -285,10 +324,10 @@ namespace Renderer
 		VkCommandBuffer cmdBuff = stage->transferCmdBuff;
 
 		if (renderDevice->isTransferQueueSeprate) {
-			ExecuteTransferMemory(renderDevice->queues[TRANSFER], cmdBuff,
+			SubmitCommandBuffer(renderDevice->queues[TRANSFER], cmdBuff,
 				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, renderDevice->device);
 		} else {
-			ExecuteTransferMemory(renderDevice->queues[TRANSFER], cmdBuff,
+			SubmitCommandBuffer(renderDevice->queues[TRANSFER], cmdBuff,
 				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, renderDevice->device);
 		}
 
@@ -327,7 +366,7 @@ namespace Renderer
 		this->Wait(stagingBuffers[prevBufferIndex]);
 	}
 
-	void StagingManager::ExecuteTransferMemory(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage, 
+	void StagingManager::SubmitCommandBuffer(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage,
 		VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence, VkDevice device)
 	{
 		VkSubmitInfo submitInfo{};
@@ -357,10 +396,10 @@ namespace Renderer
 		barrier.sType				= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		barrier.oldLayout			= oldLayout;
 		barrier.newLayout			= newLayout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // TODO: Change this
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // TODO: change this
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; 
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image				= image.GetAPIObject();
-		barrier.subresourceRange.aspectMask		= FormatToAspectMask(image.GetInfo().format); // TODO: cutomise all of these
+		barrier.subresourceRange.aspectMask		= FormatToAspectMask(image.GetInfo().format);
 		barrier.subresourceRange.layerCount		= image.GetInfo().layers;
 		barrier.subresourceRange.levelCount		= image.GetInfo().levels;
 

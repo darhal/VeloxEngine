@@ -40,6 +40,14 @@ namespace Renderer
 
 		void ChangeImageLayout(Image& image, VkImageLayout oldLayout, VkImageLayout newLayout);
 
+		void PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess,
+			bool needTopLevelBarrier = true);
+
+		void GenerateMipmap(const Image& image);
+
+		void ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, 
+			VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
+
 		void Prepare();
 
 		VkCommandBuffer Flush();
@@ -52,7 +60,7 @@ namespace Renderer
 	private:
 		StagingBuffer* PrepareFlush();
 
-		void ExecuteTransferMemory(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage,
+		void SubmitCommandBuffer(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage,
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence = VK_NULL_HANDLE, VkDevice device = VK_NULL_HANDLE);
 
 		void ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout);

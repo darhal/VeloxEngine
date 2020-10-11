@@ -28,6 +28,37 @@ Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) :
     gpuMemoryAllocator.Init(renderDevice.internal);
 
     this->Init();
+
+    const auto vendor = [](uint32 id) -> std::string
+    {
+        switch (id) {
+        case 0x1002:
+            return "AMD";
+            break;
+        case 0x10DE:
+            return "NIVIDIA";
+            break;
+        case 0x8086:
+            return "Intel";
+            break;
+        case 0x13B5:
+            return "ARM";
+            break;
+        case 0x5143:
+            return "Qualcomm";
+            break;
+        case 0x1010:
+            return "Imagination Technology";
+            break;
+        default:
+            return "Unknown";
+        }
+    };
+
+    TRE_LOGI("GPU............: %s", renderDevice.internal.gpuProperties.deviceName);
+    TRE_LOGI("Vendor.........: %s", vendor(renderDevice.internal.gpuProperties.vendorID).c_str());
+    TRE_LOGI("Driver.........: %d.%d", VK_VERSION_MAJOR(renderDevice.internal.gpuProperties.driverVersion), VK_VERSION_MINOR(renderDevice.internal.gpuProperties.driverVersion));
+    TRE_LOGI("Device ID......: 0x%x", renderDevice.internal.gpuProperties.deviceID);
 }
 
 void Renderer::RenderBackend::Init()
@@ -132,10 +163,6 @@ Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo
         break;
     }
 
-    if (info.mipLevels == 0) {
-        info.mipLevels = 1; // TODO: complete
-    }
-
     StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
     info.sharingMode = (VkSharingMode)(createInfo.queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
 
@@ -168,7 +195,7 @@ Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo
         if (memUsage == MemoryUsage::GPU_ONLY) {
             stagingManager.Stage(*ret, data, createInfo.width * createInfo.height * FormatToChannelCount(createInfo.format));
         } else {
-            // TODO: add uploading directly from GPU
+            // TODO: add uploading directly from CPU
             ASSERTF(true, "Not supported!");
         }
     } else {
@@ -493,9 +520,13 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
     for (auto& img : frame.destroyedImages)
         vkDestroyImage(dev, img, NULL);
 
+    for (auto& mem : frame.freedMemory)
+        vkFreeMemory(dev, mem, NULL);
+
     frame.destroyedFramebuffers.Clear();
     frame.destroyedImageViews.Clear();
     frame.destroyedImages.Clear();
+    frame.freedMemory.Clear();
     frame.shouldDestroy = false;
 }
 
@@ -517,6 +548,13 @@ void Renderer::RenderBackend::DestroyFramebuffer(VkFramebuffer fb)
 {
     PerFrame& frame = this->Frame();
     frame.destroyedFramebuffers.EmplaceBack(fb);
+    frame.shouldDestroy = true;
+}
+
+void Renderer::RenderBackend::FreeMemory(VkDeviceMemory memory)
+{
+    PerFrame& frame = this->Frame();
+    frame.freedMemory.EmplaceBack(memory);
     frame.shouldDestroy = true;
 }
 

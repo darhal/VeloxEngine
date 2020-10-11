@@ -19,6 +19,8 @@ namespace Renderer
         {
         }
 
+        Color() : hex(0) {}
+
         operator uint32()
         {
             return hex;

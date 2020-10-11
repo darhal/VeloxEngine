@@ -38,8 +38,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 #include <Engine/Core/Misc/Maths/Maths.hpp>
 #include <Engine/Core/Misc/Utils/Logging.hpp>
-// #include <Engine/Core/Misc/Utils/Image.hpp>
 #include "cube.hpp"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <Renderer/Misc/stb_image.hpp>
 
 struct MVP
 {
@@ -117,7 +119,7 @@ TRE::Renderer::RenderPassInfo GetRenderPass(TRE::Renderer::RenderBackend& backen
     return rpi;
 }
 
-void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBufferHandle buffer, const glm::vec3& pos = glm::vec3(0.f))
+void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBufferHandle buffer, const glm::vec3& pos = glm::vec3(-0.f, -0.f, 0.f))
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -133,7 +135,7 @@ void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingB
     mvp.model   = glm::translate(mvp.model, pos);
     mvp.model   = glm::rotate(mvp.model, time * TRE::Math::ToRad(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-    mvp.view    = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    mvp.view    = glm::lookAt(glm::vec3(1.0f, 1.0f, 0.7f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     mvp.proj    = glm::perspective<float>(TRE::Math::ToRad(45.0f), swapchainData.swapChainExtent.width / (float)swapchainData.swapChainExtent.height, 0.1f, 10.f);
     // mvp.proj    = glm::ortho(0, 1, 0, 1, 0, 1);
     mvp.proj[1][1] *= -1;
@@ -151,7 +153,6 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     // VkDescriptorSet descriptorSet,
     const TRE::Renderer::RingBufferHandle uniformBuffer,
     const TRE::Renderer::ImageViewHandle texture,
-    const TRE::Renderer::ImageViewHandle texture2,
     const TRE::Renderer::SamplerHandle sampler)
 {
     using namespace TRE::Renderer;
@@ -218,9 +219,16 @@ int main()
     Event ev;
     Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
     RenderBackend backend{ &window };
-    backend.SetSamplerCount(16);
-    printf("MSAA: x%d\n", backend.GetMSAASamplerCount());
+    backend.SetSamplerCount(2);
 
+    if (backend.GetMSAASamplerCount() == 1) {
+        TRE_LOGI("Anti-Aliasing: Disabled");
+    } else {
+        TRE_LOGI("Anti-Aliasing: MSAA x%d", backend.GetMSAASamplerCount());
+    }
+
+    TRE_LOGI("Engine is up and running ...");
+        
     uint32 queueFamilies = QueueFamilyFlag::NONE;
 
     if (backend.GetRenderDevice().IsTransferQueueSeprate()) {
@@ -248,25 +256,36 @@ int main()
         vertecies);
 #endif
     const uint32 checkerboard[] = {
-        0u, ~0u, 0u, ~0u,
-        ~0u, 0u, ~0u, 0u,
-        0u, ~0u, 0u, ~0u,
-        ~0u, 0u, ~0u, 0u,
+        0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
+        ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
+        0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
+        ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
+
+        0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
+        ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
+        0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
+        ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
     };
 
-    const uint32 checkerboard2[] = {
-        0u, 0u, 0u, 0u,
-        ~0u, ~0u, ~0u, ~0u,
-        0u, 0u, 0u, 0u,
-        ~0u, ~0u, ~0u, ~0u,
-    };
+    // TODO: NEED WORK ON MEMORY FREEING!! (THIS IS DONE) (However we need to detect dedicated allocations from non dedicated allocs!)
 
-    ImageHandle texture = backend.CreateImage(ImageCreateInfo::Texture2D(4, 4), checkerboard);
+    int texWidth, texHeight, texChannels;
+    stbi_uc* pixels = stbi_load("assets/box1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+    ImageHandle texture = backend.CreateImage(ImageCreateInfo::Texture2D(texWidth, texHeight, true), pixels);
     ImageViewHandle textureView = backend.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
-    SamplerHandle sampler = backend.CreateSampler(SamplerInfo::Sampler2D());
+    SamplerHandle sampler = backend.CreateSampler(SamplerInfo::Sampler2D(texture));
+
+    /*const uint32 checkerboard2[] = {
+        0u, 0u, 0u, 0u,
+        ~0u, ~0u, ~0u, ~0u,
+        0u, 0u, 0u, 0u,
+        ~0u, ~0u, ~0u, ~0u,
+    };
 
     ImageHandle texture2 = backend.CreateImage(ImageCreateInfo::Texture2D(4, 4), checkerboard2);
-    ImageViewHandle textureView2 = backend.CreateImageView(ImageViewCreateInfo::ImageView(texture2, VK_IMAGE_VIEW_TYPE_2D));
+    ImageViewHandle textureView2 = backend.CreateImageView(ImageViewCreateInfo::ImageView(texture2, VK_IMAGE_VIEW_TYPE_2D));*/
 
     RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 10);
 
@@ -279,7 +298,6 @@ int main()
     depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
 
     state.GetRasterizationState().cullMode = VK_CULL_MODE_NONE;
-
     state.GetMultisampleState().rasterizationSamples = VkSampleCountFlagBits(backend.GetMSAASamplerCount());
 
     graphicsPipeline.GetShaderProgram().Create(backend,
@@ -315,7 +333,7 @@ int main()
         }
 
         backend.BeginFrame();
-        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer, uniformBuffer, textureView, textureView2, sampler);
+        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer, uniformBuffer, textureView, sampler);
         backend.EndFrame();
 
         printFPS();
