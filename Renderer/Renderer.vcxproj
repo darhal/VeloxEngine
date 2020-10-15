@@ -198,6 +198,12 @@
     <ClInclude Include="Backend\RenderPass\Framebuffer.hpp" />
     <ClInclude Include="Backend\RenderPass\FramebufferAllocator.hpp" />
     <ClInclude Include="Backend\SwapChain\Swapchain.hpp" />
+    <ClInclude Include="Backend\Synchronization\Event\Event.hpp" />
+    <ClInclude Include="Backend\Synchronization\Fence\Fence.hpp" />
+    <ClInclude Include="Backend\Synchronization\Managers\EventManager.hpp" />
+    <ClInclude Include="Backend\Synchronization\Managers\FenceManager.hpp" />
+    <ClInclude Include="Backend\Synchronization\Managers\SemaphoreManager.hpp" />
+    <ClInclude Include="Backend\Synchronization\Semaphore\Semaphore.hpp" />
     <ClInclude Include="Core\Hashmap\TemporaryHashmap.hpp" />
     <ClInclude Include="Core\Hash\Hashable.hpp" />
     <ClInclude Include="Core\List\List.hpp" />
@@ -498,6 +504,12 @@
     <ClCompile Include="Backend\RenderPass\RenderPass.cpp" />
     <ClCompile Include="Backend\ShaderProgram\ShaderReflect\spirv_reflect.c" />
     <ClCompile Include="Backend\Swapchain\Swapchain.cpp" />
+    <ClCompile Include="Backend\Synchronization\Event\Event.cpp" />
+    <ClCompile Include="Backend\Synchronization\Fence\Fence.cpp" />
+    <ClCompile Include="Backend\Synchronization\Managers\EventManager.cpp" />
+    <ClCompile Include="Backend\Synchronization\Managers\FenceManager.cpp" />
+    <ClCompile Include="Backend\Synchronization\Managers\SemaphoreManager.cpp" />
+    <ClCompile Include="Backend\Synchronization\Semaphore\Semaphore.cpp" />
     <ClCompile Include="Backend\WindowSurface\WindowSurface.cpp" />
     <ClCompile Include="glm\detail\glm.cpp" />
     <ClCompile Include="Backend\Pipeline\GraphicsState\GraphicsState.cpp" />

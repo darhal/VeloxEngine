@@ -277,16 +277,6 @@ int main()
     ImageViewHandle textureView = backend.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
     SamplerHandle sampler = backend.CreateSampler(SamplerInfo::Sampler2D(texture));
 
-    /*const uint32 checkerboard2[] = {
-        0u, 0u, 0u, 0u,
-        ~0u, ~0u, ~0u, ~0u,
-        0u, 0u, 0u, 0u,
-        ~0u, ~0u, ~0u, ~0u,
-    };
-
-    ImageHandle texture2 = backend.CreateImage(ImageCreateInfo::Texture2D(4, 4), checkerboard2);
-    ImageViewHandle textureView2 = backend.CreateImageView(ImageViewCreateInfo::ImageView(texture2, VK_IMAGE_VIEW_TYPE_2D));*/
-
     RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 10);
 
     GraphicsPipeline graphicsPipeline;
@@ -313,12 +303,17 @@ int main()
         { offsetof(Vertex, pos), offsetof(Vertex, color), offsetof(Vertex, tex) }
     );
 
-
     RenderPassInfo::Subpass subpass;
     const RenderPass& rp = backend.RequestRenderPass(GetRenderPass(backend, subpass));
     graphicsPipeline.SetRenderPass(rp.GetAPIObject());
     // graphicsPipeline.SetRenderPass(backend.GetRenderContext().GetSwapchain().GetRenderPass());
     graphicsPipeline.Create(backend.GetRenderContext(), state);
+
+    {
+        auto sem = backend.RequestSemaphore();
+        auto event = backend.RequestPiplineEvent();
+        auto fence = backend.RequestFence();
+    }
 
     INIT_BENCHMARK;
 

@@ -26,6 +26,9 @@ Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) :
 
     stagingManager.Init();
     gpuMemoryAllocator.Init(renderDevice.internal);
+    fenceManager.Init(&renderDevice);
+    semaphoreManager.Init(&renderDevice);
+    eventManager.Init(&renderDevice);
 
     this->Init();
 
@@ -120,6 +123,38 @@ void Renderer::RenderBackend::EndFrame()
 void Renderer::RenderBackend::SetSamplerCount(uint32 msaaSamplerCount)
 {
     this->msaaSamplerCount = renderDevice.GetUsableSampleCount(msaaSamplerCount);
+}
+
+Renderer::FenceHandle Renderer::RenderBackend::RequestFence()
+{
+    VkFence fence = fenceManager.RequestClearedFence();
+    FenceHandle h(objectsPool.fences.Allocate(*this, fence));
+    return h;
+}
+
+void Renderer::RenderBackend::ResetFence(VkFence fence, bool isWaited)
+{
+    if (isWaited) {
+        vkResetFences(renderDevice.GetDevice(), 1, &fence);
+        fenceManager.Recycle(fence);
+    } else {
+        Frame().recycleFences.EmplaceBack(fence);
+        Frame().shouldDestroy = true;
+    }
+}
+
+Renderer::SemaphoreHandle Renderer::RenderBackend::RequestSemaphore()
+{
+    VkSemaphore sem = semaphoreManager.RequestSemaphore();
+    SemaphoreHandle ptr(objectsPool.semaphores.Allocate(*this, sem));
+    return ptr;
+}
+
+Renderer::PiplineEventHandle Renderer::RenderBackend::RequestPiplineEvent()
+{
+    VkEvent event = eventManager.RequestEvent();
+    PiplineEventHandle ptr(objectsPool.events.Allocate(*this, event));
+    return ptr;
 }
 
 Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo& createInfo, const void* data)
@@ -523,10 +558,23 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
     for (auto& mem : frame.freedMemory)
         vkFreeMemory(dev, mem, NULL);
 
+    for (auto& sem : frame.destroyedSemaphores)
+        vkDestroySemaphore(dev, sem, NULL);
+
+    for (auto& sem : frame.recycleSemaphores)
+        semaphoreManager.Recycle(sem);
+
+    vkResetFences(dev, (uint32)frame.recycleFences.Size(), frame.recycleFences.Data());
+    for (auto& fence : frame.recycleFences)
+        fenceManager.Recycle(fence);
+
     frame.destroyedFramebuffers.Clear();
     frame.destroyedImageViews.Clear();
     frame.destroyedImages.Clear();
     frame.freedMemory.Clear();
+    frame.destroyedSemaphores.Clear();
+    frame.recycleSemaphores.Clear();
+    frame.recycleFences.Clear();
     frame.shouldDestroy = false;
 }
 
@@ -556,6 +604,24 @@ void Renderer::RenderBackend::FreeMemory(VkDeviceMemory memory)
     PerFrame& frame = this->Frame();
     frame.freedMemory.EmplaceBack(memory);
     frame.shouldDestroy = true;
+}
+
+void Renderer::RenderBackend::RecycleSemaphore(VkSemaphore sem)
+{
+    Frame().recycleSemaphores.EmplaceBack(sem);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderBackend::DestroySemaphore(VkSemaphore sem)
+{
+    Frame().destroyedSemaphores.EmplaceBack(sem);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderBackend::DestroryEvent(VkEvent event)
+{
+    Frame().destroyedEvents.EmplaceBack(event);
+    Frame().shouldDestroy = true;
 }
 
 TRE_NS_END

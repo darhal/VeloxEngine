@@ -22,6 +22,12 @@
 #include <Renderer/Backend/RenderPass/RenderPass.hpp>
 #include <Renderer/Backend/Images/ImageHelper.hpp>
 #include <Renderer/Backend/RenderPass/AttachmentAllocator.hpp>
+#include <Renderer/Backend/Synchronization/Managers/FenceManager.hpp>
+#include <Renderer/Backend/Synchronization/Fence/Fence.hpp>
+#include <Renderer/Backend/Synchronization/Managers/SemaphoreManager.hpp>
+#include <Renderer/Backend/Synchronization/Semaphore/Semaphore.hpp>
+#include <Renderer/Backend/Synchronization/Managers/EventManager.hpp>
+#include <Renderer/Backend/Synchronization/Event/Event.hpp>
 
 TRE_NS_START
 
@@ -43,6 +49,12 @@ namespace Renderer
 			TRE::Vector<VkBufferView>	  destroyedBufferViews;
 			TRE::Vector<VkRenderPass>	  destroyedRenderPasses;
 			TRE::Vector<VkDescriptorPool> destroyedDescriptorPool;
+			TRE::Vector<VkSemaphore>	  destroyedSemaphores;
+			TRE::Vector<VkEvent>		  destroyedEvents;
+
+			TRE::Vector<VkFence>		  recycleFences;
+			TRE::Vector<VkSemaphore>	  recycleSemaphores;
+
 			TRE::Vector<VkDeviceMemory>	  freedMemory;
 
 			bool shouldDestroy = false;
@@ -56,6 +68,9 @@ namespace Renderer
 			ObjectPool<Image>		  images;
 			ObjectPool<ImageView>	  imageViews;
 			ObjectPool<Sampler>		  samplers;
+			ObjectPool<Fence>		  fences;
+			ObjectPool<Semaphore>	  semaphores;
+			ObjectPool<PipelineEvent> events;
 		};
 
 	public:
@@ -76,6 +91,14 @@ namespace Renderer
 		FORCEINLINE const RenderDevice& GetRenderDevice() const { return renderDevice; }
 
 		void SetSamplerCount(uint32 msaaSamplerCount = 1);
+
+		FenceHandle RequestFence();
+
+		void ResetFence(VkFence fence, bool isWaited);
+
+		SemaphoreHandle RequestSemaphore();
+
+		PiplineEventHandle RequestPiplineEvent();
 
 		ImageHandle CreateImage(const ImageCreateInfo& createInfo, const void* data = NULL);
 
@@ -116,6 +139,12 @@ namespace Renderer
 
 		void FreeMemory(VkDeviceMemory memory);
 
+		void RecycleSemaphore(VkSemaphore sem);
+
+		void DestroySemaphore(VkSemaphore sem);
+
+		void DestroryEvent(VkEvent event);
+
 		FORCEINLINE uint32 GetMSAASamplerCount() const { return msaaSamplerCount; }
 
 		FORCEINLINE MemoryAllocator& GetContextAllocator() { return gpuMemoryAllocator; }
@@ -142,14 +171,17 @@ namespace Renderer
 		RenderDevice	renderDevice;
 		RenderContext	renderContext;
 
-		MemoryAllocator	gpuMemoryAllocator;
-		StagingManager	stagingManager;
+		MemoryAllocator	 gpuMemoryAllocator;
+		StagingManager	 stagingManager;
+		FenceManager	 fenceManager;
+		SemaphoreManager semaphoreManager;
+		EventManager	 eventManager;
 
 		std::unordered_map<Hash, DescriptorSetAllocator> descriptorSetAllocators;
 		std::unordered_map<Hash, RenderPass>			 renderPasses;
 		FramebufferAllocator							 framebufferAllocator;
 		AttachmentAllocator								 transientAttachmentAllocator;
-
+		
 		PerFrame		perFrame[MAX_FRAMES];
 		HandlePool		objectsPool;
 
@@ -157,6 +189,8 @@ namespace Renderer
 
 		friend class Image;
 		friend class Swapchain;
+		friend class Semaphore;
+		friend class Fence;
 	};
 };
 
