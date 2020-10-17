@@ -179,7 +179,6 @@ namespace Renderer
 	enum class QueueTypes
 	{
 		GENERIC = 0,
-		GRAPHICS_ONLY = 1,
 		TRANSFER_ONLY = 2,
 		COMPUTE_ONLY = 3,
 

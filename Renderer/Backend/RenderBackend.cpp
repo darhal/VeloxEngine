@@ -141,7 +141,7 @@ void Renderer::RenderBackend::BeginFrame()
 void Renderer::RenderBackend::EndFrame()
 {
     const PerFrame& frame = this->Frame();
-    const auto& submissions = frame.submissions[(uint32)QueueTypes::GRAPHICS_ONLY];
+    const auto& submissions = frame.submissions[(uint32)QueueTypes::GENERIC];
     renderContext.EndFrame(renderDevice, submissions.GetData(), (uint32)submissions.GetElementCount());
 }
 
