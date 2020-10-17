@@ -66,10 +66,15 @@ Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) :
 
 void Renderer::RenderBackend::Init()
 {
+    const Internal::QueueFamilyIndices& queueFamilyIndices = renderDevice.GetQueueFamilyIndices();
+
     for (uint32 f = 0; f < renderContext.GetNumFrames(); f++) {
         for (uint32 t = 0; t < MAX_THREADS; t++) {
-            for (uint32 i = 0; i < (uint32)QueueTypes::MAX; i++) {
-                const Internal::QueueFamilyIndices& queueFamilyIndices = renderDevice.GetQueueFamilyIndices();
+            for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
+                if (queueFamilyIndices.queueFamilies[i] == UINT32_MAX) {
+                    continue;
+                }
+
                 PerFrame& frame = perFrame[f];
                 frame.commandPools[t][i] = std::move(CommandPool(&renderDevice, queueFamilyIndices.queueFamilies[i]));
             }
@@ -77,11 +82,31 @@ void Renderer::RenderBackend::Init()
     }
 }
 
+Renderer::CommandBuffer::Type Renderer::RenderBackend::GetPhysicalQueueType(CommandBuffer::Type type)
+{
+    return type;
+}
+
+void Renderer::RenderBackend::GetQueueData(CommandBuffer::Type type)
+{
+
+}
+
+void Renderer::RenderBackend::GetQueueSubmissions(CommandBuffer::Type type)
+{
+
+}
+
+VkQueue Renderer::RenderBackend::GetQueue(CommandBuffer::Type type)
+{
+    return renderDevice.GetQueue((uint32)type);
+}
+
 void Renderer::RenderBackend::ClearFrame()
 {
     PerFrame& frame = Frame();
 
-    for (uint32 i = 0; i < (uint32)QueueTypes::MAX; i++) {
+    for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
         frame.commandPools[0][i].Reset();
         frame.submissions[i].Reset();
     }
@@ -376,11 +401,11 @@ Renderer::SamplerHandle Renderer::RenderBackend::CreateSampler(const SamplerInfo
     return ret;
 }
 
-Renderer::CommandBufferHandle Renderer::RenderBackend::RequestCommandBuffer(QueueTypes type)
+Renderer::CommandBufferHandle Renderer::RenderBackend::RequestCommandBuffer(CommandBuffer::Type type)
 {
     PerFrame& frame = Frame();
     VkCommandBuffer buffer = frame.commandPools[0][(uint32)type].RequestCommandBuffer();
-    CommandBufferHandle handle(objectsPool.commandBuffers.Allocate(this, buffer, CommandBuffer::Type::GENERIC));
+    CommandBufferHandle handle(objectsPool.commandBuffers.Allocate(this, buffer, type));
     return handle;
 }
 
@@ -400,10 +425,10 @@ Renderer::DescriptorSetAllocator* Renderer::RenderBackend::RequestDescriptorSetA
     return &res.first->second;
 }
 
-void Renderer::RenderBackend::Submit(CommandBufferHandle cmd)
+void Renderer::RenderBackend::Submit(CommandBufferHandle cmd, Fence* fence, uint32 semaphoreCount, Semaphore* semaphores)
 {
     PerFrame& frame = Frame();
-    VkCommandBuffer* allocCmd = frame.submissions[(uint32)QueueTypes::GRAPHICS_ONLY].Allocate(1);
+    VkCommandBuffer* allocCmd = frame.submissions[(uint32)cmd->GetType()].Allocate(1);
     *allocCmd = cmd->GetAPIObject();
 }
 

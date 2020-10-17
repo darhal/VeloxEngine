@@ -37,9 +37,8 @@ namespace Renderer
 		enum class Type
 		{
 			GENERIC,
-			ASYNC_GRAPHICS,
-			ASYNC_COMPUTE,
 			ASYNC_TRANSFER,
+			ASYNC_COMPUTE,
 			MAX
 		};
 	public:
@@ -111,6 +110,8 @@ namespace Renderer
 			VkAccessFlags dstAccess);
 
 		FORCEINLINE VkCommandBuffer GetAPIObject() const { return commandBuffer; }
+
+		FORCEINLINE Type GetType() const { return type; }
 	private:
 		void UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings);
 

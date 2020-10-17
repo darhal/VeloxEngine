@@ -154,27 +154,6 @@ namespace Renderer
 		INPUT_ATTACHMENT = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
 	};
 
-	enum QueueFamilyFlag 
-	{
-		NONE	 = 0x0,
-		GRAPHICS = 0x1,
-		COMPUTE  = 0x2,
-		TRANSFER = 0x4,
-		SPARSE	 = 0x8,
-		PRESENT  = 0x10,
-	};
-
-	enum class QueueTypes
-	{
-		GRAPHICS_ONLY = 0,
-		TRANSFER_ONLY = 1, 
-		// COMPUTE_ONLY = 2,
-		
-		// GENERIC = 3,
-
-		MAX,
-	};
-
 	struct MemoryView
 	{
 		VkDeviceMemory  memory;
@@ -183,6 +162,28 @@ namespace Renderer
 		DeviceSize		padding;
 		void*			mappedData;
 		uint32			alignment;
+	};
+
+	enum QueueFamilyFlag 
+	{
+		NONE	 = 0x0,
+		GRAPHICS = 0x1,
+		COMPUTE  = 0x2,
+		TRANSFER = 0x4,
+		SPARSE	 = 0x8,
+		PRESENT  = 0x10,
+
+		GENERIC = GRAPHICS | COMPUTE | TRANSFER,
+	};
+
+	enum class QueueTypes
+	{
+		GENERIC = 0,
+		GRAPHICS_ONLY = 1,
+		TRANSFER_ONLY = 2,
+		COMPUTE_ONLY = 3,
+
+		MAX,
 	};
 
 	class Buffer;
@@ -197,7 +198,7 @@ namespace Renderer
 			QFT_SPARSE = 3,
 			QFT_PRESENT = 4,
 
-			QFT_MAX = 5
+			QFT_MAX
 		};
 
 		struct QueueFamilyIndices

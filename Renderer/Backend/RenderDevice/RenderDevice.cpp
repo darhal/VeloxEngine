@@ -211,11 +211,28 @@ Renderer::Internal::QueueFamilyIndices Renderer::RenderDevice::FindQueueFamilies
     int32 i = 0;
 
     for (const VkQueueFamilyProperties& queueFamily : queueFamilies) {
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+        if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
+            (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT)) 
+        {
             indices.queueFamilies[Internal::QFT_GRAPHICS] = i;
         }
 
-        if ((queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) && !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
+        /*if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && 
+            !(queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
+        {
+            indices.queueFamilies[Internal::QFT_GRAPHICS] = i;
+        }*/
+
+        if ((queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) &&
+            !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)) 
+        {
+            indices.queueFamilies[Internal::QFT_COMPUTE] = i;
+        }
+
+        if ((queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) && 
+            !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
+            !(queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)) 
+        {
             indices.queueFamilies[Internal::QFT_TRANSFER] = i;
         }
 

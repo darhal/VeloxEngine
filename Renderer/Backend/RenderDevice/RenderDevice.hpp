@@ -37,6 +37,8 @@ namespace Renderer
 
 		FORCEINLINE const VkQueue* const GetQueues() const { return internal.queues; }
 
+		FORCEINLINE VkQueue GetQueue(uint32 i) const { return internal.queues[i]; }
+
 		FORCEINLINE bool IsPresentQueueSeprate() const { return internal.isPresentQueueSeprate; }
 
 		FORCEINLINE bool IsTransferQueueSeprate() const { return internal.isTransferQueueSeprate; }

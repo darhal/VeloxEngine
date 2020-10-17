@@ -38,8 +38,8 @@ namespace Renderer
 	public:
 		struct PerFrame
 		{
-			CommandPool commandPools[MAX_THREADS][(uint32)QueueTypes::MAX];
-			StackAlloc<VkCommandBuffer, 32> submissions[(uint32)QueueTypes::MAX];
+			CommandPool commandPools[MAX_THREADS][(uint32)CommandBuffer::Type::MAX];
+			StackAlloc<VkCommandBuffer, 32> submissions[(uint32)CommandBuffer::Type::MAX];
 
 			TRE::Vector<VkPipeline>       destroyedPipelines;
 			TRE::Vector<VkFramebuffer>    destroyedFramebuffers;
@@ -112,9 +112,11 @@ namespace Renderer
 
 		SamplerHandle CreateSampler(const SamplerInfo& createInfo);
 	
-		CommandBufferHandle RequestCommandBuffer(QueueTypes type);
+		CommandBufferHandle RequestCommandBuffer(CommandBuffer::Type type);
 
-		void Submit(CommandBufferHandle cmd);
+		void Submit(CommandBufferHandle cmd, Fence* fence  = NULL, uint32 semaphoreCount = 0, Semaphore* semaphores = NULL);
+
+		void SubmitQueue(CommandBuffer::Type type, uint32 semaphoreCount = 0, Semaphore* semaphores = NULL);
 
 		void CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut);
 
@@ -162,6 +164,14 @@ namespace Renderer
 		FORCEINLINE const PerFrame& PreviousFrame() const { return perFrame[renderContext.GetPreviousFrame()]; }
 
 		FORCEINLINE PerFrame& PreviousFrame() { return perFrame[renderContext.GetPreviousFrame()]; }
+
+		CommandBuffer::Type GetPhysicalQueueType(CommandBuffer::Type type);
+
+		void GetQueueData(CommandBuffer::Type type);
+
+		void GetQueueSubmissions(CommandBuffer::Type type);
+
+		VkQueue GetQueue(CommandBuffer::Type type);
 
 		void Init();
 

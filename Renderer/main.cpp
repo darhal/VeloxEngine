@@ -156,7 +156,7 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     const TRE::Renderer::SamplerHandle sampler)
 {
     using namespace TRE::Renderer;
-    CommandBufferHandle currentCmdBuff = backend.RequestCommandBuffer(QueueTypes::GRAPHICS_ONLY);
+    CommandBufferHandle currentCmdBuff = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
     updateMVP(backend, uniformBuffer);
 
     currentCmdBuff->Begin();
