@@ -22,7 +22,7 @@ namespace Renderer
 				if (offset + count > N)
 					return NULL;
 
-				T* ret = buffer + offset;
+				T* ret = (T*)buffer + offset;
 				offset += count;
 				return ret;
 			}
@@ -47,9 +47,9 @@ namespace Renderer
 
 			size_t GetElementCount() const { return offset; }
 
-			const T* GetData() const { return buffer; }
+			const T* GetData() const { return (T*)buffer; }
 		private:
-			T buffer[N];
+			alignas(T) char buffer[sizeof(T) * N];
 			size_t offset;
 		};
 	}

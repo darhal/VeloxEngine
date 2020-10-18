@@ -1,7 +1,10 @@
 #pragma once
 
-#include <Renderer/Common.hpp>
+#include <vector>
+#include <array>
 #include <initializer_list>
+
+#include <Renderer/Common.hpp>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
 #include <Engine/Core/Misc/Maths/Common.hpp>
 #include <Renderer/Core/ObjectPool/ObjectPool.hpp>
@@ -9,8 +12,8 @@
 #include <Renderer/Core/Hash/Hash.hpp>
 #include <Renderer/Core/Handle/Handle.hpp>
 #include <Renderer/Core/Hash/Hashable.hpp>
-#include <vector>
-#include <array>
+#include <Renderer/Core/StaticVector/StaticVector.hpp>
+
 
 TRE_NS_START
 
@@ -58,6 +61,9 @@ namespace Renderer
 	CONSTEXPR static uint32 DESCRIPTOR_RING_SIZE	= 8;
 	CONSTEXPR static uint32 FRAMEBUFFER_RING_SIZE	= 8;
 
+	CONSTEXPR static uint32 MAX_CMD_LIST_SUBMISSION			= 32;
+	CONSTEXPR static uint32 MAX_WAIT_SEMAPHORE_PER_QUEUE    = 64;
+
 	template<typename T>
 	using ObjectPool = Utils::ObjectPool<T>;
 
@@ -76,6 +82,9 @@ namespace Renderer
 	using Hasher = Utils::Hasher;
 
 	using Hashable = Utils::Hashable;
+
+	template<typename T, size_t N = 32>
+	using StaticVector = Utils::StaticVector<T, N>;
 
 	typedef VkDeviceSize DeviceSize;
 

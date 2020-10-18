@@ -39,7 +39,13 @@ namespace Renderer
 		struct PerFrame
 		{
 			CommandPool commandPools[MAX_THREADS][(uint32)CommandBuffer::Type::MAX];
-			StackAlloc<VkCommandBuffer, 32> submissions[(uint32)CommandBuffer::Type::MAX];
+			StackAlloc<VkCommandBuffer, MAX_CMD_LIST_SUBMISSION> submissions[(uint32)CommandBuffer::Type::MAX];
+
+			struct QueueData
+			{
+				StackAlloc<Semaphore, MAX_WAIT_SEMAPHORE_PER_QUEUE> waitSemaphores;
+				StackAlloc<VkPipelineStageFlags, MAX_WAIT_SEMAPHORE_PER_QUEUE> waitStages;
+			} queueData[(uint32)CommandBuffer::Type::MAX];
 
 			TRE::Vector<VkPipeline>       destroyedPipelines;
 			TRE::Vector<VkFramebuffer>    destroyedFramebuffers;
@@ -116,7 +122,7 @@ namespace Renderer
 
 		void Submit(CommandBufferHandle cmd, Fence* fence  = NULL, uint32 semaphoreCount = 0, Semaphore* semaphores = NULL);
 
-		void SubmitQueue(CommandBuffer::Type type, uint32 semaphoreCount = 0, Semaphore* semaphores = NULL);
+		void SubmitQueue(CommandBuffer::Type type, Fence* fence = NULL, uint32 semaphoreCount = 0, Semaphore* semaphores = NULL);
 
 		void CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut);
 
@@ -167,15 +173,17 @@ namespace Renderer
 
 		CommandBuffer::Type GetPhysicalQueueType(CommandBuffer::Type type);
 
-		void GetQueueData(CommandBuffer::Type type);
+		PerFrame::QueueData& GetQueueData(CommandBuffer::Type type);
 
-		void GetQueueSubmissions(CommandBuffer::Type type);
+		StackAlloc<VkCommandBuffer, MAX_CMD_LIST_SUBMISSION>& GetQueueSubmissions(CommandBuffer::Type type);
 
 		VkQueue GetQueue(CommandBuffer::Type type);
 
 		void Init();
 
 		void ClearFrame();
+
+		void SubmitEmpty(CommandBuffer::Type type, Fence* fence, uint32 semaphoreCount, Semaphore* semaphores);
 	private:
 		RenderInstance	renderInstance;
 		RenderDevice	renderDevice;

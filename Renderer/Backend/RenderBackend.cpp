@@ -64,6 +64,17 @@ Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) :
     TRE_LOGI("Device ID......: 0x%x", renderDevice.internal.gpuProperties.deviceID);
 }
 
+Renderer::RenderBackend::~RenderBackend()
+{
+    vkDeviceWaitIdle(renderDevice.internal.device);
+
+    renderContext.DestroyRenderContext(renderInstance.internal, renderDevice.internal, renderContext.internal);
+
+    stagingManager.Shutdown();
+    renderDevice.DestroryRenderDevice();
+    renderInstance.DestroyRenderInstance();
+}
+
 void Renderer::RenderBackend::Init()
 {
     const Internal::QueueFamilyIndices& queueFamilyIndices = renderDevice.GetQueueFamilyIndices();
@@ -87,19 +98,53 @@ Renderer::CommandBuffer::Type Renderer::RenderBackend::GetPhysicalQueueType(Comm
     return type;
 }
 
-void Renderer::RenderBackend::GetQueueData(CommandBuffer::Type type)
+Renderer::RenderBackend::PerFrame::QueueData& Renderer::RenderBackend::GetQueueData(CommandBuffer::Type type)
 {
-
+    return Frame().queueData[(uint32)type];
 }
 
-void Renderer::RenderBackend::GetQueueSubmissions(CommandBuffer::Type type)
+Renderer::StackAlloc<VkCommandBuffer, Renderer::MAX_CMD_LIST_SUBMISSION>& Renderer::RenderBackend::GetQueueSubmissions(CommandBuffer::Type type)
 {
-
+    return Frame().submissions[(uint32)type];
 }
 
 VkQueue Renderer::RenderBackend::GetQueue(CommandBuffer::Type type)
 {
     return renderDevice.GetQueue((uint32)type);
+}
+
+void Renderer::RenderBackend::Submit(CommandBufferHandle cmd, Fence* fence, uint32 semaphoreCount, Semaphore* semaphores)
+{
+    cmd->End();
+
+    PerFrame& frame = Frame();
+    VkCommandBuffer* allocCmd = frame.submissions[(uint32)cmd->GetType()].Allocate(1);
+    *allocCmd = cmd->GetAPIObject();
+
+    if (fence || semaphoreCount) {
+        this->SubmitQueue(cmd->GetType(), fence, semaphoreCount, semaphores);
+    }
+}
+
+void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, Fence* fence, uint32 semaphoreCount, Semaphore* semaphores)
+{
+    //if (type != CommandBuffer::Type::ASYNC_TRANSFER)
+    //    FlushFrame(CommandBuffer::Type::ASYNC_TRANSFER);
+
+    auto& data = this->GetQueueData(type);
+    auto& submissions = this->GetQueueSubmissions(type);
+
+    if (submissions.GetElementCount() == 0) {
+        if (fence || semaphoreCount) {
+            this->SubmitEmpty(type, fence, semaphoreCount, semaphores);
+        }
+
+        return;
+    }
+
+    StaticVector<VkSubmitInfo> submits;
+
+    // TODO: complete:
 }
 
 void Renderer::RenderBackend::ClearFrame()
@@ -113,17 +158,6 @@ void Renderer::RenderBackend::ClearFrame()
 
     // objectsPool.commandBuffers.Clear();
     this->DestroyPendingObjects(frame);
-}
-
-Renderer::RenderBackend::~RenderBackend()
-{
-    vkDeviceWaitIdle(renderDevice.internal.device);
-    
-    renderContext.DestroyRenderContext(renderInstance.internal, renderDevice.internal, renderContext.internal);
-
-    stagingManager.Shutdown();
-    renderDevice.DestroryRenderDevice();
-    renderInstance.DestroyRenderInstance();
 }
 
 void Renderer::RenderBackend::BeginFrame()
@@ -406,6 +440,7 @@ Renderer::CommandBufferHandle Renderer::RenderBackend::RequestCommandBuffer(Comm
     PerFrame& frame = Frame();
     VkCommandBuffer buffer = frame.commandPools[0][(uint32)type].RequestCommandBuffer();
     CommandBufferHandle handle(objectsPool.commandBuffers.Allocate(this, buffer, type));
+    handle->Begin();
     return handle;
 }
 
@@ -423,13 +458,6 @@ Renderer::DescriptorSetAllocator* Renderer::RenderBackend::RequestDescriptorSetA
     }
 
     return &res.first->second;
-}
-
-void Renderer::RenderBackend::Submit(CommandBufferHandle cmd, Fence* fence, uint32 semaphoreCount, Semaphore* semaphores)
-{
-    PerFrame& frame = Frame();
-    VkCommandBuffer* allocCmd = frame.submissions[(uint32)cmd->GetType()].Allocate(1);
-    *allocCmd = cmd->GetAPIObject();
 }
 
 void Renderer::RenderBackend::CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut)

@@ -30,6 +30,7 @@ namespace Renderer
 
 		friend struct SemaphoreDeleter;
 		friend class Utils::ObjectPool<Semaphore>;
+		friend class Utils::StackAllocator<Semaphore, MAX_WAIT_SEMAPHORE_PER_QUEUE>;
 	};
 
 	using SemaphoreHandle = Handle<Semaphore>;

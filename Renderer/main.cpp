@@ -159,9 +159,7 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     CommandBufferHandle currentCmdBuff = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
     updateMVP(backend, uniformBuffer);
 
-    currentCmdBuff->Begin();
     currentCmdBuff->BindPipeline(graphicsPipeline);
-
 
     RenderPassInfo::Subpass subpass;
     currentCmdBuff->BeginRenderPass(GetRenderPass(backend, subpass));
@@ -190,7 +188,6 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     currentCmdBuff->Draw(36);*/
     
     currentCmdBuff->EndRenderPass();
-    currentCmdBuff->End();
 
     backend.Submit(currentCmdBuff);
 }
