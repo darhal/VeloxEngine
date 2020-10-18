@@ -10,7 +10,7 @@
 TRE_NS_START
 
 Renderer::CommandBuffer::CommandBuffer(RenderBackend* backend, VkCommandBuffer buffer, Type type) :
-    renderBackend(backend), commandBuffer(buffer), type(type), allocatedSets{}, dirtySets{}
+    renderBackend(backend), commandBuffer(buffer), type(type), allocatedSets{}, dirtySets{}, renderToSwapchain(false)
 {
 }
 
@@ -75,6 +75,10 @@ void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubp
         if (info.clearAttachments & (1u << i)) {
             clearValues[i].color = info.clearColor[i];
             clearValuesCount = i + 1;
+        }
+
+        if (info.colorAttachments[i]->GetImage()->IsSwapchainImage()) {
+            renderToSwapchain = true;
         }
     }
 

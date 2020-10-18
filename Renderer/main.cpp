@@ -24,6 +24,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #include <vector>
 #include <iostream>
 #include <chrono>
+#include <future>
 #include <Renderer/Window/Window.hpp>
 #include <Renderer/Backend/RenderBackend.hpp>
 #include <Renderer/Backend/SwapChain/SwapChain.hpp>
@@ -189,6 +190,21 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     
     currentCmdBuff->EndRenderPass();
 
+    INIT_BENCHMARK
+    start = std::chrono::high_resolution_clock::now();
+    FenceHandle fence;
+    backend.Submit(currentCmdBuff, &fence);
+
+    std::async(std::launch::async, [&backend, fence, &start]() mutable {
+        fence->Wait();
+        auto end = std::chrono::high_resolution_clock::now(); \
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start); \
+        std::cout << "\nExecution of 'Command buffer' took : " << duration.count() << " microsecond(s)" << std::endl; \
+        });
+
+    currentCmdBuff = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
+    currentCmdBuff->BeginRenderPass(GetRenderPass(backend, subpass));
+    currentCmdBuff->EndRenderPass();
     backend.Submit(currentCmdBuff);
 }
 

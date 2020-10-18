@@ -60,7 +60,6 @@ void Renderer::RenderContext::EndFrame(const RenderDevice& renderDevice, const V
 {
     const Swapchain::SwapchainData& swapchainData = swapchain.swapchainData;
 
-    const VkDevice device = renderDevice.GetDevice();
     const VkQueue* queues = renderDevice.GetQueues();
     const uint32 currentFrame = internal.currentFrame;
     const uint32_t currentBuffer = internal.currentImage;

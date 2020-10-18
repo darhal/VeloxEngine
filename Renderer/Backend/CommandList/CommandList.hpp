@@ -112,6 +112,8 @@ namespace Renderer
 		FORCEINLINE VkCommandBuffer GetAPIObject() const { return commandBuffer; }
 
 		FORCEINLINE Type GetType() const { return type; }
+
+		FORCEINLINE bool UsesSwapchain() const { return renderToSwapchain; }
 	private:
 		void UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings);
 
@@ -135,6 +137,8 @@ namespace Renderer
 		VkDescriptorSet allocatedSets[MAX_DESCRIPTOR_SET];
 		VkCommandBuffer commandBuffer;
 		Type type;
+
+		bool renderToSwapchain;
 	};
 
 	typedef CommandBuffer CommandList;

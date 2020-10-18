@@ -39,13 +39,15 @@ namespace Renderer
 		struct PerFrame
 		{
 			CommandPool commandPools[MAX_THREADS][(uint32)CommandBuffer::Type::MAX];
-			StackAlloc<VkCommandBuffer, MAX_CMD_LIST_SUBMISSION> submissions[(uint32)CommandBuffer::Type::MAX];
+			StaticVector<CommandBufferHandle> submissions[(uint32)CommandBuffer::Type::MAX];
 
 			struct QueueData
 			{
-				StackAlloc<Semaphore, MAX_WAIT_SEMAPHORE_PER_QUEUE> waitSemaphores;
-				StackAlloc<VkPipelineStageFlags, MAX_WAIT_SEMAPHORE_PER_QUEUE> waitStages;
+				StaticVector<SemaphoreHandle> waitSemaphores;
+				StaticVector<VkPipelineStageFlags> waitStages;
 			} queueData[(uint32)CommandBuffer::Type::MAX];
+
+			StaticVector<VkFence>		  waitFences;
 
 			TRE::Vector<VkPipeline>       destroyedPipelines;
 			TRE::Vector<VkFramebuffer>    destroyedFramebuffers;
@@ -120,9 +122,15 @@ namespace Renderer
 	
 		CommandBufferHandle RequestCommandBuffer(CommandBuffer::Type type);
 
-		void Submit(CommandBufferHandle cmd, Fence* fence  = NULL, uint32 semaphoreCount = 0, Semaphore* semaphores = NULL);
+		void Submit(CommandBufferHandle cmd, FenceHandle* fence  = NULL, uint32 semaphoreCount = 0, SemaphoreHandle* semaphores = NULL);
 
-		void SubmitQueue(CommandBuffer::Type type, Fence* fence = NULL, uint32 semaphoreCount = 0, Semaphore* semaphores = NULL);
+		void SubmitQueue(CommandBuffer::Type type, FenceHandle* fence = NULL, uint32 semaphoreCount = 0, SemaphoreHandle* semaphores = NULL);
+
+		void AddWaitSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages, bool flush = false);
+
+		void FlushQueue(CommandBuffer::Type type);
+
+		void FlushFrame();
 
 		void CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut);
 
@@ -175,7 +183,7 @@ namespace Renderer
 
 		PerFrame::QueueData& GetQueueData(CommandBuffer::Type type);
 
-		StackAlloc<VkCommandBuffer, MAX_CMD_LIST_SUBMISSION>& GetQueueSubmissions(CommandBuffer::Type type);
+		StaticVector<CommandBufferHandle>& GetQueueSubmissions(CommandBuffer::Type type);
 
 		VkQueue GetQueue(CommandBuffer::Type type);
 
@@ -183,7 +191,7 @@ namespace Renderer
 
 		void ClearFrame();
 
-		void SubmitEmpty(CommandBuffer::Type type, Fence* fence, uint32 semaphoreCount, Semaphore* semaphores);
+		void SubmitEmpty(CommandBuffer::Type type, FenceHandle* fence, uint32 semaphoreCount, SemaphoreHandle* semaphores);
 	private:
 		RenderInstance	renderInstance;
 		RenderDevice	renderDevice;

@@ -17,11 +17,15 @@ namespace Renderer
 				return reinterpret_cast<T*>(alignedChar);
 			}
 
+			const T* Data() const
+			{
+				return reinterpret_cast<const T*>(alignedChar);
+			}
 		private:
 			alignas(T) char alignedChar[sizeof(T) * N];
 		};
 
-		template<typename T, size_t N = 32>
+		template<typename T, uint32 N = 32>
 		class StaticVector
 		{
 		public:
@@ -33,7 +37,7 @@ namespace Renderer
 			{
 				auto data = this->Data();
 
-				for (size_t i = 0; < size; i++) {
+				for (uint32 i = 0; i < size; i++) {
 					new (&data[i]) T(other[i]);
 				}
 			}
@@ -42,7 +46,7 @@ namespace Renderer
 			{
 				auto data = this->Data();
 
-				for (size_t i = 0; < size; i++) {
+				for (uint32 i = 0; i < size; i++) {
 					new (&data[i]) T(std::move(other[i]));
 				}
 
@@ -54,7 +58,7 @@ namespace Renderer
 				this->size = other.size;
 				auto data = this->Data();
 
-				for (size_t i = 0; < size; i++) {
+				for (uint32 i = 0; i < size; i++) {
 					new (&data[i]) T(other[i]);
 				}
 			}
@@ -64,7 +68,7 @@ namespace Renderer
 				this->size = other.size;
 				auto data = this->Data();
 
-				for (size_t i = 0; < size; i++) {
+				for (size_t i = 0; i < size; i++) {
 					new (&data[i]) T(std::move(other[i]));
 				}
 
@@ -78,22 +82,31 @@ namespace Renderer
 
 			void Clear()
 			{
+				auto data = this->Data();
+				for (uint i = 0; i < size; i++)
+					data[i].~T();
 				size = 0;
 			}
 
-			void PushBack(const T& t)
+			uint32 Size() const { return size; }
+
+			uint32 Length() const { return size; }
+
+			T& PushBack(const T& t)
 			{
 				T* data = stackStorage.Data();
 				new (data + size) T(t);
 				size++;
+				return data[size - 1];
 			}
 
-			template<typename... T>
-			void EmplaceBack(T&&... args)
+			template<typename... Args>
+			T& EmplaceBack(Args&&... args)
 			{
 				T* data = stackStorage.Data();
 				new (data + size) T(std::forward<T>(args)...);
 				size++;
+				return data[size - 1];
 			}
 
 			T* Data()
@@ -111,15 +124,15 @@ namespace Renderer
 				return size == 0;
 			}
 
-			T& operator[](size_t i)
+			T& operator[](uint32 i)
 			{
 				T* ptr = stackStorage.Data();
 				return ptr[i];
 			}
 
-			const T& operator[](size_t i) const
+			const T& operator[](uint32 i) const
 			{
-				T* ptr = stackStorage.Data();
+				const T* ptr = stackStorage.Data();
 				return ptr[i];
 			}
 
@@ -137,13 +150,13 @@ namespace Renderer
 
 			const T* begin() const
 			{
-				T* ptr = stackStorage.Data();
+				const T* ptr = stackStorage.Data();
 				return ptr;
 			}
 
 			const T* end() const
 			{
-				T* ptr = stackStorage.Data();
+				const T* ptr = stackStorage.Data();
 				return ptr + size;
 			}
 
@@ -155,7 +168,7 @@ namespace Renderer
 
 			const T& Front() const
 			{
-				T* ptr = stackStorage.Data();
+				const T* ptr = stackStorage.Data();
 				return ptr[0];
 			}
 
@@ -167,12 +180,12 @@ namespace Renderer
 
 			const T& Back() const
 			{
-				T* ptr = stackStorage.Data();
+				const T* ptr = stackStorage.Data();
 				return ptr[size - 1];
 			}
 		private:
 			AlignedBuffer<T, N> stackStorage;
-			size_t size;
+			uint32 size;
 		};
 	}
 }

@@ -103,7 +103,7 @@ Renderer::RenderBackend::PerFrame::QueueData& Renderer::RenderBackend::GetQueueD
     return Frame().queueData[(uint32)type];
 }
 
-Renderer::StackAlloc<VkCommandBuffer, Renderer::MAX_CMD_LIST_SUBMISSION>& Renderer::RenderBackend::GetQueueSubmissions(CommandBuffer::Type type)
+Renderer::StaticVector<Renderer::CommandBufferHandle>& Renderer::RenderBackend::GetQueueSubmissions(CommandBuffer::Type type)
 {
     return Frame().submissions[(uint32)type];
 }
@@ -113,38 +113,118 @@ VkQueue Renderer::RenderBackend::GetQueue(CommandBuffer::Type type)
     return renderDevice.GetQueue((uint32)type);
 }
 
-void Renderer::RenderBackend::Submit(CommandBufferHandle cmd, Fence* fence, uint32 semaphoreCount, Semaphore* semaphores)
+void Renderer::RenderBackend::Submit(CommandBufferHandle cmd, FenceHandle* fence, uint32 semaphoreCount, SemaphoreHandle* semaphores)
 {
     cmd->End();
 
     PerFrame& frame = Frame();
-    VkCommandBuffer* allocCmd = frame.submissions[(uint32)cmd->GetType()].Allocate(1);
-    *allocCmd = cmd->GetAPIObject();
+    CommandBufferHandle& handle = frame.submissions[(uint32)cmd->GetType()].EmplaceBack(std::move(cmd));
 
     if (fence || semaphoreCount) {
-        this->SubmitQueue(cmd->GetType(), fence, semaphoreCount, semaphores);
+        this->SubmitQueue(handle->GetType(), fence, semaphoreCount, semaphores);
     }
 }
 
-void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, Fence* fence, uint32 semaphoreCount, Semaphore* semaphores)
+void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle* fence, uint32 semaphoreCount, SemaphoreHandle* semaphores)
 {
-    //if (type != CommandBuffer::Type::ASYNC_TRANSFER)
-    //    FlushFrame(CommandBuffer::Type::ASYNC_TRANSFER);
+    if (type != CommandBuffer::Type::ASYNC_TRANSFER)
+        this->FlushQueue(CommandBuffer::Type::ASYNC_TRANSFER);
 
     auto& data = this->GetQueueData(type);
     auto& submissions = this->GetQueueSubmissions(type);
 
-    if (submissions.GetElementCount() == 0) {
+    if (submissions.Size() == 0) {
         if (fence || semaphoreCount) {
-            this->SubmitEmpty(type, fence, semaphoreCount, semaphores);
+            // this->SubmitEmpty(type, fence, semaphoreCount, semaphores);
         }
 
         return;
     }
 
+    StaticVector<CommandBufferHandle> swapchainBuffer;
     StaticVector<VkSubmitInfo> submits;
+    StaticVector<VkCommandBuffer> cmds;
+    StaticVector<VkSemaphore> waits;
+    StaticVector<VkSemaphore> signals;
+    VkFence vkFence = VK_NULL_HANDLE;
 
-    // TODO: complete:
+    for (auto& sem : data.waitSemaphores) {
+        waits.PushBack(sem->GetAPIObject());
+    }
+
+    for (auto& sub : submissions) {
+        if (sub->UsesSwapchain()) {
+            swapchainBuffer.EmplaceBack(sub);
+        }
+
+        cmds.PushBack(sub->GetAPIObject());
+    }
+
+    for (uint32 i = 0; i < semaphoreCount; i++) {
+        VkSemaphore sem = semaphoreManager.RequestSemaphore();
+        semaphores[i] = SemaphoreHandle(objectsPool.semaphores.Allocate(*this, sem));
+        signals.EmplaceBack(sem);
+    }
+
+    if (semaphoreCount) {
+        auto& submit = submits.EmplaceBack();
+        submit = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+        submit.waitSemaphoreCount = waits.Size();
+        submit.pWaitSemaphores = waits.Data();
+        submit.pWaitDstStageMask = data.waitStages.Data();
+        submit.commandBufferCount = cmds.Size() - 1;
+        submit.pCommandBuffers = cmds.Data();
+
+        auto& submit2 = submits.EmplaceBack();
+        submit2.commandBufferCount = 1;
+        submit2.pCommandBuffers = cmds.Data() + submit.commandBufferCount;
+        submit2.signalSemaphoreCount = semaphoreCount;
+        submit2.pSignalSemaphores = signals.Data();
+    } else {
+        auto& submit = submits.EmplaceBack();
+        submit = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+        submit.waitSemaphoreCount = waits.Size();
+        submit.pWaitSemaphores = waits.Data();
+        submit.pWaitDstStageMask = data.waitStages.Data();
+        submit.commandBufferCount = cmds.Size();
+        submit.pCommandBuffers = cmds.Data();
+    }
+
+    if (fence) {
+        *fence = this->RequestFence();
+        vkFence = (*fence)->GetAPIObject();
+    }
+
+    vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
+
+    submissions.Clear();
+    data.waitSemaphores.Clear();
+    data.waitStages.Clear();
+}
+
+void Renderer::RenderBackend::AddWaitSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages, bool flush)
+{
+    ASSERT(stages == 0);
+
+    if (flush) {
+        this->FlushQueue(type);
+    }
+
+    auto& data = GetQueueData(type);
+    data.waitSemaphores.EmplaceBack(semaphore);
+    data.waitStages.EmplaceBack(stages);
+}
+
+void Renderer::RenderBackend::FlushQueue(CommandBuffer::Type type)
+{
+    this->SubmitQueue(type);
+}
+
+void Renderer::RenderBackend::FlushFrame()
+{
+    this->FlushQueue(CommandBuffer::Type::ASYNC_TRANSFER);
+    this->FlushQueue(CommandBuffer::Type::ASYNC_COMPUTE);
+    this->FlushQueue(CommandBuffer::Type::GENERIC);
 }
 
 void Renderer::RenderBackend::ClearFrame()
@@ -153,8 +233,10 @@ void Renderer::RenderBackend::ClearFrame()
 
     for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
         frame.commandPools[0][i].Reset();
-        frame.submissions[i].Reset();
+        frame.submissions[i].Clear();
     }
+
+    
 
     // objectsPool.commandBuffers.Clear();
     this->DestroyPendingObjects(frame);
@@ -162,6 +244,14 @@ void Renderer::RenderBackend::ClearFrame()
 
 void Renderer::RenderBackend::BeginFrame()
 {
+    PerFrame& frame = Frame();
+
+    if (!frame.waitFences.Empty()) {
+        vkWaitForFences(renderDevice.GetDevice(), frame.waitFences.Size(), frame.waitFences.Data(), VK_TRUE, UINT64_MAX);
+        vkResetFences(renderDevice.GetDevice(), frame.waitFences.Size(), frame.waitFences.Data());
+        frame.waitFences.Clear();
+    }
+
     renderContext.BeginFrame(renderDevice, stagingManager);
     framebufferAllocator.BeginFrame();
     transientAttachmentAllocator.BeginFrame();
@@ -174,9 +264,34 @@ void Renderer::RenderBackend::BeginFrame()
 
 void Renderer::RenderBackend::EndFrame()
 {
-    const PerFrame& frame = this->Frame();
+    CONSTEXPR uint32 subOrder[] = {
+        (uint32)CommandBuffer::Type::ASYNC_TRANSFER,
+        (uint32)CommandBuffer::Type::ASYNC_COMPUTE
+    };
+
+    PerFrame& frame = this->Frame();
+    FenceHandle fence;
+
+    for (uint32 type : subOrder) {
+        if (frame.submissions[type].Size()) {
+            CommandBuffer::Type qType = (CommandBuffer::Type)type;
+            this->SubmitQueue(qType, &fence);
+            frame.waitFences.EmplaceBack(fence->GetAPIObject());
+            frame.recycleFences.EmplaceBack(fence->GetAPIObject());
+        }
+    }
+
+    this->SubmitQueue(CommandBuffer::Type::GENERIC);
+    // renderContext.EndFrame(renderDevice, cmds.Data(), (uint32)cmds.Size());
+
     const auto& submissions = frame.submissions[(uint32)QueueTypes::GENERIC];
-    renderContext.EndFrame(renderDevice, submissions.GetData(), (uint32)submissions.GetElementCount());
+    StaticVector<VkCommandBuffer> cmds;
+
+    for (auto& cmd : submissions) {
+        cmds.EmplaceBack(cmd->GetAPIObject());
+    }
+
+    renderContext.EndFrame(renderDevice, cmds.Data(), (uint32)cmds.Size());
 }
 
 void Renderer::RenderBackend::SetSamplerCount(uint32 msaaSamplerCount)
@@ -617,7 +732,7 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
     for (auto& sem : frame.recycleSemaphores)
         semaphoreManager.Recycle(sem);
 
-    vkResetFences(dev, (uint32)frame.recycleFences.Size(), frame.recycleFences.Data());
+    // vkResetFences(dev, (uint32)frame.recycleFences.Size(), frame.recycleFences.Data());
     for (auto& fence : frame.recycleFences)
         fenceManager.Recycle(fence);
 
