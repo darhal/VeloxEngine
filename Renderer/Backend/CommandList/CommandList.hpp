@@ -4,6 +4,7 @@
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Core/Handle/Handle.hpp>
 #include <Renderer/Backend/ShaderProgram/ResourceBinding/ResourceBinding.hpp>
+#include <Renderer/Backend/Synchronization/Event/Event.hpp>
 
 TRE_NS_START
 
@@ -122,6 +123,12 @@ namespace Renderer
 			uint32 dstLevel, uint32 srcLevel, uint32 dstBaseLayer, uint32 srcBaseLayer,
 			uint32 numLayers, VkFilter filter = VK_FILTER_LINEAR);
 
+
+		EventHandle SignalEvent(VkPipelineStageFlags stages);
+
+		void WaitEvents(EventHandle* event, uint32 eventsCount, VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages,
+			const VkMemoryBarrier* barriers, uint32 barriersCount, const VkBufferMemoryBarrier* buffersBarriers, uint32 bufferCount,
+			const VkImageMemoryBarrier* imagesBarriers, uint32 imageCoun);
 
 		void FullBarrier();
 

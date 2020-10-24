@@ -211,7 +211,7 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     currentCmdBuff->EndRenderPass();*/
 
     auto transferQueue = backend.RequestCommandBuffer(CommandBuffer::Type::ASYNC_TRANSFER);
-    transferQueue->CopyBuffer(cpuBuffer, vertexIndexBuffer);
+    transferQueue->CopyBuffer(*cpuBuffer, *vertexIndexBuffer);
 
     SemaphoreHandle sem;
     backend.Submit(transferQueue, NULL, 1, &sem);

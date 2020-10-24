@@ -173,6 +173,13 @@ namespace Renderer
 		uint32			alignment;
 	};
 
+	template<typename T>
+	struct VectorView
+	{
+		const T* data;
+		uint32 size;
+	};
+
 	enum QueueFamilyFlag 
 	{
 		NONE	 = 0x0,

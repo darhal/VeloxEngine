@@ -382,6 +382,28 @@ void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, cons
         filter);
 }
 
+Renderer::EventHandle Renderer::CommandBuffer::SignalEvent(VkPipelineStageFlags stages)
+{
+    auto event = renderBackend->RequestPiplineEvent();
+    vkCmdSetEvent(commandBuffer, event->GetAPIObject(), stages);
+    event->SetStages(stages);
+    return event;
+}
+
+void Renderer::CommandBuffer::WaitEvents(EventHandle* event, uint32 eventsCount, VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages,
+    const VkMemoryBarrier* barriers, uint32 barriersCount, const VkBufferMemoryBarrier* buffersBarriers, uint32 bufferCount, 
+    const VkImageMemoryBarrier* imagesBarriers, uint32 imageCount)
+{
+    StaticVector<VkEvent> events;
+    
+    for (uint32 i = 0; i < eventsCount; i++) {
+        events.EmplaceBack((*event)->GetAPIObject());
+    }
+
+    vkCmdWaitEvents(commandBuffer, eventsCount, events.Data(), srcStages, dstStages, 
+        barriersCount, barriers, bufferCount, buffersBarriers, imageCount, imagesBarriers);
+}
+
 void Renderer::CommandBuffer::FullBarrier()
 {
     this->Barrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,

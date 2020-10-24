@@ -59,6 +59,8 @@ namespace Renderer
 
 		void CreateDefaultView(VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
 
+		FORCEINLINE VkImageLayout GetLayout(VkImageLayout layout) const { return info.layout == layout ? layout : VK_IMAGE_LAYOUT_GENERAL; }
+
 		FORCEINLINE VkImage GetAPIObject() const { return apiImage; }
 
 		FORCEINLINE const ImageCreateInfo& GetInfo() const { return info; }
