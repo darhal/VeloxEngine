@@ -64,7 +64,7 @@ void Renderer::RenderContext::EndFrame(const RenderDevice& renderDevice, const V
     const uint32 currentFrame = internal.currentFrame;
     const uint32_t currentBuffer = internal.currentImage;
 
-    VkSubmitInfo submitInfo = {};
+    /*VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -81,7 +81,7 @@ void Renderer::RenderContext::EndFrame(const RenderDevice& renderDevice, const V
 
     if (vkQueueSubmit(queues[Internal::QFT_GRAPHICS], 1, &submitInfo, swapchainData.fences[currentFrame]) != VK_SUCCESS) {
         ASSERTF(true, "failed to submit draw command buffer!");
-    }
+    }*/
     
     /*if (renderDevice.IsPresentQueueSeprate()) {
         // If we are using separate queues, change image ownership to the

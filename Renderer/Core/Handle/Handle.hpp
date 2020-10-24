@@ -183,6 +183,11 @@ namespace Renderer
 			{
 				return data;
 			}
+
+			operator bool() const
+			{
+				return !data;
+			}
 		private:
 			T* data = NULL;
 		};

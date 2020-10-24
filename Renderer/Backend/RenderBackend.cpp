@@ -141,7 +141,7 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
         return;
     }
 
-    StaticVector<CommandBufferHandle> swapchainBuffer;
+    CommandBufferHandle swapchainCommandBuffer;
     StaticVector<VkSubmitInfo> submits;
     StaticVector<VkCommandBuffer> cmds;
     StaticVector<VkSemaphore> waits;
@@ -154,7 +154,7 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
 
     for (auto& sub : submissions) {
         if (sub->UsesSwapchain()) {
-            swapchainBuffer.EmplaceBack(sub);
+            swapchainCommandBuffer = sub;
         }
 
         cmds.PushBack(sub->GetAPIObject());
@@ -166,36 +166,34 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
         signals.EmplaceBack(sem);
     }
 
-    if (semaphoreCount) {
-        auto& submit = submits.EmplaceBack();
-        submit = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
-        submit.waitSemaphoreCount = waits.Size();
-        submit.pWaitSemaphores = waits.Data();
-        submit.pWaitDstStageMask = data.waitStages.Data();
-        submit.commandBufferCount = cmds.Size() - 1;
-        submit.pCommandBuffers = cmds.Data();
-
-        auto& submit2 = submits.EmplaceBack();
-        submit2.commandBufferCount = 1;
-        submit2.pCommandBuffers = cmds.Data() + submit.commandBufferCount;
-        submit2.signalSemaphoreCount = semaphoreCount;
-        submit2.pSignalSemaphores = signals.Data();
-    } else {
-        auto& submit = submits.EmplaceBack();
-        submit = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
-        submit.waitSemaphoreCount = waits.Size();
-        submit.pWaitSemaphores = waits.Data();
-        submit.pWaitDstStageMask = data.waitStages.Data();
-        submit.commandBufferCount = cmds.Size();
-        submit.pCommandBuffers = cmds.Data();
+    if (swapchainCommandBuffer) {
+        auto cmdBuff = swapchainCommandBuffer->GetAPIObject();
+        data.waitStages.EmplaceBack(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        waits.EmplaceBack(renderContext.GetImageAcquiredSemaphore());
+        signals.EmplaceBack(renderContext.GetDrawCompletedSemaphore());
     }
+
+    auto& submit = submits.EmplaceBack();
+    submit = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+    submit.waitSemaphoreCount = waits.Size();
+    submit.pWaitSemaphores = waits.Data();
+    submit.pWaitDstStageMask = data.waitStages.Data();
+    submit.commandBufferCount = cmds.Size();
+    submit.pCommandBuffers = cmds.Data();
+    submit.signalSemaphoreCount = semaphoreCount;
+    submit.pSignalSemaphores = signals.Data();
 
     if (fence) {
         *fence = this->RequestFence();
         vkFence = (*fence)->GetAPIObject();
     }
 
-    vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
+    if (swapchainCommandBuffer) {
+        vkFence = renderContext.GetFrameFence();
+        vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
+    } else {
+        vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
+    }
 
     submissions.Clear();
     data.waitSemaphores.Clear();
@@ -235,8 +233,6 @@ void Renderer::RenderBackend::ClearFrame()
         frame.commandPools[0][i].Reset();
         frame.submissions[i].Clear();
     }
-
-    
 
     // objectsPool.commandBuffers.Clear();
     this->DestroyPendingObjects(frame);

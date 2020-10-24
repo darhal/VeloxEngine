@@ -24,6 +24,12 @@ namespace Renderer
 
 		void DestroyRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice, Internal::RenderContext& renderContext);
 
+		FORCEINLINE VkFence GetFrameFence() const { return swapchain.swapchainData.fences[internal.currentFrame]; }
+
+		FORCEINLINE VkSemaphore GetImageAcquiredSemaphore() const { return swapchain.swapchainData.imageAcquiredSemaphores[internal.currentFrame]; };
+
+		FORCEINLINE VkSemaphore GetDrawCompletedSemaphore() const { return swapchain.swapchainData.drawCompleteSemaphores[internal.currentFrame]; };
+
 		FORCEINLINE uint32 GetCurrentImageIndex() const { return internal.currentImage; }
 
 		FORCEINLINE uint32 GetCurrentFrame() const { return internal.currentFrame; }
