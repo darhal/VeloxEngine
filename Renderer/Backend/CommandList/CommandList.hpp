@@ -81,6 +81,34 @@ namespace Renderer
 
 		void SetTexture(uint32 set, uint32 binding, const ImageView& texture, const Sampler& sampler);
 
+
+		void CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, DeviceSize size, DeviceSize srcOffset = 0, DeviceSize dstOffset = 0);
+
+		void CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer);
+
+		void CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, const VectorView<VkBufferCopy>& copies);
+
+
+		void CopyBufferToImage(const Buffer& srcBuffer, const Image& dstImage, VkDeviceSize bufferOffset, const VkOffset3D& imageOffset,
+			const VkExtent3D& imageExtent, uint32_t bufferRowLength, uint32_t bufferImageHeight,
+			const VkImageSubresourceLayers& imageSubresource);
+
+		void CopyBufferToImage(const Buffer& srcBuffer, const Image& dstImage, VkDeviceSize bufferOffset = 0, uint32 mipLevel = 0,
+			uint32_t bufferRowLength = 0, uint32_t bufferImageHeight = 0);
+
+		void CopyBufferToImage(const Buffer& srcBuffer, const Image& dstImage, const VectorView<VkBufferImageCopy>& copies);
+
+	
+		void CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, VkDeviceSize bufferOffset, const VkOffset3D& imageOffset,
+			const VkExtent3D& imageExtent, uint32_t bufferRowLength, uint32_t bufferImageHeight,
+			const VkImageSubresourceLayers& imageSubresource);
+
+		void CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, VkDeviceSize bufferOffset = 0, uint32 mipLevel = 0,
+			uint32_t bufferRowLength = 0, uint32_t bufferImageHeight = 0);
+
+		void CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, const VectorView<VkBufferImageCopy>& copies);
+
+
 		// Prepare an image to have its mipmap generated.
 		// Puts the top level into TRANSFER_SRC_OPTIMAL, and the all the remaining levels are set to TRANSFER_DST_OPTIMAL
 		void PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess,
@@ -94,20 +122,24 @@ namespace Renderer
 			uint32 dstLevel, uint32 srcLevel, uint32 dstBaseLayer, uint32 srcBaseLayer,
 			uint32 numLayers, VkFilter filter = VK_FILTER_LINEAR);
 
+
+		void FullBarrier();
+
+		void PixelBarrier();
+
 		void Barrier(VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages,
 			uint32 barriers, const VkMemoryBarrier* globals,
 			uint32 bufferBarriers, const VkBufferMemoryBarrier* buffers,
 			uint32 imageBarriers, const VkImageMemoryBarrier* images);
 
-		void Barrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage,
+		void Barrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
+
+		void BufferBarrier(const Buffer& buffer, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, 
 			VkAccessFlags dstAccess);
 
-		void BufferBarrier(const Buffer& buffer, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess,
-			VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
+		void ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags srcStage, 
+			VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
 
-		void ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout,
-			VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage,
-			VkAccessFlags dstAccess);
 
 		FORCEINLINE VkCommandBuffer GetAPIObject() const { return commandBuffer; }
 

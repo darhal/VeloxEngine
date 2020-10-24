@@ -56,7 +56,7 @@ void Renderer::RenderContext::BeginFrame(const RenderDevice& renderDevice, Stagi
     }
 }
 
-void Renderer::RenderContext::EndFrame(const RenderDevice& renderDevice, const VkCommandBuffer* commandBuffers, const uint32 cmdBuffCount)
+void Renderer::RenderContext::EndFrame(const RenderDevice& renderDevice)
 {
     const Swapchain::SwapchainData& swapchainData = swapchain.swapchainData;
 

@@ -89,6 +89,8 @@ const std::vector<uint16_t> indices = {
     //0, 1, 2, 3, 7, 1, 5, 4, 7, 6, 2, 4, 0, 1
 };
 
+Vertex vertecies[12 * 3];
+
 #define CUBE
 
 TRE::Renderer::RenderPassInfo GetRenderPass(TRE::Renderer::RenderBackend& backend, TRE::Renderer::RenderPassInfo::Subpass& subpass)
@@ -154,7 +156,9 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     // VkDescriptorSet descriptorSet,
     const TRE::Renderer::RingBufferHandle uniformBuffer,
     const TRE::Renderer::ImageViewHandle texture,
-    const TRE::Renderer::SamplerHandle sampler)
+    const TRE::Renderer::SamplerHandle sampler,
+    const TRE::Renderer::BufferHandle cpuBuffer
+    )
 {
     using namespace TRE::Renderer;
     CommandBufferHandle currentCmdBuff = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
@@ -190,7 +194,7 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     
     currentCmdBuff->EndRenderPass();
 
-    INIT_BENCHMARK
+    /*INIT_BENCHMARK
     start = std::chrono::high_resolution_clock::now();
     FenceHandle fence;
     backend.Submit(currentCmdBuff, &fence);
@@ -204,7 +208,14 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 
     currentCmdBuff = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
     currentCmdBuff->BeginRenderPass(GetRenderPass(backend, subpass));
-    currentCmdBuff->EndRenderPass();
+    currentCmdBuff->EndRenderPass();*/
+
+    auto transferQueue = backend.RequestCommandBuffer(CommandBuffer::Type::ASYNC_TRANSFER);
+    transferQueue->CopyBuffer(cpuBuffer, vertexIndexBuffer);
+
+    SemaphoreHandle sem;
+    backend.Submit(transferQueue, NULL, 1, &sem);
+    backend.AddWaitSemapore(CommandBuffer::Type::GENERIC, sem, VK_PIPELINE_STAGE_TRANSFER_BIT);
     backend.Submit(currentCmdBuff);
 }
 
@@ -232,7 +243,7 @@ int main()
     Event ev;
     Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
     RenderBackend backend{ &window };
-    backend.SetSamplerCount(2);
+    // backend.SetSamplerCount(2);
 
     if (backend.GetMSAASamplerCount() == 1) {
         TRE_LOGI("Anti-Aliasing: Disabled");
@@ -259,14 +270,13 @@ int main()
         { vertexSize + indexSize, BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER | BufferUsage::INDEX_BUFFER }, 
         data);
 #else
-    Vertex vertecies[12 * 3];
     for (int32_t i = 0; i < 12 * 3; i++) {
         vertecies[i].pos = TRE::vec3{ g_vertex_buffer_data[i * 3], g_vertex_buffer_data[i * 3 + 1], g_vertex_buffer_data[i * 3 + 2] };
         vertecies[i].tex = TRE::vec2{ g_uv_buffer_data[2 * i], g_uv_buffer_data[2 * i + 1] };
     }
-    BufferHandle vertexIndexBuffer = backend.CreateBuffer(
-        { sizeof(vertecies), BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER },
-        vertecies);
+
+    BufferHandle vertexIndexBuffer = backend.CreateBuffer({ sizeof(vertecies), BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER }, vertecies);
+    BufferHandle cpuVertexBuffer = backend.CreateBuffer({ sizeof(vertecies), BufferUsage::TRANSFER_SRC, MemoryUsage::CPU_ONLY }, vertecies);
 #endif
     const uint32 checkerboard[] = {
         0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
@@ -281,7 +291,6 @@ int main()
     };
 
     // TODO: NEED WORK ON MEMORY FREEING!! (THIS IS DONE) (However we need to detect dedicated allocations from non dedicated allocs!)
-
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load("assets/box1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -340,10 +349,18 @@ int main()
             continue;
         }
 
-        backend.BeginFrame();
-        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer, uniformBuffer, textureView, sampler);
-        backend.EndFrame();
 
+
+        backend.BeginFrame();
+        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer, uniformBuffer, textureView, sampler, cpuVertexBuffer);
+
+        for (int32_t i = 0; i < 12 * 3; i++) {
+            float r = ((double)rand() / (RAND_MAX)) + 1;
+            vertecies[i].pos = TRE::vec3{ g_vertex_buffer_data[i * 3] * r, g_vertex_buffer_data[i * 3 + 1] * r, g_vertex_buffer_data[i * 3 + 2] * r };
+        }
+        cpuVertexBuffer->WriteToBuffer(sizeof(vertecies), &vertecies);
+
+        backend.EndFrame();
         printFPS();
     }
     

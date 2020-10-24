@@ -120,7 +120,7 @@ namespace Renderer
 
 		SamplerHandle CreateSampler(const SamplerInfo& createInfo);
 	
-		CommandBufferHandle RequestCommandBuffer(CommandBuffer::Type type);
+		CommandBufferHandle RequestCommandBuffer(CommandBuffer::Type type = CommandBuffer::Type::GENERIC);
 
 		void Submit(CommandBufferHandle cmd, FenceHandle* fence  = NULL, uint32 semaphoreCount = 0, SemaphoreHandle* semaphores = NULL);
 

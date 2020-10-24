@@ -37,6 +37,8 @@ namespace Renderer
 
 		const BufferInfo& GetBufferInfo() const { return bufferInfo; }
 
+		const MemoryView& GetBufferMemory() const { return bufferMemory; }
+
 	protected:
 		BufferInfo bufferInfo;
 		MemoryView bufferMemory;

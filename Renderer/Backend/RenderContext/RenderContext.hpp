@@ -50,7 +50,7 @@ namespace Renderer
 
 		void BeginFrame(const RenderDevice& renderDevice, StagingManager& stagingManager);
 
-		void EndFrame(const RenderDevice& renderDevice, const VkCommandBuffer* commandBuffers, const uint32 cmdBuffCount);
+		void EndFrame(const RenderDevice& renderDevice);
 	private:
 		Internal::RenderContext	internal;
 		Swapchain swapchain;

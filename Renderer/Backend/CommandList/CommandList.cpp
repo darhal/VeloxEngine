@@ -6,6 +6,7 @@
 #include <Renderer/Backend/Descriptors/DescriptorSetAlloc.hpp>
 #include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/Images/Sampler.hpp>
+#include <Renderer/Backend/Buffers/Buffer.hpp>
 
 TRE_NS_START
 
@@ -264,7 +265,101 @@ void Renderer::CommandBuffer::GenerateMipmap(const Image& image)
     }
 }
 
-void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, const VkOffset3D& dstOffset, const VkOffset3D& dstExtent, 
+void Renderer::CommandBuffer::CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, DeviceSize size, DeviceSize srcOffset, DeviceSize dstOffset)
+{
+    ASSERT(size >= dstBuffer.GetBufferInfo().size);
+
+    VkBufferCopy copy;
+    copy.srcOffset = srcOffset;
+    copy.dstOffset = dstOffset;
+    copy.size = size;
+    vkCmdCopyBuffer(commandBuffer, srcBuffer.GetAPIObject(), dstBuffer.GetAPIObject(), 1, &copy);
+}
+
+void Renderer::CommandBuffer::CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer)
+{
+    VkBufferCopy copy;
+    copy.srcOffset = 0;
+    copy.dstOffset = 0;
+    copy.size = dstBuffer.GetBufferInfo().size;
+    vkCmdCopyBuffer(commandBuffer, srcBuffer.GetAPIObject(), dstBuffer.GetAPIObject(), 1, &copy);
+}
+
+void Renderer::CommandBuffer::CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, const VectorView<VkBufferCopy>& copies)
+{
+    vkCmdCopyBuffer(commandBuffer, srcBuffer.GetAPIObject(), dstBuffer.GetAPIObject(), copies.size, copies.data);
+}
+
+void Renderer::CommandBuffer::CopyBufferToImage(const Buffer& srcBuffer, const Image& dstImage, VkDeviceSize bufferOffset,
+    const VkOffset3D& imageOffset, const VkExtent3D& imageExtent, uint32_t bufferRowLength, uint32_t bufferImageHeight, 
+    const VkImageSubresourceLayers& imageSubresource)
+{
+    const VkBufferImageCopy copy = {
+        bufferOffset,
+        bufferRowLength, bufferImageHeight,
+        imageSubresource, imageOffset, imageExtent
+    };
+
+    this->CopyBufferToImage(srcBuffer, dstImage, {&copy, 1});
+}
+
+void Renderer::CommandBuffer::CopyBufferToImage(const Buffer& srcBuffer, const Image& dstImage, VkDeviceSize bufferOffset,
+    uint32 mipLevel, uint32_t bufferRowLength, uint32_t bufferImageHeight)
+{
+    const auto& info = dstImage.GetInfo();
+    VkBufferImageCopy copy;
+    copy.bufferOffset = bufferOffset;
+    copy.bufferRowLength = 0;
+    copy.bufferImageHeight = 0;
+    copy.imageSubresource = { FormatToAspectMask(info.format) , mipLevel, 0, info.layers };
+    copy.imageOffset = { 0, 0, 0 };
+    copy.imageExtent = { info.width, info.height, info.depth };
+
+    this->CopyBufferToImage(srcBuffer, dstImage, { &copy, 1 });
+}
+
+void Renderer::CommandBuffer::CopyBufferToImage(const Buffer& srcBuffer, const Image& dstImage, const VectorView<VkBufferImageCopy>& copies)
+{
+    vkCmdCopyBufferToImage(commandBuffer, srcBuffer.GetAPIObject(), dstImage.GetAPIObject(),
+        dstImage.GetLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL), 
+        copies.size, copies.data);
+}
+
+void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, VkDeviceSize bufferOffset,
+    const VkOffset3D& imageOffset, const VkExtent3D& imageExtent, uint32_t bufferRowLength, uint32_t bufferImageHeight, 
+    const VkImageSubresourceLayers& imageSubresource)
+{
+    const VkBufferImageCopy copy = {
+        bufferOffset,
+        bufferRowLength, bufferImageHeight,
+        imageSubresource, imageOffset, imageExtent
+    };
+
+    this->CopyImageToBuffer(srcImage, dstBuffer, { &copy, 1 });
+}
+
+void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, VkDeviceSize bufferOffset, uint32 mipLevel, uint32_t bufferRowLength, uint32_t bufferImageHeight)
+{
+    const auto& info = srcImage.GetInfo();
+    VkBufferImageCopy copy;
+    copy.bufferOffset = bufferOffset;
+    copy.bufferRowLength = 0;
+    copy.bufferImageHeight = 0;
+    copy.imageSubresource = { FormatToAspectMask(info.format) , mipLevel, 0, info.layers };
+    copy.imageOffset = { 0, 0, 0 };
+    copy.imageExtent = { info.width, info.height, info.depth };
+
+    this->CopyImageToBuffer(srcImage, dstBuffer, { &copy, 1 });
+}
+
+void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, const VectorView<VkBufferImageCopy>& copies)
+{
+    vkCmdCopyImageToBuffer(commandBuffer, srcImage.GetAPIObject(),
+        srcImage.GetLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL),
+        dstBuffer.GetAPIObject(), copies.size, copies.data);
+}
+
+void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, const VkOffset3D& dstOffset, const VkOffset3D& dstExtent,
     const VkOffset3D& srcOffset, const VkOffset3D& srcExtent, uint32 dstLevel, uint32 srcLevel, uint32 dstBaseLayer, uint32 srcBaseLayer, 
     uint32 numLayers, VkFilter filter)
 {
@@ -287,12 +382,55 @@ void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, cons
         filter);
 }
 
-void Renderer::CommandBuffer::Barrier(VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages, uint32 barriers, const VkMemoryBarrier* globals, uint32 bufferBarriers, const VkBufferMemoryBarrier* buffers, uint32 imageBarriers, const VkImageMemoryBarrier* images)
+void Renderer::CommandBuffer::FullBarrier()
+{
+    this->Barrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_SHADER_WRITE_BIT |
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
+        VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT);
+}
+
+void Renderer::CommandBuffer::PixelBarrier()
+{
+    VkMemoryBarrier barrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+    barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT, 1, &barrier, 0, NULL, 0, NULL);
+}
+
+void Renderer::CommandBuffer::Barrier(VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages, uint32 barriers, 
+    const VkMemoryBarrier* globals, uint32 bufferBarriers, const VkBufferMemoryBarrier* buffers, uint32 imageBarriers, 
+    const VkImageMemoryBarrier* images)
 {
     vkCmdPipelineBarrier(commandBuffer, srcStages, dstStages, 0, barriers, globals, bufferBarriers, buffers, imageBarriers, images);
 }
 
-void Renderer::CommandBuffer::ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess)
+void Renderer::CommandBuffer::Barrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess)
+{
+    VkMemoryBarrier barrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+    barrier.srcAccessMask = srcAccess;
+    barrier.dstAccessMask = dstAccess;
+    vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 1, &barrier, 0, NULL, 0, NULL);
+}
+
+void Renderer::CommandBuffer::BufferBarrier(const Buffer& buffer, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess)
+{
+    VkBufferMemoryBarrier barrier = { VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER };
+    barrier.srcAccessMask = srcAccess;
+    barrier.dstAccessMask = dstAccess;
+    barrier.buffer = buffer.GetAPIObject();
+    barrier.offset = 0;
+    barrier.size = buffer.GetBufferInfo().size;
+
+    vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, NULL, 1, &barrier, 0, NULL);
+}
+
+void Renderer::CommandBuffer::ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags srcStage, 
+    VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess)
 {
     ASSERT(image.GetInfo().domain == ImageDomain::TRANSIENT);
 

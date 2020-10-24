@@ -168,7 +168,7 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
 
     if (swapchainCommandBuffer) {
         auto cmdBuff = swapchainCommandBuffer->GetAPIObject();
-        data.waitStages.EmplaceBack(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        data.waitStages.PushBack(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
         waits.EmplaceBack(renderContext.GetImageAcquiredSemaphore());
         signals.EmplaceBack(renderContext.GetDrawCompletedSemaphore());
     }
@@ -180,8 +180,10 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
     submit.pWaitDstStageMask = data.waitStages.Data();
     submit.commandBufferCount = cmds.Size();
     submit.pCommandBuffers = cmds.Data();
-    submit.signalSemaphoreCount = semaphoreCount;
+    submit.signalSemaphoreCount = signals.Size();
     submit.pSignalSemaphores = signals.Data();
+
+    ASSERTF(fence && swapchainCommandBuffer, "Can't submit command buffers that draw to swapchain with a fance");
 
     if (fence) {
         *fence = this->RequestFence();
@@ -190,10 +192,9 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
 
     if (swapchainCommandBuffer) {
         vkFence = renderContext.GetFrameFence();
-        vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
-    } else {
-        vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
     }
+
+    vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
 
     submissions.Clear();
     data.waitSemaphores.Clear();
@@ -210,7 +211,7 @@ void Renderer::RenderBackend::AddWaitSemapore(CommandBuffer::Type type, Semaphor
 
     auto& data = GetQueueData(type);
     data.waitSemaphores.EmplaceBack(semaphore);
-    data.waitStages.EmplaceBack(stages);
+    data.waitStages.PushBack(stages);
 }
 
 void Renderer::RenderBackend::FlushQueue(CommandBuffer::Type type)
@@ -278,16 +279,7 @@ void Renderer::RenderBackend::EndFrame()
     }
 
     this->SubmitQueue(CommandBuffer::Type::GENERIC);
-    // renderContext.EndFrame(renderDevice, cmds.Data(), (uint32)cmds.Size());
-
-    const auto& submissions = frame.submissions[(uint32)QueueTypes::GENERIC];
-    StaticVector<VkCommandBuffer> cmds;
-
-    for (auto& cmd : submissions) {
-        cmds.EmplaceBack(cmd->GetAPIObject());
-    }
-
-    renderContext.EndFrame(renderDevice, cmds.Data(), (uint32)cmds.Size());
+    renderContext.EndFrame(renderDevice);
 }
 
 void Renderer::RenderBackend::SetSamplerCount(uint32 msaaSamplerCount)
