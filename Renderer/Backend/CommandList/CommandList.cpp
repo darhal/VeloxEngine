@@ -59,6 +59,8 @@ void Renderer::CommandBuffer::BeginRenderPass(VkClearColorValue clearColor)
     renderPassInfo.pClearValues      = clearValue;
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    subpassIndex = 0;
 }
 
 void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubpassContents contents)
@@ -70,8 +72,12 @@ void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubp
     VkClearValue clearValues[MAX_ATTACHMENTS + 1];
     uint32 clearValuesCount = 0;
 
-    for (unsigned i = 0; i < info.colorAttachmentCount; i++) {
+    memset(framebufferAttachments, 0, sizeof(framebufferAttachments));
+
+    for (uint32 i = 0; i < info.colorAttachmentCount; i++) {
         ASSERT(!info.colorAttachments[i]);
+
+        framebufferAttachments[i] = info.colorAttachments[i];
 
         if (info.clearAttachments & (1u << i)) {
             clearValues[i].color = info.clearColor[i];
@@ -84,6 +90,7 @@ void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubp
     }
 
     if (info.depthStencil && (info.opFlags & RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT) != 0) {
+        framebufferAttachments[info.colorAttachmentCount] = info.depthStencil;
         clearValues[info.colorAttachmentCount].depthStencil = info.clearDepthStencil;
         clearValuesCount = info.colorAttachmentCount + 1;
     }
@@ -100,11 +107,20 @@ void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubp
     vkCmdBeginRenderPass(commandBuffer, &beginInfo, contents);
     this->SetViewport(viewport);
     this->SetScissor(scissor);
+
+    subpassIndex = 0;
 }
 
 void Renderer::CommandBuffer::EndRenderPass()
 {
     vkCmdEndRenderPass(commandBuffer);
+}
+
+void Renderer::CommandBuffer::NextRenderPass(VkSubpassContents contents)
+{
+    ASSERT(renderPass != NULL);
+    vkCmdNextSubpass(commandBuffer, contents);
+    subpassIndex++;
 }
 
 void Renderer::CommandBuffer::BindPipeline(const GraphicsPipeline& pipeline)
@@ -156,7 +172,18 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
     b.dynamicOffset   = (uint32)offset;
 
     dirtySets.dirtySets |= (1u << set);
-    dirtySets.dirtyBindings[set] |= (1u << binding);
+}
+
+void Renderer::CommandBuffer::SetStorageBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range)
+{
+    ASSERT(set >= MAX_DESCRIPTOR_SET);
+    ASSERT(binding >= MAX_DESCRIPTOR_BINDINGS);
+
+    auto& b = bindings.bindings[set][binding];
+    b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetAPIObject(), offset, range };
+    b.dynamicOffset = 0;
+
+    dirtySets.dirtySets |= (1u << set);
 }
 
 void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const ImageView& texture)
@@ -170,7 +197,12 @@ void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const Image
     b.resource.image.imageLayout = texture.GetInfo().image->GetInfo().layout;
 
     dirtySets.dirtySets |= (1u << set);
-    dirtySets.dirtyBindings[set] |= (1u << binding);
+}
+
+void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const ImageView& texture, const Sampler& sampler)
+{
+    this->SetTexture(set, binding, texture);
+    this->SetSampler(set, binding, sampler);
 }
 
 void Renderer::CommandBuffer::SetSampler(uint32 set, uint32 binding, const Sampler& sampler)
@@ -182,13 +214,39 @@ void Renderer::CommandBuffer::SetSampler(uint32 set, uint32 binding, const Sampl
     b.resource.image.sampler = sampler.GetAPIObject();
 
     dirtySets.dirtySets |= (1u << set);
-    dirtySets.dirtyBindings[set] |= (1u << binding);
 }
 
-void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const ImageView& texture, const Sampler& sampler)
+void Renderer::CommandBuffer::SetInputAttachments(uint32 set, uint32 startBinding)
 {
-    this->SetTexture(set, binding, texture);
-    this->SetSampler(set, binding, sampler);
+    ASSERT(set >= MAX_DESCRIPTOR_SET);
+    ASSERT(startBinding + renderPass->GetInputAttachmentsCount(subpassIndex) >= MAX_DESCRIPTOR_BINDINGS);
+
+    uint32 inputAttachmentCount = renderPass->GetInputAttachmentsCount(subpassIndex);
+
+    for (uint32 i = 0; i < inputAttachmentCount; i++) {
+        auto& ref = renderPass->GetInputAttachment(subpassIndex, i);
+
+        if (ref.attachment == VK_ATTACHMENT_UNUSED)
+            continue;
+        
+        const ImageView* view = framebufferAttachments[ref.attachment];
+        ASSERT(!view);
+        ASSERT(!(view->GetImage()->GetInfo().usage & VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT));
+
+        auto& b = bindings.bindings[set][startBinding + i];
+        b.resource.image.imageLayout = ref.layout;
+        b.resource.image.imageView = view->GetAPIObject();
+
+        dirtySets.dirtySets |= 1u << set;
+    }
+}
+
+void Renderer::CommandBuffer::PushConstants(ShaderStagesFlags stages, const void* data, VkDeviceSize size, VkDeviceSize offset)
+{
+    const auto& pipelineLayout = pipeline->GetPipelineLayout();
+    const auto& pushConstant = pipelineLayout.GetPushConstantRangeFromStage(stages);
+
+    vkCmdPushConstants(commandBuffer, pipelineLayout.GetAPIObject(), stages, pushConstant.offset + offset, size, data);
 }
 
 void Renderer::CommandBuffer::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
@@ -474,41 +532,64 @@ void Renderer::CommandBuffer::ImageBarrier(const Image& image, VkImageLayout old
 void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings)
 {
     ASSERT(set >= MAX_DESCRIPTOR_SET);
-    ASSERT(dirtySets.dirtyBindings[set] == 0);
 
     VkWriteDescriptorSet writes[MAX_DESCRIPTOR_BINDINGS];
     uint32 writeCount = 0;
 
     for (uint32 binding = 0; binding < MAX_DESCRIPTOR_BINDINGS; binding++) {
-        //if (dirtySets.dirtyBindings[set] & (1u << binding)) {
-            if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) {
-                writes[writeCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                writes[writeCount].pNext            = NULL;
-                writes[writeCount].dstSet           = descSet;
-                writes[writeCount].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-                writes[writeCount].descriptorCount  = 1;
-                writes[writeCount].dstBinding       = binding;
-                writes[writeCount].dstArrayElement  = 0;
-                writes[writeCount].pBufferInfo      = &bindings[binding].resource.buffer;
-                writes[writeCount].pImageInfo       = NULL;
-                writes[writeCount].pTexelBufferView = NULL;
+        if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) {
+            writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[writeCount].pNext = NULL;
+            writes[writeCount].dstSet = descSet;
+            writes[writeCount].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            writes[writeCount].descriptorCount = 1;
+            writes[writeCount].dstBinding = binding;
+            writes[writeCount].dstArrayElement = 0;
+            writes[writeCount].pBufferInfo = &bindings[binding].resource.buffer;
+            writes[writeCount].pImageInfo = NULL;
+            writes[writeCount].pTexelBufferView = NULL;
 
-                writeCount++;
-            } else if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
-                writes[writeCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                writes[writeCount].pNext            = NULL;
-                writes[writeCount].dstSet           = descSet;
-                writes[writeCount].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                writes[writeCount].descriptorCount  = 1;
-                writes[writeCount].dstBinding       = binding;
-                writes[writeCount].dstArrayElement  = 0;
-                writes[writeCount].pBufferInfo      = NULL;
-                writes[writeCount].pImageInfo       = &bindings[binding].resource.image;
-                writes[writeCount].pTexelBufferView = NULL;
+            writeCount++;
+        } else if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER) {
+            writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[writeCount].pNext = NULL;
+            writes[writeCount].dstSet = descSet;
+            writes[writeCount].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            writes[writeCount].descriptorCount = 1;
+            writes[writeCount].dstBinding = binding;
+            writes[writeCount].dstArrayElement = 0;
+            writes[writeCount].pBufferInfo = &bindings[binding].resource.buffer;;
+            writes[writeCount].pImageInfo = NULL;
+            writes[writeCount].pTexelBufferView = NULL;
 
-                writeCount++;
-            }
-        //}
+            writeCount++;
+        } else if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
+            writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[writeCount].pNext = NULL;
+            writes[writeCount].dstSet = descSet;
+            writes[writeCount].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            writes[writeCount].descriptorCount = 1;
+            writes[writeCount].dstBinding = binding;
+            writes[writeCount].dstArrayElement = 0;
+            writes[writeCount].pBufferInfo = NULL;
+            writes[writeCount].pImageInfo = &bindings[binding].resource.image;
+            writes[writeCount].pTexelBufferView = NULL;
+
+            writeCount++;
+        } else if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT) {
+            writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[writeCount].pNext = NULL;
+            writes[writeCount].dstSet = descSet;
+            writes[writeCount].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+            writes[writeCount].descriptorCount = 1;
+            writes[writeCount].dstBinding = binding;
+            writes[writeCount].dstArrayElement = 0;
+            writes[writeCount].pBufferInfo = NULL;
+            writes[writeCount].pImageInfo = &bindings[binding].resource.image;
+            writes[writeCount].pTexelBufferView = NULL;
+
+            writeCount++;
+        }
     }
 
     printf("Updating descriptor sets: writting count:%u\n", writeCount);
@@ -549,7 +630,6 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
 
     allocatedSets[set] = alloc.first;
     dirtySets.dirtySets = dirtySets.dirtySets & ~(1u << set);
-    dirtySets.dirtyBindings[set] = 0;
 }
 
 void Renderer::CommandBuffer::FlushDescriptorSets()

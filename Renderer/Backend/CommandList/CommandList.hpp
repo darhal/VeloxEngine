@@ -23,7 +23,6 @@ namespace Renderer
 
 	struct DescriptorSetDirty
 	{
-		uint32 dirtyBindings[MAX_DESCRIPTOR_SET];
 		uint8 dirtySets;
 	};
 
@@ -61,6 +60,8 @@ namespace Renderer
 
 		void EndRenderPass();
 
+		void NextRenderPass(VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
+
 		void BindPipeline(const GraphicsPipeline& pipeline);
 
 		void BindVertexBuffer(const Buffer& buffer, DeviceSize offset = 0);
@@ -74,14 +75,21 @@ namespace Renderer
 		void BindDescriptorSet(const GraphicsPipeline& pipeline, const std::initializer_list<VkDescriptorSet>& descriptors, 
 			const std::initializer_list<uint32>& dyncOffsets);
 
+
 		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range = VK_WHOLE_SIZE);
+
+		void SetStorageBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
 
 		void SetTexture(uint32 set, uint32 binding, const ImageView& texture);
 
-		void SetSampler(uint32 set, uint32 binding, const Sampler& sampler);
-
 		void SetTexture(uint32 set, uint32 binding, const ImageView& texture, const Sampler& sampler);
 
+		void SetSampler(uint32 set, uint32 binding, const Sampler& sampler);
+
+		void SetInputAttachments(uint32 set, uint32 startBinding = 0);
+
+
+		void PushConstants(ShaderStagesFlags stages, const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
 
 		void CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, DeviceSize size, DeviceSize srcOffset = 0, DeviceSize dstOffset = 0);
 
@@ -173,9 +181,13 @@ namespace Renderer
 		VkRect2D scissor;
 		VkViewport viewport;
 
+		const ImageView* framebufferAttachments[MAX_ATTACHMENTS + 1] = {};
+
 		VkDescriptorSet allocatedSets[MAX_DESCRIPTOR_SET];
 		VkCommandBuffer commandBuffer;
 		Type type;
+
+		uint32 subpassIndex;
 
 		bool renderToSwapchain;
 	};

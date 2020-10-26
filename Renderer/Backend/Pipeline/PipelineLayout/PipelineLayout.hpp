@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Descriptors/DescriptorSetLayout.hpp>
 
@@ -7,15 +9,6 @@ TRE_NS_START
 
 namespace Renderer
 {
-	/*struct ResourceLayout
-	{
-		DescriptorSetLayout descriptorSetLayouts[MAX_DESCRIPTOR_SET];
-		VkPushConstantRange pushConstantsRanges[MAX_DESCRIPTOR_SET * 4];
-		
-		uint32 descriptorSetLayoutsCount;
-		uint32 pushConstantsCount;
-	};*/
-
 	class DescriptorSetAllocator;
 	class RenderBackend;
 
@@ -50,10 +43,17 @@ namespace Renderer
 
 		void AddPushConstantRange(VkShaderStageFlags stageFlags, uint32_t offset, uint32_t size)
 		{
+			pushConstants.emplace(std::make_pair(stageFlags, pushConstantsCount));
 			pushConstantsRanges[pushConstantsCount++] = { stageFlags, offset, size };
 		}
 
 		const DescriptorSetLayout& GetDescriptorSetLayout(uint32 set) const { return descriptorSetLayouts[set]; }
+
+		const VkPushConstantRange& GetPushConstantRange(uint32 i) const { return pushConstantsRanges[i]; };
+
+		const VkPushConstantRange& GetPushConstantRangeFromStage(VkShaderStageFlags stage) const { 
+			return pushConstantsRanges[pushConstants.at(stage)]; 
+		};
 
 		DescriptorSetAllocator* GetAllocator(uint32 set) const { return descriptorSetAlloc[set]; }
 	private:
@@ -62,12 +62,14 @@ namespace Renderer
 		DescriptorSetLayout descriptorSetLayouts[MAX_DESCRIPTOR_SET];
 		VkPushConstantRange pushConstantsRanges[MAX_DESCRIPTOR_SET * 4];
 
+		std::unordered_map<VkShaderStageFlags, uint32> pushConstants;
+
 		VkPipelineLayout pipelineLayout;
 		
 		uint32 descriptorSetLayoutCount;
 		uint32 pushConstantsCount;
 
-		// TODO: this need to know aeverything about the layout, not just VK objects
+		// TODO: this need to know everything about the layout, not just VK objects
 	};
 }
 

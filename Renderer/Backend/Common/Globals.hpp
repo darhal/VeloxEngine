@@ -54,6 +54,8 @@ namespace Renderer
 	CONSTEXPR static uint32	MAX_DESCRIPTOR_BINDINGS = 16;
 	CONSTEXPR static uint32 MAX_DESCRIPTOR_TYPES	= 11;
 	CONSTEXPR static uint32 MAX_SETS_PER_POOL		= 16;
+	CONSTEXPR static uint32 MAX_PUSH_CONSTANT_SIZE  = 128;
+	CONSTEXPR static uint32 MAX_SHADER_CONSTANTS    = 16;
 
 	// Renderpass and framebuffers:
 	CONSTEXPR static uint32 MAX_ATTACHMENTS			= 8;

@@ -90,6 +90,9 @@ const std::vector<uint16_t> indices = {
 };
 
 Vertex vertecies[12 * 3];
+uint32 isColor = 0;
+
+uint32 originalColor = 1;
 
 #define CUBE
 
@@ -158,7 +161,7 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     const TRE::Renderer::ImageViewHandle texture,
     const TRE::Renderer::SamplerHandle sampler,
     const TRE::Renderer::BufferHandle cpuBuffer
-    )
+)
 {
     using namespace TRE::Renderer;
     CommandBufferHandle currentCmdBuff = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
@@ -176,6 +179,17 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 
     currentCmdBuff->SetUniformBuffer(0, 0, *uniformBuffer, uniformBuffer->GetCurrentOffset());
     currentCmdBuff->SetTexture(0, 1, *texture, *sampler);
+
+    currentCmdBuff->PushConstants(FRAGMENT_SHADER, &isColor, sizeof(uint32));
+
+    if (originalColor) {
+        glm::vec3 color = {1.0f, 1.0f, 1.0f};
+        currentCmdBuff->PushConstants(VERTEX_SHADER, &originalColor, sizeof(uint32), sizeof(glm::vec3));
+        currentCmdBuff->PushConstants(VERTEX_SHADER, &color, sizeof(uint32));
+    }else{
+        currentCmdBuff->PushConstants(VERTEX_SHADER, &originalColor, sizeof(uint32), sizeof(glm::vec3));
+    }
+
 #if !defined(CUBE)
     currentCmdBuff->DrawIndexed(indices.size());
 #else
@@ -210,12 +224,12 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     currentCmdBuff->BeginRenderPass(GetRenderPass(backend, subpass));
     currentCmdBuff->EndRenderPass();*/
 
+    /*SemaphoreHandle sem;
     auto transferQueue = backend.RequestCommandBuffer(CommandBuffer::Type::ASYNC_TRANSFER);
     transferQueue->CopyBuffer(*cpuBuffer, *vertexIndexBuffer);
-
-    SemaphoreHandle sem;
     backend.Submit(transferQueue, NULL, 1, &sem);
-    backend.AddWaitSemapore(CommandBuffer::Type::GENERIC, sem, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    backend.AddWaitSemapore(CommandBuffer::Type::GENERIC, sem, VK_PIPELINE_STAGE_TRANSFER_BIT);*/
+
     backend.Submit(currentCmdBuff);
 }
 
@@ -273,6 +287,7 @@ int main()
     for (int32_t i = 0; i < 12 * 3; i++) {
         vertecies[i].pos = TRE::vec3{ g_vertex_buffer_data[i * 3], g_vertex_buffer_data[i * 3 + 1], g_vertex_buffer_data[i * 3 + 2] };
         vertecies[i].tex = TRE::vec2{ g_uv_buffer_data[2 * i], g_uv_buffer_data[2 * i + 1] };
+        vertecies[i].color = TRE::vec3{ 81.f/255.f, 254.f/255.f, 115.f/255.f };
     }
 
     BufferHandle vertexIndexBuffer = backend.CreateBuffer({ sizeof(vertecies), BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER }, vertecies);
@@ -340,6 +355,9 @@ int main()
     INIT_BENCHMARK;
 
     time_t lasttime = time(NULL);
+    isColor = 0;
+
+    // TODO: shader customisation 
 
     while (window.isOpen()) {
         window.getEvent(ev);
@@ -347,18 +365,25 @@ int main()
         if (ev.Type == TRE::Event::TE_RESIZE) {
             backend.GetRenderContext().GetSwapchain().UpdateSwapchain();
             continue;
+        } else if (ev.Type == TRE::Event::TE_KEY_UP) {
+            if (ev.Key.Code == TRE::Key::C)
+                isColor = 1;
+            else if (ev.Key.Code == TRE::Key::T)
+                isColor = 0;
+            else if (ev.Key.Code == TRE::Key::O)
+                originalColor = 1;
+            else if (ev.Key.Code == TRE::Key::N)
+                originalColor = 0;
         }
-
-
 
         backend.BeginFrame();
         RenderFrame(backend, graphicsPipeline, vertexIndexBuffer, uniformBuffer, textureView, sampler, cpuVertexBuffer);
 
-        for (int32_t i = 0; i < 12 * 3; i++) {
+        /*for (int32_t i = 0; i < 12 * 3; i++) {
             float r = ((double)rand() / (RAND_MAX)) + 1;
             vertecies[i].pos = TRE::vec3{ g_vertex_buffer_data[i * 3] * r, g_vertex_buffer_data[i * 3 + 1] * r, g_vertex_buffer_data[i * 3 + 2] * r };
         }
-        cpuVertexBuffer->WriteToBuffer(sizeof(vertecies), &vertecies);
+        cpuVertexBuffer->WriteToBuffer(sizeof(vertecies), &vertecies);*/
 
         backend.EndFrame();
         printFPS();

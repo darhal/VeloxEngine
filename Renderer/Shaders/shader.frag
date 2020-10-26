@@ -8,7 +8,14 @@ layout(location = 0) out vec4 outColor;
 
 layout(set = 0, binding = 1) uniform sampler2D texSampler;
 
+layout(push_constant) uniform Instance {
+    layout(offset=16) int isColor;
+} u_instance;
+
 void main() {
-    outColor = texture(texSampler, fragTexCoord); // vec4(fragColor, 1.0);
-	// outColor = vec4(fragColor, 1.0);
+	if (u_instance.isColor == 1) {
+		outColor = vec4(fragColor, 1.0);
+	}else{
+		outColor = texture(texSampler, fragTexCoord); // vec4(fragColor, 1.0);
+	}
 }

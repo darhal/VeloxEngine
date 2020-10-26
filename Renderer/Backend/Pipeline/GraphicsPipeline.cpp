@@ -29,7 +29,21 @@ void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, cons
     dynamicState.dynamicStateCount = 2;
     dynamicState.pDynamicStates = dynamicStates;
     
+    // Add shader specilization here:
+    /*{
+        VectorView<uint8> specBuffer;
 
+        VkPipelineShaderStageCreateInfo* shaderStages = shaderProgram.GetShaderStages();
+        VkSpecializationInfo specInfo;
+        specInfo.dataSize = specBuffer.size;
+        specInfo.pData = specBuffer.data;
+
+        specInfo.pMapEntries = 0;
+        specInfo.mapEntryCount = 0;
+        
+        // shaderStages->pSpecializationInfo
+    }*/
+    
     VkGraphicsPipelineCreateInfo pipelineInfo;
     pipelineInfo.sType                  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.pNext                  = NULL;

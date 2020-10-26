@@ -1,17 +1,27 @@
 #pragma once
 
 #include <vector>
+#include <string>
+#include <unordered_set>
+#include <unordered_map>
+
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/Pipeline/PipelineLayout/PipelineLayout.hpp>
 #include <Renderer/Backend/Pipeline/VertexInput/VertexInput.hpp>
-#include <unordered_set>
+
 
 TRE_NS_START
 
 namespace Renderer
 {
 	class RenderBackend;
+
+	/*struct PushConstantKey
+	{
+		uint32 offset;
+		uint32 size;
+	};*/
 
 	class ShaderProgram
 	{
@@ -63,9 +73,12 @@ namespace Renderer
 
 		VertexInput& GetVertexInput() { return vertexInput; }
 	private:
+		VkPipelineShaderStageCreateInfo* GetShaderStages() { return shaderStagesCreateInfo; }
+
 		static VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& code);
 
-		void ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage, std::unordered_set<uint32>& seenDescriptorSets);
+		void ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage, std::unordered_set<uint32>& seenDescriptorSets,
+			std::unordered_map<std::string, VkPushConstantRange>& pushConstants, uint32& oldOffset);
 	private:
 		VkPipelineShaderStageCreateInfo shaderStagesCreateInfo[MAX_SHADER_STAGES];
 		VkShaderModule shaderModules[MAX_SHADER_STAGES];
@@ -73,6 +86,8 @@ namespace Renderer
 		VertexInput vertexInput;
 
 		uint32 shadersCount;
+
+		friend class GraphicsPipeline;
 	};
 }
 

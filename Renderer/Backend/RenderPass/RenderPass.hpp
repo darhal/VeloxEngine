@@ -78,6 +78,28 @@ namespace Renderer
 		RenderPass(const RenderDevice& device, const RenderPassInfo& info);
 
 		VkRenderPass GetAPIObject() const { return renderPass; }
+
+		const SubpassInfo& GetSubpassInfo(uint32 subpass) const { return subpassesInfo[subpass]; }
+
+		uint32 GetSampleCount(uint32 subpass) const { return subpassesInfo[subpass].samples; }
+
+		uint32 GetColorAttachmentsCount(uint32 subpass) const { return subpassesInfo[subpass].colorAttachmentsCount; }
+
+		uint32 GetInputAttachmentsCount(uint32 subpass) const { return subpassesInfo[subpass].inputAttachmentsCount; }
+
+		const VkAttachmentReference& GetColorAttachment(uint32 subpass, uint32 index) const { return subpassesInfo[subpass].colorAttachments[index]; }
+
+		const VkAttachmentReference& GetInputAttachment(uint32 subpass, uint32 index) const { return subpassesInfo[subpass].colorAttachments[index]; }
+
+		bool HasDepth(uint32 subpass) const
+		{
+			return subpassesInfo[subpass].depthStencilAttachment.attachment != VK_ATTACHMENT_UNUSED && HasDepthComponent(depthStencilFormat);
+		}
+
+		bool HasStencil(uint32 subpass) const
+		{
+			return subpassesInfo[subpass].depthStencilAttachment.attachment != VK_ATTACHMENT_UNUSED && HasDepthComponent(depthStencilFormat);
+		}
 	private:
 		void SetupRenderPass(const VkRenderPassCreateInfo& createInfo);
 	private:

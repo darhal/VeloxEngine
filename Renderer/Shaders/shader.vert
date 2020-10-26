@@ -14,10 +14,20 @@ layout(set = 0, binding = 0) uniform DYNC_MVP {
     mat4 proj;
 } mvp;
 
+layout(push_constant) uniform Color {
+    vec3 color;
+	int isOriginalColor;
+} u_color;
 
 void main() {
-	// mvp.view * mvp.proj *
     gl_Position = mvp.proj * mvp.view * mvp.model * vec4(inPosition, 1.0);
-    fragColor = inColor;
+	
+	if (u_color.isOriginalColor == 1){
+		fragColor = inColor;
+	}else{
+		fragColor = u_color.color;
+	}
+    
+	
 	fragTexCoord = inTexCoord;
 }

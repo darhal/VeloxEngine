@@ -13,6 +13,11 @@ namespace Renderer
 {
 	class RenderContext;
 
+	struct ShaderSpecilization
+	{
+
+	};
+
 	class GraphicsPipeline
 	{
 	public:
@@ -42,6 +47,7 @@ namespace Renderer
 		ShaderProgram					shaderProgram;
 		VkRenderPass					renderPass;
 		VkPipeline						pipeline;
+		// ShaderSpecilization				shaderConstants[MAX_SHADER_CONSTANTS];
 	};
 }
 

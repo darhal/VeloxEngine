@@ -22,6 +22,7 @@ namespace Renderer
 	struct ResouceBindings
 	{
 		ResourceBinding bindings[MAX_DESCRIPTOR_SET][MAX_DESCRIPTOR_BINDINGS];
+		uint8 pushConstantData[MAX_PUSH_CONSTANT_SIZE];
 	};
 }
 

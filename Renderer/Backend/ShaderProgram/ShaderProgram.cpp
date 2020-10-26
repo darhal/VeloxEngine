@@ -20,7 +20,9 @@ VkShaderModule Renderer::ShaderProgram::CreateShaderModule(VkDevice device, cons
     return shaderModule;
 }
 
-void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage, std::unordered_set<uint32>& seenDescriptorSets)
+void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage, 
+    std::unordered_set<uint32>& seenDescriptorSets, std::unordered_map<std::string, VkPushConstantRange>& pushConstants, 
+    uint32& oldOffset)
 {
     // Generate reflection data for a shader
     SpvReflectShaderModule module;
@@ -75,9 +77,29 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
     spvReflectEnumeratePushConstants(&module, &pushConstCount, &pushConstantsReflect);
 
     for (uint32 i = 0; i < pushConstCount; i++) {
-        piplineLayout.AddPushConstantRange(VK_SHADER_STAGES[shaderStage], pushConstantsReflect[i].offset, pushConstantsReflect[i].size);
+        const char* typeName = pushConstantsReflect[i].type_description->type_name;
+
+        auto ret = pushConstants.emplace(
+            std::pair<std::string, VkPushConstantRange>{ typeName, 
+            { VkShaderStageFlags(VK_SHADER_STAGES[shaderStage]), pushConstantsReflect[i].offset, pushConstantsReflect[i].size } });
+
+        if (!ret.second) {
+            ret.first->second.stageFlags |= VK_SHADER_STAGES[shaderStage];
+
+            //printf("\tUpdating Push constant: Type: %s | Stage: %d | Offset: %d | Size: %d\n", 
+            //    pushConstantsReflect[i].type_description->type_name, VK_SHADER_STAGES[shaderStage], 
+            //    ret.first->second.offset, ret.first->second.size);
+        } else {
+            ret.first->second.offset += pushConstantsReflect[i].members->offset; 
+            oldOffset += pushConstantsReflect[i].size;  // TODO: possiblity of patching SPIRV code here to add the offset automatically
+           
+            //printf("\tPush constant: Type: %s | Stage: %d | Offset: %d | Size: %d\n", 
+            //    pushConstantsReflect[i].type_description->type_name, VK_SHADER_STAGES[shaderStage], 
+            //    ret.first->second.offset, ret.first->second.size);
+        }
     }
 
+    
     // Destroy the reflection data when no longer required.
     // delete[] descriptorSetsReflect;
     // delete[] pushConstantsReflect;
@@ -89,11 +111,13 @@ void Renderer::ShaderProgram::Create(RenderBackend& renderBackend, const std::in
     shadersCount = 0;
     const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
     std::unordered_set<uint32> seenDescriptorSets;
+    std::unordered_map<std::string, VkPushConstantRange> pushConstants;
+    uint32 offset = 0;
 
     for (const auto& shaderStage : shaderStages) {
         auto shaderCode = TRE::Renderer::ReadShaderFile(shaderStage.path);
         shaderModules[shadersCount] = CreateShaderModule(renderDevice.GetDevice(), shaderCode);
-        this->ReflectShaderCode(shaderCode.data(), shaderCode.size(), shaderStage.shaderStage, seenDescriptorSets);
+        this->ReflectShaderCode(shaderCode.data(), shaderCode.size(), shaderStage.shaderStage, seenDescriptorSets, pushConstants, offset);
 
         shaderStagesCreateInfo[shadersCount].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shaderStagesCreateInfo[shadersCount].pNext  = NULL;
@@ -104,6 +128,11 @@ void Renderer::ShaderProgram::Create(RenderBackend& renderBackend, const std::in
         shaderStagesCreateInfo[shadersCount].pSpecializationInfo = NULL;
 
         shadersCount++;
+    }
+
+    for (auto& cts : pushConstants) {
+        auto& pushConstantRange = cts.second;
+        piplineLayout.AddPushConstantRange(pushConstantRange.stageFlags, pushConstantRange.offset, pushConstantRange.size);
     }
 
     piplineLayout.Create(renderBackend);
