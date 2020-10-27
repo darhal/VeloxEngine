@@ -2,6 +2,7 @@
 
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/Images/ImageHelper.hpp>
 
 TRE_NS_START
 

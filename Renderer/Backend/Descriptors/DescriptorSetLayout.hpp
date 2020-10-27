@@ -34,6 +34,8 @@ namespace Renderer
 
 		void AddBinding(uint32 binding, uint32 descriptorCount, DescriptorType descriptorType, ShaderStagesFlags shaderStages, const VkSampler* sampler = NULL)
 		{
+			ASSERT(binding + descriptorCount >= MAX_DESCRIPTOR_BINDINGS);
+
 			layoutBindings[bindingsCount].binding				= binding;
 			layoutBindings[bindingsCount].descriptorType		= (VkDescriptorType)descriptorType;
 			layoutBindings[bindingsCount].descriptorCount		= descriptorCount;

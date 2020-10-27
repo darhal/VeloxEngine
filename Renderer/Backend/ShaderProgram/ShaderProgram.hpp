@@ -49,7 +49,7 @@ namespace Renderer
 
 		CONSTEXPR static const char* DYNAMIC_KEYWORD_PREFIX = "DYNC_";
 		CONSTEXPR static const char* DEFAULT_ENTRY_POINT	= "main";
-		CONSTEXPR static uint32 DYNAMIC_KEYWORD_SIZE		= ARRAY_SIZE(DYNAMIC_KEYWORD_PREFIX);
+		CONSTEXPR static uint32 DYNAMIC_KEYWORD_SIZE		= ARRAY_SIZE(DYNAMIC_KEYWORD_PREFIX) - 1;
 
 		struct ShaderStage
 		{

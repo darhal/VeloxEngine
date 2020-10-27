@@ -15,6 +15,8 @@ namespace Renderer
 
 		void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
 
+		uint32 GetUnitSize() const { return unitSize; }
+
 		uint32 GetCurrentOffset() const { return bufferIndex * unitSize; }
 	private:
 		uint32		ringSize;

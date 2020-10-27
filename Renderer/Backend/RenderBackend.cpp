@@ -456,13 +456,17 @@ bool Renderer::RenderBackend::CreateBufferInternal(VkBuffer& outBuffer, MemoryVi
             queueFamilyIndices.AllocateInit(1, renderDevice.queueFamilyIndices.queueFamilies[i]);
         }
     }
-    
+
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = createInfo.size;
     bufferInfo.usage = createInfo.usage;
     bufferInfo.sharingMode = sharingMode;
     bufferInfo.flags = 0;
+
+    if (createInfo.domain == MemoryUsage::GPU_ONLY) {
+        bufferInfo.usage |= BufferUsage::TRANSFER_DST;
+    }
 
     if (bufferInfo.sharingMode == VK_SHARING_MODE_CONCURRENT) {
         bufferInfo.queueFamilyIndexCount = (uint32)queueFamilyIndices.GetElementCount();
@@ -507,8 +511,8 @@ Renderer::RingBufferHandle Renderer::RenderBackend::CreateRingBuffer(const Buffe
     const DeviceSize alignment = this->renderDevice.internal.gpuProperties.limits.minUniformBufferOffsetAlignment;
     const DeviceSize padding = (alignment - (info.size % alignment)) % alignment;
     const DeviceSize alignedSize = info.size + padding;
-    info.size = alignedSize * ringSize - padding;
-
+    info.size = alignedSize * ringSize; //- padding; // here we must remove padding as we dont need it at the end but (otherwise waste of memory)
+                                                     // this is going to complicate our calulations later so better keep it
     MemoryView bufferMemory;
     VkBuffer apiBuffer;
 

@@ -56,16 +56,19 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
         }
         
         for (uint32 j = 0; j < descriptorSetsReflect[i].binding_count; j++) {
-            SpvReflectDescriptorBinding* bindings = descriptorSetsReflect[i].bindings[i];
+            SpvReflectDescriptorBinding* bindings = descriptorSetsReflect[i].bindings[j];
             DescriptorType descriptorType = (DescriptorType)bindings->descriptor_type;
+            bool isUniform = bindings->descriptor_type == (uint32)DescriptorType::UNIFORM_BUFFER ||
+                                bindings->descriptor_type == (uint32)DescriptorType::STORAGE_BUFFER;
            
-            if (bindings->type_description->type_name && bindings->descriptor_type 
-                && strncmp(bindings->type_description->type_name, DYNAMIC_KEYWORD_PREFIX, DYNAMIC_KEYWORD_SIZE)) 
+            if (isUniform && bindings->type_description->type_name && 
+                !strncmp(bindings->type_description->type_name, DYNAMIC_KEYWORD_PREFIX, DYNAMIC_KEYWORD_SIZE)) 
             {
-                descriptorType = DescriptorType::UNIFORM_BUFFER_DYNC;
+                descriptorType = DescriptorType(bindings->descriptor_type + 2);
             }
 
-            printf("\tSet: %d - Binding: %d - Name: %s - Descriptor type: %d - Count: %d - Description type: %s\n", bindings->set, bindings->binding, bindings->name, descriptorType, bindings->count, bindings->type_description->type_name);
+            printf("\tSet: %d - Binding: %d - Name: %s - Descriptor type: %d - Count: %d - Description type: %s\n",
+                bindings->set, bindings->binding, bindings->name, descriptorType, bindings->count, bindings->type_description->type_name);
             piplineLayout.AddBindingToSet(bindings->set, bindings->binding, bindings->count, descriptorType, VK_SHADER_STAGES[shaderStage], NULL);
         }
     }

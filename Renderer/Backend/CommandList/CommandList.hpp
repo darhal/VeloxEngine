@@ -11,6 +11,7 @@ TRE_NS_START
 namespace Renderer
 {
 	class Buffer;
+	class RingBuffer;
 	class Image;
 	class ImageView;
 	class Sampler;
@@ -23,7 +24,8 @@ namespace Renderer
 
 	struct DescriptorSetDirty
 	{
-		uint8 dirtySets;
+		uint8 sets = 0;
+		uint8 dynamicSets = 0;
 	};
 
 	struct CommandBufferDeleter
@@ -76,7 +78,9 @@ namespace Renderer
 			const std::initializer_list<uint32>& dyncOffsets);
 
 
-		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range = VK_WHOLE_SIZE);
+		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
+
+		void SetUniformBuffer(uint32 set, uint32 binding, const RingBuffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
 
 		void SetStorageBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
 
@@ -168,10 +172,12 @@ namespace Renderer
 
 		void FlushDescriptorSets();
 
+		void RebindDescriptorSet(uint32 set);
+
 		void InitViewportScissor(const RenderPassInfo& info, const Framebuffer* fb);
 	private:
 		ResouceBindings bindings;
-		DescriptorSetDirty dirtySets;
+		DescriptorSetDirty dirty;
 		RenderBackend* renderBackend;
 
 		const GraphicsPipeline* pipeline;

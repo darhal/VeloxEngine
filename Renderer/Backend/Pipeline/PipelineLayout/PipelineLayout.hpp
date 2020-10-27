@@ -68,8 +68,6 @@ namespace Renderer
 		
 		uint32 descriptorSetLayoutCount;
 		uint32 pushConstantsCount;
-
-		// TODO: this need to know everything about the layout, not just VK objects
 	};
 }
 

@@ -7,11 +7,12 @@
 #include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/Images/Sampler.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
+#include <Renderer/Backend/Buffers/RingBuffer.hpp>
 
 TRE_NS_START
 
 Renderer::CommandBuffer::CommandBuffer(RenderBackend* backend, VkCommandBuffer buffer, Type type) :
-    renderBackend(backend), commandBuffer(buffer), type(type), allocatedSets{}, dirtySets{}, renderToSwapchain(false)
+    renderBackend(backend), commandBuffer(buffer), type(type), allocatedSets{}, dirty{}, renderToSwapchain(false)
 {
 }
 
@@ -168,10 +169,36 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
     ASSERT(binding >= MAX_DESCRIPTOR_BINDINGS);
 
     auto& b = bindings.bindings[set][binding];
-    b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetAPIObject(), 0, range };
-    b.dynamicOffset   = (uint32)offset;
+    b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetAPIObject(), offset, range };
+    b.dynamicOffset   = 0;
 
-    dirtySets.dirtySets |= (1u << set);
+    dirty.sets |= (1u << set);
+}
+
+void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const RingBuffer& buffer, DeviceSize offset, DeviceSize range)
+{
+    ASSERT(set >= MAX_DESCRIPTOR_SET);
+    ASSERT(binding >= MAX_DESCRIPTOR_BINDINGS);
+
+    if (range == VK_WHOLE_SIZE) {
+        range = buffer.GetUnitSize();
+    }
+
+    auto& b = bindings.bindings[set][binding];
+    b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetAPIObject(), offset, range };
+    b.dynamicOffset   = buffer.GetCurrentOffset();
+
+    dirty.sets |= (1u << set);
+
+    // TODO: think about what if everything is the same just the offset changed! we shouldnt then update dirty set instead just update the set
+    // that have the dynamic offset set in it
+    /*
+    if (nothing changed and only dynamicOffset changed) {
+        dirty_sets_dynamic |= 1u << set;
+    }else{
+        // update everything
+    }
+    */
 }
 
 void Renderer::CommandBuffer::SetStorageBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range)
@@ -183,7 +210,9 @@ void Renderer::CommandBuffer::SetStorageBuffer(uint32 set, uint32 binding, const
     b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetAPIObject(), offset, range };
     b.dynamicOffset = 0;
 
-    dirtySets.dirtySets |= (1u << set);
+    dirty.sets |= (1u << set);
+
+    // TODO: the set storage buffer and set uniform buffer are similar! Maybe we can optimise using some tricks and dynamic offsets
 }
 
 void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const ImageView& texture)
@@ -196,13 +225,13 @@ void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const Image
     b.resource.image.imageView = texture.GetAPIObject();
     b.resource.image.imageLayout = texture.GetInfo().image->GetInfo().layout;
 
-    dirtySets.dirtySets |= (1u << set);
+    dirty.sets |= (1u << set);
 }
 
 void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const ImageView& texture, const Sampler& sampler)
 {
-    this->SetTexture(set, binding, texture);
     this->SetSampler(set, binding, sampler);
+    this->SetTexture(set, binding, texture);
 }
 
 void Renderer::CommandBuffer::SetSampler(uint32 set, uint32 binding, const Sampler& sampler)
@@ -212,8 +241,9 @@ void Renderer::CommandBuffer::SetSampler(uint32 set, uint32 binding, const Sampl
 
     auto& b = bindings.bindings[set][binding];
     b.resource.image.sampler = sampler.GetAPIObject();
+    // b.resource.image.imageView = VK_NULL_HANDLE;
 
-    dirtySets.dirtySets |= (1u << set);
+    dirty.sets |= (1u << set);
 }
 
 void Renderer::CommandBuffer::SetInputAttachments(uint32 set, uint32 startBinding)
@@ -237,7 +267,7 @@ void Renderer::CommandBuffer::SetInputAttachments(uint32 set, uint32 startBindin
         b.resource.image.imageLayout = ref.layout;
         b.resource.image.imageView = view->GetAPIObject();
 
-        dirtySets.dirtySets |= 1u << set;
+        dirty.sets |= 1u << set;
     }
 }
 
@@ -246,7 +276,7 @@ void Renderer::CommandBuffer::PushConstants(ShaderStagesFlags stages, const void
     const auto& pipelineLayout = pipeline->GetPipelineLayout();
     const auto& pushConstant = pipelineLayout.GetPushConstantRangeFromStage(stages);
 
-    vkCmdPushConstants(commandBuffer, pipelineLayout.GetAPIObject(), stages, pushConstant.offset + offset, size, data);
+    vkCmdPushConstants(commandBuffer, pipelineLayout.GetAPIObject(), stages, pushConstant.offset + (uint32)offset, (uint32)size, data);
 }
 
 void Renderer::CommandBuffer::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
@@ -536,60 +566,46 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
     VkWriteDescriptorSet writes[MAX_DESCRIPTOR_BINDINGS];
     uint32 writeCount = 0;
 
-    for (uint32 binding = 0; binding < MAX_DESCRIPTOR_BINDINGS; binding++) {
-        if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) {
-            writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writes[writeCount].pNext = NULL;
-            writes[writeCount].dstSet = descSet;
-            writes[writeCount].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-            writes[writeCount].descriptorCount = 1;
-            writes[writeCount].dstBinding = binding;
-            writes[writeCount].dstArrayElement = 0;
-            writes[writeCount].pBufferInfo = &bindings[binding].resource.buffer;
-            writes[writeCount].pImageInfo = NULL;
-            writes[writeCount].pTexelBufferView = NULL;
+    for (uint32 binding = 0; binding < layout.GetBindingsCount(); binding++) {
+        auto& layoutBinding = layout.GetDescriptorSetLayoutBinding(binding);
+
+        if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC
+            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) {
+            for (uint32 i = 0; i < layoutBinding.descriptorCount; i++) {
+                writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writes[writeCount].pNext = NULL;
+                writes[writeCount].dstSet = descSet;
+                writes[writeCount].descriptorType = layoutBinding.descriptorType;
+                writes[writeCount].descriptorCount = 1;
+                writes[writeCount].dstBinding = binding;
+                writes[writeCount].dstArrayElement = i;
+                writes[writeCount].pBufferInfo = &bindings[binding + i].resource.buffer;
+                writes[writeCount].pImageInfo = NULL;
+                writes[writeCount].pTexelBufferView = NULL;
+            }
 
             writeCount++;
-        } else if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER) {
-            writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writes[writeCount].pNext = NULL;
-            writes[writeCount].dstSet = descSet;
-            writes[writeCount].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            writes[writeCount].descriptorCount = 1;
-            writes[writeCount].dstBinding = binding;
-            writes[writeCount].dstArrayElement = 0;
-            writes[writeCount].pBufferInfo = &bindings[binding].resource.buffer;;
-            writes[writeCount].pImageInfo = NULL;
-            writes[writeCount].pTexelBufferView = NULL;
+        } else if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER 
+            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
+            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER
+            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT) {
+            for (uint32 i = 0; i < layoutBinding.descriptorCount; i++) {
+                writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writes[writeCount].pNext = NULL;
+                writes[writeCount].dstSet = descSet;
+                writes[writeCount].descriptorType = layoutBinding.descriptorType;
+                writes[writeCount].descriptorCount = 1;
+                writes[writeCount].dstBinding = binding;
+                writes[writeCount].dstArrayElement = i;
+                writes[writeCount].pBufferInfo = NULL;
+                writes[writeCount].pImageInfo = &bindings[binding + i].resource.image;
+                writes[writeCount].pTexelBufferView = NULL;
+            }
 
             writeCount++;
-        } else if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
-            writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writes[writeCount].pNext = NULL;
-            writes[writeCount].dstSet = descSet;
-            writes[writeCount].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            writes[writeCount].descriptorCount = 1;
-            writes[writeCount].dstBinding = binding;
-            writes[writeCount].dstArrayElement = 0;
-            writes[writeCount].pBufferInfo = NULL;
-            writes[writeCount].pImageInfo = &bindings[binding].resource.image;
-            writes[writeCount].pTexelBufferView = NULL;
-
-            writeCount++;
-        } else if (layout.GetDescriptorSetLayoutBinding(binding).descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT) {
-            writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writes[writeCount].pNext = NULL;
-            writes[writeCount].dstSet = descSet;
-            writes[writeCount].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-            writes[writeCount].descriptorCount = 1;
-            writes[writeCount].dstBinding = binding;
-            writes[writeCount].dstArrayElement = 0;
-            writes[writeCount].pBufferInfo = NULL;
-            writes[writeCount].pImageInfo = &bindings[binding].resource.image;
-            writes[writeCount].pTexelBufferView = NULL;
-
-            writeCount++;
-        }
+        } 
     }
 
     printf("Updating descriptor sets: writting count:%u\n", writeCount);
@@ -609,11 +625,17 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
     uint32 numDyncOffset = 0;
     Hasher h;
 
-    for (uint32 binding = 0; binding < setLayout.GetBindingsCount(); binding++) {
-        h.Data(reinterpret_cast<const uint32*>(&resourceBinding[binding].resource), sizeof(ResourceBinding::Resource));
+    for (uint32 i = 0; i < setLayout.GetBindingsCount(); i++) {
+        auto& bindingLayout = setBindings[i];
 
-        if (setBindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) {
-            dyncOffset[numDyncOffset++] = resourceBinding[binding].dynamicOffset;
+        for (uint32 j = 0; j < bindingLayout.descriptorCount; j++) {
+            uint32 bindingResourceIndex = bindingLayout.binding + j;
+            h.Data(reinterpret_cast<const uint32*>(&resourceBinding[bindingResourceIndex].resource), sizeof(ResourceBinding::Resource));
+
+            if (setBindings[bindingResourceIndex].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC 
+                || setBindings[bindingResourceIndex].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) {
+                dyncOffset[numDyncOffset++] = resourceBinding[bindingResourceIndex].dynamicOffset;
+            }
         }
     }
 
@@ -626,22 +648,62 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
     
     vkCmdBindDescriptorSets(
         commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetAPIObject(), 
-        0, 1, &alloc.first, numDyncOffset, dyncOffset);
+        set, 1, &alloc.first, numDyncOffset, dyncOffset);
 
     allocatedSets[set] = alloc.first;
-    dirtySets.dirtySets = dirtySets.dirtySets & ~(1u << set);
+    dirty.sets = dirty.sets & ~(1u << set);
 }
 
 void Renderer::CommandBuffer::FlushDescriptorSets()
 {
-    if (!dirtySets.dirtySets)
+    if (!dirty.sets)
         return;
 
+    uint8 dirtySets = dirty.sets;
+
     for (uint32 set = 0; set < MAX_DESCRIPTOR_SET; set++) {
-        if (dirtySets.dirtySets & (1u << set)) {
+        if (dirty.sets & (1u << set)) {
             this->FlushDescriptorSet(set);
         }
     }
+
+    dirty.dynamicSets &= ~dirtySets;
+
+    if (dirty.dynamicSets) {
+        for (uint32 set = 0; set < MAX_DESCRIPTOR_SET; set++) {
+            if (dirty.dynamicSets & (1u << set)) {
+                this->RebindDescriptorSet(set);
+            }
+        }
+
+        dirty.dynamicSets = 0;
+    }
+}
+
+void Renderer::CommandBuffer::RebindDescriptorSet(uint32 set)
+{
+    const PipelineLayout& layout = pipeline->GetShaderProgram().GetPipelineLayout();
+    const DescriptorSetLayout& setLayout = layout.GetDescriptorSetLayout(set);
+    const VkDescriptorSetLayoutBinding* setBindings = setLayout.GetDescriptorSetLayoutBindings();
+    const ResourceBinding* resourceBinding = bindings.bindings[set];
+    uint32 dyncOffset[MAX_DESCRIPTOR_BINDINGS];
+    uint32 numDyncOffset = 0;
+    Hasher h;
+
+    for (uint32 i = 0; i < setLayout.GetBindingsCount(); i++) {
+        auto& bindingLayout = setBindings[i];
+        for (uint32 j = 0; j < bindingLayout.descriptorCount; j++) {
+            uint32 bindingResourceIndex = bindingLayout.binding + j;
+            if (setBindings[bindingResourceIndex].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC
+                || setBindings[bindingResourceIndex].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) {
+                dyncOffset[numDyncOffset++] = resourceBinding[bindingResourceIndex].dynamicOffset;
+            }
+        }
+    }
+
+    vkCmdBindDescriptorSets(
+        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetAPIObject(),
+        set, 1, &allocatedSets[set], numDyncOffset, dyncOffset);
 }
 
 void Renderer::CommandBuffer::InitViewportScissor(const RenderPassInfo& info, const Framebuffer* fb)
