@@ -171,6 +171,10 @@ namespace Renderer
 		FORCEINLINE Type GetType() const { return type; }
 
 		FORCEINLINE bool UsesSwapchain() const { return renderToSwapchain; }
+
+		FORCEINLINE const RenderPass* GetRenderPass() { return renderPass; }
+
+		FORCEINLINE const Framebuffer* GetFramebuffer() { return framebuffer; }
 	private:
 		void UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings);
 

@@ -165,32 +165,44 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 )
 {
     using namespace TRE::Renderer;
-    CommandBufferHandle currentCmdBuff = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
+    static GraphicsPipeline* pipeline = NULL;
+
+    if (!pipeline) {
+        pipeline = new GraphicsPipeline(&program);
+
+        RenderPassInfo::Subpass subpass;
+        const RenderPass& rp = backend.RequestRenderPass(GetRenderPass(backend, subpass));
+        pipeline->SetRenderPass(&rp);
+        pipeline->Create(backend.GetRenderContext(), state);
+    }
+
+    CommandBufferHandle cmd = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
     updateMVP(backend, uniformBuffer);
 
-    currentCmdBuff->BindShaderProgram(program);
-    currentCmdBuff->SetGraphicsState(state);
+    cmd->BindShaderProgram(program);
+    cmd->SetGraphicsState(state);
+    cmd->BindPipeline(*pipeline);
 
     RenderPassInfo::Subpass subpass;
-    currentCmdBuff->BeginRenderPass(GetRenderPass(backend, subpass));
+    cmd->BeginRenderPass(GetRenderPass(backend, subpass));
 
-    currentCmdBuff->BindVertexBuffer(*vertexIndexBuffer);
+    cmd->BindVertexBuffer(*vertexIndexBuffer);
 #if !defined(CUBE)
-    currentCmdBuff->BindIndexBuffer(*vertexIndexBuffer, sizeof(vertices[0]) * vertices.size());
+    cmd->BindIndexBuffer(*vertexIndexBuffer, sizeof(vertices[0]) * vertices.size());
 #endif
 
-    currentCmdBuff->SetUniformBuffer(0, 0, *uniformBuffer);
-    currentCmdBuff->SetUniformBuffer(0, 2, *lightBuffer);
-    currentCmdBuff->SetTexture(0, 1, *texture, *sampler);
+    cmd->SetUniformBuffer(0, 0, *uniformBuffer);
+    cmd->SetUniformBuffer(0, 2, *lightBuffer);
+    cmd->SetTexture(0, 1, *texture, *sampler);
 
 #if !defined(CUBE)
-    currentCmdBuff->DrawIndexed(indices.size());
+    cmd->DrawIndexed(indices.size());
 #else
-    currentCmdBuff->Draw(36);
+    cmd->Draw(36);
 #endif
     
-    currentCmdBuff->EndRenderPass();
-    backend.Submit(currentCmdBuff);
+    cmd->EndRenderPass();
+    backend.Submit(cmd);
 }
 
 void printFPS() {

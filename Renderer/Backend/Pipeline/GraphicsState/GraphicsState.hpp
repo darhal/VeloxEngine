@@ -99,6 +99,8 @@ namespace Renderer
 
 		FORCEINLINE ColorBlendAttachmentState& GetColorBlendAttachmentState(uint32 i) { return colorBlendAttachmetns[i]; }
 
+		FORCEINLINE const VkPipelineViewportStateCreateInfo& GetViewportState() const { return viewportState; }
+
 	private:
 		Hash CalculateHash();
 	private:

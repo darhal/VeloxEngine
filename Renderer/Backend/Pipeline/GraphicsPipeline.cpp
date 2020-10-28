@@ -7,15 +7,32 @@ TRE_NS_START
 
 void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, const VertexInput& vertexInput, const GraphicsState& state)
 {
-    /*if (state.viewportState.viewportCount == 0) {
+    VkViewport viewport;
+    VkRect2D scissor;
+
+    VkPipelineViewportStateCreateInfo viewportState = { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
+    viewportState.viewportCount = state.GetViewportState().viewportCount;
+    viewportState.pViewports = state.GetViewportState().pViewports;
+    viewportState.scissorCount = state.GetViewportState().scissorCount;
+    viewportState.pScissors = state.GetViewportState().pScissors;
+
+    if (state.viewportState.viewportCount == 0) {
         const Swapchain::SwapchainData& swapchainData = renderContext.GetSwapchain().GetSwapchainData();
-        state.AddViewport({ 0.f, 0.f, (float)swapchainData.swapChainExtent.width, (float)swapchainData.swapChainExtent.height, 0.f, 1.f });
+        // state.AddViewport({ 0.f, 0.f, (float)swapchainData.swapChainExtent.width, (float)swapchainData.swapChainExtent.height, 0.f, 1.f });
+
+        viewport = { 0.f, 0.f, (float)swapchainData.swapChainExtent.width, (float)swapchainData.swapChainExtent.height, 0.f, 1.f };
+        viewportState.viewportCount = 1;
+        viewportState.pViewports = &viewport;
     }
 
     if (state.viewportState.scissorCount == 0) {
         const Swapchain::SwapchainData& swapchainData = renderContext.GetSwapchain().GetSwapchainData();
-        state.AddScissor({ {0, 0}, swapchainData.swapChainExtent });
-    }*/
+        // state.AddScissor({ {0, 0}, swapchainData.swapChainExtent });
+
+        scissor = { {0, 0}, swapchainData.swapChainExtent };
+        viewportState.scissorCount = 1;
+        viewportState.pScissors = &scissor;
+    }
     
     VkDynamicState dynamicStates[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
@@ -51,7 +68,7 @@ void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, cons
     pipelineInfo.stageCount             = (uint32)shaderProgram->GetShadersCount();
     pipelineInfo.pStages                = shaderProgram->GetShaderStages(); //shaderStagesDesc.data();
     pipelineInfo.pVertexInputState      = &vertexInput.GetVertexInputDesc();
-    pipelineInfo.pViewportState         = &state.viewportState;
+    pipelineInfo.pViewportState         = &viewportState;
     pipelineInfo.pInputAssemblyState    = &state.inputAssemblyState;
     pipelineInfo.pRasterizationState    = &state.rasterizationState;
     pipelineInfo.pTessellationState     = NULL;
@@ -68,6 +85,8 @@ void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, cons
     if (vkCreateGraphicsPipelines(renderContext.GetRenderDevice()->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &pipeline) != VK_SUCCESS) {
         ASSERTF(true, "Failed to create graphics pipeline!");
     }
+
+    printf("Creating new pipline\n");
 }
 
 void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, const GraphicsState& state)
