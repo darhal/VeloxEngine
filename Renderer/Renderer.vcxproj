@@ -194,6 +194,7 @@
     <ClInclude Include="Backend\CommandList\CommandList.hpp" />
     <ClInclude Include="Backend\CommandList\CommandPool.hpp" />
     <ClInclude Include="Backend\Descriptors\DescriptorSetAlloc.hpp" />
+    <ClInclude Include="Backend\Pipeline\PipelineAllocator\PipelineAllocator.hpp" />
     <ClInclude Include="Backend\RenderPass\AttachmentAllocator.hpp" />
     <ClInclude Include="Backend\RenderPass\Framebuffer.hpp" />
     <ClInclude Include="Backend\RenderPass\FramebufferAllocator.hpp" />
@@ -495,6 +496,7 @@
     <ClCompile Include="Backend\Images\Image.cpp" />
     <ClCompile Include="Backend\Images\Sampler.cpp" />
     <ClCompile Include="Backend\MemoryAllocator\MemoryAllocator.cpp" />
+    <ClCompile Include="Backend\Pipeline\PipelineAllocator\PipelineAllocator.cpp" />
     <ClCompile Include="Backend\Pipeline\PipelineLayout\PipelineLayout.cpp" />
     <ClCompile Include="Backend\RenderContext\RenderContext.cpp" />
     <ClCompile Include="Backend\Pipeline\GraphicsPipeline.cpp" />

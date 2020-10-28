@@ -78,7 +78,7 @@ namespace Renderer
 
 	typedef VkPipelineColorBlendAttachmentState ColorBlendAttachmentState;
 
-	class GraphicsState
+	class GraphicsState : public Hashable
 	{
 	public:
 		GraphicsState();
@@ -89,6 +89,8 @@ namespace Renderer
 
 		void AddScissor(const VkRect2D& rect);
 
+		void SaveChanges() { this->CalculateHash(); }
+
 		FORCEINLINE InputAssemblyState& GetInputAssemblyState() { return inputAssemblyState; };
 		FORCEINLINE RasterizationState& GetRasterizationState() { return rasterizationState; }
 		FORCEINLINE MultisampleState& GetMultisampleState() { return multisampleState; }
@@ -96,6 +98,9 @@ namespace Renderer
 		FORCEINLINE ColorBlendState& GetColorBlendState() { return colorBlendState; }
 
 		FORCEINLINE ColorBlendAttachmentState& GetColorBlendAttachmentState(uint32 i) { return colorBlendAttachmetns[i]; }
+
+	private:
+		Hash CalculateHash();
 	private:
 		InputAssemblyState			inputAssemblyState;
 		RasterizationState			rasterizationState;
@@ -111,6 +116,7 @@ namespace Renderer
 		uint32								subpassIndex;
 
 		friend class GraphicsPipeline;
+		friend class CommandBuffer;
 	};
 }
 

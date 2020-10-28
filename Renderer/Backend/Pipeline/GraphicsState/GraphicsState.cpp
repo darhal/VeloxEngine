@@ -128,4 +128,62 @@ void Renderer::GraphicsState::AddScissor(const VkRect2D& rect)
     viewportState.scissorCount++;
 }
 
+Renderer::Hash Renderer::GraphicsState::CalculateHash()
+{
+    Hasher h;
+
+    h.u32(inputAssemblyState.topology);
+    h.u32(inputAssemblyState.primitiveRestartEnable);
+
+    h.u32(rasterizationState.depthClampEnable);
+    h.u32(rasterizationState.rasterizerDiscardEnable);
+    h.u32(rasterizationState.polygonMode);
+    h.u32(rasterizationState.cullMode);
+    h.u32(rasterizationState.frontFace);
+    h.u32(rasterizationState.depthBiasEnable);
+    h.f32(rasterizationState.depthBiasConstantFactor);
+    h.f32(rasterizationState.depthBiasClamp);
+    h.f32(rasterizationState.depthBiasSlopeFactor);
+    h.f32(rasterizationState.lineWidth);
+
+    h.u32(multisampleState.rasterizationSamples);
+    h.u32(multisampleState.sampleShadingEnable);
+    h.f32(multisampleState.minSampleShading);
+    h.u64((uint64)multisampleState.pSampleMask);
+    h.u32(multisampleState.alphaToCoverageEnable);
+    h.u32(multisampleState.alphaToOneEnable);
+    
+    h.u32(depthStencilState.depthTestEnable);
+    h.u32(depthStencilState.depthWriteEnable);
+    h.u32(depthStencilState.depthCompareOp);
+    h.u32(depthStencilState.depthBoundsTestEnable);
+    h.u32(depthStencilState.stencilTestEnable);
+    h.Data(reinterpret_cast<const uint32*>(&depthStencilState.front), sizeof(VkStencilOpState) / 4);
+    h.Data(reinterpret_cast<const uint32*>(&depthStencilState.back), sizeof(VkStencilOpState) / 4);
+    h.f32(depthStencilState.minDepthBounds);
+    h.f32(depthStencilState.maxDepthBounds);
+
+    h.u32(colorBlendState.logicOpEnable);
+    h.u32(colorBlendState.logicOp);
+    h.u32(colorBlendState.attachmentCount);
+
+    for (uint32 i = 0; i < colorBlendState.attachmentCount; i++) {
+        const auto& attch = colorBlendState.pAttachments[i];
+        h.u32(attch.blendEnable);
+        h.u32(attch.srcColorBlendFactor);
+        h.u32(attch.dstColorBlendFactor);
+        h.u32(attch.colorBlendOp);
+        h.u32(attch.srcAlphaBlendFactor);
+        h.u32(attch.dstAlphaBlendFactor);
+        h.u32(attch.alphaBlendOp);
+        h.u32(attch.colorWriteMask);
+    }
+
+    for (uint32 i = 0; i < 4; i++)
+        h.f32(colorBlendState.blendConstants[i]);
+
+    hash = h.Get();
+    return h.Get();
+}
+
 TRE_NS_END

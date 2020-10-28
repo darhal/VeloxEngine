@@ -56,6 +56,18 @@ namespace Renderer
 		};
 
 		DescriptorSetAllocator* GetAllocator(uint32 set) const { return descriptorSetAlloc[set]; }
+
+		Hash GetHash()
+		{
+			Hasher h;
+			h.u32(descriptorSetLayoutCount);
+			for (uint32 i = 0; i < descriptorSetLayoutCount; i++)
+				h.u64(descriptorSetLayouts[i].GetHash());
+
+			h.u32(pushConstantsCount);
+			h.Data(reinterpret_cast<const uint32*>(pushConstantsRanges), sizeof(VkPushConstantRange) * pushConstantsCount / 4);
+			return h.Get();
+		}
 	private:
 		DescriptorSetAllocator* descriptorSetAlloc[MAX_DESCRIPTOR_SET];
 

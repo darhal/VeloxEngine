@@ -8,11 +8,14 @@
 #include <Renderer/Backend/Images/Sampler.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Buffers/RingBuffer.hpp>
+#include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
+#include <Renderer/Backend/Pipeline/GraphicsState/GraphicsState.hpp>
 
 TRE_NS_START
 
 Renderer::CommandBuffer::CommandBuffer(RenderBackend* backend, VkCommandBuffer buffer, Type type) :
-    renderBackend(backend), commandBuffer(buffer), type(type), allocatedSets{}, dirty{}, renderToSwapchain(false)
+    renderBackend(backend), commandBuffer(buffer), type(type), allocatedSets{}, dirty{}, renderToSwapchain(false),
+    program(NULL), state(NULL), pipeline(NULL)
 {
 }
 
@@ -109,6 +112,11 @@ void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubp
     this->SetViewport(viewport);
     this->SetScissor(scissor);
 
+    if (program && state) {
+        pipeline = &renderBackend->RequestPipeline(*program, renderBackend->RequestRenderPass(info, true), *state);
+        this->BindPipeline(*pipeline);
+    }
+
     subpassIndex = 0;
 }
 
@@ -161,6 +169,37 @@ void Renderer::CommandBuffer::BindDescriptorSet(const GraphicsPipeline& pipeline
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         pipeline.GetPipelineLayout().GetAPIObject(),
         0, (uint32)descriptors.size(), descriptors.begin(), (uint32)dyncOffsets.size(), dyncOffsets.begin());
+}
+
+void Renderer::CommandBuffer::SetGraphicsState(GraphicsState& state)
+{
+    if (this->state && this->state->GetHash() == state.GetHash())
+        return;
+
+    pipeline = NULL;
+    this->state = &state;
+    bool changed = false;
+
+    if (state.viewportState.viewportCount == 0) {
+        const Swapchain::SwapchainData& swapchainData = renderBackend->GetRenderContext().GetSwapchain().GetSwapchainData();
+        state.AddViewport({ 0.f, 0.f, (float)swapchainData.swapChainExtent.width, (float)swapchainData.swapChainExtent.height, 0.f, 1.f });
+        changed = true;
+    }
+
+    if (state.viewportState.scissorCount == 0) {
+        const Swapchain::SwapchainData& swapchainData = renderBackend->GetRenderContext().GetSwapchain().GetSwapchainData();
+        state.AddScissor({ {0, 0}, swapchainData.swapChainExtent });
+        changed = true;
+    }
+}
+
+void Renderer::CommandBuffer::BindShaderProgram(const ShaderProgram& program)
+{
+    if (this->program && this->program->GetHash() == program.GetHash())
+        return;
+
+    pipeline = NULL;
+    this->program = &program;
 }
 
 void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range)
@@ -617,7 +656,7 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
     ASSERT(pipeline == NULL);
     ASSERT(set >= MAX_DESCRIPTOR_SET);
 
-    const PipelineLayout& layout = pipeline->GetShaderProgram().GetPipelineLayout();
+    const PipelineLayout& layout = pipeline->GetShaderProgram()->GetPipelineLayout();
     const DescriptorSetLayout& setLayout = layout.GetDescriptorSetLayout(set);
     const VkDescriptorSetLayoutBinding* setBindings = setLayout.GetDescriptorSetLayoutBindings();
     const ResourceBinding* resourceBinding = bindings.bindings[set];
@@ -656,6 +695,8 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
 
 void Renderer::CommandBuffer::FlushDescriptorSets()
 {
+    this->BindPipeline();
+
     if (!dirty.sets)
         return;
 
@@ -682,7 +723,7 @@ void Renderer::CommandBuffer::FlushDescriptorSets()
 
 void Renderer::CommandBuffer::RebindDescriptorSet(uint32 set)
 {
-    const PipelineLayout& layout = pipeline->GetShaderProgram().GetPipelineLayout();
+    const PipelineLayout& layout = pipeline->GetShaderProgram()->GetPipelineLayout();
     const DescriptorSetLayout& setLayout = layout.GetDescriptorSetLayout(set);
     const VkDescriptorSetLayoutBinding* setBindings = setLayout.GetDescriptorSetLayoutBindings();
     const ResourceBinding* resourceBinding = bindings.bindings[set];
@@ -716,6 +757,19 @@ void Renderer::CommandBuffer::InitViewportScissor(const RenderPassInfo& info, co
 
     viewport = { 0.0f, 0.0f, float(fb->GetWidth()), float(fb->GetHeight()), 0.0f, 1.0f };
     scissor  = rect;
+}
+
+void Renderer::CommandBuffer::BindPipeline()
+{
+    ASSERT(!program);
+    // ASSERT(!state); // Only if its graphics
+
+    if (pipeline == NULL) {
+        // TODO: think about the renderpass we just need a compatible one not one that is exactly fit
+        // The one we have is the exact renderpass which will cause the creation of multiple PSO's 
+        // that we can't afford the time for
+        this->BindPipeline(renderBackend->RequestPipeline(*program, *renderPass, *state));
+    }
 }
 
 void Renderer::CommandBufferDeleter::operator()(CommandBuffer* cmd)

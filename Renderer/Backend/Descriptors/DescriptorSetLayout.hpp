@@ -70,6 +70,13 @@ namespace Renderer
 		const VkDescriptorSetLayoutBinding& GetDescriptorSetLayoutBinding(uint32 i) const { return layoutBindings[i]; }
 
 		uint32 GetBindingsCount() const { return bindingsCount; }
+
+		Hash GetHash()
+		{
+			Hasher h;
+			h.u64((uint64)descriptorSetLayout);
+			return h.Get();
+		}
 	private:
 		VkDescriptorSetLayoutBinding layoutBindings[MAX_DESCRIPTOR_BINDINGS];
 		VkDescriptorSetLayout descriptorSetLayout;

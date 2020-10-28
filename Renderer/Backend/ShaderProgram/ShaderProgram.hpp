@@ -23,7 +23,7 @@ namespace Renderer
 		uint32 size;
 	};*/
 
-	class ShaderProgram
+	class ShaderProgram : public Hashable
 	{
 	public:
 		enum ShaderStages
@@ -56,6 +56,15 @@ namespace Renderer
 			ShaderStage(const char* path, ShaderStages stage, const char* entryPoint = DEFAULT_ENTRY_POINT) : 
 				path(path), entryPoint(entryPoint), shaderStage(stage) {}
 
+			Hash GetHash() const
+			{
+				Hasher h;
+				h.Data(path, strlen(path));
+				h.Data(entryPoint, strlen(entryPoint));
+				h.u32(shaderStage);
+				return h.Get();
+			}
+
 			const char* path;
 			const char* entryPoint;
 			ShaderStages shaderStage;
@@ -70,6 +79,8 @@ namespace Renderer
 		const VkPipelineShaderStageCreateInfo* GetShaderStages() const { return shaderStagesCreateInfo; }
 
 		const PipelineLayout& GetPipelineLayout() const { return piplineLayout; };
+
+		const VertexInput& GetVertexInput() const { return vertexInput; }
 
 		VertexInput& GetVertexInput() { return vertexInput; }
 	private:

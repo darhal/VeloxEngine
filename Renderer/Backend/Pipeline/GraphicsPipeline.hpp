@@ -6,6 +6,7 @@
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 #include <Renderer/Backend/Pipeline/VertexInput/VertexInput.hpp>
 #include <Renderer/Backend/Pipeline/PipelineLayout/PipelineLayout.hpp> 
+#include <Renderer/Backend/RenderPass/RenderPass.hpp>
 
 TRE_NS_START
 
@@ -21,31 +22,31 @@ namespace Renderer
 	class GraphicsPipeline
 	{
 	public:
-		GraphicsPipeline() : shaderProgram{}, renderPass(VK_NULL_HANDLE), pipeline(VK_NULL_HANDLE) {}
+		GraphicsPipeline(const ShaderProgram* program = NULL) : shaderProgram(program), renderPass(NULL), pipeline(VK_NULL_HANDLE) {}
 
 		void Create(
 			const RenderContext& renderContext,
 			const VertexInput& vertexInput, 
-			GraphicsState& state);
+			const GraphicsState& state);
 
 		void Create(
 			const RenderContext& renderContext,
-			GraphicsState& state);
+			const GraphicsState& state);
 
-		const PipelineLayout& GetPipelineLayout() const { return shaderProgram.GetPipelineLayout(); }
+		FORCEINLINE VkPipeline GetAPIObject() const { return pipeline; }
 
-		ShaderProgram& GetShaderProgram() { return shaderProgram; }
+		const PipelineLayout& GetPipelineLayout() const { return shaderProgram->GetPipelineLayout(); }
 
-		const ShaderProgram& GetShaderProgram() const { return shaderProgram; }
+		void SetShaderProgram(const ShaderProgram* program) { shaderProgram = program; }
 
-		VkPipeline GetAPIObject() const { return pipeline; }
+		const ShaderProgram* GetShaderProgram() const { return shaderProgram; }
 
-		VkRenderPass GetRenderPassAPIObject() const { return renderPass; }
+		void SetRenderPass(const RenderPass* renderPass) { this->renderPass = renderPass; }
 
-		void SetRenderPass(VkRenderPass renderPass) { this->renderPass = renderPass; }
+		const RenderPass* GetRenderPass() const { return renderPass; }
 	private:
-		ShaderProgram					shaderProgram;
-		VkRenderPass					renderPass;
+		const ShaderProgram*			shaderProgram;
+		const RenderPass*				renderPass;
 		VkPipeline						pipeline;
 		// ShaderSpecilization				shaderConstants[MAX_SHADER_CONSTANTS];
 	};

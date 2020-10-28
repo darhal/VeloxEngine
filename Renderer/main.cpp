@@ -154,7 +154,8 @@ void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingB
 }
 
 void RenderFrame(TRE::Renderer::RenderBackend& backend,
-    TRE::Renderer::GraphicsPipeline& graphicsPipeline,
+    const TRE::Renderer::ShaderProgram& program,
+    TRE::Renderer::GraphicsState& state,
     const TRE::Renderer::BufferHandle vertexIndexBuffer,
     // VkDescriptorSet descriptorSet,
     const TRE::Renderer::RingBufferHandle uniformBuffer,
@@ -167,7 +168,8 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     CommandBufferHandle currentCmdBuff = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
     updateMVP(backend, uniformBuffer);
 
-    currentCmdBuff->BindPipeline(graphicsPipeline);
+    currentCmdBuff->BindShaderProgram(program);
+    currentCmdBuff->SetGraphicsState(state);
 
     RenderPassInfo::Subpass subpass;
     currentCmdBuff->BeginRenderPass(GetRenderPass(backend, subpass));
@@ -278,8 +280,8 @@ int main()
 
     RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 3);
 
-    GraphicsPipeline graphicsPipeline;
     GraphicsState state;
+    ShaderProgram program;
 
     auto& depthStencilState = state.GetDepthStencilState();
     depthStencilState.depthTestEnable = true;
@@ -289,29 +291,20 @@ int main()
     state.GetRasterizationState().cullMode = VK_CULL_MODE_NONE;
     state.GetMultisampleState().rasterizationSamples = VkSampleCountFlagBits(backend.GetMSAASamplerCount());
 
-    graphicsPipeline.GetShaderProgram().Create(backend,
+    state.SaveChanges();
+
+    program.GetVertexInput().AddBinding(
+        0, sizeof(Vertex),
+        VertexInput::LOCATION_0 | VertexInput::LOCATION_1 | VertexInput::LOCATION_2 | VertexInput::LOCATION_3,
+        { offsetof(Vertex, pos), offsetof(Vertex, color), offsetof(Vertex, tex), offsetof(Vertex, normal) }
+    );
+
+    program.Create(backend,
         { 
             {"shaders/vert.spv", ShaderProgram::VERTEX_SHADER}, 
             {"shaders/frag.spv", ShaderProgram::FRAGMENT_SHADER} 
         }
     );
-
-    graphicsPipeline.GetShaderProgram().GetVertexInput().AddBinding(
-        0, sizeof(Vertex), 
-        VertexInput::LOCATION_0 | VertexInput::LOCATION_1 | VertexInput::LOCATION_2 | VertexInput::LOCATION_3, 
-        { offsetof(Vertex, pos), offsetof(Vertex, color), offsetof(Vertex, tex), offsetof(Vertex, normal) }
-    );
-
-    RenderPassInfo::Subpass subpass;
-    const RenderPass& rp = backend.RequestRenderPass(GetRenderPass(backend, subpass));
-    graphicsPipeline.SetRenderPass(rp.GetAPIObject());
-    graphicsPipeline.Create(backend.GetRenderContext(), state);
-
-    {
-        auto sem = backend.RequestSemaphore();
-        auto event = backend.RequestPiplineEvent();
-        auto fence = backend.RequestFence();
-    }
 
     INIT_BENCHMARK;
 
@@ -338,7 +331,7 @@ int main()
         }
 
         backend.BeginFrame();
-        RenderFrame(backend, graphicsPipeline, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
+        RenderFrame(backend, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
 
         /*for (int32_t i = 0; i < 12 * 3; i++) {
             float r = ((double)rand() / (RAND_MAX)) + 1;

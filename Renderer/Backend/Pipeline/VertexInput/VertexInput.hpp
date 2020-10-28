@@ -47,6 +47,18 @@ namespace Renderer
 			}
 		{ }
 
+		Hash GetHash()
+		{
+			Hasher h;
+			h.u32(vertexInputInfo.vertexBindingDescriptionCount);
+			h.Data(reinterpret_cast<uint32*>(bindingDescription), 
+				sizeof(VkVertexInputBindingDescription) * vertexInputInfo.vertexBindingDescriptionCount / 4);
+			h.u32(vertexInputInfo.vertexAttributeDescriptionCount);
+			h.Data(reinterpret_cast<uint32*>(bindingDescription), 
+				sizeof(VkPipelineVertexInputStateCreateInfo) * vertexInputInfo.vertexAttributeDescriptionCount / 4);
+			return h.Get();
+		}
+
 		FORCEINLINE void AddBindings(const std::initializer_list<VertexAttrib>& attribs, uint32 stride, InputRate inputRate = VERTEX_RATE)
 		{
 			uint32& bindingCount = vertexInputInfo.vertexBindingDescriptionCount;

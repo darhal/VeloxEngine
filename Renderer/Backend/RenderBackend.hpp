@@ -28,6 +28,8 @@
 #include <Renderer/Backend/Synchronization/Semaphore/Semaphore.hpp>
 #include <Renderer/Backend/Synchronization/Managers/EventManager.hpp>
 #include <Renderer/Backend/Synchronization/Event/Event.hpp>
+#include <Renderer/Backend/Pipeline/GraphicsPipeline.hpp>
+#include <Renderer/Backend/Pipeline/PipelineAllocator/PipelineAllocator.hpp>
 
 TRE_NS_START
 
@@ -136,6 +138,8 @@ namespace Renderer
 
 		DescriptorSetAllocator* RequestDescriptorSetAllocator(const DescriptorSetLayout& layout);
 
+		GraphicsPipeline& RequestPipeline(const ShaderProgram& program, const RenderPass& rp, const GraphicsState& state);
+
 		// Render pass and framebuffer functionalities:
 		const Framebuffer& RequestFramebuffer(const RenderPassInfo& info, const RenderPass* rp = NULL);
 
@@ -207,6 +211,7 @@ namespace Renderer
 		std::unordered_map<Hash, RenderPass>			 renderPasses;
 		FramebufferAllocator							 framebufferAllocator;
 		AttachmentAllocator								 transientAttachmentAllocator;
+		PipelineAllocator								 pipelineAllocator;
 		
 		PerFrame		perFrame[MAX_FRAMES];
 		HandlePool		objectsPool;

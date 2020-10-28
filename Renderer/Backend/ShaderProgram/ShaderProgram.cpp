@@ -116,6 +116,7 @@ void Renderer::ShaderProgram::Create(RenderBackend& renderBackend, const std::in
     std::unordered_set<uint32> seenDescriptorSets;
     std::unordered_map<std::string, VkPushConstantRange> pushConstants;
     uint32 offset = 0;
+    Hasher h;
 
     for (const auto& shaderStage : shaderStages) {
         auto shaderCode = TRE::Renderer::ReadShaderFile(shaderStage.path);
@@ -127,9 +128,10 @@ void Renderer::ShaderProgram::Create(RenderBackend& renderBackend, const std::in
         shaderStagesCreateInfo[shadersCount].flags  = 0;
         shaderStagesCreateInfo[shadersCount].stage  = VK_SHADER_STAGES[shaderStage.shaderStage];
         shaderStagesCreateInfo[shadersCount].module = shaderModules[shadersCount];
-        shaderStagesCreateInfo[shadersCount].pName  = DEFAULT_ENTRY_POINT;
+        shaderStagesCreateInfo[shadersCount].pName  = shaderStage.entryPoint;
         shaderStagesCreateInfo[shadersCount].pSpecializationInfo = NULL;
 
+        h.u64(shaderStage.GetHash());
         shadersCount++;
     }
 
@@ -139,6 +141,11 @@ void Renderer::ShaderProgram::Create(RenderBackend& renderBackend, const std::in
     }
 
     piplineLayout.Create(renderBackend);
+
+    // Hash everything:
+    h.u64(piplineLayout.GetHash());
+    h.u64(vertexInput.GetHash());
+    hash = h.Get();
 }
 
 TRE_NS_END

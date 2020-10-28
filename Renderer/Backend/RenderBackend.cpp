@@ -13,6 +13,7 @@ Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) :
     renderContext(*this),
     framebufferAllocator(&renderDevice),
     transientAttachmentAllocator(*this, true),
+    pipelineAllocator(this),
     msaaSamplerCount(1)
 {
     renderDevice.internal.renderContext = &renderContext.internal;
@@ -565,6 +566,11 @@ Renderer::DescriptorSetAllocator* Renderer::RenderBackend::RequestDescriptorSetA
     }
 
     return &res.first->second;
+}
+
+Renderer::GraphicsPipeline& Renderer::RenderBackend::RequestPipeline(const ShaderProgram& program, const RenderPass& rp, const GraphicsState& state)
+{
+   return pipelineAllocator.RequestPipline(rp, program, state);
 }
 
 void Renderer::RenderBackend::CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut)

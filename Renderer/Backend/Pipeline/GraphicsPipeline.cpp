@@ -5,9 +5,9 @@
 
 TRE_NS_START
 
-void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, const VertexInput& vertexInput, GraphicsState& state)
+void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, const VertexInput& vertexInput, const GraphicsState& state)
 {
-    if (state.viewportState.viewportCount == 0) {
+    /*if (state.viewportState.viewportCount == 0) {
         const Swapchain::SwapchainData& swapchainData = renderContext.GetSwapchain().GetSwapchainData();
         state.AddViewport({ 0.f, 0.f, (float)swapchainData.swapChainExtent.width, (float)swapchainData.swapChainExtent.height, 0.f, 1.f });
     }
@@ -15,7 +15,7 @@ void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, cons
     if (state.viewportState.scissorCount == 0) {
         const Swapchain::SwapchainData& swapchainData = renderContext.GetSwapchain().GetSwapchainData();
         state.AddScissor({ {0, 0}, swapchainData.swapChainExtent });
-    }
+    }*/
     
     VkDynamicState dynamicStates[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
@@ -48,8 +48,8 @@ void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, cons
     pipelineInfo.sType                  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.pNext                  = NULL;
     pipelineInfo.flags                  = 0;
-    pipelineInfo.stageCount             = (uint32)shaderProgram.GetShadersCount();
-    pipelineInfo.pStages                = shaderProgram.GetShaderStages(); //shaderStagesDesc.data();
+    pipelineInfo.stageCount             = (uint32)shaderProgram->GetShadersCount();
+    pipelineInfo.pStages                = shaderProgram->GetShaderStages(); //shaderStagesDesc.data();
     pipelineInfo.pVertexInputState      = &vertexInput.GetVertexInputDesc();
     pipelineInfo.pViewportState         = &state.viewportState;
     pipelineInfo.pInputAssemblyState    = &state.inputAssemblyState;
@@ -59,8 +59,8 @@ void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, cons
     pipelineInfo.pDepthStencilState     = &state.depthStencilState;
     pipelineInfo.pColorBlendState       = &state.colorBlendState;
     pipelineInfo.pDynamicState          = &dynamicState;
-    pipelineInfo.layout                 = shaderProgram.GetPipelineLayout().GetAPIObject();
-    pipelineInfo.renderPass             = this->renderPass;
+    pipelineInfo.layout                 = shaderProgram->GetPipelineLayout().GetAPIObject();
+    pipelineInfo.renderPass             = renderPass->GetAPIObject();
     pipelineInfo.subpass                = state.subpassIndex; //desc.subpass;
     pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE; //desc.basePipelineHandle;
     pipelineInfo.basePipelineIndex      = -1;//desc.basePipelineIndex;
@@ -70,9 +70,9 @@ void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, cons
     }
 }
 
-void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, GraphicsState& state)
+void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, const GraphicsState& state)
 {
-    this->Create(renderContext, shaderProgram.GetVertexInput(), state);
+    this->Create(renderContext, shaderProgram->GetVertexInput(), state);
 }
 
 TRE_NS_END

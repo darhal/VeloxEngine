@@ -20,6 +20,8 @@ namespace Renderer
 	class DescriptorSetLayout;
 	class RenderPass;
 	class Framebuffer;
+	class ShaderProgram;
+	class GraphicsState;
 	struct RenderPassInfo;
 
 	struct DescriptorSetDirty
@@ -76,6 +78,10 @@ namespace Renderer
 
 		void BindDescriptorSet(const GraphicsPipeline& pipeline, const std::initializer_list<VkDescriptorSet>& descriptors, 
 			const std::initializer_list<uint32>& dyncOffsets);
+
+		void SetGraphicsState(GraphicsState& state);
+
+		void BindShaderProgram(const ShaderProgram& program);
 
 
 		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
@@ -175,19 +181,22 @@ namespace Renderer
 		void RebindDescriptorSet(uint32 set);
 
 		void InitViewportScissor(const RenderPassInfo& info, const Framebuffer* fb);
+
+		void BindPipeline();
 	private:
 		ResouceBindings bindings;
 		DescriptorSetDirty dirty;
 		RenderBackend* renderBackend;
 
+		const ShaderProgram* program;
+		const GraphicsState* state;
 		const GraphicsPipeline* pipeline;
 		const RenderPass* renderPass;
 		const Framebuffer* framebuffer;
+		const ImageView* framebufferAttachments[MAX_ATTACHMENTS + 1] = {};
 
 		VkRect2D scissor;
 		VkViewport viewport;
-
-		const ImageView* framebufferAttachments[MAX_ATTACHMENTS + 1] = {};
 
 		VkDescriptorSet allocatedSets[MAX_DESCRIPTOR_SET];
 		VkCommandBuffer commandBuffer;
