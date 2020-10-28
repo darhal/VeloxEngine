@@ -47,15 +47,15 @@ namespace Renderer
 			}
 		{ }
 
-		Hash GetHash()
+		Hash GetHash() const
 		{
 			Hasher h;
 			h.u32(vertexInputInfo.vertexBindingDescriptionCount);
-			h.Data(reinterpret_cast<uint32*>(bindingDescription), 
-				sizeof(VkVertexInputBindingDescription) * vertexInputInfo.vertexBindingDescriptionCount / 4);
+			h.Data(reinterpret_cast<const uint32*>(bindingDescription), 
+				sizeof(VkVertexInputBindingDescription) * vertexInputInfo.vertexBindingDescriptionCount / sizeof(uint32));
 			h.u32(vertexInputInfo.vertexAttributeDescriptionCount);
-			h.Data(reinterpret_cast<uint32*>(bindingDescription), 
-				sizeof(VkPipelineVertexInputStateCreateInfo) * vertexInputInfo.vertexAttributeDescriptionCount / 4);
+			h.Data(reinterpret_cast<const uint32*>(bindingDescription), 
+				sizeof(VkPipelineVertexInputStateCreateInfo) * vertexInputInfo.vertexAttributeDescriptionCount / sizeof(uint32));
 			return h.Get();
 		}
 
@@ -101,8 +101,6 @@ namespace Renderer
 			uint slot = 0;
 			
 			for (uint8 i = 0; i < MAX_ATTRIBS && i < attribsCount; i++) {
-				// printf("TESTING: %d | %d\n", (uint8(1) << i), locations);
-
 				if (locations & (uint32(1) << i)) {
 					for (uint32 j = 0; j < attribsCount; j++) {
 						VkVertexInputAttributeDescription& attrib = attributeDescriptions[j];

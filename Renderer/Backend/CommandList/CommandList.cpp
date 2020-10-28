@@ -110,10 +110,10 @@ void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubp
 
     vkCmdBeginRenderPass(commandBuffer, &beginInfo, contents);
 
-    /*if (program && state) {
+    if (program && state) {
         pipeline = &renderBackend->RequestPipeline(*program, *renderPass, *state);
         this->BindPipeline(*pipeline);
-    }*/
+    }
 
     this->SetViewport(viewport);
     this->SetScissor(scissor);

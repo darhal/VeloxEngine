@@ -70,9 +70,13 @@ namespace Renderer
 			ShaderStages shaderStage;
 		};
 	public:
-		ShaderProgram() : shadersCount(0) {}
+		ShaderProgram(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages);
 
-		void Create(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages);
+		ShaderProgram(const ShaderProgram&) = delete;
+
+		ShaderProgram& operator=(const ShaderProgram&) = delete;
+
+		void Compile();
 
 		uint32 GetShadersCount() const { return shadersCount; }
 

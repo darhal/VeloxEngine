@@ -165,23 +165,12 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 )
 {
     using namespace TRE::Renderer;
-    static GraphicsPipeline* pipeline = NULL;
-
-    if (!pipeline) {
-        pipeline = new GraphicsPipeline(&program);
-
-        RenderPassInfo::Subpass subpass;
-        const RenderPass& rp = backend.RequestRenderPass(GetRenderPass(backend, subpass));
-        pipeline->SetRenderPass(&rp);
-        pipeline->Create(backend.GetRenderContext(), state);
-    }
 
     CommandBufferHandle cmd = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
     updateMVP(backend, uniformBuffer);
 
     cmd->BindShaderProgram(program);
     cmd->SetGraphicsState(state);
-    cmd->BindPipeline(*pipeline);
 
     RenderPassInfo::Subpass subpass;
     cmd->BeginRenderPass(GetRenderPass(backend, subpass));
@@ -293,30 +282,25 @@ int main()
     RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 3);
 
     GraphicsState state;
-    ShaderProgram program;
-
     auto& depthStencilState = state.GetDepthStencilState();
     depthStencilState.depthTestEnable = true;
     depthStencilState.depthWriteEnable = true;
     depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
-
     state.GetRasterizationState().cullMode = VK_CULL_MODE_NONE;
     state.GetMultisampleState().rasterizationSamples = VkSampleCountFlagBits(backend.GetMSAASamplerCount());
-
     state.SaveChanges();
 
+    ShaderProgram program = ShaderProgram(backend,
+        {
+            {"shaders/vert.spv", ShaderProgram::VERTEX_SHADER},
+            {"shaders/frag.spv", ShaderProgram::FRAGMENT_SHADER}
+        });
     program.GetVertexInput().AddBinding(
         0, sizeof(Vertex),
         VertexInput::LOCATION_0 | VertexInput::LOCATION_1 | VertexInput::LOCATION_2 | VertexInput::LOCATION_3,
         { offsetof(Vertex, pos), offsetof(Vertex, color), offsetof(Vertex, tex), offsetof(Vertex, normal) }
     );
-
-    program.Create(backend,
-        { 
-            {"shaders/vert.spv", ShaderProgram::VERTEX_SHADER}, 
-            {"shaders/frag.spv", ShaderProgram::FRAGMENT_SHADER} 
-        }
-    );
+    program.Compile();
 
     INIT_BENCHMARK;
 

@@ -39,7 +39,7 @@ void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, cons
         VK_DYNAMIC_STATE_LINE_WIDTH
     };
 
-    VkPipelineDynamicStateCreateInfo dynamicState{};
+    VkPipelineDynamicStateCreateInfo dynamicState;
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamicState.pNext = NULL;
     dynamicState.flags = 0;

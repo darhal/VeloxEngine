@@ -109,9 +109,9 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
     spvReflectDestroyShaderModule(&module);
 }
 
-void Renderer::ShaderProgram::Create(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages)
+Renderer::ShaderProgram::ShaderProgram(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages)
+    : shadersCount(0)
 {
-    shadersCount = 0;
     const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
     std::unordered_set<uint32> seenDescriptorSets;
     std::unordered_map<std::string, VkPushConstantRange> pushConstants;
@@ -141,8 +141,14 @@ void Renderer::ShaderProgram::Create(RenderBackend& renderBackend, const std::in
     }
 
     piplineLayout.Create(renderBackend);
+    hash = h.Get();
+}
 
+void Renderer::ShaderProgram::Compile()
+{
     // Hash everything:
+    Hasher h;
+    h.u64(hash);
     h.u64(piplineLayout.GetHash());
     h.u64(vertexInput.GetHash());
     hash = h.Get();
