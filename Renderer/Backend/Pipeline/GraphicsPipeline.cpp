@@ -34,17 +34,22 @@ void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, cons
         viewportState.pScissors = &scissor;
     }
     
-    VkDynamicState dynamicStates[] = {
+    VkDynamicState dynamicStatesArray[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
         VK_DYNAMIC_STATE_LINE_WIDTH
     };
+
+    for (uint32 i = 0; i < ARRAY_SIZE(dynamicStatesArray); i++) {
+        dynamicState |= 1 << dynamicStatesArray[i];
+    }
 
     VkPipelineDynamicStateCreateInfo dynamicState;
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamicState.pNext = NULL;
     dynamicState.flags = 0;
     dynamicState.dynamicStateCount = 2;
-    dynamicState.pDynamicStates = dynamicStates;
+    dynamicState.pDynamicStates = dynamicStatesArray;
     
     // Add shader specilization here:
     /*{

@@ -22,7 +22,8 @@ namespace Renderer
 	class GraphicsPipeline
 	{
 	public:
-		GraphicsPipeline(const ShaderProgram* program = NULL) : shaderProgram(program), renderPass(NULL), pipeline(VK_NULL_HANDLE) {}
+		GraphicsPipeline(const ShaderProgram* program = NULL) : shaderProgram(program), renderPass(NULL), pipeline(VK_NULL_HANDLE), dynamicState(0) 
+		{}
 
 		void Create(
 			const RenderContext& renderContext,
@@ -44,10 +45,14 @@ namespace Renderer
 		void SetRenderPass(const RenderPass* renderPass) { this->renderPass = renderPass; }
 
 		const RenderPass* GetRenderPass() const { return renderPass; }
+
+		bool IsStateDynamic(VkDynamicState state) const { return dynamicState & (1 << state); }
 	private:
 		const ShaderProgram*			shaderProgram;
 		const RenderPass*				renderPass;
 		VkPipeline						pipeline;
+
+		uint32 dynamicState;
 		// ShaderSpecilization				shaderConstants[MAX_SHADER_CONSTANTS];
 	};
 }

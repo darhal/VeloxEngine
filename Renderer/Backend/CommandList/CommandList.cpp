@@ -14,8 +14,8 @@
 TRE_NS_START
 
 Renderer::CommandBuffer::CommandBuffer(RenderBackend* backend, VkCommandBuffer buffer, Type type) :
-    renderBackend(backend), commandBuffer(buffer), type(type), allocatedSets{}, dirty{}, renderToSwapchain(false),
-    program(NULL), state(NULL), pipeline(NULL)
+    renderBackend(backend), commandBuffer(buffer), type(type), allocatedSets{}, dirty{},
+    program(NULL), state(NULL), pipeline(NULL), stateUpdate(false), renderToSwapchain(false)
 {
 }
 
@@ -110,13 +110,12 @@ void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubp
 
     vkCmdBeginRenderPass(commandBuffer, &beginInfo, contents);
 
-    if (program && state) {
-        pipeline = &renderBackend->RequestPipeline(*program, *renderPass, *state);
-        this->BindPipeline(*pipeline);
+    if (program && state && !stateUpdate) {
+        this->BindPipeline();
     }
 
-    this->SetViewport(viewport);
-    this->SetScissor(scissor);
+    // this->SetViewport(viewport);
+    // this->SetScissor(scissor);
     subpassIndex = 0;
 }
 
@@ -178,19 +177,6 @@ void Renderer::CommandBuffer::SetGraphicsState(GraphicsState& state)
 
     pipeline = NULL;
     this->state = &state;
-    bool changed = false;
-
-    if (state.viewportState.viewportCount == 0) {
-        const Swapchain::SwapchainData& swapchainData = renderBackend->GetRenderContext().GetSwapchain().GetSwapchainData();
-        state.AddViewport({ 0.f, 0.f, (float)swapchainData.swapChainExtent.width, (float)swapchainData.swapChainExtent.height, 0.f, 1.f });
-        changed = true;
-    }
-
-    if (state.viewportState.scissorCount == 0) {
-        const Swapchain::SwapchainData& swapchainData = renderBackend->GetRenderContext().GetSwapchain().GetSwapchainData();
-        state.AddScissor({ {0, 0}, swapchainData.swapChainExtent });
-        changed = true;
-    }
 }
 
 void Renderer::CommandBuffer::BindShaderProgram(const ShaderProgram& program)
@@ -768,7 +754,37 @@ void Renderer::CommandBuffer::BindPipeline()
         // TODO: think about the renderpass we just need a compatible one not one that is exactly fit
         // The one we have is the exact renderpass which will cause the creation of multiple PSO's 
         // that we can't afford the time for
+
+        if (stateUpdate) {
+            state->SaveChanges();
+        }
+
         this->BindPipeline(renderBackend->RequestPipeline(*program, *renderPass, *state));
+
+        if (pipeline->IsStateDynamic(VK_DYNAMIC_STATE_VIEWPORT)) {
+            this->SetViewport(viewport);
+        }
+
+        if (pipeline->IsStateDynamic(VK_DYNAMIC_STATE_SCISSOR)) {
+            this->SetScissor(scissor);
+        }
+
+        if (pipeline->IsStateDynamic(VK_DYNAMIC_STATE_LINE_WIDTH)) {
+            vkCmdSetLineWidth(commandBuffer, state->rasterizationState.lineWidth);
+        }
+
+        if (pipeline->IsStateDynamic(VK_DYNAMIC_STATE_DEPTH_BIAS)) {
+            vkCmdSetDepthBias(commandBuffer, state->rasterizationState.depthBiasConstantFactor, state->rasterizationState.depthBiasClamp, 
+                state->rasterizationState.depthBiasSlopeFactor);
+        }
+
+        if (pipeline->IsStateDynamic(VK_DYNAMIC_STATE_BLEND_CONSTANTS)) {
+            vkCmdSetBlendConstants(commandBuffer, state->colorBlendState.blendConstants);
+        }
+
+        if (pipeline->IsStateDynamic(VK_DYNAMIC_STATE_DEPTH_BOUNDS)) {
+            vkCmdSetDepthBounds(commandBuffer, state->depthStencilState.minDepthBounds, state->depthStencilState.maxDepthBounds);
+        }
     }
 }
 
@@ -777,6 +793,199 @@ void Renderer::CommandBufferDeleter::operator()(CommandBuffer* cmd)
     cmd->renderBackend->GetObjectsPool().commandBuffers.Free(cmd);
 }
 
+void Renderer::CommandBuffer::SetPrimitiveTopology(VkPrimitiveTopology topology, VkBool32 primitiveRestartEnable)
+{
+    ASSERT(!state);
+
+    state->inputAssemblyState.topology = topology;
+    state->inputAssemblyState.primitiveRestartEnable = primitiveRestartEnable;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetDepthClampEnable(VkBool32 depthClampEnable)
+{
+    ASSERT(!state);
+
+    state->rasterizationState.depthClampEnable = depthClampEnable;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetRasterizerDiscardEnable(VkBool32 rasterizerDiscardEnable)
+{
+    ASSERT(!state);
+
+    state->rasterizationState.rasterizerDiscardEnable = rasterizerDiscardEnable;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetPolygonMode(VkPolygonMode polygonMode)
+{
+    ASSERT(!state);
+
+    state->rasterizationState.polygonMode = polygonMode;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetCullMode(VkCullModeFlags cullMode)
+{
+    ASSERT(!state);
+
+    state->rasterizationState.cullMode = cullMode;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetFrontFrace(VkFrontFace frontFace)
+{
+    ASSERT(!state);
+
+    state->rasterizationState.frontFace = frontFace;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetDepthBias(VkBool32 depthBiasEnable, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor)
+{
+    ASSERT(!state);
+
+    state->rasterizationState.depthBiasEnable = depthBiasEnable;
+    state->rasterizationState.depthBiasConstantFactor = depthBiasConstantFactor;
+    state->rasterizationState.depthBiasClamp = depthBiasClamp;
+    state->rasterizationState.depthBiasSlopeFactor = depthBiasSlopeFactor;
+
+    if (!(pipeline && pipeline->IsStateDynamic(VK_DYNAMIC_STATE_DEPTH_BIAS))) {
+        stateUpdate = true;
+    }
+}
+
+void Renderer::CommandBuffer::SetLineWidth(float lineWidth)
+{
+    ASSERT(!state);
+
+    state->rasterizationState.lineWidth = lineWidth;
+
+    if (!(pipeline && pipeline->IsStateDynamic(VK_DYNAMIC_STATE_LINE_WIDTH))) {
+        stateUpdate = true;
+    }
+}
+
+void Renderer::CommandBuffer::SetDepthTest(VkBool32 depthTestEnable, VkBool32 depthWriteEnable)
+{
+    ASSERT(!state);
+
+    state->depthStencilState.depthTestEnable = depthTestEnable;
+    state->depthStencilState.depthWriteEnable = depthWriteEnable;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetDepthBounds(float minDepthBounds, float maxDepthBounds)
+{
+    ASSERT(!state);
+
+    state->depthStencilState.minDepthBounds = minDepthBounds;
+    state->depthStencilState.maxDepthBounds = maxDepthBounds;
+
+    if (!(pipeline && pipeline->IsStateDynamic(VK_DYNAMIC_STATE_DEPTH_BOUNDS))) {
+        stateUpdate = true;
+    }
+}
+
+void Renderer::CommandBuffer::SetDepthCompareOp(VkCompareOp depthCompareOp)
+{
+    ASSERT(!state);
+
+    state->depthStencilState.depthCompareOp = depthCompareOp;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::EnableDepthBoundsTest(VkBool32 depthBoundsTestEnable)
+{
+    ASSERT(!state);
+
+    state->depthStencilState.depthBoundsTestEnable = depthBoundsTestEnable;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::EnableStencilTest(VkBool32 stencilTestEnable)
+{
+    ASSERT(!state);
+
+    state->depthStencilState.stencilTestEnable = stencilTestEnable;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetStencilOpState(VkStencilOpState front, VkStencilOpState back)
+{
+    ASSERT(!state);
+
+    state->depthStencilState.front = front;
+    state->depthStencilState.back = back;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetLogicOp(VkBool32 logicOpEnable, VkLogicOp logicOp)
+{
+    ASSERT(!state);
+
+    state->colorBlendState.logicOpEnable = logicOpEnable;
+    state->colorBlendState.logicOpEnable = logicOpEnable;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetBlendConstants(float blendConstants[4])
+{
+    ASSERT(!state);
+
+    memcpy(state->colorBlendState.blendConstants, blendConstants, 4 * sizeof(float));
+
+    if (!(pipeline && pipeline->IsStateDynamic(VK_DYNAMIC_STATE_BLEND_CONSTANTS))) {
+        stateUpdate = true;
+    }
+}
+
+void Renderer::CommandBuffer::SetAttachmentBlendFactor(uint32 attach, VkBlendFactor srcColorBlendFactor, VkBlendFactor dstColorBlendFactor, 
+    VkBlendFactor srcAlphaBlendFactor, VkBlendFactor dstAlphaBlendFactor)
+{
+    ASSERT(!state);
+    ASSERT(attach > state->colorBlendState.attachmentCount);
+
+    state->colorBlendAttachmetns[attach].srcColorBlendFactor = srcColorBlendFactor;
+    state->colorBlendAttachmetns[attach].dstColorBlendFactor = dstColorBlendFactor;
+    state->colorBlendAttachmetns[attach].srcAlphaBlendFactor = srcAlphaBlendFactor;
+    state->colorBlendAttachmetns[attach].dstAlphaBlendFactor = dstAlphaBlendFactor;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetAttachmentBlendOp(uint32 attach, VkBlendOp colorBlendOp, VkBlendOp alphaBlendOp)
+{
+    ASSERT(!state);
+    ASSERT(attach > state->colorBlendState.attachmentCount);
+
+    state->colorBlendAttachmetns[attach].colorBlendOp = colorBlendOp;
+    state->colorBlendAttachmetns[attach].alphaBlendOp = alphaBlendOp;
+
+    stateUpdate = true;
+}
+
+void Renderer::CommandBuffer::SetAttachmentColorWriteMask(uint32 attach, VkColorComponentFlags colorWriteMask)
+{
+    ASSERT(!state);
+    ASSERT(attach > state->colorBlendState.attachmentCount);
+
+    state->colorBlendAttachmetns[attach].colorWriteMask = colorWriteMask;
+    
+    stateUpdate = true;
+}
+
 TRE_NS_END
-
-

@@ -575,7 +575,7 @@ Renderer::GraphicsPipeline& Renderer::RenderBackend::RequestPipeline(const Shade
 
 void Renderer::RenderBackend::CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut)
 {
-    shaderProgramOut->Create(*this, shaderStages);
+    // shaderProgramOut->Create(*this, shaderStages);
 }
 
 const Renderer::RenderPass& Renderer::RenderBackend::RequestRenderPass(const RenderPassInfo& info, bool compatible)

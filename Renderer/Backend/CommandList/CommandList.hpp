@@ -79,11 +79,12 @@ namespace Renderer
 		void BindDescriptorSet(const GraphicsPipeline& pipeline, const std::initializer_list<VkDescriptorSet>& descriptors, 
 			const std::initializer_list<uint32>& dyncOffsets);
 
-		void SetGraphicsState(GraphicsState& state);
-
 		void BindShaderProgram(const ShaderProgram& program);
 
+		// Graphics State functions:
+		void SetGraphicsState(GraphicsState& state);
 
+		// Uniform buffers, textures, input attachments, etc
 		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
 
 		void SetUniformBuffer(uint32 set, uint32 binding, const RingBuffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
@@ -98,8 +99,8 @@ namespace Renderer
 
 		void SetInputAttachments(uint32 set, uint32 startBinding = 0);
 
-
 		void PushConstants(ShaderStagesFlags stages, const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
+
 
 		void CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, DeviceSize size, DeviceSize srcOffset = 0, DeviceSize dstOffset = 0);
 
@@ -175,6 +176,49 @@ namespace Renderer
 		FORCEINLINE const RenderPass* GetRenderPass() { return renderPass; }
 
 		FORCEINLINE const Framebuffer* GetFramebuffer() { return framebuffer; }
+
+		// Input Assembly
+		void SetPrimitiveTopology(VkPrimitiveTopology topology, VkBool32 primitiveRestartEnable);
+
+		// Rasterization
+		void SetDepthClampEnable(VkBool32 depthClampEnable);
+
+		void SetRasterizerDiscardEnable(VkBool32 rasterizerDiscardEnable);
+
+		void SetPolygonMode(VkPolygonMode polygonMode);
+
+		void SetCullMode(VkCullModeFlags cullMode);
+
+		void SetFrontFrace(VkFrontFace frontFace);
+
+		void SetDepthBias(VkBool32 depthBiasEnable, float depthBiasConstantFactor = 0.f, float depthBiasClamp = 0.f, float depthBiasSlopeFactor = 0.f);
+
+		void SetLineWidth(float lineWidth = 1.f);
+
+		// Depth Stencil state
+		void SetDepthTest(VkBool32 depthTestEnable, VkBool32 depthWriteEnable);
+
+		void SetDepthBounds(float minDepthBounds, float maxDepthBounds);
+
+		void SetDepthCompareOp(VkCompareOp depthCompareOp);
+
+		void EnableDepthBoundsTest(VkBool32 depthBoundsTestEnable);
+
+		void EnableStencilTest(VkBool32 stencilTestEnable);
+
+		void SetStencilOpState(VkStencilOpState front, VkStencilOpState back);
+
+		// Blend state
+		void SetLogicOp(VkBool32 logicOpEnable, VkLogicOp logicOp = VK_LOGIC_OP_SET);
+
+		void SetBlendConstants(float blendConstants[4]);
+
+		void SetAttachmentBlendFactor(uint32 attach, VkBlendFactor srcColorBlendFactor, VkBlendFactor dstColorBlendFactor,
+			VkBlendFactor srcAlphaBlendFactor, VkBlendFactor dstAlphaBlendFactor);
+
+		void SetAttachmentBlendOp(uint32 attach, VkBlendOp colorBlendOp, VkBlendOp alphaBlendOp);
+
+		void SetAttachmentColorWriteMask(uint32 attach, VkColorComponentFlags colorWriteMask);
 	private:
 		void UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings);
 
@@ -192,8 +236,8 @@ namespace Renderer
 		DescriptorSetDirty dirty;
 		RenderBackend* renderBackend;
 
+		GraphicsState* state;
 		const ShaderProgram* program;
-		const GraphicsState* state;
 		const GraphicsPipeline* pipeline;
 		const RenderPass* renderPass;
 		const Framebuffer* framebuffer;
@@ -209,6 +253,7 @@ namespace Renderer
 		uint32 subpassIndex;
 
 		bool renderToSwapchain;
+		bool stateUpdate;
 	};
 
 	typedef CommandBuffer CommandList;

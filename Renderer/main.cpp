@@ -92,9 +92,6 @@ const std::vector<uint16_t> indices = {
 };
 
 Vertex vertecies[12 * 3];
-uint32 isColor = 0;
-
-uint32 originalColor = 1;
 
 #define CUBE
 
@@ -171,6 +168,11 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 
     cmd->BindShaderProgram(program);
     cmd->SetGraphicsState(state);
+
+    cmd->SetDepthTest(true, true);
+    cmd->SetDepthCompareOp(VK_COMPARE_OP_LESS);
+    cmd->SetCullMode(VK_CULL_MODE_NONE);
+    state.GetMultisampleState().rasterizationSamples = VkSampleCountFlagBits(backend.GetMSAASamplerCount());
 
     RenderPassInfo::Subpass subpass;
     cmd->BeginRenderPass(GetRenderPass(backend, subpass));
@@ -282,15 +284,15 @@ int main()
     RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 3);
 
     GraphicsState state;
-    auto& depthStencilState = state.GetDepthStencilState();
+    /*auto& depthStencilState = state.GetDepthStencilState();
     depthStencilState.depthTestEnable = true;
     depthStencilState.depthWriteEnable = true;
     depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
     state.GetRasterizationState().cullMode = VK_CULL_MODE_NONE;
     state.GetMultisampleState().rasterizationSamples = VkSampleCountFlagBits(backend.GetMSAASamplerCount());
-    state.SaveChanges();
+    state.SaveChanges();*/
 
-    ShaderProgram program = ShaderProgram(backend,
+    ShaderProgram program(backend,
         {
             {"shaders/vert.spv", ShaderProgram::VERTEX_SHADER},
             {"shaders/frag.spv", ShaderProgram::FRAGMENT_SHADER}
@@ -305,8 +307,6 @@ int main()
     INIT_BENCHMARK;
 
     time_t lasttime = time(NULL);
-    isColor = 0;
-
     // TODO: shader specilization constants 
 
     while (window.isOpen()) {
@@ -316,14 +316,13 @@ int main()
             backend.GetRenderContext().GetSwapchain().UpdateSwapchain();
             continue;
         } else if (ev.Type == TRE::Event::TE_KEY_UP) {
-            if (ev.Key.Code == TRE::Key::C)
-                isColor = 1;
-            else if (ev.Key.Code == TRE::Key::T)
-                isColor = 0;
-            else if (ev.Key.Code == TRE::Key::O)
-                originalColor = 1;
-            else if (ev.Key.Code == TRE::Key::N)
-                originalColor = 0;
+            if (ev.Key.Code == TRE::Key::L) {
+                state.GetRasterizationState().polygonMode = VK_POLYGON_MODE_LINE;
+                state.SaveChanges();
+            } else if (ev.Key.Code == TRE::Key::F) {
+                state.GetRasterizationState().polygonMode = VK_POLYGON_MODE_FILL;
+                state.SaveChanges();
+            }
         }
 
         backend.BeginFrame();
