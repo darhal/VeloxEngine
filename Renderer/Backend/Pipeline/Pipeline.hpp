@@ -7,6 +7,7 @@
 #include <Renderer/Backend/Pipeline/VertexInput/VertexInput.hpp>
 #include <Renderer/Backend/Pipeline/PipelineLayout/PipelineLayout.hpp> 
 #include <Renderer/Backend/RenderPass/RenderPass.hpp>
+#include <Renderer/Backend/Pipeline/Pipeline.hpp>
 
 TRE_NS_START
 
@@ -14,25 +15,20 @@ namespace Renderer
 {
 	class RenderContext;
 
-	struct ShaderSpecilization
+	enum class PipelineType
 	{
-
+		GRAPHICS = 0,
+		COMPUTE
 	};
 
-	class GraphicsPipeline
+	class Pipeline
 	{
 	public:
-		GraphicsPipeline(const ShaderProgram* program = NULL) : shaderProgram(program), renderPass(NULL), pipeline(VK_NULL_HANDLE), dynamicState(0) 
-		{}
-
-		void Create(
-			const RenderContext& renderContext,
-			const VertexInput& vertexInput, 
-			const GraphicsState& state);
-
-		void Create(
-			const RenderContext& renderContext,
-			const GraphicsState& state);
+		// Generic:
+		Pipeline(PipelineType type, const ShaderProgram* program = NULL) :
+			pipelineType(type), pipeline(VK_NULL_HANDLE), shaderProgram(program), renderPass(NULL), dynamicState(0)
+		{
+		}
 
 		FORCEINLINE VkPipeline GetAPIObject() const { return pipeline; }
 
@@ -42,17 +38,34 @@ namespace Renderer
 
 		const ShaderProgram* GetShaderProgram() const { return shaderProgram; }
 
+		PipelineType GetPipelineType() const { return pipelineType; }
+
+		// Compute:
+		void Create(const RenderDevice& device);
+
+		// Graphics:
+		void Create(
+			const RenderContext& renderContext,
+			const VertexInput& vertexInput, 
+			const GraphicsState& state);
+
+		void Create(
+			const RenderContext& renderContext,
+			const GraphicsState& state);
+
 		void SetRenderPass(const RenderPass* renderPass) { this->renderPass = renderPass; }
 
 		const RenderPass* GetRenderPass() const { return renderPass; }
 
 		bool IsStateDynamic(VkDynamicState state) const { return dynamicState & (1 << state); }
-	private:
-		const ShaderProgram*			shaderProgram;
-		const RenderPass*				renderPass;
-		VkPipeline						pipeline;
+	protected:
+		const ShaderProgram* shaderProgram;
+		VkPipeline			 pipeline;
+		PipelineType		 pipelineType;
+		
+		const RenderPass*	renderPass;
+		uint32				dynamicState;
 
-		uint32 dynamicState;
 		// ShaderSpecilization				shaderConstants[MAX_SHADER_CONSTANTS];
 	};
 }

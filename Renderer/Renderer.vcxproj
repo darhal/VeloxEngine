@@ -227,7 +227,7 @@
     <ClInclude Include="Backend\MemoryAllocator\MemoryAllocator.hpp" />
     <ClInclude Include="Backend\RenderContext\RenderContext.hpp" />
     <ClInclude Include="Backend\Descriptors\DescriptorSetLayout.hpp" />
-    <ClInclude Include="Backend\Pipeline\GraphicsPipeline.hpp" />
+    <ClInclude Include="Backend\Pipeline\Pipeline.hpp" />
     <ClInclude Include="Backend\RenderDevice\RenderDevice.hpp" />
     <ClInclude Include="Backend\WindowSurface\WindowSurface.hpp" />
     <ClInclude Include="Core\Allocators\StackAllocator.hpp" />
@@ -499,7 +499,7 @@
     <ClCompile Include="Backend\Pipeline\PipelineAllocator\PipelineAllocator.cpp" />
     <ClCompile Include="Backend\Pipeline\PipelineLayout\PipelineLayout.cpp" />
     <ClCompile Include="Backend\RenderContext\RenderContext.cpp" />
-    <ClCompile Include="Backend\Pipeline\GraphicsPipeline.cpp" />
+    <ClCompile Include="Backend\Pipeline\Pipeline.cpp" />
     <ClCompile Include="Backend\RenderDevice\RenderDevice.cpp" />
     <ClCompile Include="Backend\RenderPass\AttachmentAllocator.cpp" />
     <ClCompile Include="Backend\RenderPass\Framebuffer.cpp" />

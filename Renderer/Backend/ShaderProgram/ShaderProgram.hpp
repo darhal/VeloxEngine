@@ -102,7 +102,7 @@ namespace Renderer
 
 		uint32 shadersCount;
 
-		friend class GraphicsPipeline;
+		friend class Pipeline;
 	};
 }
 

@@ -1,11 +1,27 @@
-#include "GraphicsPipeline.hpp"
+#include "Pipeline.hpp"
 #include <Renderer/Backend/Common/Utils.hpp>
 #include <Renderer/Backend/RenderContext/RenderContext.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 
 TRE_NS_START
 
-void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, const VertexInput& vertexInput, const GraphicsState& state)
+// Compute:
+
+void Renderer::Pipeline::Create(const RenderDevice& device)
+{
+    VkComputePipelineCreateInfo info;
+    info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    info.pNext = NULL;
+    info.flags = 0;
+    info.stage = *shaderProgram->GetShaderStages();
+    info.layout = shaderProgram->GetPipelineLayout().GetAPIObject();
+    info.basePipelineHandle = VK_NULL_HANDLE;
+    info.basePipelineIndex = -1;
+
+    vkCreateComputePipelines(device.GetDevice(), VK_NULL_HANDLE, 1, &info, NULL, &pipeline);
+}
+
+void Renderer::Pipeline::Create(const RenderContext& renderContext, const VertexInput& vertexInput, const GraphicsState& state)
 {
     VkViewport viewport;
     VkRect2D scissor;
@@ -94,7 +110,7 @@ void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, cons
     printf("Creating new pipline\n");
 }
 
-void Renderer::GraphicsPipeline::Create(const RenderContext& renderContext, const GraphicsState& state)
+void Renderer::Pipeline::Create(const RenderContext& renderContext, const GraphicsState& state)
 {
     this->Create(renderContext, shaderProgram->GetVertexInput(), state);
 }

@@ -16,12 +16,12 @@ namespace Renderer
 	class ImageView;
 	class Sampler;
 	class RenderBackend;
-	class GraphicsPipeline;
 	class DescriptorSetLayout;
 	class RenderPass;
 	class Framebuffer;
 	class ShaderProgram;
 	class GraphicsState;
+	class Pipeline;
 	struct RenderPassInfo;
 
 	struct DescriptorSetDirty
@@ -54,6 +54,9 @@ namespace Renderer
 
 		void End();
 
+		// Compute dispatch:
+		void Dispatch(uint32 groupX, uint32 groupY, uint32 groupZ);
+
 		void SetViewport(const VkViewport& viewport);
 
 		void SetScissor(const VkRect2D& scissor);
@@ -66,7 +69,7 @@ namespace Renderer
 
 		void NextRenderPass(VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
-		void BindPipeline(const GraphicsPipeline& pipeline);
+		void BindPipeline(const Pipeline& pipeline);
 
 		void BindVertexBuffer(const Buffer& buffer, DeviceSize offset = 0);
 
@@ -76,13 +79,14 @@ namespace Renderer
 
 		void Draw(uint32 vertexCount, uint32 instanceCount = 1, uint32 firstVertex = 0, uint32 firstInstance = 0);
 
-		void BindDescriptorSet(const GraphicsPipeline& pipeline, const std::initializer_list<VkDescriptorSet>& descriptors, 
+		void BindDescriptorSet(const Pipeline& pipeline, const std::initializer_list<VkDescriptorSet>& descriptors, 
 			const std::initializer_list<uint32>& dyncOffsets);
 
 		void BindShaderProgram(const ShaderProgram& program);
 
 		// Graphics State functions:
 		void SetGraphicsState(GraphicsState& state);
+
 
 		// Uniform buffers, textures, input attachments, etc
 		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
@@ -238,7 +242,7 @@ namespace Renderer
 
 		GraphicsState* state;
 		const ShaderProgram* program;
-		const GraphicsPipeline* pipeline;
+		const Pipeline* pipeline;
 		const RenderPass* renderPass;
 		const Framebuffer* framebuffer;
 		const ImageView* framebufferAttachments[MAX_ATTACHMENTS + 1] = {};

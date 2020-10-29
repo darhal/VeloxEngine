@@ -28,7 +28,7 @@
 #include <Renderer/Backend/Synchronization/Semaphore/Semaphore.hpp>
 #include <Renderer/Backend/Synchronization/Managers/EventManager.hpp>
 #include <Renderer/Backend/Synchronization/Event/Event.hpp>
-#include <Renderer/Backend/Pipeline/GraphicsPipeline.hpp>
+#include <Renderer/Backend/Pipeline/Pipeline.hpp>
 #include <Renderer/Backend/Pipeline/PipelineAllocator/PipelineAllocator.hpp>
 
 TRE_NS_START
@@ -138,7 +138,9 @@ namespace Renderer
 
 		DescriptorSetAllocator* RequestDescriptorSetAllocator(const DescriptorSetLayout& layout);
 
-		GraphicsPipeline& RequestPipeline(const ShaderProgram& program, const RenderPass& rp, const GraphicsState& state);
+		Pipeline& RequestPipeline(const ShaderProgram& program, const RenderPass& rp, const GraphicsState& state);
+
+		Pipeline& RequestPipeline(const ShaderProgram& program);
 
 		// Render pass and framebuffer functionalities:
 		const Framebuffer& RequestFramebuffer(const RenderPassInfo& info, const RenderPass* rp = NULL);

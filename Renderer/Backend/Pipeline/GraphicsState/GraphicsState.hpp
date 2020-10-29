@@ -117,7 +117,7 @@ namespace Renderer
 
 		uint32								subpassIndex;
 
-		friend class GraphicsPipeline;
+		friend class Pipeline;
 		friend class CommandBuffer;
 	};
 }

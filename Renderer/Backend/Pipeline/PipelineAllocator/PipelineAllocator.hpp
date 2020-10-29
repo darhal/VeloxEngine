@@ -2,7 +2,7 @@
 
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
-#include <Renderer/Backend/Pipeline/GraphicsPipeline.hpp>
+#include <Renderer/Backend/Pipeline/Pipeline.hpp>
 #include <Renderer/Core/Hashmap/TemporaryHashmap.hpp>
 
 TRE_NS_START
@@ -19,14 +19,16 @@ namespace Renderer
 	public:
 		PipelineAllocator(RenderBackend* backend);
 
-		GraphicsPipeline& RequestPipline(const RenderPass& rp, const ShaderProgram& program, const GraphicsState& state);
+		Pipeline& RequestPipline(const ShaderProgram& program, const RenderPass& rp, const GraphicsState& state);
+
+		Pipeline& RequestPipline(const ShaderProgram& program);
 
 		void BeginFrame();
 
 		void Clear();
 	private:
 		RenderBackend* renderBackend;
-		std::unordered_map<Hash, GraphicsPipeline> pipelineCache;
+		std::unordered_map<Hash, Pipeline> pipelineCache;
 	};
 }
 

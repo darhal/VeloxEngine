@@ -7,20 +7,37 @@ Renderer::PipelineAllocator::PipelineAllocator(RenderBackend* backend) : renderB
 {
 }
 
-Renderer::GraphicsPipeline& Renderer::PipelineAllocator::RequestPipline(const RenderPass& rp, const ShaderProgram& program, const GraphicsState& state)
+Renderer::Pipeline& Renderer::PipelineAllocator::RequestPipline(const ShaderProgram& program, const RenderPass& rp, const GraphicsState& state)
 {
+	// Graphics pipeline:
 	Hasher h;
 	h.u64(rp.GetHash());
 	h.u64(program.GetHash());
 	h.u64(state.GetHash());
 
-	auto ret = pipelineCache.emplace(std::make_pair(h.Get(), &program));
-	GraphicsPipeline& pipline = ret.first->second;
+	auto ret = pipelineCache.emplace(std::piecewise_construct, std::forward_as_tuple(h.Get()), std::forward_as_tuple(PipelineType::GRAPHICS, &program));
+	Pipeline& pipline = ret.first->second;
 
 	if (ret.second) {
 		pipline.SetRenderPass(&rp);
 		// pipline.SetShaderProgram(&program);
 		pipline.Create(renderBackend->GetRenderContext(), state);
+	}
+
+	return pipline;
+}
+
+Renderer::Pipeline& Renderer::PipelineAllocator::RequestPipline(const ShaderProgram& program)
+{
+	// Compute pipeline:
+	Hasher h;
+	h.u64(program.GetHash());
+
+	auto ret = pipelineCache.emplace(std::piecewise_construct, std::forward_as_tuple(h.Get()), std::forward_as_tuple(PipelineType::COMPUTE, &program));
+	Pipeline& pipline = ret.first->second;
+
+	if (ret.second) {
+		pipline.Create(renderBackend->GetRenderDevice());
 	}
 
 	return pipline;
