@@ -18,7 +18,8 @@ namespace Renderer
 	enum class PipelineType
 	{
 		GRAPHICS = 0,
-		COMPUTE
+		COMPUTE,
+		RAY_TRACE,
 	};
 
 	class Pipeline

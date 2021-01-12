@@ -5,8 +5,58 @@
 
 TRE_NS_START
 
-// Compute:
+// Ray-tracing:
+void Renderer::Pipeline::Create(const RenderDevice& device)
+{
+    VkDynamicState dynamicStatesArray[] = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
+        VK_DYNAMIC_STATE_LINE_WIDTH
+    };
 
+    for (uint32 i = 0; i < ARRAY_SIZE(dynamicStatesArray); i++) {
+        dynamicState |= 1 << dynamicStatesArray[i];
+    }
+
+    VkPipelineDynamicStateCreateInfo dynamicState;
+    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicState.pNext = NULL;
+    dynamicState.flags = 0;
+    dynamicState.dynamicStateCount = 2;
+    dynamicState.pDynamicStates = dynamicStatesArray;
+
+    VkRayTracingPipelineInterfaceCreateInfoKHR pipelineInterface;
+    pipelineInterface.pNext = NULL;
+    pipelineInterface.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_INTERFACE_CREATE_INFO_KHR;
+    pipelineInterface.maxPipelineRayPayloadSize = 1; // TODO: change this
+    pipelineInterface.maxPipelineRayHitAttributeSize = 1; // TODO: change this
+
+
+    VkRayTracingPipelineCreateInfoKHR rayTraceInfo;
+    rayTraceInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
+    rayTraceInfo.pNext = NULL;
+    rayTraceInfo.flags = 0;
+    rayTraceInfo.stageCount = (uint32)shaderProgram->GetShadersCount();
+    rayTraceInfo.pStages = shaderProgram->GetShaderStages(); //shaderStagesDesc.data();
+    rayTraceInfo.layout = shaderProgram->GetPipelineLayout().GetAPIObject();
+    rayTraceInfo.pDynamicState = &dynamicState;
+
+    rayTraceInfo.maxPipelineRayRecursionDepth = 2; // TODO: change
+
+    //uint32_t                                    groupCount;
+    //const VkRayTracingShaderGroupCreateInfoKHR* pGroups;
+    //const VkPipelineLibraryCreateInfoKHR*       pLibraryInfo;
+
+    rayTraceInfo.pLibraryInterface = &pipelineInterface;
+    
+    
+    rayTraceInfo.basePipelineHandle = VK_NULL_HANDLE; //desc.basePipelineHandle;
+    rayTraceInfo.basePipelineIndex = -1;//desc.basePipelineIndex;
+
+    vkCreateRayTracingPipelinesKHR(device.GetDevice(), NULL, VK_NULL_HANDLE, 1, &rayTraceInfo, NULL, &pipeline);
+}
+
+// Compute:
 void Renderer::Pipeline::Create(const RenderDevice& device)
 {
     VkComputePipelineCreateInfo info;
@@ -21,6 +71,7 @@ void Renderer::Pipeline::Create(const RenderDevice& device)
     vkCreateComputePipelines(device.GetDevice(), VK_NULL_HANDLE, 1, &info, NULL, &pipeline);
 }
 
+// Graphics
 void Renderer::Pipeline::Create(const RenderContext& renderContext, const VertexInput& vertexInput, const GraphicsState& state)
 {
     VkViewport viewport;
