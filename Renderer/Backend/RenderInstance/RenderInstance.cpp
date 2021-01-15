@@ -12,7 +12,7 @@ Renderer::RenderInstance::~RenderInstance()
 
 }
 
-int32 Renderer::RenderInstance::CreateRenderInstance()
+int32 Renderer::RenderInstance::CreateRenderInstance(const char** extensions, uint32 extCount, const char** layers, uint32 layerCount)
 {
     int32 err_code; 
     err_code = CreateInstance(&internal.instance);
@@ -26,9 +26,47 @@ void Renderer::RenderInstance::DestroyRenderInstance()
     DestroyInstance(internal.instance);
 }
 
-int32 Renderer::RenderInstance::CreateInstance(VkInstance* p_instance)
+int32 Renderer::RenderInstance::CreateInstance(VkInstance* p_instance, const char** extensions, uint32 extCount, const char** layers, uint32 layerCount)
 {
     ASSERT(p_instance == NULL);
+
+    this->FetchAvailbleInstanceExtensions();
+
+    StaticVector<const char*> extensionsArr;
+    StaticVector<const char*> layersArr;
+
+    for (const auto& ext : VK_REQ_EXT) {
+        extensionsArr.PushBack(ext);
+        Hash h = Utils::Data(ext, strlen(ext));
+
+        if (availbleInstExtensions.find(h) == availbleInstExtensions.end()) {
+            TRE_LOGE("Can't load mandatory extension '%s' not supported by VK instance", ext);
+            return -1;
+        }
+
+        deviceExtensions.emplace();
+    }
+
+    for (uint32 i = 0; i < extCount; i++) {
+        extensionsArr.PushBack(extensions[i]);
+        Hash h = Utils::Data(extensions[i], strlen(extensions[i]));
+
+        if (availbleInstExtensions.find(h) == availbleInstExtensions.end()) {
+            TRE_LOGW("Skipping extension '%s' not supported by VK instance", extensions[i]);
+            continue;
+        }
+
+        deviceExtensions.emplace();
+    }
+
+    for (const auto& ext : VK_REQ_LAYERS) {
+        layersArr.PushBack(ext);
+    }
+
+    for (uint32 i = 0; i < layerCount; i++) {
+        layersArr.PushBack(layers[i]);
+    }
+
 
     VkApplicationInfo appInfo{};
     appInfo.sType               = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -43,12 +81,12 @@ int32 Renderer::RenderInstance::CreateInstance(VkInstance* p_instance)
     createInfo.pApplicationInfo         = &appInfo;
 
     // Extensions:
-    createInfo.enabledExtensionCount    = (uint32)VK_REQ_EXT.size();
-    createInfo.ppEnabledExtensionNames  = VK_REQ_EXT.begin();
+    createInfo.enabledExtensionCount    = (uint32)extensionsArr.Size();//(uint32)VK_REQ_EXT.size();
+    createInfo.ppEnabledExtensionNames  = extensionsArr.begin();//VK_REQ_EXT.begin();
 
     // Layers:
-    createInfo.enabledLayerCount        = (uint32)VK_REQ_LAYERS.size();
-    createInfo.ppEnabledLayerNames      = VK_REQ_LAYERS.begin();
+    createInfo.enabledLayerCount        = (uint32)layersArr.Size();     //(uint32)VK_REQ_LAYERS.size();
+    createInfo.ppEnabledLayerNames      = layersArr.begin();    //VK_REQ_LAYERS.begin();
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 
@@ -58,11 +96,25 @@ int32 Renderer::RenderInstance::CreateInstance(VkInstance* p_instance)
         createInfo.pNext = NULL;
     }
 
-    if (vkCreateInstance(&createInfo, NULL, p_instance) != VK_SUCCESS) {
-        return -1;
-    }
+    //if (vkCreateInstance(&createInfo, NULL, p_instance) != VK_SUCCESS) {
+    //    return -1;
+    //}
+    CALL_VK(vkCreateInstance(&createInfo, NULL, p_instance));
 
     return 0;
+}
+
+void Renderer::RenderInstance::FetchAvailbleInstanceExtensions()
+{
+
+    uint32 extensionsCount;
+    StaticVector<VkExtensionProperties, 256> extensionsAvailble;
+    vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount, extensionsAvailble.begin());
+    extensionsAvailble.Resize(extensionsCount);
+
+    for (const auto& ext : extensionsAvailble) {
+        availbleInstExtensions.emplace(Utils::Data(ext.extensionName, strlen(ext.extensionName)));
+    }
 }
 
 void Renderer::RenderInstance::DestroyInstance(VkInstance p_instance)

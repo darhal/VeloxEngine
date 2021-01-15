@@ -33,3 +33,5 @@
     std::cout << "\nExecution of '" << name << "' took : " << duration.count() << " microsecond(s)" << std::endl; \
 
 #include <vulkan/vulkan.h>
+//TODO: checks on OS
+#include <vulkan/vulkan_win32.h>

@@ -8,8 +8,9 @@
 
 TRE_NS_START
 
-Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) : 
-    stagingManager{ &renderDevice.internal }, 
+Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) :
+    stagingManager{ &renderDevice.internal },
+    window(wnd),
     renderContext(*this),
     framebufferAllocator(&renderDevice),
     transientAttachmentAllocator(*this, true),
@@ -18,11 +19,22 @@ Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) :
 {
     renderDevice.internal.renderContext = &renderContext.internal;
     renderContext.internal.renderDevice = &renderDevice.internal;
+}
+
+void Renderer::RenderBackend::InitInstance(uint32 usage)
+{
+    StaticVector<const char*> deviceExt;
+
+    if (usage & RAY_TRACING) {
+        for (const auto& ext : DEV_EXTENSIONS[GetSetBit(RAY_TRACING)]) {
+            deviceExt.PushBack(ext);
+        }
+    }
 
     renderInstance.CreateRenderInstance();
 
-    renderContext.CreateRenderContext(wnd, renderInstance.internal);
-    renderDevice.CreateRenderDevice(renderInstance.internal, renderContext.internal);
+    renderContext.CreateRenderContext(window, renderInstance.internal);
+    renderDevice.CreateRenderDevice(renderInstance.internal, renderContext.internal, deviceExt.begin(), deviceExt.Size());
     renderContext.InitRenderContext(renderInstance.internal, renderDevice.internal);
 
     stagingManager.Init();

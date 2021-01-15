@@ -38,6 +38,11 @@ namespace Renderer
 	class RENDERER_API RenderBackend
 	{
 	public:
+		enum
+		{
+			RAY_TRACING = 0x1,
+		};
+
 		struct PerFrame
 		{
 			CommandPool commandPools[MAX_THREADS][(uint32)CommandBuffer::Type::MAX];
@@ -87,6 +92,8 @@ namespace Renderer
 		RenderBackend(TRE::Window* wnd);
 
 		~RenderBackend();
+
+		void InitInstance(uint32 usage);
 
 		void BeginFrame();
 
@@ -202,6 +209,7 @@ namespace Renderer
 		RenderInstance	renderInstance;
 		RenderDevice	renderDevice;
 		RenderContext	renderContext;
+		TRE::Window*	window;
 
 		MemoryAllocator	 gpuMemoryAllocator;
 		StagingManager	 stagingManager;

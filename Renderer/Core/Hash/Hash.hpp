@@ -10,6 +10,17 @@ namespace Renderer
 	{
 		using Hash = uint64;
 
+		// TODO: put this some where where it fits
+		template<typename T>
+		FORCEINLINE static Hash Data(const T* data_, size_t size)
+		{
+			Hash h = 0xcbf29ce484222325ull;
+			size /= sizeof(*data_);
+			for (size_t i = 0; i < size; i++)
+				h = (h * 0x100000001b3ull) ^ data_[i];
+			return h;
+		}
+
 		class Hasher
 		{
 		public:

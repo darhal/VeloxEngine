@@ -76,6 +76,17 @@ namespace Renderer
 
         return buffer;
     }
+
+    FORCEINLINE uint32 GetSetBit(uint32 bitmask)
+    {
+        uint32 i = 0;
+
+        while(!(bitmask & (1 << ++i))) 
+        {
+        }
+
+        return i - 1;
+    }
 }
 
 TRE_NS_END

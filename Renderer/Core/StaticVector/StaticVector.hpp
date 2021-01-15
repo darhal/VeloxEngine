@@ -80,6 +80,11 @@ namespace Renderer
 				this->Clear();
 			}
 
+			void Resize(uint32 sz)
+			{
+				size = sz;
+			}
+
 			void Clear()
 			{
 				auto data = this->Data();

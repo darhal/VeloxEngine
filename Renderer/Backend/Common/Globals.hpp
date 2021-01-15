@@ -13,7 +13,7 @@
 #include <Renderer/Core/Handle/Handle.hpp>
 #include <Renderer/Core/Hash/Hashable.hpp>
 #include <Renderer/Core/StaticVector/StaticVector.hpp>
-
+#include "Utils.hpp"
 
 TRE_NS_START
 
@@ -21,9 +21,17 @@ class Window;
 
 namespace Renderer
 {
+#define CALL_VK(cmd) \
+		{\
+			VkResult r;\
+			if ((r = cmd) != VK_SUCCESS) {\
+				printf("[VK ERROR]: %s\n", GetVulkanResultString(r));\
+			}\
+		}\
+
 	const std::initializer_list<const char*> VK_REQ_EXT = {
-		"VK_KHR_surface",
-		"VK_KHR_win32_surface",
+		VK_KHR_SURFACE_EXTENSION_NAME,
+		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 
 #if defined(DEBUG) && defined(VALIDATION_LAYERS)
 		"VK_EXT_debug_utils",
@@ -41,6 +49,18 @@ namespace Renderer
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	};
 
+	const std::initializer_list<const char*> DEV_EXTENSIONS[] = {
+		// Ray-Tracing
+		{ 
+			VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME, 
+			VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME, 
+			VK_KHR_MAINTENANCE3_EXTENSION_NAME,
+			VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME,
+			VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+			VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME
+		},
+	};
+	
 	// Threading related constants:
 	CONSTEXPR static uint32 MAX_THREADS				= 1;
 

@@ -220,6 +220,7 @@ int main()
     Event ev;
     Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
     RenderBackend backend{ &window };
+    backend.InitInstance(RenderBackend::RAY_TRACING);
     backend.SetSamplerCount(2);
 
     if (backend.GetMSAASamplerCount() == 1) {
@@ -229,12 +230,6 @@ int main()
     }
 
     TRE_LOGI("Engine is up and running ...");
-        
-    uint32 queueFamilies = QueueFamilyFlag::NONE;
-
-    if (backend.GetRenderDevice().IsTransferQueueSeprate()) {
-        queueFamilies = QueueFamilyFlag::TRANSFER | QueueFamilyFlag::GRAPHICS;
-    }
 
 #if !defined(CUBE)
     size_t vertexSize = sizeof(vertices[0]) * vertices.size();

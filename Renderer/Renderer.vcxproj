@@ -209,6 +209,7 @@
     <ClInclude Include="Core\Hash\Hashable.hpp" />
     <ClInclude Include="Core\List\List.hpp" />
     <ClInclude Include="Core\Logs\Logs.hpp" />
+    <ClInclude Include="Core\StaticString\StaticString.hpp" />
     <ClInclude Include="Core\StaticVector\StaticVector.hpp" />
     <ClInclude Include="cube.hpp" />
     <ClInclude Include="Backend\Images\Image.hpp" />

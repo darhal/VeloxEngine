@@ -12,11 +12,13 @@ Renderer::RenderDevice::RenderDevice() : internal{ 0 }
 
 }
 
-int32 Renderer::RenderDevice::CreateRenderDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx)
+int32 Renderer::RenderDevice::CreateRenderDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx, 
+    const char** extensions, uint32 extCount, const char** layers, uint32 layerCount)
 {
     internal.gpu = PickGPU(renderInstance, ctx);
     ASSERTF(internal.gpu == VK_NULL_HANDLE, "Couldn't pick a GPU.");
 
+    this->FetchDeviceAvailableExtensions();
     vkGetPhysicalDeviceFeatures(internal.gpu, &internal.gpuFeatures);
     vkGetPhysicalDeviceProperties(internal.gpu, &internal.gpuProperties);
 
@@ -35,9 +37,45 @@ void Renderer::RenderDevice::DestroryRenderDevice()
     vkDestroyDevice(internal.device, NULL);
 }
 
-int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx)
+int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx,
+    const char** extensions, uint32 extCount, const char** layers, uint32 layerCount)
 {
     ASSERT(renderInstance.instance == VK_NULL_HANDLE);
+
+    StaticVector<const char*> extensionsArr;
+    StaticVector<const char*> layersArr;
+
+    for (const auto& ext : VK_REQ_DEVICE_EXT) {
+        Hash h = Utils::Data(ext, strlen(ext));
+
+        if (availbleDevExtensions.find(h) == availbleDevExtensions.end()) {
+            TRE_LOGE("Can't load mandatory extension '%s' not supported by device", ext);
+            return -1;
+        }
+
+        extensionsArr.PushBack(ext);
+        deviceExtensions.emplace(h);
+    }
+
+    for (uint32 i = 0; i < extCount; i++) {
+        Hash h = Utils::Data(extensions[i], strlen(extensions[i]));
+
+        if (availbleDevExtensions.find(h) == availbleDevExtensions.end()) {
+            TRE_LOGW("Skipping extension '%s' not supported by device", extensions[i]);
+            continue;
+        }
+
+        extensionsArr.PushBack(extensions[i]);
+        deviceExtensions.emplace();
+    }
+
+    for (const auto& ext : VK_REQ_LAYERS) {
+        layersArr.PushBack(ext);
+    }
+
+    for (uint32 i = 0; i < layerCount; i++) {
+        layersArr.PushBack(layers[i]);
+    }
 
     VkDevice device = VK_NULL_HANDLE;
     float queuePriority = 1.0f;
@@ -58,23 +96,41 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
     }
 
     // Enable some device features:
-    VkPhysicalDeviceFeatures deviceFeatures{};
-    deviceFeatures.samplerAnisotropy = VK_TRUE; // TODO: check if the GPU supports this feature
-    deviceFeatures.fillModeNonSolid = VK_TRUE;
+    // TODO: 
+    VkPhysicalDeviceFeatures2 deviceFeatures2;
+    deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    deviceFeatures2.pNext = NULL;
+    vkGetPhysicalDeviceFeatures2(internal.gpu, &deviceFeatures2);
 
-    VkDeviceCreateInfo createInfo{};
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR accelFeatures;
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeatures;
+    accelFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+    rtPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+
+    deviceFeatures2.pNext = &accelFeatures;
+    accelFeatures.pNext = &rtPipelineFeatures;
+    deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
+    deviceFeatures2.features.fillModeNonSolid = VK_TRUE;
+
+    
+    // Classical VkPhysicalDeviceFeatures deviceFeatures{};
+    // TODO: check if the GPU supports this feature
+
+    VkDeviceCreateInfo createInfo;
     createInfo.sType                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.pNext = NULL;// &deviceFeatures2;
+    createInfo.flags = 0;
 
     createInfo.pQueueCreateInfos        = queueCreateInfos.Data();
     createInfo.queueCreateInfoCount     = (uint32)queueCreateInfos.Size();
 
-    createInfo.pEnabledFeatures         = &deviceFeatures;
+    createInfo.pEnabledFeatures         = &deviceFeatures2.features;
 
-    createInfo.enabledExtensionCount    = (uint32)VK_REQ_DEVICE_EXT.size();
-    createInfo.ppEnabledExtensionNames  = VK_REQ_DEVICE_EXT.begin();
+    createInfo.enabledExtensionCount    = (uint32)extensionsArr.Size();
+    createInfo.ppEnabledExtensionNames  = extensionsArr.begin();
 
-    createInfo.enabledLayerCount        = (uint32)VK_REQ_LAYERS.size();
-    createInfo.ppEnabledLayerNames      = VK_REQ_LAYERS.begin();
+    createInfo.enabledLayerCount        = (uint32)layersArr.Size();
+    createInfo.ppEnabledLayerNames      = layersArr.begin();
 
     VkResult res = vkCreateDevice(internal.gpu, &createInfo, NULL, &internal.device);
 
@@ -184,6 +240,18 @@ VkPhysicalDevice Renderer::RenderDevice::PickGPU(const Internal::RenderInstance&
     }
 
     return physicalDevice;
+}
+
+void Renderer::RenderDevice::FetchDeviceAvailableExtensions()
+{
+    uint32 extensionsCount;
+    StaticVector<VkExtensionProperties, 256> extensionsAvailble;
+    vkEnumerateDeviceExtensionProperties(internal.gpu, nullptr, &extensionsCount, extensionsAvailble.begin());
+    extensionsAvailble.Resize(extensionsCount);
+
+    for (const auto& ext : extensionsAvailble) {
+        availbleDevExtensions.emplace(Utils::Data(ext.extensionName, strlen(ext.extensionName)));
+    }
 }
 
 bool Renderer::RenderDevice::IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR surface)

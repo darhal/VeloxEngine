@@ -3,6 +3,8 @@
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
+#include <unordered_map>
+#include <unordered_set>
 
 TRE_NS_START
 
@@ -13,11 +15,14 @@ namespace Renderer
 	public:
 		RenderDevice();
 
-		int32 CreateRenderDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx);
+		int32 CreateRenderDevice(
+			const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx,
+			const char** extensions = NULL, uint32 extCount = 0, const char** layers = NULL, uint32 layerCount = 0);
 
 		void DestroryRenderDevice();
 
-		int32 CreateLogicalDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx);
+		int32 CreateLogicalDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx, 
+			const char** extensions = NULL, uint32 extCount = 0, const char** layers = NULL, uint32 layerCount = 0);
 
 		VkDeviceMemory AllocateDedicatedMemory(VkImage image, MemoryUsage memoryDomain = MemoryUsage::GPU_ONLY) const;
 
@@ -43,6 +48,8 @@ namespace Renderer
 
 		FORCEINLINE bool IsTransferQueueSeprate() const { return internal.isTransferQueueSeprate; }
 	private:
+		void FetchDeviceAvailableExtensions();
+
 		typedef bool(*FPN_RankGPU)(VkPhysicalDevice, VkSurfaceKHR);
 
 		static bool IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR surface);
@@ -52,6 +59,8 @@ namespace Renderer
 		static Internal::QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice p_gpu, VkSurfaceKHR p_surface = NULL); 
 	private:
 		Internal::RenderDevice internal;
+		std::unordered_set<uint64> deviceExtensions;
+		std::unordered_set<uint64> availbleDevExtensions;
 
 		friend class RenderBackend;
 	};

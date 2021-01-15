@@ -6,7 +6,7 @@
 TRE_NS_START
 
 // Ray-tracing:
-void Renderer::Pipeline::Create(const RenderDevice& device)
+void Renderer::Pipeline::Create(const RenderDevice& device, bool)
 {
     VkDynamicState dynamicStatesArray[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
@@ -104,7 +104,7 @@ void Renderer::Pipeline::Create(const RenderContext& renderContext, const Vertex
     VkDynamicState dynamicStatesArray[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
-        VK_DYNAMIC_STATE_LINE_WIDTH
+        VK_DYNAMIC_STATE_LINE_WIDTH,
     };
 
     for (uint32 i = 0; i < ARRAY_SIZE(dynamicStatesArray); i++) {
@@ -115,7 +115,7 @@ void Renderer::Pipeline::Create(const RenderContext& renderContext, const Vertex
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamicState.pNext = NULL;
     dynamicState.flags = 0;
-    dynamicState.dynamicStateCount = 2;
+    dynamicState.dynamicStateCount = ARRAY_SIZE(dynamicStatesArray);
     dynamicState.pDynamicStates = dynamicStatesArray;
     
     // Add shader specilization here:

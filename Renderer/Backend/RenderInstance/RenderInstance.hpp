@@ -3,7 +3,9 @@
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Engine/Core/DataStructure/Array/Array.hpp>
+#include <Renderer/Core/StaticString/StaticString.hpp>
 #include <initializer_list>
+#include <unordered_set>
 
 TRE_NS_START
 
@@ -16,12 +18,16 @@ namespace Renderer
 
 		~RenderInstance();
 
-		int32 CreateRenderInstance();
+		// int32 CreateRenderInstance();
+
+		int32 CreateRenderInstance(const char** extensions = NULL, uint32 extCount = 0, const char** layers = NULL, uint32 layerCount = 0);
 
 		void DestroyRenderInstance();
 
 	private:
-		static int32 CreateInstance(VkInstance* p_instance);
+		void FetchAvailbleInstanceExtensions();
+
+		int32 CreateInstance(VkInstance* p_instance, const char** extensions = NULL, uint32 extCount = 0, const char** layers = NULL, uint32 layerCount = 0);
 
 		static void DestroyInstance(VkInstance p_instance);
 
@@ -38,6 +44,8 @@ namespace Renderer
 		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 	private:
 		Internal::RenderInstance internal;
+		std::unordered_set<uint64> deviceExtensions;
+		std::unordered_set<uint64> availbleInstExtensions;
 
 		friend class RenderBackend;
 	};

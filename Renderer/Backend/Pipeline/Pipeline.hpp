@@ -41,6 +41,9 @@ namespace Renderer
 
 		PipelineType GetPipelineType() const { return pipelineType; }
 
+		// RT:
+		void Create(const RenderDevice& device, bool);
+
 		// Compute:
 		void Create(const RenderDevice& device);
 
