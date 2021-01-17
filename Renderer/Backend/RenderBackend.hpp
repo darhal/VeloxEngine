@@ -30,6 +30,7 @@
 #include <Renderer/Backend/Synchronization/Event/Event.hpp>
 #include <Renderer/Backend/Pipeline/Pipeline.hpp>
 #include <Renderer/Backend/Pipeline/PipelineAllocator/PipelineAllocator.hpp>
+#include <Renderer/Backend/RayTracing/BLAS/BLAS.hpp>
 
 TRE_NS_START
 
@@ -86,6 +87,9 @@ namespace Renderer
 			ObjectPool<Fence>		  fences;
 			ObjectPool<Semaphore>	  semaphores;
 			ObjectPool<PipelineEvent> events;
+
+			// RT:
+			ObjectPool<Blas>		  blases;
 		};
 
 	public:
@@ -106,6 +110,13 @@ namespace Renderer
 		FORCEINLINE const RenderInstance& GetRenderInstance() const { return renderInstance; }
 		FORCEINLINE const RenderContext& GetRenderContext() const { return renderContext; }
 		FORCEINLINE const RenderDevice& GetRenderDevice() const { return renderDevice; }
+
+		// RT:
+		BlasHandle CreateBlas(const BlasCreateInfo& blasInfo);
+
+		VkAccelerationStructureKHR CreateAcceleration(VkAccelerationStructureCreateInfoKHR& info, BufferHandle* buffer);
+
+		// ..
 
 		void SetSamplerCount(uint32 msaaSamplerCount = 1);
 

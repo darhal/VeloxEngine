@@ -19,7 +19,7 @@ namespace Renderer
 	public:
 		~Semaphore();
 
-		FORCEINLINE VkSemaphore GetAPIObject() const { return semaphore; }
+		FORCEINLINE VkSemaphore GetApiObject() const { return semaphore; }
 	private:
 		Semaphore(RenderBackend& backend, VkSemaphore semaphore) :
 			backend(backend), semaphore(semaphore)

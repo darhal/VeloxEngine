@@ -78,7 +78,7 @@ namespace Renderer
 
 		RenderPass(const RenderDevice& device, const RenderPassInfo& info);
 
-		VkRenderPass GetAPIObject() const { return renderPass; }
+		VkRenderPass GetApiObject() const { return renderPass; }
 
 		const SubpassInfo& GetSubpassInfo(uint32 subpass) const { return subpassesInfo[subpass]; }
 

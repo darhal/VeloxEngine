@@ -100,31 +100,30 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
     VkPhysicalDeviceFeatures2 deviceFeatures2;
     deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     deviceFeatures2.pNext = NULL;
-    vkGetPhysicalDeviceFeatures2(internal.gpu, &deviceFeatures2);
-
-    VkPhysicalDeviceAccelerationStructureFeaturesKHR accelFeatures;
-    VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeatures;
-    accelFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
-    rtPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+    
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR accelFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR };
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR };
+    VkPhysicalDeviceBufferDeviceAddressFeatures buffAdrFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES };
 
     deviceFeatures2.pNext = &accelFeatures;
     accelFeatures.pNext = &rtPipelineFeatures;
+    rtPipelineFeatures.pNext = &buffAdrFeatures;
     deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
     deviceFeatures2.features.fillModeNonSolid = VK_TRUE;
-
+    // buffAdrFeatures.bufferDeviceAddress = VK_TRUE;
+    vkGetPhysicalDeviceFeatures2(internal.gpu, &deviceFeatures2);
     
     // Classical VkPhysicalDeviceFeatures deviceFeatures{};
     // TODO: check if the GPU supports this feature
 
     VkDeviceCreateInfo createInfo;
     createInfo.sType                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.pNext = NULL;// &deviceFeatures2;
+    createInfo.pNext = &deviceFeatures2;
     createInfo.flags = 0;
+    createInfo.pEnabledFeatures = NULL;//&deviceFeatures2.features;
 
     createInfo.pQueueCreateInfos        = queueCreateInfos.Data();
     createInfo.queueCreateInfoCount     = (uint32)queueCreateInfos.Size();
-
-    createInfo.pEnabledFeatures         = &deviceFeatures2.features;
 
     createInfo.enabledExtensionCount    = (uint32)extensionsArr.Size();
     createInfo.ppEnabledExtensionNames  = extensionsArr.begin();
@@ -133,6 +132,7 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
     createInfo.ppEnabledLayerNames      = layersArr.begin();
 
     VkResult res = vkCreateDevice(internal.gpu, &createInfo, NULL, &internal.device);
+    load_VK_EXTENSION_SUBSET(renderInstance.instance, vkGetInstanceProcAddr, internal.device, vkGetDeviceProcAddr);
 
     if (res != VK_SUCCESS) {
         ASSERTF(true, "Couldn't create a logical device (%s)!", GetVulkanResultString(res));
@@ -158,7 +158,7 @@ VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkImage image, Me
     info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     info.pNext           = NULL;
     info.allocationSize  = memRequirements.size;
-    info.memoryTypeIndex = Buffer::FindMemoryTypeIndex(internal, memRequirements.memoryTypeBits, memoryDomain);
+    info.memoryTypeIndex = Buffer::FindMemoryTypeIndex(*this, memRequirements.memoryTypeBits, memoryDomain);
 
     vkAllocateMemory(internal.device, &info, NULL, &memory);
     vkBindImageMemory(internal.device, image, memory, 0);
@@ -175,7 +175,7 @@ VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkBuffer buffer, 
     info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     info.pNext = NULL;
     info.allocationSize = memRequirements.size;
-    info.memoryTypeIndex = Buffer::FindMemoryTypeIndex(internal, memRequirements.memoryTypeBits, memoryDomain);
+    info.memoryTypeIndex = Buffer::FindMemoryTypeIndex(*this, memRequirements.memoryTypeBits, memoryDomain);
 
     vkAllocateMemory(internal.device, &info, NULL, &memory);
     vkBindBufferMemory(internal.device, buffer, memory, 0);

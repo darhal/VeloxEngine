@@ -27,7 +27,7 @@ namespace Renderer
 
 		FORCEINLINE VkPipelineStageFlags GetStages() const { return stages; }
 
-		FORCEINLINE VkEvent GetAPIObject() const { return event; }
+		FORCEINLINE VkEvent GetApiObject() const { return event; }
 	private:
 		PipelineEvent(RenderBackend& backend, VkEvent event) :
 			backend(backend), event(event), stages(0)

@@ -63,7 +63,7 @@ namespace Renderer
 			return descriptorSetLayout;
 		}
 
-		VkDescriptorSetLayout GetAPIObject() const { return descriptorSetLayout; }
+		VkDescriptorSetLayout GetApiObject() const { return descriptorSetLayout; }
 
 		const VkDescriptorSetLayoutBinding* const GetDescriptorSetLayoutBindings() const { return layoutBindings; }
 

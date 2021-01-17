@@ -9,7 +9,7 @@
 TRE_NS_START
 
 Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) :
-    stagingManager{ &renderDevice.internal },
+    stagingManager{ renderDevice },
     window(wnd),
     renderContext(*this),
     framebufferAllocator(&renderDevice),
@@ -162,7 +162,7 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
     VkFence vkFence = VK_NULL_HANDLE;
 
     for (auto& sem : data.waitSemaphores) {
-        waits.PushBack(sem->GetAPIObject());
+        waits.PushBack(sem->GetApiObject());
     }
 
     for (auto& sub : submissions) {
@@ -170,7 +170,7 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
             swapchainCommandBuffer = sub;
         }
 
-        cmds.PushBack(sub->GetAPIObject());
+        cmds.PushBack(sub->GetApiObject());
     }
 
     for (uint32 i = 0; i < semaphoreCount; i++) {
@@ -180,7 +180,7 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
     }
 
     if (swapchainCommandBuffer) {
-        auto cmdBuff = swapchainCommandBuffer->GetAPIObject();
+        auto cmdBuff = swapchainCommandBuffer->GetApiObject();
         data.waitStages.PushBack(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
         waits.EmplaceBack(renderContext.GetImageAcquiredSemaphore());
         signals.EmplaceBack(renderContext.GetDrawCompletedSemaphore());
@@ -200,7 +200,7 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
 
     if (fence) {
         *fence = this->RequestFence();
-        vkFence = (*fence)->GetAPIObject();
+        vkFence = (*fence)->GetApiObject();
     }
 
     if (swapchainCommandBuffer) {
@@ -286,13 +286,70 @@ void Renderer::RenderBackend::EndFrame()
         if (frame.submissions[type].Size()) {
             CommandBuffer::Type qType = (CommandBuffer::Type)type;
             this->SubmitQueue(qType, &fence);
-            frame.waitFences.EmplaceBack(fence->GetAPIObject());
-            frame.recycleFences.EmplaceBack(fence->GetAPIObject());
+            frame.waitFences.EmplaceBack(fence->GetApiObject());
+            frame.recycleFences.EmplaceBack(fence->GetApiObject());
         }
     }
 
     this->SubmitQueue(CommandBuffer::Type::GENERIC);
     renderContext.EndFrame(renderDevice);
+}
+
+Renderer::BlasHandle Renderer::RenderBackend::CreateBlas(const BlasCreateInfo& blasInfo)
+{
+    VkAccelerationStructureKHR blas; 
+
+    VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
+    buildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+    buildInfo.pNext = NULL;
+    buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+    buildInfo.flags;
+    buildInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+    buildInfo.srcAccelerationStructure = VK_NULL_HANDLE;
+    buildInfo.geometryCount  = blasInfo.acclGeo.Size();
+    buildInfo.pGeometries = blasInfo.acclGeo.begin();
+    buildInfo.ppGeometries = NULL;
+    
+    VkDeviceOrHostAddressKHR   scratchData;
+
+    StaticVector<uint32> maxPrimCount;
+    maxPrimCount.Resize(blasInfo.accOffset.Size());
+
+    for (auto tt = 0; tt < blasInfo.accOffset.Size(); tt++)
+        maxPrimCount[tt] = blasInfo.accOffset[tt].primitiveCount;  // Number of primitives/triangles
+
+    VkAccelerationStructureBuildSizesInfoKHR sizeInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
+    vkGetAccelerationStructureBuildSizesKHR(renderDevice.GetDevice(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+        &buildInfo, maxPrimCount.begin(), &sizeInfo);
+
+    // Create acceleration structure object. Not yet bound to memory.
+    VkAccelerationStructureCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
+    createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+    createInfo.size = sizeInfo.accelerationStructureSize; // Will be used to allocate memory.
+
+    // Actual allocation of buffer and acceleration structure. Note: This relies on createInfo.offset == 0
+    // and fills in createInfo.buffer with the buffer allocated to store the BLAS. The underlying
+    // vkCreateAccelerationStructureKHR call then consumes the buffer value.
+    BufferHandle buffer;
+    VkAccelerationStructureKHR accl = this->CreateAcceleration(createInfo, &buffer);
+    buildInfo.dstAccelerationStructure = accl;  // Setting the where the build lands
+    stagingManager.StageAcclBuilding(buildInfo, blasInfo.accOffset.begin(), blasInfo.accOffset.Size());
+
+    BlasHandle ret(objectsPool.blases.Allocate(*this, blasInfo, blas, buffer));
+    return ret;
+}
+
+VkAccelerationStructureKHR Renderer::RenderBackend::CreateAcceleration(VkAccelerationStructureCreateInfoKHR& info, BufferHandle* buffer)
+{
+    BufferCreateInfo bufferInfo;
+    bufferInfo.size = info.size;
+    bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_STORAGE;
+    bufferInfo.domain = MemoryUsage::GPU_ONLY;
+    *buffer = this->CreateBuffer(bufferInfo);
+
+    VkAccelerationStructureKHR accl;
+    vkCreateAccelerationStructureKHR(renderDevice.GetDevice(), &info, NULL, &accl);
+    return accl;
 }
 
 void Renderer::RenderBackend::SetSamplerCount(uint32 msaaSamplerCount)
@@ -395,7 +452,7 @@ Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo
     MemoryView imageMemory;
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(renderDevice.GetDevice(), apiImage, &memRequirements);
-    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice.internal, memRequirements.memoryTypeBits, memUsage);
+    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice, memRequirements.memoryTypeBits, memUsage);
     imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, memRequirements.alignment);
     vkBindImageMemory(renderDevice.GetDevice(), apiImage, imageMemory.memory, imageMemory.offset);
 
@@ -440,7 +497,7 @@ Renderer::ImageViewHandle Renderer::RenderBackend::CreateImageView(const ImageVi
     viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.pNext      = NULL;
     viewInfo.flags      = 0;
-    viewInfo.image      = info.image->GetAPIObject();
+    viewInfo.image      = info.image->GetApiObject();
     viewInfo.viewType   = info.viewType;
     viewInfo.format     = info.format;
     viewInfo.components = info.swizzle;
@@ -460,41 +517,13 @@ Renderer::ImageViewHandle Renderer::RenderBackend::CreateImageView(const ImageVi
 
 bool Renderer::RenderBackend::CreateBufferInternal(VkBuffer& outBuffer, MemoryView& outMemoryView, const BufferInfo& createInfo)
 {
-    Internal::RenderDevice& renderDevice = this->renderDevice.internal;
-    StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
-    VkSharingMode sharingMode = (VkSharingMode)(createInfo.queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
-
-    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
-        if (Internal::QUEUE_FAMILY_FLAGS[i] & createInfo.queueFamilies) {
-            queueFamilyIndices.AllocateInit(1, renderDevice.queueFamilyIndices.queueFamilies[i]);
-        }
-    }
-
-    VkBufferCreateInfo bufferInfo{};
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = createInfo.size;
-    bufferInfo.usage = createInfo.usage;
-    bufferInfo.sharingMode = sharingMode;
-    bufferInfo.flags = 0;
-
-    if (createInfo.domain == MemoryUsage::GPU_ONLY) {
-        bufferInfo.usage |= BufferUsage::TRANSFER_DST;
-    }
-
-    if (bufferInfo.sharingMode == VK_SHARING_MODE_CONCURRENT) {
-        bufferInfo.queueFamilyIndexCount = (uint32)queueFamilyIndices.GetElementCount();
-        bufferInfo.pQueueFamilyIndices = queueFamilyIndices.GetData();
-    }
-
-    if (vkCreateBuffer(renderDevice.device, &bufferInfo, NULL, &outBuffer) != VK_SUCCESS) {
-        ASSERTF(true, "failed to create a buffer!");
-    }
+    outBuffer = Buffer::CreateBuffer(renderDevice, createInfo);
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(renderDevice.device, outBuffer, &memRequirements);
-    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice, memRequirements.memoryTypeBits, createInfo.domain);
+    vkGetBufferMemoryRequirements(renderDevice.GetDevice(), outBuffer, &memRequirements);
+    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(this->renderDevice, memRequirements.memoryTypeBits, createInfo.domain);
     outMemoryView = gpuMemoryAllocator.Allocate(memoryTypeIndex, createInfo.size, memRequirements.alignment);
-    vkBindBufferMemory(renderDevice.device, outBuffer, outMemoryView.memory, outMemoryView.offset);
+    vkBindBufferMemory(renderDevice.GetDevice(), outBuffer, outMemoryView.memory, outMemoryView.offset);
 
     return true;
 }

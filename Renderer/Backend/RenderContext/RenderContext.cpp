@@ -43,7 +43,7 @@ void Renderer::RenderContext::BeginFrame(const RenderDevice& renderDevice, Stagi
     vkWaitForFences(device, 1, &swapchainData.fences[currentFrame], VK_TRUE, UINT64_MAX);
     vkResetFences(device, 1, &swapchainData.fences[currentFrame]);
 
-    VkResult result = vkAcquireNextImageKHR(device, swapchain.GetAPIObject(), UINT64_MAX, swapchainData.imageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &internal.currentImage);
+    VkResult result = vkAcquireNextImageKHR(device, swapchain.GetApiObject(), UINT64_MAX, swapchainData.imageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &internal.currentImage);
     
     stagingManager.Wait(stagingManager.GetCurrentStagingBuffer());
     stagingManager.Flush();

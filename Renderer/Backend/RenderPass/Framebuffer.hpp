@@ -16,7 +16,7 @@ namespace Renderer
 	public:
 		Framebuffer(const RenderDevice& device, const RenderPass& rp, const RenderPassInfo& info);
 
-		FORCEINLINE VkFramebuffer GetAPIObject() const { return framebuffer; }
+		FORCEINLINE VkFramebuffer GetApiObject() const { return framebuffer; }
 
 		FORCEINLINE const RenderPass& GetRenderPass() const { return renderPass; }
 

@@ -31,7 +31,7 @@ namespace Renderer
 		{
 		}
 
-		FORCEINLINE VkPipeline GetAPIObject() const { return pipeline; }
+		FORCEINLINE VkPipeline GetApiObject() const { return pipeline; }
 
 		const PipelineLayout& GetPipelineLayout() const { return shaderProgram->GetPipelineLayout(); }
 

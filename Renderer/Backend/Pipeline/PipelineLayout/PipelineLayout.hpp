@@ -19,7 +19,7 @@ namespace Renderer
 
 		void Create(RenderBackend& backend);
 
-		VkPipelineLayout GetAPIObject() const
+		VkPipelineLayout GetApiObject() const
 		{
 			return pipelineLayout;
 		}

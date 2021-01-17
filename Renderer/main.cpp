@@ -299,6 +299,24 @@ int main()
     );
     program.Compile();
 
+    BlasCreateInfo info;
+
+    /*VkDeviceAddress vertexData,
+        VkDeviceSize vertexStride, uint32 vertexCount,
+        VkDeviceAddress transformData = VK_NULL_HANDLE,
+        VkDeviceAddress indexData = VK_NULL_HANDLE,
+        const AsOffset& offset = { 0, 0, 0, 0 },
+        uint32 flags = VK_GEOMETRY_OPAQUE_BIT_KHR,
+        VkFormat vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
+        VkIndexType indexType = VK_INDEX_TYPE_UINT32*/
+
+    /*info.AddGeometry(
+        cpuVertexBuffer->GetAddress(backend.GetRenderDevice().GetDevice()), 
+        sizeof(Vertex), 12 * 3
+    );
+    BlasHandle blas = backend.CreateBlas(info);*/
+
+
     INIT_BENCHMARK;
 
     time_t lasttime = time(NULL);
@@ -348,7 +366,7 @@ int main()
 
 //for (uint32 i = 0; i < 1/*ctx.imagesCount*/; i++) {
 //    VkDescriptorBufferInfo bufferInfo{};
-//    bufferInfo.buffer = uniformBuffer.GetAPIObject();
+//    bufferInfo.buffer = uniformBuffer.GetApiObject();
 //    bufferInfo.offset = 0;
 //    bufferInfo.range  = sizeof(MVP);
 

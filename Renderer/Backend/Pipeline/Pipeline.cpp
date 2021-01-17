@@ -38,7 +38,7 @@ void Renderer::Pipeline::Create(const RenderDevice& device, bool)
     rayTraceInfo.flags = 0;
     rayTraceInfo.stageCount = (uint32)shaderProgram->GetShadersCount();
     rayTraceInfo.pStages = shaderProgram->GetShaderStages(); //shaderStagesDesc.data();
-    rayTraceInfo.layout = shaderProgram->GetPipelineLayout().GetAPIObject();
+    rayTraceInfo.layout = shaderProgram->GetPipelineLayout().GetApiObject();
     rayTraceInfo.pDynamicState = &dynamicState;
 
     rayTraceInfo.maxPipelineRayRecursionDepth = 2; // TODO: change
@@ -64,7 +64,7 @@ void Renderer::Pipeline::Create(const RenderDevice& device)
     info.pNext = NULL;
     info.flags = 0;
     info.stage = *shaderProgram->GetShaderStages();
-    info.layout = shaderProgram->GetPipelineLayout().GetAPIObject();
+    info.layout = shaderProgram->GetPipelineLayout().GetApiObject();
     info.basePipelineHandle = VK_NULL_HANDLE;
     info.basePipelineIndex = -1;
 
@@ -148,8 +148,8 @@ void Renderer::Pipeline::Create(const RenderContext& renderContext, const Vertex
     pipelineInfo.pDepthStencilState     = &state.depthStencilState;
     pipelineInfo.pColorBlendState       = &state.colorBlendState;
     pipelineInfo.pDynamicState          = &dynamicState;
-    pipelineInfo.layout                 = shaderProgram->GetPipelineLayout().GetAPIObject();
-    pipelineInfo.renderPass             = renderPass->GetAPIObject();
+    pipelineInfo.layout                 = shaderProgram->GetPipelineLayout().GetApiObject();
+    pipelineInfo.renderPass             = renderPass->GetApiObject();
     pipelineInfo.subpass                = state.subpassIndex; //desc.subpass;
     pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE; //desc.basePipelineHandle;
     pipelineInfo.basePipelineIndex      = -1;//desc.basePipelineIndex;

@@ -85,7 +85,7 @@ namespace Renderer
 
         const SamplerInfo& GetInfo() const { return info; }
 
-        VkSampler GetAPIObject() const { return sampler; }
+        VkSampler GetApiObject() const { return sampler; }
 	private:
         SamplerInfo info;
         VkSampler sampler;

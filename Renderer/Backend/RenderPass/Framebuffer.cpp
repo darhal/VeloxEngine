@@ -23,7 +23,7 @@ Renderer::Framebuffer::Framebuffer(const RenderDevice& device, const RenderPass&
 	fb_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	fb_info.pNext = NULL;
 	fb_info.flags = 0;
-	fb_info.renderPass = rp.GetAPIObject();
+	fb_info.renderPass = rp.GetApiObject();
 	fb_info.attachmentCount = viewsCount;
 	fb_info.pAttachments = views;
 	fb_info.width = width;
@@ -62,17 +62,17 @@ unsigned Renderer::Framebuffer::SetupRawViews(VkImageView* views, const RenderPa
 
 		// For multiview, we use view indices to pick right layers.
 		if (info.layersCount > 1)
-			views[num_views++] = info.colorAttachments[i]->GetAPIObject();
+			views[num_views++] = info.colorAttachments[i]->GetApiObject();
 		else
-			views[num_views++] = info.colorAttachments[i]->GetAPIObject();// info.colorAttachments[i]->get_render_target_view(info.base_layer);
+			views[num_views++] = info.colorAttachments[i]->GetApiObject();// info.colorAttachments[i]->get_render_target_view(info.base_layer);
 	}
 
 	if (info.depthStencil) {
 		// For multiview, we use view indices to pick right layers.
 		if (info.layersCount > 1)
-			views[num_views++] = info.depthStencil->GetAPIObject();
+			views[num_views++] = info.depthStencil->GetApiObject();
 		else
-			views[num_views++] = info.depthStencil->GetAPIObject();//info.depthStencil->get_render_target_view(info.base_layer);
+			views[num_views++] = info.depthStencil->GetApiObject();//info.depthStencil->get_render_target_view(info.base_layer);
 	}
 
 	return num_views;

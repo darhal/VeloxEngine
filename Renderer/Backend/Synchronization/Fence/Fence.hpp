@@ -23,7 +23,7 @@ namespace Renderer
 
 		void Reset();
 
-		FORCEINLINE VkFence GetAPIObject() const { return fence; }
+		FORCEINLINE VkFence GetApiObject() const { return fence; }
 
 		FORCEINLINE bool BeenWaiting() const { return beenWaiting; }
 	private:

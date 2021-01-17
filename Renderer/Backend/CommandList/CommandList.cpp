@@ -115,8 +115,8 @@ void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubp
     VkRenderPassBeginInfo beginInfo;
     beginInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     beginInfo.pNext             = NULL;
-    beginInfo.renderPass        = renderPass->GetAPIObject();
-    beginInfo.framebuffer       = framebuffer->GetAPIObject();
+    beginInfo.renderPass        = renderPass->GetApiObject();
+    beginInfo.framebuffer       = framebuffer->GetApiObject();
     beginInfo.renderArea        = scissor;
     beginInfo.clearValueCount   = clearValuesCount;
     beginInfo.pClearValues      = clearValues;
@@ -152,19 +152,19 @@ void Renderer::CommandBuffer::BindPipeline(const Pipeline& pipeline)
     this->pipeline = &pipeline;
     vkCmdBindPipeline(commandBuffer, 
         pipeline.GetPipelineType() == PipelineType::GRAPHICS ? VK_PIPELINE_BIND_POINT_GRAPHICS  : VK_PIPELINE_BIND_POINT_COMPUTE,
-        pipeline.GetAPIObject());
+        pipeline.GetApiObject());
 }
 
 void Renderer::CommandBuffer::BindVertexBuffer(const Buffer& buffer, DeviceSize offset)
 {
-    VkBuffer vertexBuffers[] = { buffer.GetAPIObject() };
+    VkBuffer vertexBuffers[] = { buffer.GetApiObject() };
     VkDeviceSize offsets[]   = { offset };
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 }
 
 void Renderer::CommandBuffer::BindIndexBuffer(const Buffer& buffer, DeviceSize offset)
 {
-    vkCmdBindIndexBuffer(commandBuffer, buffer.GetAPIObject(), offset, VK_INDEX_TYPE_UINT16);
+    vkCmdBindIndexBuffer(commandBuffer, buffer.GetApiObject(), offset, VK_INDEX_TYPE_UINT16);
 }
 
 void Renderer::CommandBuffer::DrawIndexed(uint32 indexCount, uint32 instanceCount, uint32 firstIndex, int32 vertexOffset, uint32 firstInstance)
@@ -184,7 +184,7 @@ void Renderer::CommandBuffer::BindDescriptorSet(const Pipeline& pipeline, const 
 {
     vkCmdBindDescriptorSets(commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipeline.GetPipelineLayout().GetAPIObject(),
+        pipeline.GetPipelineLayout().GetApiObject(),
         0, (uint32)descriptors.size(), descriptors.begin(), (uint32)dyncOffsets.size(), dyncOffsets.begin());
 }
 
@@ -217,14 +217,14 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
     auto& b = bindings.bindings[set][binding];
 
     // TODO: for the cache I dont think we need to place the VK object but instead a hash of the vk object and its state (wether its written or not)
-    if (bindings.cache[set][binding] == (uint64)buffer.GetAPIObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
+    if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
         return;
     }
 
-    b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetAPIObject(), offset, range };
+    b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetApiObject(), offset, range };
     b.dynamicOffset   = 0;
 
-    bindings.cache[set][binding] = (uint64)buffer.GetAPIObject();
+    bindings.cache[set][binding] = (uint64)buffer.GetApiObject();
     dirty.sets |= (1u << set);
 }
 
@@ -241,15 +241,15 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
 
     // Think about what if everything is the same just the offset changed! we shouldnt then update dirty set instead just update the set
     // that have the dynamic offset set in it
-    if (bindings.cache[set][binding] == (uint64)buffer.GetAPIObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
+    if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
         b.dynamicOffset = buffer.GetCurrentOffset();
         dirty.dynamicSets |= 1u << set;
     }else{
         // update everything
-        b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetAPIObject(), offset, range };
+        b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetApiObject(), offset, range };
         b.dynamicOffset = buffer.GetCurrentOffset();
 
-        bindings.cache[set][binding] = (uint64)buffer.GetAPIObject();
+        bindings.cache[set][binding] = (uint64)buffer.GetApiObject();
         dirty.sets |= (1u << set);
     }
 }
@@ -260,14 +260,14 @@ void Renderer::CommandBuffer::SetStorageBuffer(uint32 set, uint32 binding, const
     ASSERT(binding >= MAX_DESCRIPTOR_BINDINGS);
     auto& b = bindings.bindings[set][binding];
 
-    if (bindings.cache[set][binding] == (uint64)buffer.GetAPIObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
+    if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
         return;
     }
 
-    b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetAPIObject(), offset, range };
+    b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetApiObject(), offset, range };
     b.dynamicOffset = 0;
 
-    bindings.cache[set][binding] = (uint64)buffer.GetAPIObject();
+    bindings.cache[set][binding] = (uint64)buffer.GetApiObject();
     dirty.sets |= (1u << set);
 }
 
@@ -279,14 +279,14 @@ void Renderer::CommandBuffer::SetTexture(uint32 set, uint32 binding, const Image
     auto& b = bindings.bindings[set][binding];
     VkImageLayout layout = texture.GetInfo().image->GetInfo().layout;
 
-    if (bindings.cache[set][binding] == (uint64)texture.GetAPIObject() && b.resource.image.imageLayout == layout) {
+    if (bindings.cache[set][binding] == (uint64)texture.GetApiObject() && b.resource.image.imageLayout == layout) {
         return;
     }
 
-    b.resource.image.imageView = texture.GetAPIObject();
+    b.resource.image.imageView = texture.GetApiObject();
     b.resource.image.imageLayout = layout;
 
-    bindings.cache[set][binding] = (uint64)texture.GetAPIObject();
+    bindings.cache[set][binding] = (uint64)texture.GetApiObject();
     dirty.sets |= (1u << set);
 }
 
@@ -303,13 +303,13 @@ void Renderer::CommandBuffer::SetSampler(uint32 set, uint32 binding, const Sampl
 
     auto& b = bindings.bindings[set][binding];
 
-    if (bindings.cache[set][binding] == (uint64)sampler.GetAPIObject()) {
+    if (bindings.cache[set][binding] == (uint64)sampler.GetApiObject()) {
         return;
     }
 
-    b.resource.image.sampler = sampler.GetAPIObject();
+    b.resource.image.sampler = sampler.GetApiObject();
 
-    bindings.cache[set][binding] = (uint64)sampler.GetAPIObject();
+    bindings.cache[set][binding] = (uint64)sampler.GetApiObject();
     dirty.sets |= (1u << set);
 }
 
@@ -332,7 +332,7 @@ void Renderer::CommandBuffer::SetInputAttachments(uint32 set, uint32 startBindin
 
         auto& b = bindings.bindings[set][startBinding + i];
         b.resource.image.imageLayout = ref.layout;
-        b.resource.image.imageView = view->GetAPIObject();
+        b.resource.image.imageView = view->GetApiObject();
 
         dirty.sets |= 1u << set;
     }
@@ -343,7 +343,7 @@ void Renderer::CommandBuffer::PushConstants(ShaderStagesFlags stages, const void
     const auto& pipelineLayout = pipeline->GetPipelineLayout();
     const auto& pushConstant = pipelineLayout.GetPushConstantRangeFromStage(stages);
 
-    vkCmdPushConstants(commandBuffer, pipelineLayout.GetAPIObject(), stages, pushConstant.offset + (uint32)offset, (uint32)size, data);
+    vkCmdPushConstants(commandBuffer, pipelineLayout.GetApiObject(), stages, pushConstant.offset + (uint32)offset, (uint32)size, data);
 }
 
 void Renderer::CommandBuffer::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
@@ -354,7 +354,7 @@ void Renderer::CommandBuffer::PrepareGenerateMipmapBarrier(const Image& image, V
 
     for (uint32 i = 0; i < 2; i++) {
         barriers[i].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        barriers[i].image = image.GetAPIObject();
+        barriers[i].image = image.GetApiObject();
         barriers[i].subresourceRange.aspectMask = FormatToAspectMask(info.format);
         barriers[i].subresourceRange.layerCount = info.layers;
         barriers[i].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -396,7 +396,7 @@ void Renderer::CommandBuffer::GenerateMipmap(const Image& image)
     VkImageMemoryBarrier imgBarrier;
     imgBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     imgBarrier.pNext = NULL;
-    imgBarrier.image = image.GetAPIObject();
+    imgBarrier.image = image.GetApiObject();
     imgBarrier.subresourceRange = { FormatToAspectMask(info.format), 0, 1, 0, info.layers };
     imgBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     imgBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
@@ -428,7 +428,7 @@ void Renderer::CommandBuffer::CopyBuffer(const Buffer& srcBuffer, const Buffer& 
     copy.srcOffset = srcOffset;
     copy.dstOffset = dstOffset;
     copy.size = size;
-    vkCmdCopyBuffer(commandBuffer, srcBuffer.GetAPIObject(), dstBuffer.GetAPIObject(), 1, &copy);
+    vkCmdCopyBuffer(commandBuffer, srcBuffer.GetApiObject(), dstBuffer.GetApiObject(), 1, &copy);
 }
 
 void Renderer::CommandBuffer::CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer)
@@ -437,12 +437,12 @@ void Renderer::CommandBuffer::CopyBuffer(const Buffer& srcBuffer, const Buffer& 
     copy.srcOffset = 0;
     copy.dstOffset = 0;
     copy.size = dstBuffer.GetBufferInfo().size;
-    vkCmdCopyBuffer(commandBuffer, srcBuffer.GetAPIObject(), dstBuffer.GetAPIObject(), 1, &copy);
+    vkCmdCopyBuffer(commandBuffer, srcBuffer.GetApiObject(), dstBuffer.GetApiObject(), 1, &copy);
 }
 
 void Renderer::CommandBuffer::CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, const VectorView<VkBufferCopy>& copies)
 {
-    vkCmdCopyBuffer(commandBuffer, srcBuffer.GetAPIObject(), dstBuffer.GetAPIObject(), copies.size, copies.data);
+    vkCmdCopyBuffer(commandBuffer, srcBuffer.GetApiObject(), dstBuffer.GetApiObject(), copies.size, copies.data);
 }
 
 void Renderer::CommandBuffer::CopyBufferToImage(const Buffer& srcBuffer, const Image& dstImage, VkDeviceSize bufferOffset,
@@ -475,7 +475,7 @@ void Renderer::CommandBuffer::CopyBufferToImage(const Buffer& srcBuffer, const I
 
 void Renderer::CommandBuffer::CopyBufferToImage(const Buffer& srcBuffer, const Image& dstImage, const VectorView<VkBufferImageCopy>& copies)
 {
-    vkCmdCopyBufferToImage(commandBuffer, srcBuffer.GetAPIObject(), dstImage.GetAPIObject(),
+    vkCmdCopyBufferToImage(commandBuffer, srcBuffer.GetApiObject(), dstImage.GetApiObject(),
         dstImage.GetLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL), 
         copies.size, copies.data);
 }
@@ -509,9 +509,9 @@ void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buf
 
 void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, const VectorView<VkBufferImageCopy>& copies)
 {
-    vkCmdCopyImageToBuffer(commandBuffer, srcImage.GetAPIObject(),
+    vkCmdCopyImageToBuffer(commandBuffer, srcImage.GetApiObject(),
         srcImage.GetLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL),
-        dstBuffer.GetAPIObject(), copies.size, copies.data);
+        dstBuffer.GetApiObject(), copies.size, copies.data);
 }
 
 void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, const VkOffset3D& dstOffset, const VkOffset3D& dstExtent,
@@ -531,8 +531,8 @@ void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, cons
     };
 
     vkCmdBlitImage(commandBuffer,
-        src.GetAPIObject(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-        dst.GetAPIObject(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        src.GetApiObject(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        dst.GetApiObject(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         1, &blit,
         filter);
 }
@@ -540,7 +540,7 @@ void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, cons
 Renderer::EventHandle Renderer::CommandBuffer::SignalEvent(VkPipelineStageFlags stages)
 {
     auto event = renderBackend->RequestPiplineEvent();
-    vkCmdSetEvent(commandBuffer, event->GetAPIObject(), stages);
+    vkCmdSetEvent(commandBuffer, event->GetApiObject(), stages);
     event->SetStages(stages);
     return event;
 }
@@ -552,7 +552,7 @@ void Renderer::CommandBuffer::WaitEvents(EventHandle* event, uint32 eventsCount,
     StaticVector<VkEvent> events;
     
     for (uint32 i = 0; i < eventsCount; i++) {
-        events.EmplaceBack((*event)->GetAPIObject());
+        events.EmplaceBack((*event)->GetApiObject());
     }
 
     vkCmdWaitEvents(commandBuffer, eventsCount, events.Data(), srcStages, dstStages, 
@@ -599,7 +599,7 @@ void Renderer::CommandBuffer::BufferBarrier(const Buffer& buffer, VkPipelineStag
     VkBufferMemoryBarrier barrier = { VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER };
     barrier.srcAccessMask = srcAccess;
     barrier.dstAccessMask = dstAccess;
-    barrier.buffer = buffer.GetAPIObject();
+    barrier.buffer = buffer.GetApiObject();
     barrier.offset = 0;
     barrier.size = buffer.GetBufferInfo().size;
 
@@ -614,7 +614,7 @@ void Renderer::CommandBuffer::ImageBarrier(const Image& image, VkImageLayout old
     VkImageMemoryBarrier barrier;
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.pNext = NULL;
-    barrier.image = image.GetAPIObject();
+    barrier.image = image.GetApiObject();
     barrier.srcAccessMask = srcAccess;
     barrier.dstAccessMask = dstAccess;
     barrier.oldLayout = oldLayout;
@@ -714,7 +714,7 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
     }
     
     vkCmdBindDescriptorSets(
-        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetAPIObject(), 
+        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetApiObject(), 
         set, 1, &alloc.first, numDyncOffset, dyncOffset);
 
     allocatedSets[set] = alloc.first;
@@ -773,7 +773,7 @@ void Renderer::CommandBuffer::RebindDescriptorSet(uint32 set)
     }
 
     vkCmdBindDescriptorSets(
-        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetAPIObject(),
+        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetApiObject(),
         set, 1, &allocatedSets[set], numDyncOffset, dyncOffset);
 }
 

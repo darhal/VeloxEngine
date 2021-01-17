@@ -8,6 +8,7 @@ TRE_NS_START
 namespace Renderer
 {
 	class Image;
+	class RenderDevice;
 
 	struct StagingBuffer
 	{
@@ -21,14 +22,27 @@ namespace Renderer
 		bool			shouldRun; // Used for memory barriers and layout transitioning 
 	};
 
+	struct RtStaging
+	{
+		VkCommandPool cmdPool;
+		VkBuffer scratchBuffer;
+		VkDeviceAddress address;
+		VkQueryPool queryPool;
+		std::vector<VkCommandBuffer> cmds;
+
+		bool submitted;
+	};
+
 	class RENDERER_API StagingManager
 	{
 	public:
-		StagingManager(const Internal::RenderDevice* renderDevice);
+		StagingManager(const RenderDevice& renderDevice);
 
 		~StagingManager();
 
 		void Init();
+
+		void InitRT();
 
 		void Shutdown();
 
@@ -57,6 +71,11 @@ namespace Renderer
 		void WaitCurrent();
 
 		FORCEINLINE StagingBuffer& GetCurrentStagingBuffer() { return stagingBuffers[currentBuffer]; }
+
+		// RT Functionality:
+		void StageAcclBuilding(VkAccelerationStructureBuildGeometryInfoKHR& buildInfo, 
+			const VkAccelerationStructureBuildRangeInfoKHR* ranges, uint32 rangesCount = 1, 
+			uint32 flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
 	private:
 		StagingBuffer* PrepareFlush();
 
@@ -64,6 +83,8 @@ namespace Renderer
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence = VK_NULL_HANDLE, VkDevice device = VK_NULL_HANDLE);
 
 		void ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout);
+
+		VkCommandBuffer CreateCommandBuffer(VkCommandPool pool);
 	private:
 		StagingBuffer   stagingBuffers[NUM_FRAMES];
 		uint8*		    mappedData;
@@ -71,8 +92,12 @@ namespace Renderer
 		VkCommandPool	commandPool;
 		uint32			currentBuffer;
 		
+		// RT Functionality:
+		RtStaging rtStaging[NUM_FRAMES];
+		uint32 maxScratchSize;
+		uint32 currentStaging;
 
-		const Internal::RenderDevice* renderDevice;
+		const RenderDevice& renderDevice;
 		
 		CONSTEXPR static uint32 MAX_UPLOAD_BUFFER_SIZE = 64 * 1024 * 1024;
 	};

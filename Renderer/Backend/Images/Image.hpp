@@ -29,7 +29,7 @@ namespace Renderer
 
 		~ImageView();
 
-		FORCEINLINE VkImageView GetAPIObject() const { return apiImageView; }
+		FORCEINLINE VkImageView GetApiObject() const { return apiImageView; }
 
 		FORCEINLINE const ImageViewCreateInfo& GetInfo() const { return info; }
 
@@ -61,7 +61,7 @@ namespace Renderer
 
 		FORCEINLINE VkImageLayout GetLayout(VkImageLayout layout) const { return info.layout == layout ? layout : VK_IMAGE_LAYOUT_GENERAL; }
 
-		FORCEINLINE VkImage GetAPIObject() const { return apiImage; }
+		FORCEINLINE VkImage GetApiObject() const { return apiImage; }
 
 		FORCEINLINE const ImageCreateInfo& GetInfo() const { return info; }
 

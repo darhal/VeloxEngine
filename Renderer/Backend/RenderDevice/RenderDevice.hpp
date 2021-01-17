@@ -47,6 +47,8 @@ namespace Renderer
 		FORCEINLINE bool IsPresentQueueSeprate() const { return internal.isPresentQueueSeprate; }
 
 		FORCEINLINE bool IsTransferQueueSeprate() const { return internal.isTransferQueueSeprate; }
+
+		FORCEINLINE const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const { return internal.memoryProperties; }
 	private:
 		void FetchDeviceAvailableExtensions();
 

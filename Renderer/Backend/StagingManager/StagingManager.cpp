@@ -2,12 +2,15 @@
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/CommandList/CommandList.hpp>
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 
 TRE_NS_START
 
 namespace Renderer
 {
-	StagingManager::StagingManager(const Internal::RenderDevice* renderDevice) : renderDevice(renderDevice), currentBuffer(0)
+	StagingManager::StagingManager(const RenderDevice& renderDevice) : 
+		renderDevice(renderDevice), currentBuffer(0)
+		,maxScratchSize(MAX_UPLOAD_BUFFER_SIZE), currentStaging(0)
 	{
 	}
 
@@ -17,7 +20,7 @@ namespace Renderer
 
 	void StagingManager::Shutdown()
 	{
-		VkDevice device = renderDevice->device;
+		VkDevice device = renderDevice.GetDevice();
 
 		vkUnmapMemory(device, memory);
 
@@ -32,38 +35,27 @@ namespace Renderer
 
 	void StagingManager::Init()
 	{
-		VkDevice device = renderDevice->device;
+		VkDevice device = renderDevice.GetDevice();
 
-		VkBufferCreateInfo bufferCreateInfo = {};
-		bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferCreateInfo.size = MAX_UPLOAD_BUFFER_SIZE;
-		bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		BufferCreateInfo info;
+		info.domain = MemoryUsage::CPU_COHERENT;
+		info.size = MAX_UPLOAD_BUFFER_SIZE;
+		info.usage = BufferUsage::TRANSFER_SRC;
 
 		for (int i = 0; i < NUM_FRAMES; ++i) {
 			stagingBuffers[i].offset = 0;
 			stagingBuffers[i].shouldRun = false;
-
-			vkCreateBuffer(device, &bufferCreateInfo, NULL, &stagingBuffers[i].apiBuffer);
+			stagingBuffers[i].apiBuffer = Buffer::CreateBuffer(renderDevice, info);
 		}
 
-		VkMemoryRequirements memoryRequirements;
-		vkGetBufferMemoryRequirements(device, stagingBuffers[0].apiBuffer, &memoryRequirements);
-
-		const VkDeviceSize alignMod = memoryRequirements.size % memoryRequirements.alignment;
-		const VkDeviceSize alignedSize = (alignMod == 0) ? memoryRequirements.size : (memoryRequirements.size + memoryRequirements.alignment - alignMod);
-
-		VkMemoryAllocateInfo memoryAllocateInfo = {};
-		memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		memoryAllocateInfo.allocationSize = alignedSize * NUM_FRAMES;
-		memoryAllocateInfo.memoryTypeIndex = Buffer::FindMemoryTypeIndex(*renderDevice, memoryRequirements.memoryTypeBits, MemoryUsage::CPU_COHERENT);
-
-		vkAllocateMemory(device, &memoryAllocateInfo, NULL, &memory);
+		VkDeviceSize alignedSize = 0;
+		memory = Buffer::CreateBufferMemory(renderDevice, info, stagingBuffers[0].apiBuffer, &alignedSize, NUM_FRAMES);
 		vkMapMemory(device, memory, 0, alignedSize * NUM_FRAMES, 0, reinterpret_cast<void**>(&mappedData));
 
 		VkCommandPoolCreateInfo commandPoolCreateInfo = {};
 		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		commandPoolCreateInfo.queueFamilyIndex = renderDevice->queueFamilyIndices.queueFamilies[TRANSFER];
+		commandPoolCreateInfo.queueFamilyIndex = renderDevice.GetQueueFamilyIndices().queueFamilies[TRANSFER];
 		vkCreateCommandPool(device, &commandPoolCreateInfo, NULL, &commandPool);
 
 		{
@@ -86,6 +78,39 @@ namespace Renderer
 
 				stagingBuffers[i].data = (uint8*)mappedData + (i * alignedSize);
 			}
+		}
+
+		this->InitRT();
+	}
+
+	// RT functionality:
+	void StagingManager::InitRT()
+	{
+		BufferCreateInfo info;
+		info.domain = MemoryUsage::GPU_ONLY;
+		info.size = maxScratchSize;
+		info.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::STORAGE_BUFFER;
+
+		for (int i = 0; i < NUM_FRAMES; i++) {
+			rtStaging[i].scratchBuffer = Buffer::CreateBuffer(renderDevice, info);
+
+			VkCommandPoolCreateInfo commandPoolCreateInfo = {};
+			commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+			commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+			//TODO: we are doing RT here so what should we do maybe transfer ?
+			commandPoolCreateInfo.queueFamilyIndex = renderDevice.GetQueueFamilyIndices().queueFamilies[TRANSFER];
+			vkCreateCommandPool(renderDevice.GetDevice(), &commandPoolCreateInfo, NULL, &rtStaging[i].cmdPool);
+		}
+
+		VkDeviceSize alignedSize = 0;
+		memory = Buffer::CreateBufferMemory(renderDevice, info, rtStaging[0].scratchBuffer, &alignedSize, NUM_FRAMES);
+		VkBufferDeviceAddressInfo bufferAdrInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+
+		for (int i = 0; i < NUM_FRAMES; i++) {
+			vkBindBufferMemory(renderDevice.GetDevice(), rtStaging[i].scratchBuffer, memory, i * alignedSize);
+
+			bufferAdrInfo.buffer = rtStaging[i].scratchBuffer;
+			rtStaging[i].address = vkGetBufferDeviceAddress(renderDevice.GetDevice(), &bufferAdrInfo);
 		}
 	}
 
@@ -218,7 +243,7 @@ namespace Renderer
 		barrier.newLayout			= newLayout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image				= image.GetAPIObject();
+		barrier.image				= image.GetApiObject();
 		barrier.srcAccessMask		= ImageUsageToPossibleAccess(image.GetInfo().usage); // TODO: some doubt there
 		barrier.dstAccessMask		= ImageUsageToPossibleAccess(image.GetInfo().usage); // TODO: same doubt
 		barrier.subresourceRange.aspectMask		= FormatToAspectMask(image.GetInfo().format);
@@ -263,6 +288,60 @@ namespace Renderer
 		cmd.ImageBarrier(image, oldLayout, newLayout, srcStage, srcAccess, dstStage, dstAccess);
 	}
 
+	void StagingManager::StageAcclBuilding(VkAccelerationStructureBuildGeometryInfoKHR& buildInfo, 
+		const VkAccelerationStructureBuildRangeInfoKHR* ranges, uint32 rangesCount, uint32 flags)
+	{
+		RtStaging* stage = &rtStaging[currentStaging];
+
+		buildInfo.scratchData.deviceAddress = stage->address;
+		// Is compaction requested?
+		bool doCompaction = (flags & VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR)
+			== VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR;
+
+		// Allocate a query pool for storing the needed size for every BLAS compaction.
+		VkQueryPoolCreateInfo qpci{ VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO };
+		qpci.queryCount = 1;
+		qpci.queryType = VK_QUERY_TYPE_ACCELERATION_STRUCTURE_COMPACTED_SIZE_KHR;
+		VkQueryPool queryPool;
+		vkCreateQueryPool(renderDevice.GetDevice(), &qpci, NULL, &queryPool);
+
+		// Create new command buffer:
+		stage->cmds.emplace_back(this->CreateCommandBuffer(stage->cmdPool));
+		auto cmd = stage->cmds.back();
+
+		std::vector<const VkAccelerationStructureBuildRangeInfoKHR*> pBuildOffset(rangesCount);
+		for (size_t i = 0; i < rangesCount; i++) {
+			pBuildOffset[i] = &ranges[i];
+		}
+
+		vkCmdBuildAccelerationStructuresKHR(cmd, 1, &buildInfo, pBuildOffset.data());
+
+		// Since the scratch buffer is reused across builds, we need a barrier to ensure one build
+		// is finished before starting the next one
+		VkMemoryBarrier barrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+		barrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+		barrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
+			VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, NULL, 0, NULL);
+
+		// Write compacted size to query number idx.
+		if (doCompaction) {
+			vkCmdWriteAccelerationStructuresPropertiesKHR(cmd, 1, &buildInfo.dstAccelerationStructure,
+				VK_QUERY_TYPE_ACCELERATION_STRUCTURE_COMPACTED_SIZE_KHR, queryPool, 1);
+		}
+
+		VkFenceCreateInfo fenceCreateInfo = {};
+		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		VkFence fence;
+		vkCreateFence(renderDevice.GetDevice(), &fenceCreateInfo, NULL, &fence);
+
+		SubmitCommandBuffer(renderDevice.GetQueue(TRANSFER), cmd,
+			0, VK_NULL_HANDLE, VK_NULL_HANDLE, fence, renderDevice.GetDevice());
+
+		vkWaitForFences(renderDevice.GetDevice(), 1, &fence, VK_TRUE, UINT64_MAX);
+		vkResetFences(renderDevice.GetDevice(), 1, &fence);
+	}
+
 	StagingBuffer* StagingManager::PrepareFlush()
 	{
 		StagingBuffer& stage = stagingBuffers[currentBuffer];
@@ -277,7 +356,7 @@ namespace Renderer
 
 		VkCommandBuffer cmdBuff = stage.transferCmdBuff;
 
-		if (!renderDevice->isTransferQueueSeprate) {
+		if (!renderDevice.IsTransferQueueSeprate()) {
 			VkMemoryBarrier barrier = {};
 			barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -294,7 +373,7 @@ namespace Renderer
 		memoryRange.sType	= VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 		memoryRange.memory	= memory;
 		memoryRange.size	= VK_WHOLE_SIZE;
-		vkFlushMappedMemoryRanges(renderDevice->device, 1, &memoryRange);
+		vkFlushMappedMemoryRanges(renderDevice.GetDevice(), 1, &memoryRange);
 		return &stage;
 	}
 
@@ -323,12 +402,12 @@ namespace Renderer
 
 		VkCommandBuffer cmdBuff = stage->transferCmdBuff;
 
-		if (renderDevice->isTransferQueueSeprate) {
-			SubmitCommandBuffer(renderDevice->queues[TRANSFER], cmdBuff,
-				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, renderDevice->device);
+		if (renderDevice.IsTransferQueueSeprate()) {
+			SubmitCommandBuffer(renderDevice.GetQueue(TRANSFER), cmdBuff,
+				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, renderDevice.GetDevice());
 		} else {
-			SubmitCommandBuffer(renderDevice->queues[TRANSFER], cmdBuff,
-				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, renderDevice->device);
+			SubmitCommandBuffer(renderDevice.GetQueue(TRANSFER), cmdBuff,
+				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, renderDevice.GetDevice());
 		}
 
 		stage->submitted = true;
@@ -342,8 +421,8 @@ namespace Renderer
 			return;
 		}
 
-		vkWaitForFences(renderDevice->device, 1, &stage.transferFence, VK_TRUE, UINT64_MAX);
-		vkResetFences(renderDevice->device, 1, &stage.transferFence);
+		vkWaitForFences(renderDevice.GetDevice(), 1, &stage.transferFence, VK_TRUE, UINT64_MAX);
+		vkResetFences(renderDevice.GetDevice(), 1, &stage.transferFence);
 
 		stage.offset	= 0;
 		stage.submitted = false;
@@ -398,7 +477,7 @@ namespace Renderer
 		barrier.newLayout			= newLayout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; 
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image				= image.GetAPIObject();
+		barrier.image				= image.GetApiObject();
 		barrier.subresourceRange.aspectMask		= FormatToAspectMask(image.GetInfo().format);
 		barrier.subresourceRange.layerCount		= image.GetInfo().layers;
 		barrier.subresourceRange.levelCount		= image.GetInfo().levels;
@@ -435,6 +514,26 @@ namespace Renderer
 			0, NULL,
 			1, &barrier
 		);
+	}
+
+	VkCommandBuffer StagingManager::CreateCommandBuffer(VkCommandPool pool)
+	{
+		// Command buffer allocation:
+		VkCommandBuffer cmd;
+		VkCommandBufferAllocateInfo allocInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandPool = pool;
+		allocInfo.commandBufferCount = 1;
+		vkAllocateCommandBuffers(renderDevice.GetDevice(), &allocInfo, &cmd);
+
+		// Begin recording
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		beginInfo.pInheritanceInfo = NULL;
+		vkBeginCommandBuffer(cmd, &beginInfo);
+
+		return cmd;
 	}
 }
 

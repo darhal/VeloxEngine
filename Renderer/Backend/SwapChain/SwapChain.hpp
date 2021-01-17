@@ -100,7 +100,7 @@ namespace Renderer
 
         FORCEINLINE const SwapchainSupportDetails& GetSwapchainSupportDetaims() const { return supportDetails; }
 
-        FORCEINLINE VkSwapchainKHR GetAPIObject() const { return swapchain; }
+        FORCEINLINE VkSwapchainKHR GetApiObject() const { return swapchain; }
 
         FORCEINLINE VkRenderPass GetRenderPass() const { return renderPass; }
 

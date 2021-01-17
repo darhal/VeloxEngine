@@ -171,7 +171,7 @@ namespace Renderer
 			VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
 
 
-		FORCEINLINE VkCommandBuffer GetAPIObject() const { return commandBuffer; }
+		FORCEINLINE VkCommandBuffer GetApiObject() const { return commandBuffer; }
 
 		FORCEINLINE Type GetType() const { return type; }
 

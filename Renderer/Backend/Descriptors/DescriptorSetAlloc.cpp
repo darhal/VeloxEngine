@@ -45,7 +45,7 @@ void Renderer::DescriptorSetAllocator::AllocatePool()
 
     VkDescriptorSetLayout layouts[MAX_SETS_PER_POOL];
     VkDescriptorSet sets[MAX_SETS_PER_POOL];
-    std::fill(std::begin(layouts), std::end(layouts), descriptorSetLayout.GetAPIObject());
+    std::fill(std::begin(layouts), std::end(layouts), descriptorSetLayout.GetApiObject());
 
     VkDescriptorSetAllocateInfo allocInfo;
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
