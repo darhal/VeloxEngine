@@ -3,6 +3,7 @@
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
+#include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -33,6 +34,19 @@ namespace Renderer
 		VkSampleCountFlagBits GetUsableSampleCount(uint32 sampleCount = 4) const;
 
 		VkSampleCountFlagBits GetMaxUsableSampleCount() const;
+
+		uint32 FindMemoryType(uint32 typeFilter, VkMemoryPropertyFlags properties) const;
+
+		uint32 FindMemoryTypeIndex(uint32 typeFilter, MemoryUsage usage) const;
+
+		VkBuffer CreateBuffer(const BufferInfo& info) const;
+
+		VkDeviceMemory CreateBufferMemory(const BufferInfo& info, VkBuffer buffer,
+			VkDeviceSize* alignedSize = NULL, uint32 multiplier = 1) const;
+
+		VkAccelerationStructureKHR CreateAcceleration(VkAccelerationStructureCreateInfoKHR& info, VkBuffer* buffer) const;
+
+		FORCEINLINE VkDeviceAddress GetBufferAddress(BufferHandle buff) const;
 
 		FORCEINLINE VkDevice GetDevice() const { return internal.device; }
 

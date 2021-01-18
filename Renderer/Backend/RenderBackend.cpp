@@ -26,7 +26,7 @@ void Renderer::RenderBackend::InitInstance(uint32 usage)
     StaticVector<const char*> deviceExt;
 
     if (usage & RAY_TRACING) {
-        for (const auto& ext : DEV_EXTENSIONS[GetSetBit(RAY_TRACING)]) {
+        for (auto ext : DEV_EXTENSIONS[GetSetBit(RAY_TRACING)]) {
             deviceExt.PushBack(ext);
         }
     }
@@ -295,27 +295,24 @@ void Renderer::RenderBackend::EndFrame()
     renderContext.EndFrame(renderDevice);
 }
 
-Renderer::BlasHandle Renderer::RenderBackend::CreateBlas(const BlasCreateInfo& blasInfo)
+Renderer::BlasHandle Renderer::RenderBackend::CreateBlas(const BlasCreateInfo& blasInfo, uint32 flags)
 {
-    VkAccelerationStructureKHR blas; 
-
     VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
     buildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
     buildInfo.pNext = NULL;
     buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-    buildInfo.flags;
+    buildInfo.flags = 0;
     buildInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
     buildInfo.srcAccelerationStructure = VK_NULL_HANDLE;
+    buildInfo.dstAccelerationStructure = VK_NULL_HANDLE;
     buildInfo.geometryCount  = blasInfo.acclGeo.Size();
     buildInfo.pGeometries = blasInfo.acclGeo.begin();
     buildInfo.ppGeometries = NULL;
     
-    VkDeviceOrHostAddressKHR   scratchData;
-
-    StaticVector<uint32> maxPrimCount;
+    StaticVector<uint32, 256> maxPrimCount;
     maxPrimCount.Resize(blasInfo.accOffset.Size());
 
-    for (auto tt = 0; tt < blasInfo.accOffset.Size(); tt++)
+    for (uint32 tt = 0; tt < blasInfo.accOffset.Size(); tt++)
         maxPrimCount[tt] = blasInfo.accOffset[tt].primitiveCount;  // Number of primitives/triangles
 
     VkAccelerationStructureBuildSizesInfoKHR sizeInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
@@ -331,11 +328,10 @@ Renderer::BlasHandle Renderer::RenderBackend::CreateBlas(const BlasCreateInfo& b
     // and fills in createInfo.buffer with the buffer allocated to store the BLAS. The underlying
     // vkCreateAccelerationStructureKHR call then consumes the buffer value.
     BufferHandle buffer;
-    VkAccelerationStructureKHR accl = this->CreateAcceleration(createInfo, &buffer);
-    buildInfo.dstAccelerationStructure = accl;  // Setting the where the build lands
-    stagingManager.StageAcclBuilding(buildInfo, blasInfo.accOffset.begin(), blasInfo.accOffset.Size());
-
+    VkAccelerationStructureKHR blas = this->CreateAcceleration(createInfo, &buffer);
+    buildInfo.dstAccelerationStructure = blas;  // Setting the where the build lands
     BlasHandle ret(objectsPool.blases.Allocate(*this, blasInfo, blas, buffer));
+    stagingManager.StageAcclBuilding(ret, buildInfo, blasInfo.accOffset.begin(), blasInfo.accOffset.Size(), flags);
     return ret;
 }
 
@@ -346,9 +342,10 @@ VkAccelerationStructureKHR Renderer::RenderBackend::CreateAcceleration(VkAcceler
     bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_STORAGE;
     bufferInfo.domain = MemoryUsage::GPU_ONLY;
     *buffer = this->CreateBuffer(bufferInfo);
+    info.buffer = (*buffer)->GetApiObject();
 
     VkAccelerationStructureKHR accl;
-    vkCreateAccelerationStructureKHR(renderDevice.GetDevice(), &info, NULL, &accl);
+    CALL_VK(vkCreateAccelerationStructureKHR(renderDevice.GetDevice(), &info, NULL, &accl));
     return accl;
 }
 
@@ -452,7 +449,7 @@ Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo
     MemoryView imageMemory;
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(renderDevice.GetDevice(), apiImage, &memRequirements);
-    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(renderDevice, memRequirements.memoryTypeBits, memUsage);
+    uint32 memoryTypeIndex = renderDevice.FindMemoryTypeIndex(memRequirements.memoryTypeBits, memUsage);
     imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, memRequirements.alignment);
     vkBindImageMemory(renderDevice.GetDevice(), apiImage, imageMemory.memory, imageMemory.offset);
 
@@ -517,13 +514,24 @@ Renderer::ImageViewHandle Renderer::RenderBackend::CreateImageView(const ImageVi
 
 bool Renderer::RenderBackend::CreateBufferInternal(VkBuffer& outBuffer, MemoryView& outMemoryView, const BufferInfo& createInfo)
 {
-    outBuffer = Buffer::CreateBuffer(renderDevice, createInfo);
+    outBuffer = renderDevice.CreateBuffer(createInfo);
 
-    VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(renderDevice.GetDevice(), outBuffer, &memRequirements);
-    uint32 memoryTypeIndex = Buffer::FindMemoryTypeIndex(this->renderDevice, memRequirements.memoryTypeBits, createInfo.domain);
-    outMemoryView = gpuMemoryAllocator.Allocate(memoryTypeIndex, createInfo.size, memRequirements.alignment);
-    vkBindBufferMemory(renderDevice.GetDevice(), outBuffer, outMemoryView.memory, outMemoryView.offset);
+    // TODO: fix this!! this is quick and dirty way
+    if (!(createInfo.usage & BufferUsage::SHADER_DEVICE_ADDRESS)) {
+        VkMemoryRequirements memRequirements;
+        vkGetBufferMemoryRequirements(renderDevice.GetDevice(), outBuffer, &memRequirements);
+        uint32 memoryTypeIndex = renderDevice.FindMemoryTypeIndex(memRequirements.memoryTypeBits, createInfo.domain);
+        outMemoryView = gpuMemoryAllocator.Allocate(memoryTypeIndex, createInfo.size, memRequirements.alignment);
+        vkBindBufferMemory(renderDevice.GetDevice(), outBuffer, outMemoryView.memory, outMemoryView.offset);
+    } else {
+        outMemoryView.offset = 0;
+        outMemoryView.size = createInfo.size;
+        outMemoryView.padding = 0;
+        outMemoryView.mappedData = NULL;
+        outMemoryView.alignment = 0;
+
+        outMemoryView.memory = renderDevice.CreateBufferMemory(createInfo, outBuffer);
+    }
 
     return true;
 }

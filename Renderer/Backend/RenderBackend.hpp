@@ -112,9 +112,15 @@ namespace Renderer
 		FORCEINLINE const RenderDevice& GetRenderDevice() const { return renderDevice; }
 
 		// RT:
-		BlasHandle CreateBlas(const BlasCreateInfo& blasInfo);
+		BlasHandle CreateBlas(const BlasCreateInfo& blasInfo, uint32 flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
 
 		VkAccelerationStructureKHR CreateAcceleration(VkAccelerationStructureCreateInfoKHR& info, BufferHandle* buffer);
+
+		FORCEINLINE void RtSyncAcclBuilding() { stagingManager.SyncAcclBuilding(); };
+
+		FORCEINLINE void RtBuildBlasBatchs() { stagingManager.BuildBlasBatchs(); };
+
+		FORCEINLINE void RtCompressBatch() { stagingManager.CompressBatch(*this); };
 
 		// ..
 

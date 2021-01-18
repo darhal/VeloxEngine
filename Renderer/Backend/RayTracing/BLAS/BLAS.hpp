@@ -75,6 +75,7 @@ namespace Renderer
 		BufferHandle buffer;
 		
 		friend class RenderBackend;
+		friend class StagingManager;
 	};
 
 	using BlasHandle = Handle<Blas>;

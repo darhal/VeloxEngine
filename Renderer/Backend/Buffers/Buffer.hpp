@@ -26,27 +26,11 @@ namespace Renderer
 	class Buffer : public NoRefCount
 	{
 	public:
-		static uint32 FindMemoryType(const RenderDevice& renderDevice, uint32 typeFilter, VkMemoryPropertyFlags properties);
-
-		static uint32 FindMemoryTypeIndex(const RenderDevice& renderDevice, uint32 typeFilter, MemoryUsage usage);
-
-		static VkBuffer CreateBuffer(const RenderDevice& dev, const BufferInfo& info);
-
-		static VkDeviceMemory CreateBufferMemory(const RenderDevice& dev, const BufferInfo& info, VkBuffer buffer, 
-			VkDeviceSize* alignedSize = NULL, uint32 multiplier = 1);
-
 		Buffer(VkBuffer buffer, const BufferInfo& info, const MemoryView& mem);
 
 		void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
 
 		FORCEINLINE VkBuffer GetApiObject() const { return apiBuffer; }
-
-		FORCEINLINE VkDeviceAddress GetAddress(VkDevice dev) const
-		{
-			VkBufferDeviceAddressInfo bufferAdrInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
-			bufferAdrInfo.buffer = apiBuffer;
-			return vkGetBufferDeviceAddress(dev, &bufferAdrInfo);
-		}
 
 		FORCEINLINE const BufferInfo& GetBufferInfo() const { return bufferInfo; }
 
@@ -58,6 +42,7 @@ namespace Renderer
 		VkBuffer   apiBuffer;
 
 		friend class RenderBackend;
+		friend class StagingManager;
 	};
 
 	using BufferHandle = Handle<Buffer>;

@@ -81,7 +81,7 @@ namespace Renderer
     {
         uint32 i = 0;
 
-        while(!(bitmask & (1 << ++i))) 
+        while(!(bitmask & (1 << i++))) 
         {
         }
 

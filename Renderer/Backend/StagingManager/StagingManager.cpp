@@ -3,6 +3,8 @@
 #include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/CommandList/CommandList.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
+#include <Renderer/Backend/RayTracing/BLAS/BLAS.hpp>
+#include <Renderer/Backend/RenderBackend.hpp>
 
 TRE_NS_START
 
@@ -35,6 +37,8 @@ namespace Renderer
 
 	void StagingManager::Init()
 	{
+		this->InitRT();
+
 		VkDevice device = renderDevice.GetDevice();
 
 		BufferCreateInfo info;
@@ -45,11 +49,11 @@ namespace Renderer
 		for (int i = 0; i < NUM_FRAMES; ++i) {
 			stagingBuffers[i].offset = 0;
 			stagingBuffers[i].shouldRun = false;
-			stagingBuffers[i].apiBuffer = Buffer::CreateBuffer(renderDevice, info);
+			stagingBuffers[i].apiBuffer = renderDevice.CreateBuffer(info);
 		}
 
 		VkDeviceSize alignedSize = 0;
-		memory = Buffer::CreateBufferMemory(renderDevice, info, stagingBuffers[0].apiBuffer, &alignedSize, NUM_FRAMES);
+		memory = renderDevice.CreateBufferMemory(info, stagingBuffers[0].apiBuffer, &alignedSize, NUM_FRAMES);
 		vkMapMemory(device, memory, 0, alignedSize * NUM_FRAMES, 0, reinterpret_cast<void**>(&mappedData));
 
 		VkCommandPoolCreateInfo commandPoolCreateInfo = {};
@@ -79,8 +83,6 @@ namespace Renderer
 				stagingBuffers[i].data = (uint8*)mappedData + (i * alignedSize);
 			}
 		}
-
-		this->InitRT();
 	}
 
 	// RT functionality:
@@ -92,25 +94,31 @@ namespace Renderer
 		info.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::STORAGE_BUFFER;
 
 		for (int i = 0; i < NUM_FRAMES; i++) {
-			rtStaging[i].scratchBuffer = Buffer::CreateBuffer(renderDevice, info);
+			rtStaging[i].scratchBuffer = renderDevice.CreateBuffer(info);
+			rtStaging[i].address = NULL;
+			rtStaging[i].submitted = false;
 
 			VkCommandPoolCreateInfo commandPoolCreateInfo = {};
 			commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 			commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 			//TODO: we are doing RT here so what should we do maybe transfer ?
-			commandPoolCreateInfo.queueFamilyIndex = renderDevice.GetQueueFamilyIndices().queueFamilies[TRANSFER];
+			commandPoolCreateInfo.queueFamilyIndex = renderDevice.GetQueueFamilyIndices().queueFamilies[COMPUTE];
 			vkCreateCommandPool(renderDevice.GetDevice(), &commandPoolCreateInfo, NULL, &rtStaging[i].cmdPool);
 		}
 
 		VkDeviceSize alignedSize = 0;
-		memory = Buffer::CreateBufferMemory(renderDevice, info, rtStaging[0].scratchBuffer, &alignedSize, NUM_FRAMES);
+		memory = renderDevice.CreateBufferMemory(info, rtStaging[0].scratchBuffer, &alignedSize, NUM_FRAMES);
 		VkBufferDeviceAddressInfo bufferAdrInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+
+		VkFenceCreateInfo fenceCreateInfo = {};
+		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
 		for (int i = 0; i < NUM_FRAMES; i++) {
 			vkBindBufferMemory(renderDevice.GetDevice(), rtStaging[i].scratchBuffer, memory, i * alignedSize);
 
 			bufferAdrInfo.buffer = rtStaging[i].scratchBuffer;
-			rtStaging[i].address = vkGetBufferDeviceAddress(renderDevice.GetDevice(), &bufferAdrInfo);
+			rtStaging[i].address = vkGetBufferDeviceAddressKHR(renderDevice.GetDevice(), &bufferAdrInfo);
+			vkCreateFence(renderDevice.GetDevice(), &fenceCreateInfo, NULL, &rtStaging[i].fence);
 		}
 	}
 
@@ -288,58 +296,196 @@ namespace Renderer
 		cmd.ImageBarrier(image, oldLayout, newLayout, srcStage, srcAccess, dstStage, dstAccess);
 	}
 
-	void StagingManager::StageAcclBuilding(VkAccelerationStructureBuildGeometryInfoKHR& buildInfo, 
+	void StagingManager::BuildBlasBatchs()
+	{
+		// Start by building compact ones as they have dependcies later
+		this->BuildBlasBatch(1);
+		this->BuildBlasBatch(0);
+	}
+
+	void StagingManager::SyncAcclBuilding()
+	{
+		RtStaging* stage = &rtStaging[currentStaging];
+		bool fenceSet = stage->submitted;
+
+		if (!fenceSet)
+			return;
+
+		// wait till we get everything done to re-claim resources
+		vkWaitForFences(renderDevice.GetDevice(), 1, &stage->fence, VK_TRUE, UINT64_MAX);
+		vkResetFences(renderDevice.GetDevice(), 1, &stage->fence);
+		stage->submitted = false;
+
+		vkResetCommandPool(renderDevice.GetDevice(), stage->cmdPool, 0);
+
+		for (uint32 i = 0; i < stage->batch[1].batchInfo.size(); i++) {
+			vkDestroyAccelerationStructureKHR(renderDevice.GetDevice(), stage->cleanupAS[i], NULL);
+		}
+
+		stage->batch[0].batchInfo.clear();
+		stage->batch[1].batchInfo.clear();
+
+		// TRE_LOGI("Building and compression DONE.\n");
+	}
+
+	void StagingManager::StageAcclBuilding(Blas* blas, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo,
 		const VkAccelerationStructureBuildRangeInfoKHR* ranges, uint32 rangesCount, uint32 flags)
 	{
 		RtStaging* stage = &rtStaging[currentStaging];
+		
+		// wait till we get everything done to re-claim resources
+		this->SyncAcclBuilding();
 
-		buildInfo.scratchData.deviceAddress = stage->address;
 		// Is compaction requested?
 		bool doCompaction = (flags & VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR)
 			== VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR;
+		buildInfo.scratchData.deviceAddress = stage->address;
+		
+		std::vector<VkAccelerationStructureBuildRangeInfoKHR> buildOffset(ranges, ranges + rangesCount);
+		RtStaging::Batch::BatchInfo info;
+		info.buildInfo = buildInfo;
+		info.buildInfo.flags = flags;
+		info.cmd = this->CreateCommandBuffer(stage->cmdPool);
+		info.ranges = std::move(buildOffset);
+		info.blasObject = blas;
+		stage->batch[doCompaction].batchInfo.emplace_back(std::move(info));
+	}
 
-		// Allocate a query pool for storing the needed size for every BLAS compaction.
-		VkQueryPoolCreateInfo qpci{ VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO };
-		qpci.queryCount = 1;
-		qpci.queryType = VK_QUERY_TYPE_ACCELERATION_STRUCTURE_COMPACTED_SIZE_KHR;
-		VkQueryPool queryPool;
-		vkCreateQueryPool(renderDevice.GetDevice(), &qpci, NULL, &queryPool);
+	void StagingManager::BuildBlasBatch(bool compact)
+	{
+		RtStaging* stage = &rtStaging[currentStaging];
+		RtStaging::Batch& batch = stage->batch[compact];
+		auto& pBuildOffset = stage->pBuildOffset;
+		size_t nbBlas = batch.batchInfo.size();
 
-		// Create new command buffer:
-		stage->cmds.emplace_back(this->CreateCommandBuffer(stage->cmdPool));
-		auto cmd = stage->cmds.back();
-
-		std::vector<const VkAccelerationStructureBuildRangeInfoKHR*> pBuildOffset(rangesCount);
-		for (size_t i = 0; i < rangesCount; i++) {
-			pBuildOffset[i] = &ranges[i];
+		// Sanity check:
+		if (batch.batchInfo.size() == 0) {
+			return;
 		}
 
-		vkCmdBuildAccelerationStructuresKHR(cmd, 1, &buildInfo, pBuildOffset.data());
+		std::vector<VkCommandBuffer> commands(nbBlas);
 
-		// Since the scratch buffer is reused across builds, we need a barrier to ensure one build
-		// is finished before starting the next one
-		VkMemoryBarrier barrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
-		barrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
-		barrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
-		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
-			VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, NULL, 0, NULL);
+		if (compact) {
+			if (batch.queryPool)
+				vkDestroyQueryPool(renderDevice.GetDevice(), batch.queryPool, NULL);
 
-		// Write compacted size to query number idx.
-		if (doCompaction) {
-			vkCmdWriteAccelerationStructuresPropertiesKHR(cmd, 1, &buildInfo.dstAccelerationStructure,
-				VK_QUERY_TYPE_ACCELERATION_STRUCTURE_COMPACTED_SIZE_KHR, queryPool, 1);
+			VkQueryPoolCreateInfo qpci{ VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO };
+			qpci.queryCount = (uint32)nbBlas;
+			qpci.queryType = VK_QUERY_TYPE_ACCELERATION_STRUCTURE_COMPACTED_SIZE_KHR;
+			vkCreateQueryPool(renderDevice.GetDevice(), &qpci, NULL, &batch.queryPool);
 		}
 
-		VkFenceCreateInfo fenceCreateInfo = {};
-		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		VkFence fence;
-		vkCreateFence(renderDevice.GetDevice(), &fenceCreateInfo, NULL, &fence);
+		// TODO: check if we have enough memory for scratch space...
 
-		SubmitCommandBuffer(renderDevice.GetQueue(TRANSFER), cmd,
-			0, VK_NULL_HANDLE, VK_NULL_HANDLE, fence, renderDevice.GetDevice());
+		for (size_t i = 0; i < nbBlas; i++) {
+			auto& info = batch.batchInfo[i];
 
-		vkWaitForFences(renderDevice.GetDevice(), 1, &fence, VK_TRUE, UINT64_MAX);
-		vkResetFences(renderDevice.GetDevice(), 1, &fence);
+			if (pBuildOffset.size() <= info.ranges.size()) {
+				pBuildOffset.resize(info.ranges.size() * 2);
+			}
+
+			for (size_t j = 0; j < info.ranges.size(); j++) {
+				pBuildOffset[j] = &info.ranges[j];
+			}
+
+			vkCmdBuildAccelerationStructuresKHR(info.cmd, 1, &info.buildInfo, pBuildOffset.data());
+
+			// Since the scratch buffer is reused across builds, we need a barrier to ensure one build
+			// is finished before starting the next one
+			VkMemoryBarrier barrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+			barrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+			barrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+			vkCmdPipelineBarrier(info.cmd, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
+				VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, NULL, 0, NULL);
+
+			// Write compacted size to query number idx.
+			if (compact) {
+				vkCmdWriteAccelerationStructuresPropertiesKHR(info.cmd, 1, &info.buildInfo.dstAccelerationStructure,
+					VK_QUERY_TYPE_ACCELERATION_STRUCTURE_COMPACTED_SIZE_KHR, batch.queryPool, (uint32)i);
+			}
+
+			vkEndCommandBuffer(info.cmd);
+			commands[i] = info.cmd;
+		}
+
+		CALL_VK(
+			SubmitCommandBuffer(renderDevice.GetQueue(COMPUTE), commands.data(), (uint32)commands.size(),
+				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence, renderDevice.GetDevice())
+		);
+
+		stage->submitted = true;
+	}
+
+	void StagingManager::CompressBatch(RenderBackend& backend)
+	{
+		RtStaging* stage = &rtStaging[currentStaging];
+		RtStaging::Batch& batch = stage->batch[1]; // compact batch
+		auto& compactSizes = stage->compactSizes;
+		auto& cleanupAS = stage->cleanupAS;
+		auto nbBlas = batch.batchInfo.size();
+		bool fenceSet = stage->submitted;
+
+		// Sanity check:
+		if (batch.batchInfo.size() == 0) {
+			return;
+		}
+
+		if (fenceSet) {
+			printf("Waiting for fence\n");
+			vkWaitForFences(renderDevice.GetDevice(), 1, &stage->fence, VK_TRUE, UINT64_MAX);
+			vkResetFences(renderDevice.GetDevice(), 1, &stage->fence);
+			stage->submitted = false;
+
+			vkResetCommandPool(renderDevice.GetDevice(), stage->cmdPool, 0);
+			stage->compressionCommand = this->CreateCommandBuffer(stage->cmdPool);
+		} else {
+			ASSERTF(true, "Fatal Error: Fence is not set!");
+			return;
+		}
+
+		if (compactSizes.size() <= nbBlas) {
+			compactSizes.resize(nbBlas * 2);
+		}
+
+		if (cleanupAS.size() <= nbBlas) {
+			cleanupAS.resize(nbBlas * 2);
+		}
+
+		vkGetQueryPoolResults(renderDevice.GetDevice(), batch.queryPool, 0, 
+			(uint32_t)nbBlas, nbBlas * sizeof(VkDeviceSize),
+			compactSizes.data(), sizeof(VkDeviceSize), VK_QUERY_RESULT_WAIT_BIT);
+
+		for (uint32_t idx = 0; idx < nbBlas; idx++) {
+			auto& info = batch.batchInfo[idx];
+
+			// Creating a compact version of the AS
+			BufferHandle buffHandle;
+			VkAccelerationStructureCreateInfoKHR asCreateInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
+			asCreateInfo.size = compactSizes[idx];
+			asCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+			auto as = backend.CreateAcceleration(asCreateInfo, &buffHandle);
+
+			// Copy the original BLAS to a compact version
+			VkCopyAccelerationStructureInfoKHR copyInfo{ VK_STRUCTURE_TYPE_COPY_ACCELERATION_STRUCTURE_INFO_KHR };
+			copyInfo.src = info.blasObject->GetApiObject();
+			copyInfo.dst = as;
+			copyInfo.mode = VK_COPY_ACCELERATION_STRUCTURE_MODE_COMPACT_KHR;
+			vkCmdCopyAccelerationStructureKHR(stage->compressionCommand, &copyInfo);
+
+			info.blasObject->apiBlas = as;
+			info.blasObject->buffer = buffHandle;
+
+			cleanupAS[idx] = copyInfo.src;
+
+			vkEndCommandBuffer(stage->compressionCommand);
+		}
+
+		CALL_VK(
+			SubmitCommandBuffer(renderDevice.GetQueue(COMPUTE), &stage->compressionCommand, 1,
+				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence, renderDevice.GetDevice())
+		);
+
+		stage->submitted = true;
 	}
 
 	StagingBuffer* StagingManager::PrepareFlush()
@@ -369,10 +515,13 @@ namespace Renderer
 		}
 
 		vkEndCommandBuffer(cmdBuff);
-		VkMappedMemoryRange memoryRange = {};
+		VkMappedMemoryRange memoryRange;
 		memoryRange.sType	= VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		memoryRange.pNext	= NULL;
 		memoryRange.memory	= memory;
-		memoryRange.size	= VK_WHOLE_SIZE;
+		memoryRange.offset	= currentBuffer * MAX_UPLOAD_BUFFER_SIZE;
+		memoryRange.size	= MAX_UPLOAD_BUFFER_SIZE;
+
 		vkFlushMappedMemoryRanges(renderDevice.GetDevice(), 1, &memoryRange);
 		return &stage;
 	}
@@ -403,10 +552,10 @@ namespace Renderer
 		VkCommandBuffer cmdBuff = stage->transferCmdBuff;
 
 		if (renderDevice.IsTransferQueueSeprate()) {
-			SubmitCommandBuffer(renderDevice.GetQueue(TRANSFER), cmdBuff,
+			SubmitCommandBuffer(renderDevice.GetQueue(TRANSFER), &cmdBuff, 1,
 				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, renderDevice.GetDevice());
 		} else {
-			SubmitCommandBuffer(renderDevice.GetQueue(TRANSFER), cmdBuff,
+			SubmitCommandBuffer(renderDevice.GetQueue(TRANSFER), &cmdBuff, 1,
 				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence, renderDevice.GetDevice());
 		}
 
@@ -445,14 +594,14 @@ namespace Renderer
 		this->Wait(stagingBuffers[prevBufferIndex]);
 	}
 
-	void StagingManager::SubmitCommandBuffer(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage,
+	VkResult StagingManager::SubmitCommandBuffer(VkQueue queue, VkCommandBuffer* cmdBuff, uint32 cmdCount, VkPipelineStageFlags waitStage,
 		VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence, VkDevice device)
 	{
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &cmdBuff;
+		submitInfo.commandBufferCount = cmdCount;
+		submitInfo.pCommandBuffers = cmdBuff;
 
 
 		if (waitSemaphore != VK_NULL_HANDLE) {
@@ -466,7 +615,7 @@ namespace Renderer
 			submitInfo.pSignalSemaphores	= &signalSemaphore;
 		}
 
-		vkQueueSubmit(queue, 1, &submitInfo, fence);
+		return vkQueueSubmit(queue, 1, &submitInfo, fence);
 	}
 
 	void StagingManager::ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout)

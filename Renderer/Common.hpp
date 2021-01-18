@@ -20,6 +20,7 @@
 // #define DEBUG
 
 #define VALIDATION_LAYERS
+//#undef VALIDATION_LAYERS
 
 #include <chrono>
 

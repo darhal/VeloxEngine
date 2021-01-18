@@ -44,7 +44,7 @@ namespace Renderer
 		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 	private:
 		Internal::RenderInstance internal;
-		std::unordered_set<uint64> deviceExtensions;
+		std::unordered_set<uint64> instanceExtensions;
 		std::unordered_set<uint64> availbleInstExtensions;
 
 		friend class RenderBackend;

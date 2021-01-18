@@ -29,7 +29,7 @@ int32 Renderer::RenderDevice::CreateRenderDevice(const Internal::RenderInstance&
                                             internal.queueFamilyIndices.queueFamilies[Internal::QFT_TRANSFER];
 
     vkGetPhysicalDeviceMemoryProperties(internal.gpu, &internal.memoryProperties);
-    return CreateLogicalDevice(renderInstance, ctx);
+    return CreateLogicalDevice(renderInstance, ctx, extensions, extCount, layers, layerCount);
 }
 
 void Renderer::RenderDevice::DestroryRenderDevice()
@@ -66,16 +66,20 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
         }
 
         extensionsArr.PushBack(extensions[i]);
-        deviceExtensions.emplace();
+        deviceExtensions.emplace(h);
     }
 
-    for (const auto& ext : VK_REQ_LAYERS) {
-        layersArr.PushBack(ext);
-    }
+    printf("Device Ext:\n");
+    for (auto c : extensionsArr)
+        printf("\t%s\n", c);
 
     for (uint32 i = 0; i < layerCount; i++) {
         layersArr.PushBack(layers[i]);
     }
+
+    printf("Device Layers:\n");
+    for (auto c : layersArr)
+        printf("\t%s\n", c);
 
     VkDevice device = VK_NULL_HANDLE;
     float queuePriority = 1.0f;
@@ -96,31 +100,29 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
     }
 
     // Enable some device features:
-    // TODO: 
+    // TODO: check if the GPU supports this feature
     VkPhysicalDeviceFeatures2 deviceFeatures2;
-    deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    deviceFeatures2.pNext = NULL;
-    
     VkPhysicalDeviceAccelerationStructureFeaturesKHR accelFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR };
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR };
     VkPhysicalDeviceBufferDeviceAddressFeatures buffAdrFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES };
-
+    deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     deviceFeatures2.pNext = &accelFeatures;
     accelFeatures.pNext = &rtPipelineFeatures;
     rtPipelineFeatures.pNext = &buffAdrFeatures;
-    deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
-    deviceFeatures2.features.fillModeNonSolid = VK_TRUE;
-    // buffAdrFeatures.bufferDeviceAddress = VK_TRUE;
     vkGetPhysicalDeviceFeatures2(internal.gpu, &deviceFeatures2);
+
+    //deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
+    //deviceFeatures2.features.fillModeNonSolid = VK_TRUE;
+    //buffAdrFeatures.bufferDeviceAddress = VK_TRUE;
+    //deviceFeatures2.features.robustBufferAccess = VK_FALSE;
     
     // Classical VkPhysicalDeviceFeatures deviceFeatures{};
-    // TODO: check if the GPU supports this feature
 
     VkDeviceCreateInfo createInfo;
     createInfo.sType                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.pNext = &deviceFeatures2;
-    createInfo.flags = 0;
-    createInfo.pEnabledFeatures = NULL;//&deviceFeatures2.features;
+    createInfo.pNext                    = &deviceFeatures2;
+    createInfo.flags                    = 0;
+    createInfo.pEnabledFeatures         = NULL;//&deviceFeatures2.features;
 
     createInfo.pQueueCreateInfos        = queueCreateInfos.Data();
     createInfo.queueCreateInfoCount     = (uint32)queueCreateInfos.Size();
@@ -158,7 +160,7 @@ VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkImage image, Me
     info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     info.pNext           = NULL;
     info.allocationSize  = memRequirements.size;
-    info.memoryTypeIndex = Buffer::FindMemoryTypeIndex(*this, memRequirements.memoryTypeBits, memoryDomain);
+    info.memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, memoryDomain);
 
     vkAllocateMemory(internal.device, &info, NULL, &memory);
     vkBindImageMemory(internal.device, image, memory, 0);
@@ -175,7 +177,7 @@ VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkBuffer buffer, 
     info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     info.pNext = NULL;
     info.allocationSize = memRequirements.size;
-    info.memoryTypeIndex = Buffer::FindMemoryTypeIndex(*this, memRequirements.memoryTypeBits, memoryDomain);
+    info.memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, memoryDomain);
 
     vkAllocateMemory(internal.device, &info, NULL, &memory);
     vkBindBufferMemory(internal.device, buffer, memory, 0);
@@ -214,6 +216,145 @@ VkSampleCountFlagBits Renderer::RenderDevice::GetMaxUsableSampleCount() const
     return VK_SAMPLE_COUNT_1_BIT;
 }
 
+uint32 Renderer::RenderDevice::FindMemoryType(uint32 typeFilter, VkMemoryPropertyFlags properties) const
+{
+    const VkPhysicalDeviceMemoryProperties& memProperties = this->GetMemoryProperties();
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    ASSERTF(true, "Failed to find suitable memory type!");
+    return ~0u;
+}
+
+uint32 Renderer::RenderDevice::FindMemoryTypeIndex(uint32 typeFilter, MemoryUsage usage) const
+{
+    VkMemoryPropertyFlags required = 0;
+    // VkMemoryPropertyFlags preferred = 0;
+
+    switch (usage) {
+    case MemoryUsage::GPU_ONLY:
+        required |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+        // preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+        break;
+    case MemoryUsage::LINKED_GPU_CPU:
+        required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+        break;
+    case MemoryUsage::CPU_ONLY:
+        required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+        // preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+        break;
+    case MemoryUsage::CPU_CACHED:
+        required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+        // preferred |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+        break;
+    case MemoryUsage::CPU_COHERENT:
+        required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        // preferred |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+        break;
+    default:
+        ASSERTF(true, "Unknown memory usage!");
+    }
+
+    return FindMemoryType(typeFilter, required);
+}
+
+VkBuffer Renderer::RenderDevice::CreateBuffer(const BufferInfo& info) const
+{
+    StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
+
+    VkBufferCreateInfo bufferInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    bufferInfo.size = info.size;
+    bufferInfo.usage = info.usage;
+    bufferInfo.sharingMode = (VkSharingMode)SharingMode::EXCLUSIVE;
+
+    if (info.domain == MemoryUsage::GPU_ONLY) {
+        bufferInfo.usage |= BufferUsage::TRANSFER_DST;
+    }
+
+    if (info.queueFamilies) {
+        for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
+            if (Internal::QUEUE_FAMILY_FLAGS[i] & info.queueFamilies) {
+                queueFamilyIndices.AllocateInit(1, this->GetQueueFamilyIndices().queueFamilies[i]);
+            }
+        }
+
+        bufferInfo.sharingMode = (VkSharingMode)SharingMode::CONCURRENT;
+        bufferInfo.queueFamilyIndexCount = (uint32)queueFamilyIndices.GetElementCount();
+        bufferInfo.pQueueFamilyIndices = queueFamilyIndices.GetData();
+    }
+
+    VkBuffer outBuffer;
+    CALL_VK(vkCreateBuffer(this->GetDevice(), &bufferInfo, NULL, &outBuffer));
+    return outBuffer;
+}
+
+VkDeviceMemory Renderer::RenderDevice::CreateBufferMemory(const BufferInfo& info, VkBuffer buffer, VkDeviceSize* alignedSize, uint32 multiplier) const
+{
+    VkMemoryRequirements2 memoryReqs;
+    VkMemoryDedicatedRequirements   dedicatedRegs{ VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS };
+    VkBufferMemoryRequirementsInfo2 bufferReqs{ VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2 };
+    memoryReqs.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+    memoryReqs.pNext = &dedicatedRegs;
+    bufferReqs.buffer = buffer;
+    vkGetBufferMemoryRequirements2(this->GetDevice(), &bufferReqs, &memoryReqs);
+
+    const VkDeviceSize alignMod = memoryReqs.memoryRequirements.size % memoryReqs.memoryRequirements.alignment;
+    const VkDeviceSize alignedSizeConst =
+        (alignMod == 0) ?
+        memoryReqs.memoryRequirements.size :
+        (memoryReqs.memoryRequirements.size + memoryReqs.memoryRequirements.alignment - alignMod);
+
+    if (alignedSize)
+        *alignedSize = alignedSizeConst;
+
+    VkMemoryAllocateFlagsInfo memFlagInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
+    if (info.usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+        memFlagInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+
+    VkMemoryAllocateInfo memoryAllocateInfo;
+    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocateInfo.pNext = &memFlagInfo;
+    memoryAllocateInfo.allocationSize = (multiplier == 1) ? memoryReqs.memoryRequirements.size : alignedSizeConst * multiplier;
+    memoryAllocateInfo.memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, info.domain);
+
+    VkDeviceMemory mem;
+    CALL_VK(vkAllocateMemory(this->GetDevice(), &memoryAllocateInfo, NULL, &mem));
+
+    if (multiplier == 1) {
+        vkBindBufferMemory(this->GetDevice(), buffer, mem, 0);
+    }
+
+    return mem;
+}
+
+VkAccelerationStructureKHR Renderer::RenderDevice::CreateAcceleration(VkAccelerationStructureCreateInfoKHR& info, VkBuffer* buffer) const
+{
+    BufferCreateInfo bufferInfo;
+    bufferInfo.size = info.size;
+    bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_STORAGE;
+    bufferInfo.domain = MemoryUsage::GPU_ONLY;
+    *buffer = this->CreateBuffer(bufferInfo);
+    this->CreateBufferMemory(bufferInfo, *buffer);
+    info.buffer = *buffer;
+
+    VkAccelerationStructureKHR accl;
+    CALL_VK(vkCreateAccelerationStructureKHR(this->GetDevice(), &info, NULL, &accl));
+    return accl;
+}
+
+VkDeviceAddress Renderer::RenderDevice::GetBufferAddress(BufferHandle buff) const
+{
+    VkBufferDeviceAddressInfo bufferAdrInfo;
+    bufferAdrInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+    bufferAdrInfo.pNext = NULL;
+    bufferAdrInfo.buffer = buff->GetApiObject();
+    return vkGetBufferDeviceAddressKHR(this->GetDevice(), &bufferAdrInfo);
+}
+
 VkPhysicalDevice Renderer::RenderDevice::PickGPU(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx, FPN_RankGPU p_pick_func)
 {
     ASSERT(ctx.surface == NULL);
@@ -244,11 +385,11 @@ VkPhysicalDevice Renderer::RenderDevice::PickGPU(const Internal::RenderInstance&
 
 void Renderer::RenderDevice::FetchDeviceAvailableExtensions()
 {
-    uint32 extensionsCount;
+    uint32 extensionsCount = 256;
     StaticVector<VkExtensionProperties, 256> extensionsAvailble;
     vkEnumerateDeviceExtensionProperties(internal.gpu, nullptr, &extensionsCount, extensionsAvailble.begin());
     extensionsAvailble.Resize(extensionsCount);
-
+    
     for (const auto& ext : extensionsAvailble) {
         availbleDevExtensions.emplace(Utils::Data(ext.extensionName, strlen(ext.extensionName)));
     }
@@ -287,14 +428,7 @@ Renderer::Internal::QueueFamilyIndices Renderer::RenderDevice::FindQueueFamilies
             indices.queueFamilies[Internal::QFT_GRAPHICS] = i;
         }
 
-        /*if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && 
-            !(queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
-        {
-            indices.queueFamilies[Internal::QFT_GRAPHICS] = i;
-        }*/
-
-        if ((queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) &&
-            !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)) 
+        if ((queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)) 
         {
             indices.queueFamilies[Internal::QFT_COMPUTE] = i;
         }
@@ -327,7 +461,11 @@ Renderer::Internal::QueueFamilyIndices Renderer::RenderDevice::FindQueueFamilies
         indices.queueFamilies[Internal::QFT_TRANSFER] = indices.queueFamilies[Internal::QFT_GRAPHICS];
     }
 
-    // printf("Complete! (Graphics: %d | Transfer: %d)\n", indices.queueFamilies[Internal::QFT_GRAPHICS], indices.queueFamilies[Internal::QFT_TRANSFER]);
+    //printf("Complete! (Graphics: %d | Transfer: %d | Compute: %d)\n", 
+    //    indices.queueFamilies[Internal::QFT_GRAPHICS], 
+    //    indices.queueFamilies[Internal::QFT_TRANSFER],
+    //    indices.queueFamilies[Internal::QFT_COMPUTE]
+    //);
     return indices;
 }
 

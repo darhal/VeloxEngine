@@ -209,6 +209,70 @@ void printFPS() {
     }
 }
 
+uint32_t getMemoryType(const TRE::Renderer::RenderDevice& dev, uint32_t typeBits, const VkMemoryPropertyFlags& properties)
+{
+    for (uint32_t i = 0; i < dev.GetMemoryProperties().memoryTypeCount; i++) {
+        if (((typeBits & (1 << i)) > 0) && (dev.GetMemoryProperties().memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+    assert(0);
+    return ~0u;
+}
+
+struct BufferDedicated
+{
+    VkBuffer       buffer{ VK_NULL_HANDLE };
+    VkDeviceMemory allocation{ VK_NULL_HANDLE };
+};
+
+BufferDedicated createBuffer(const TRE::Renderer::RenderDevice& dev, const VkBufferCreateInfo& info_,
+    const VkMemoryPropertyFlags memUsage_ = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+{
+    BufferDedicated resultBuffer;
+    // 1. Create Buffer (can be overloaded)
+    
+    vkCreateBuffer(dev.GetDevice(), &info_, nullptr, &resultBuffer.buffer);
+
+    // 2. Find memory requirements
+    VkMemoryRequirements2           memReqs{ VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2 };
+    VkMemoryDedicatedRequirements   dedicatedRegs{ VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS };
+    VkBufferMemoryRequirementsInfo2 bufferReqs{ VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2 };
+
+    bufferReqs.buffer = resultBuffer.buffer;
+    memReqs.pNext = &dedicatedRegs;
+    vkGetBufferMemoryRequirements2(dev.GetDevice(), &bufferReqs, &memReqs);
+
+    // Device Address
+    VkMemoryAllocateFlagsInfo memFlagInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
+    if (info_.usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+        memFlagInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+
+    // 3. Allocate memory
+    VkMemoryAllocateInfo memAlloc{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+    memAlloc.allocationSize = memReqs.memoryRequirements.size;
+    memAlloc.memoryTypeIndex = getMemoryType(dev, memReqs.memoryRequirements.memoryTypeBits, memUsage_);
+    memAlloc.pNext = &memFlagInfo;
+    vkAllocateMemory(dev.GetDevice(), &memAlloc, nullptr, &resultBuffer.allocation);
+
+    // 4. Bind memory to buffer
+    vkBindBufferMemory(dev.GetDevice(), resultBuffer.buffer, resultBuffer.allocation, 0);
+
+    return resultBuffer;
+}
+
+BufferDedicated createBuffer(const TRE::Renderer::RenderDevice& dev,
+    VkDeviceSize                size_ = 0,
+    VkBufferUsageFlags          usage_ = VkBufferUsageFlags(),
+    const VkMemoryPropertyFlags memUsage_ = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+{
+    VkBufferCreateInfo info{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    info.size = size_;
+    info.usage = usage_;
+
+    return createBuffer(dev, info, memUsage_);
+}
+
 int main()
 {
     const unsigned int SCR_WIDTH = 640; //1920 / 2;
@@ -310,13 +374,42 @@ int main()
         VkFormat vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
         VkIndexType indexType = VK_INDEX_TYPE_UINT32*/
 
-    /*info.AddGeometry(
-        cpuVertexBuffer->GetAddress(backend.GetRenderDevice().GetDevice()), 
-        sizeof(Vertex), 12 * 3
+    //uint32 index[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+    //BufferHandle indexBuffer = backend.CreateBuffer({ sizeof(index), BufferUsage::INDEX_BUFFER }, index);
+
+    /*auto buff = createBuffer(backend.GetRenderDevice(), 128, BufferUsage::VERTEX_BUFFER | BufferUsage::STORAGE_BUFFER
+        | BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_BUILD_INPUT_READ_ONLY, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    
+    VkBufferDeviceAddressInfo bufferAdrInfo;
+    bufferAdrInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+    bufferAdrInfo.pNext = NULL;
+    bufferAdrInfo.buffer = buff.buffer;
+    auto adr = vkGetBufferDeviceAddressKHR(backend.GetRenderDevice().GetDevice(), &bufferAdrInfo);
+    printf("Adr:%p\n", adr);*/
+
+    BufferHandle acclBuffer = backend.CreateBuffer(
+        { sizeof(vertecies), 
+        BufferUsage::VERTEX_BUFFER | BufferUsage::STORAGE_BUFFER 
+        | BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_BUILD_INPUT_READ_ONLY, 
+        MemoryUsage::GPU_ONLY }
     );
-    BlasHandle blas = backend.CreateBlas(info);*/
+    backend.GetStagingManager().Stage(acclBuffer->GetApiObject(), &vertecies, sizeof(Vertex) * 12 * 3);
+    backend.GetStagingManager().Flush();
+    backend.GetStagingManager().WaitCurrent();
 
+    info.AddGeometry(
+        backend.GetRenderDevice().GetBufferAddress(acclBuffer),
+        sizeof(Vertex), 12 * 3, NULL, NULL, {12, 0, 0, 0}
+    );
 
+    BlasHandle blas = backend.CreateBlas(info, VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR);
+        //VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR);
+    backend.RtBuildBlasBatchs();
+    printf("Object ID: %p\n", blas->GetApiObject());
+    backend.RtCompressBatch();
+    printf("Object ID: %p\n", blas->GetApiObject());
+    backend.RtSyncAcclBuilding();
+    
     INIT_BENCHMARK;
 
     time_t lasttime = time(NULL);

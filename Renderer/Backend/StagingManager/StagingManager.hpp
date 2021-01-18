@@ -9,6 +9,8 @@ namespace Renderer
 {
 	class Image;
 	class RenderDevice;
+	class Blas;
+	class RenderBackend;
 
 	struct StagingBuffer
 	{
@@ -27,9 +29,31 @@ namespace Renderer
 		VkCommandPool cmdPool;
 		VkBuffer scratchBuffer;
 		VkDeviceAddress address;
-		VkQueryPool queryPool;
-		std::vector<VkCommandBuffer> cmds;
+		VkFence fence;
 
+		struct Batch
+		{
+			struct BatchInfo
+			{
+				VkCommandBuffer cmd;
+				VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
+				std::vector<VkAccelerationStructureBuildRangeInfoKHR> ranges;
+				Blas* blasObject;
+			};
+
+			std::vector<BatchInfo> batchInfo;
+			VkQueryPool queryPool;
+			VkDeviceSize scratchSize;
+		};
+		
+		// Compact Data:
+		std::vector<VkDeviceSize> compactSizes;
+		std::vector<const VkAccelerationStructureBuildRangeInfoKHR*> pBuildOffset;
+		std::vector<VkAccelerationStructureKHR> cleanupAS;
+		VkCommandBuffer compressionCommand;
+
+		// 0: not compact, 1: compact
+		Batch batch[2];
 		bool submitted;
 	};
 
@@ -73,13 +97,21 @@ namespace Renderer
 		FORCEINLINE StagingBuffer& GetCurrentStagingBuffer() { return stagingBuffers[currentBuffer]; }
 
 		// RT Functionality:
-		void StageAcclBuilding(VkAccelerationStructureBuildGeometryInfoKHR& buildInfo, 
+		void StageAcclBuilding(Blas* blas, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo,
 			const VkAccelerationStructureBuildRangeInfoKHR* ranges, uint32 rangesCount = 1, 
 			uint32 flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+
+		void CompressBatch(RenderBackend& backend);
+
+		void BuildBlasBatch(bool compact);
+
+		void BuildBlasBatchs();
+
+		void SyncAcclBuilding();
 	private:
 		StagingBuffer* PrepareFlush();
 
-		void SubmitCommandBuffer(VkQueue queue, VkCommandBuffer cmdBuff, VkPipelineStageFlags waitStage,
+		VkResult SubmitCommandBuffer(VkQueue queue, VkCommandBuffer* cmdBuff, uint32 cmdCount, VkPipelineStageFlags waitStage,
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence = VK_NULL_HANDLE, VkDevice device = VK_NULL_HANDLE);
 
 		void ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout);

@@ -44,7 +44,7 @@ int32 Renderer::RenderInstance::CreateInstance(VkInstance* p_instance, const cha
             return -1;
         }
 
-        deviceExtensions.emplace();
+        instanceExtensions.emplace(h);
     }
 
     for (uint32 i = 0; i < extCount; i++) {
@@ -56,8 +56,12 @@ int32 Renderer::RenderInstance::CreateInstance(VkInstance* p_instance, const cha
             continue;
         }
 
-        deviceExtensions.emplace();
+        instanceExtensions.emplace(h);
     }
+
+    printf("Instance Ext:\n");
+    for (auto c : extensionsArr)
+        printf("\t%s\n", c);
 
     for (const auto& ext : VK_REQ_LAYERS) {
         layersArr.PushBack(ext);
@@ -67,6 +71,9 @@ int32 Renderer::RenderInstance::CreateInstance(VkInstance* p_instance, const cha
         layersArr.PushBack(layers[i]);
     }
 
+    printf("Instance Layers:\n");
+    for (auto c : layersArr)
+        printf("\t%s\n", c);
 
     VkApplicationInfo appInfo{};
     appInfo.sType               = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -76,8 +83,9 @@ int32 Renderer::RenderInstance::CreateInstance(VkInstance* p_instance, const cha
     appInfo.engineVersion       = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion          = VK_VERSION_1_2;
 
-    VkInstanceCreateInfo createInfo{};
+    VkInstanceCreateInfo createInfo;
     createInfo.sType                    = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.flags                    = 0;
     createInfo.pApplicationInfo         = &appInfo;
 
     // Extensions:
@@ -107,11 +115,11 @@ int32 Renderer::RenderInstance::CreateInstance(VkInstance* p_instance, const cha
 void Renderer::RenderInstance::FetchAvailbleInstanceExtensions()
 {
 
-    uint32 extensionsCount;
+    uint32 extensionsCount = 256;
     StaticVector<VkExtensionProperties, 256> extensionsAvailble;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount, extensionsAvailble.begin());
+    vkEnumerateInstanceExtensionProperties(NULL, &extensionsCount, extensionsAvailble.begin());
     extensionsAvailble.Resize(extensionsCount);
-
+    
     for (const auto& ext : extensionsAvailble) {
         availbleInstExtensions.emplace(Utils::Data(ext.extensionName, strlen(ext.extensionName)));
     }
@@ -182,12 +190,31 @@ void Renderer::RenderInstance::DestroyDebugUtilsMessengerEXT(VkInstance instance
 #endif
 }
 
-VkBool32 Renderer::RenderInstance::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+VkBool32 Renderer::RenderInstance::DebugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
+    VkDebugUtilsMessageTypeFlagsEXT messageType, 
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, 
+    void* pUserData)
 {
-    if ((VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT & messageType) ||
-        (VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT & messageType)) {
-        fprintf(stderr, "[VALIDATION LAYER]: %s\n", pCallbackData->pMessage);
-        ASSERT(true);
+    //if ((VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT & messageType) ||
+    //    (VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT & messageType)) {
+    //    fprintf(stderr, "[VALIDATION LAYER]: %s\n", pCallbackData->pMessage);
+    //    ASSERT(true);
+    //}
+
+    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+        // TRE_LOGI("[VALIDATION LAYER]:VERBOSE: %s --> %s", pCallbackData->pMessageIdName, pCallbackData->pMessage);
+    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+        TRE_LOGI("[VALIDATION LAYER]: %s --> %s", pCallbackData->pMessageIdName, pCallbackData->pMessage);
+    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+        TRE_LOGW("[VALIDATION LAYER]: %s --> %s", pCallbackData->pMessageIdName, pCallbackData->pMessage);
+    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+        TRE_LOGE("[VALIDATION LAYER]: %s --> %s", pCallbackData->pMessageIdName, pCallbackData->pMessage);
+        ASSERT(true); // stop on errors
+    } else if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
+        TRE_LOGI("[VALIDATION LAYER]:GENERAL: %s --> %s", pCallbackData->pMessageIdName, pCallbackData->pMessage);
+    } else {
+        TRE_LOGI("[VALIDATION LAYER]:OTHER: %s --> %s", pCallbackData->pMessageIdName, pCallbackData->pMessage);
     }
 
     return VK_FALSE;
