@@ -197,6 +197,7 @@
     <ClInclude Include="Backend\Common\Loader\Extensions.hpp" />
     <ClInclude Include="Backend\Pipeline\PipelineAllocator\PipelineAllocator.hpp" />
     <ClInclude Include="Backend\RayTracing\BLAS\BLAS.hpp" />
+    <ClInclude Include="Backend\RayTracing\TLAS\Tlas.hpp" />
     <ClInclude Include="Backend\RenderPass\AttachmentAllocator.hpp" />
     <ClInclude Include="Backend\RenderPass\Framebuffer.hpp" />
     <ClInclude Include="Backend\RenderPass\FramebufferAllocator.hpp" />
@@ -207,6 +208,7 @@
     <ClInclude Include="Backend\Synchronization\Managers\FenceManager.hpp" />
     <ClInclude Include="Backend\Synchronization\Managers\SemaphoreManager.hpp" />
     <ClInclude Include="Backend\Synchronization\Semaphore\Semaphore.hpp" />
+    <ClInclude Include="Core\ArrayView\ArrayView.hpp" />
     <ClInclude Include="Core\Hashmap\TemporaryHashmap.hpp" />
     <ClInclude Include="Core\Hash\Hashable.hpp" />
     <ClInclude Include="Core\List\List.hpp" />
@@ -503,6 +505,7 @@
     <ClCompile Include="Backend\Pipeline\PipelineAllocator\PipelineAllocator.cpp" />
     <ClCompile Include="Backend\Pipeline\PipelineLayout\PipelineLayout.cpp" />
     <ClCompile Include="Backend\RayTracing\BLAS\BLAS.cpp" />
+    <ClCompile Include="Backend\RayTracing\TLAS\Tlas.cpp" />
     <ClCompile Include="Backend\RenderContext\RenderContext.cpp" />
     <ClCompile Include="Backend\Pipeline\Pipeline.cpp" />
     <ClCompile Include="Backend\RenderDevice\RenderDevice.cpp" />

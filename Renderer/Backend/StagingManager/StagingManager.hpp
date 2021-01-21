@@ -10,6 +10,7 @@ namespace Renderer
 	class Image;
 	class RenderDevice;
 	class Blas;
+	class Tlas;
 	class RenderBackend;
 
 	struct StagingBuffer
@@ -31,6 +32,10 @@ namespace Renderer
 		VkDeviceAddress address;
 		VkFence fence;
 
+		VkBuffer stagingBuffer;
+		VkDeviceSize offset;
+		uint8* data;
+
 		struct Batch
 		{
 			struct BatchInfo
@@ -51,9 +56,17 @@ namespace Renderer
 		std::vector<const VkAccelerationStructureBuildRangeInfoKHR*> pBuildOffset;
 		std::vector<VkAccelerationStructureKHR> cleanupAS;
 		VkCommandBuffer compressionCommand;
-
 		// 0: not compact, 1: compact
 		Batch batch[2];
+
+		// Bulding TLAS:
+		struct TlasBuild
+		{
+			VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
+			Tlas* tlasObject;
+		};
+		std::vector<TlasBuild> tlasBuilds;
+
 		bool submitted;
 	};
 
@@ -97,17 +110,24 @@ namespace Renderer
 		FORCEINLINE StagingBuffer& GetCurrentStagingBuffer() { return stagingBuffers[currentBuffer]; }
 
 		// RT Functionality:
-		void StageAcclBuilding(Blas* blas, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo,
+		void StageBlasBuilding(Blas* blas, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo,
 			const VkAccelerationStructureBuildRangeInfoKHR* ranges, uint32 rangesCount = 1, 
 			uint32 flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
 
-		void CompressBatch(RenderBackend& backend);
+		void StageTlasBuilding(Tlas* tlas, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo, 
+			VkBuildAccelerationStructureFlagsKHR flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+
+		void BuildTlasBatch();
 
 		void BuildBlasBatch(bool compact);
+
+		void CompressBatch(RenderBackend& backend);
 
 		void BuildBlasBatchs();
 
 		void SyncAcclBuilding();
+
+		void BuildAll(RenderBackend& backend);
 	private:
 		StagingBuffer* PrepareFlush();
 
@@ -126,8 +146,12 @@ namespace Renderer
 		
 		// RT Functionality:
 		RtStaging rtStaging[NUM_FRAMES];
-		uint32 maxScratchSize;
 		uint32 currentStaging;
+		VkDeviceMemory scartchMemory;
+		uint32 maxScratchSize;
+		VkDeviceMemory stagingMemory;
+		uint8* stagingMappedData;
+
 
 		const RenderDevice& renderDevice;
 		

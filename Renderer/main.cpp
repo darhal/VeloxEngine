@@ -343,6 +343,7 @@ int main()
     RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 3);
 
     GraphicsState state;
+    // state.GetRasterizationState().polygonMode = VK_POLYGON_MODE_LINE;
     /*auto& depthStencilState = state.GetDepthStencilState();
     depthStencilState.depthTestEnable = true;
     depthStencilState.depthWriteEnable = true;
@@ -363,8 +364,7 @@ int main()
     );
     program.Compile();
 
-    BlasCreateInfo info;
-
+    
     /*VkDeviceAddress vertexData,
         VkDeviceSize vertexStride, uint32 vertexCount,
         VkDeviceAddress transformData = VK_NULL_HANDLE,
@@ -396,7 +396,7 @@ int main()
     backend.GetStagingManager().Stage(acclBuffer->GetApiObject(), &vertecies, sizeof(Vertex) * 12 * 3);
     backend.GetStagingManager().Flush();
     backend.GetStagingManager().WaitCurrent();
-
+    BlasCreateInfo info;
     info.AddGeometry(
         backend.GetRenderDevice().GetBufferAddress(acclBuffer),
         sizeof(Vertex), 12 * 3, NULL, NULL, {12, 0, 0, 0}
@@ -409,7 +409,14 @@ int main()
     backend.RtCompressBatch();
     printf("Object ID: %p\n", blas->GetApiObject());
     backend.RtSyncAcclBuilding();
-    
+
+    BlasInstance instance;
+    instance.blas = blas;
+    TlasCreateInfo tlasInfo;
+    tlasInfo.blasInstances.emplace_back(instance);
+    TlasHandle tlas = backend.CreateTlas(tlasInfo);
+    backend.BuildAS();
+
     INIT_BENCHMARK;
 
     time_t lasttime = time(NULL);

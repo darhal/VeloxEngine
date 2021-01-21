@@ -67,7 +67,9 @@ namespace Renderer
 
 		FORCEINLINE VkAccelerationStructureKHR GetApiObject() const { return apiBlas; }
 
-		FORCEINLINE const BufferHandle GetBuffer() const { return buffer; }
+		FORCEINLINE BufferHandle GetBuffer() const { return buffer; }
+
+		VkDeviceAddress GetAcclAddress() const;
 	private:
 		RenderBackend& backend;
 		BlasCreateInfo blasInfo;

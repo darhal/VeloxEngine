@@ -295,7 +295,7 @@ void Renderer::RenderBackend::EndFrame()
     renderContext.EndFrame(renderDevice);
 }
 
-Renderer::BlasHandle Renderer::RenderBackend::CreateBlas(const BlasCreateInfo& blasInfo, uint32 flags)
+Renderer::BlasHandle Renderer::RenderBackend::CreateBlas(const BlasCreateInfo& blasInfo, VkBuildAccelerationStructureFlagsKHR flags)
 {
     VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
     buildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
@@ -331,7 +331,57 @@ Renderer::BlasHandle Renderer::RenderBackend::CreateBlas(const BlasCreateInfo& b
     VkAccelerationStructureKHR blas = this->CreateAcceleration(createInfo, &buffer);
     buildInfo.dstAccelerationStructure = blas;  // Setting the where the build lands
     BlasHandle ret(objectsPool.blases.Allocate(*this, blasInfo, blas, buffer));
-    stagingManager.StageAcclBuilding(ret, buildInfo, blasInfo.accOffset.begin(), blasInfo.accOffset.Size(), flags);
+    stagingManager.StageBlasBuilding(ret, buildInfo, blasInfo.accOffset.begin(), blasInfo.accOffset.Size(), flags);
+    return ret;
+}
+
+Renderer::TlasHandle Renderer::RenderBackend::CreateTlas(const TlasCreateInfo& createInfo, VkBuildAccelerationStructureFlagsKHR flags)
+{
+    BufferInfo bufferInfo;
+    bufferInfo.size = createInfo.blasInstances.size() * sizeof(VkAccelerationStructureInstanceKHR);
+    bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS;
+    bufferInfo.domain = MemoryUsage::GPU_ONLY;
+    BufferHandle instanceBuffer = this->CreateBuffer(bufferInfo);
+    VkDeviceAddress instanceAddress = renderDevice.GetBufferAddress(instanceBuffer);
+
+    // Create VkAccelerationStructureGeometryInstancesDataKHR
+    // This wraps a device pointer to the above uploaded instances.
+    VkAccelerationStructureGeometryInstancesDataKHR instancesVk{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR };
+    instancesVk.arrayOfPointers = VK_FALSE;
+    instancesVk.data.deviceAddress = instanceAddress;
+
+    // Put the above into a VkAccelerationStructureGeometryKHR. We need to put the
+    // instances struct in a union and label it as instance data.
+    VkAccelerationStructureGeometryKHR topASGeometry{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR };
+    topASGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+    topASGeometry.geometry.instances = instancesVk;
+
+    // Find sizes
+    VkAccelerationStructureBuildGeometryInfoKHR buildInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
+    buildInfo.flags = flags;
+    buildInfo.mode = /*update ? VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR :*/ VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+    buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+    buildInfo.srcAccelerationStructure = VK_NULL_HANDLE;
+    buildInfo.geometryCount = 1;
+    buildInfo.pGeometries = &topASGeometry;
+
+    uint32_t count = (uint32_t)createInfo.blasInstances.size();
+    VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
+    vkGetAccelerationStructureBuildSizesKHR(
+        GetRenderDevice().GetDevice(), 
+        VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+        &buildInfo, &count, &sizeInfo
+    );
+
+    // Create TLAS:
+    VkAccelerationStructureCreateInfoKHR acclCreateInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
+    acclCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+    acclCreateInfo.size = sizeInfo.accelerationStructureSize;
+
+    BufferHandle tlasBuffer;
+    VkAccelerationStructureKHR accl = CreateAcceleration(acclCreateInfo, &tlasBuffer);
+    TlasHandle ret(objectsPool.tlases.Allocate(*this, createInfo, accl, tlasBuffer, instanceBuffer));
+    stagingManager.StageTlasBuilding(ret, buildInfo, flags);
     return ret;
 }
 

@@ -15,6 +15,7 @@
 #include <Renderer/Core/StaticVector/StaticVector.hpp>
 #include "Utils.hpp"
 #include "Loader/Extensions.hpp"
+#include <Renderer/Core/ArrayView/ArrayView.hpp>
 
 TRE_NS_START
 
@@ -117,6 +118,11 @@ namespace Renderer
 
 	template<typename T, size_t N = 32>
 	using StaticVector = Utils::StaticVector<T, N>;
+
+	using ArrayView = Utils::ArrayView;
+
+	template<typename T>
+	using ArrayViewItr = Utils::ArrayViewItr<T>;
 
 	typedef VkDeviceSize DeviceSize;
 

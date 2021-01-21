@@ -13,5 +13,12 @@ Renderer::Blas::Blas(RenderBackend& backend, const BlasCreateInfo& blasInfo, VkA
 {
 }
 
+VkDeviceAddress Renderer::Blas::GetAcclAddress() const
+{
+	VkAccelerationStructureDeviceAddressInfoKHR addressInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR };
+	addressInfo.accelerationStructure = apiBlas;
+	return vkGetAccelerationStructureDeviceAddressKHR(backend.GetRenderDevice().GetDevice(), &addressInfo);
+}
+
 TRE_NS_END
 

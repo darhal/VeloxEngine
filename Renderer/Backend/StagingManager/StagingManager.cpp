@@ -3,7 +3,7 @@
 #include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/CommandList/CommandList.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Backend/RayTracing/BLAS/BLAS.hpp>
+#include <Renderer/Backend/RayTracing/TLAS/TLAS.hpp>
 #include <Renderer/Backend/RenderBackend.hpp>
 
 TRE_NS_START
@@ -93,10 +93,16 @@ namespace Renderer
 		info.size = maxScratchSize;
 		info.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::STORAGE_BUFFER;
 
+		BufferCreateInfo stagingInfo;
+		stagingInfo.domain = MemoryUsage::CPU_COHERENT;
+		stagingInfo.size = MAX_UPLOAD_BUFFER_SIZE;
+		stagingInfo.usage = BufferUsage::TRANSFER_SRC;
+
 		for (int i = 0; i < NUM_FRAMES; i++) {
 			rtStaging[i].scratchBuffer = renderDevice.CreateBuffer(info);
 			rtStaging[i].address = NULL;
 			rtStaging[i].submitted = false;
+			rtStaging[i].stagingBuffer = renderDevice.CreateBuffer(stagingInfo);
 
 			VkCommandPoolCreateInfo commandPoolCreateInfo = {};
 			commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -106,19 +112,28 @@ namespace Renderer
 			vkCreateCommandPool(renderDevice.GetDevice(), &commandPoolCreateInfo, NULL, &rtStaging[i].cmdPool);
 		}
 
-		VkDeviceSize alignedSize = 0;
-		memory = renderDevice.CreateBufferMemory(info, rtStaging[0].scratchBuffer, &alignedSize, NUM_FRAMES);
-		VkBufferDeviceAddressInfo bufferAdrInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+		VkDeviceSize stagingAlignedSize = 0;
+		stagingMemory = renderDevice.CreateBufferMemory(stagingInfo, rtStaging[0].stagingBuffer, &stagingAlignedSize, NUM_FRAMES);
+		vkMapMemory(renderDevice.GetDevice(), stagingMemory, 0, stagingAlignedSize * NUM_FRAMES, 0, reinterpret_cast<void**>(&stagingMappedData));
 
+		VkDeviceSize alignedSize = 0;
+		scartchMemory = renderDevice.CreateBufferMemory(info, rtStaging[0].scratchBuffer, &alignedSize, NUM_FRAMES);
+		VkBufferDeviceAddressInfo bufferAdrInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+		
 		VkFenceCreateInfo fenceCreateInfo = {};
 		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
 		for (int i = 0; i < NUM_FRAMES; i++) {
-			vkBindBufferMemory(renderDevice.GetDevice(), rtStaging[i].scratchBuffer, memory, i * alignedSize);
+			vkBindBufferMemory(renderDevice.GetDevice(), rtStaging[i].scratchBuffer, scartchMemory, i * alignedSize);
 
 			bufferAdrInfo.buffer = rtStaging[i].scratchBuffer;
 			rtStaging[i].address = vkGetBufferDeviceAddressKHR(renderDevice.GetDevice(), &bufferAdrInfo);
 			vkCreateFence(renderDevice.GetDevice(), &fenceCreateInfo, NULL, &rtStaging[i].fence);
+
+			// Staging buffer for RT:
+			vkBindBufferMemory(renderDevice.GetDevice(), rtStaging[i].stagingBuffer, stagingMemory, i * stagingAlignedSize);
+			rtStaging[i].data = (uint8*)stagingMappedData + (i * alignedSize);
+			rtStaging[i].offset = 0;
 		}
 	}
 
@@ -322,13 +337,124 @@ namespace Renderer
 			vkDestroyAccelerationStructureKHR(renderDevice.GetDevice(), stage->cleanupAS[i], NULL);
 		}
 
-		stage->batch[0].batchInfo.clear();
-		stage->batch[1].batchInfo.clear();
+		for (uint32 i = 0; i < NUM_FRAMES; i++) {
+			stage->batch[i].batchInfo.clear();
+			stage->offset = 0;
+		}
 
 		// TRE_LOGI("Building and compression DONE.\n");
 	}
 
-	void StagingManager::StageAcclBuilding(Blas* blas, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo,
+	void StagingManager::StageTlasBuilding(Tlas* tlas, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo,
+		VkBuildAccelerationStructureFlagsKHR flags)
+	{
+		RtStaging* stage = &rtStaging[currentStaging];
+
+		// wait till we get everything done to re-claim resources
+		this->SyncAcclBuilding();
+
+		stage->tlasBuilds.emplace_back();
+		RtStaging::TlasBuild& build = stage->tlasBuilds.back();
+		build.tlasObject = tlas;
+		build.buildInfo = buildInfo;
+		stage->tlasBuilds.emplace_back(build);
+	}
+
+	void StagingManager::BuildTlasBatch()
+	{
+		RtStaging* stage = &rtStaging[currentStaging];
+		bool fenceSet = stage->submitted;
+		size_t nbTlas = stage->tlasBuilds.size();
+		auto cmdBuff = this->CreateCommandBuffer(stage->cmdPool);
+
+		if (fenceSet) {
+			printf("TLAS:Waiting for fence\n");
+			vkWaitForFences(renderDevice.GetDevice(), 1, &stage->fence, VK_TRUE, UINT64_MAX);
+			vkResetFences(renderDevice.GetDevice(), 1, &stage->fence);
+			stage->submitted = false;
+
+			vkResetCommandPool(renderDevice.GetDevice(), stage->cmdPool, 0);
+		}
+
+		std::vector<VkAccelerationStructureInstanceKHR> geometryInstances(512);
+		
+		for (size_t i = 0; i < nbTlas; i++) {
+			auto& info = stage->tlasBuilds[i];
+			auto& buildInfo = info.buildInfo;
+			Tlas* tlas = info.tlasObject;
+			bool update = false;
+
+			geometryInstances.clear();
+			geometryInstances.reserve(tlas->GetInfo().blasInstances.size());
+
+			for (const BlasInstance& inst : tlas->GetInfo().blasInstances) {
+				geometryInstances.emplace_back();
+				VkAccelerationStructureInstanceKHR& acclInst = geometryInstances.back();
+				acclInst.instanceCustomIndex = inst.instanceCustomId;
+				acclInst.mask = inst.mask;
+				acclInst.instanceShaderBindingTableRecordOffset = inst.hitGroupId;
+				acclInst.flags = inst.flags;
+				acclInst.accelerationStructureReference = inst.blas->GetAcclAddress();
+				// TODO: maybe should transpose the matrix ?
+				memcpy(&acclInst.transform, &inst.transform, sizeof(VkTransformMatrixKHR));
+			}
+
+			// TODO: what if we exceed space ?
+			uint32 instSize = (uint32)geometryInstances.size() * sizeof(VkAccelerationStructureInstanceKHR);
+			uint8* stageBufferData = (uint8*)stage->data + stage->offset;
+			memcpy(stageBufferData, geometryInstances.data(), geometryInstances.size() * sizeof(VkAccelerationStructureInstanceKHR));
+			VkBufferCopy bufferCopy{ stage->offset, 0, instSize };
+			vkCmdCopyBuffer(cmdBuff, stage->stagingBuffer, tlas->GetInstanceBuffer()->GetApiObject(), 1, &bufferCopy);
+			stage->offset += instSize;
+
+			// Create VkAccelerationStructureGeometryInstancesDataKHR
+			// This wraps a device pointer to the above uploaded instances.
+			VkAccelerationStructureGeometryInstancesDataKHR instancesVk{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR };
+			instancesVk.arrayOfPointers = VK_FALSE;
+			instancesVk.data.deviceAddress = renderDevice.GetBufferAddress(tlas->GetInstanceBuffer());
+
+			// Put the above into a VkAccelerationStructureGeometryKHR. We need to put the
+			// instances struct in a union and label it as instance data.
+			VkAccelerationStructureGeometryKHR topASGeometry{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR };
+			topASGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+			topASGeometry.geometry.instances = instancesVk;
+
+			buildInfo.geometryCount = 1;
+			buildInfo.pGeometries = &topASGeometry;
+			
+			// Make sure the copy of the instance buffer are copied before triggering the
+			// acceleration structure build
+			VkMemoryBarrier barrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+			vkCmdPipelineBarrier(cmdBuff, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
+				0, 1, &barrier, 0, NULL, 0, NULL);
+
+			// Update build information
+			buildInfo.srcAccelerationStructure = update ? tlas->GetApiObject() : VK_NULL_HANDLE;
+			buildInfo.dstAccelerationStructure = tlas->GetApiObject();
+			buildInfo.scratchData.deviceAddress = stage->address;
+
+			// Build Offsets info: n instances
+			uint32 instanceCount = static_cast<uint32_t>(tlas->GetInfo().blasInstances.size());
+			VkAccelerationStructureBuildRangeInfoKHR        buildOffsetInfo{ instanceCount, 0, 0, 0 };
+			const VkAccelerationStructureBuildRangeInfoKHR* pBuildOffsetInfo = &buildOffsetInfo;
+
+			// Build the TLAS
+			vkCmdBuildAccelerationStructuresKHR(cmdBuff, 1, &buildInfo, &pBuildOffsetInfo);
+		}
+
+		vkEndCommandBuffer(cmdBuff);
+
+		CALL_VK(
+			SubmitCommandBuffer(renderDevice.GetQueue(COMPUTE), &cmdBuff, 1,
+				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence, renderDevice.GetDevice())
+		);
+
+		stage->submitted = true;
+	}
+
+	void StagingManager::StageBlasBuilding(Blas* blas, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo,
 		const VkAccelerationStructureBuildRangeInfoKHR* ranges, uint32 rangesCount, uint32 flags)
 	{
 		RtStaging* stage = &rtStaging[currentStaging];
@@ -436,7 +562,7 @@ namespace Renderer
 			vkResetFences(renderDevice.GetDevice(), 1, &stage->fence);
 			stage->submitted = false;
 
-			vkResetCommandPool(renderDevice.GetDevice(), stage->cmdPool, 0);
+			// vkResetCommandPool(renderDevice.GetDevice(), stage->cmdPool, 0);
 			stage->compressionCommand = this->CreateCommandBuffer(stage->cmdPool);
 		} else {
 			ASSERTF(true, "Fatal Error: Fence is not set!");
@@ -486,6 +612,13 @@ namespace Renderer
 		);
 
 		stage->submitted = true;
+	}
+
+	void StagingManager::BuildAll(RenderBackend& backend)
+	{
+		this->BuildBlasBatchs();
+		this->CompressBatch(backend);
+		this->BuildTlasBatch();
 	}
 
 	StagingBuffer* StagingManager::PrepareFlush()

@@ -20,6 +20,11 @@ namespace Renderer
 			{
 				return --count == 0;
 			}
+
+			FORCEINLINE size_t Get() const
+			{
+				return count;
+			}
 		private:
 			size_t count = 1;
 		};
@@ -48,6 +53,11 @@ namespace Renderer
 				counter.AddRef();
 			}
 
+			size_t GetCounter() const
+			{
+				return counter.Get();
+			}
+
 			RefCounterEnabled() = default;
 
 			RefCounterEnabled(const RefCounterEnabled&) = delete;
@@ -67,6 +77,7 @@ namespace Renderer
 			using Counter = void;
 			void ReleaseReference() {}
 			void AddReference() {}
+			size_t GetCounter() const { return 0; }
 		};
 
 		template<typename T>

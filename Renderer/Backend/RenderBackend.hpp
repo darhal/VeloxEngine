@@ -31,6 +31,7 @@
 #include <Renderer/Backend/Pipeline/Pipeline.hpp>
 #include <Renderer/Backend/Pipeline/PipelineAllocator/PipelineAllocator.hpp>
 #include <Renderer/Backend/RayTracing/BLAS/BLAS.hpp>
+#include <Renderer/Backend/RayTracing/TLAS/TLAS.hpp>
 
 TRE_NS_START
 
@@ -90,6 +91,7 @@ namespace Renderer
 
 			// RT:
 			ObjectPool<Blas>		  blases;
+			ObjectPool<Tlas>		  tlases;
 		};
 
 	public:
@@ -112,15 +114,23 @@ namespace Renderer
 		FORCEINLINE const RenderDevice& GetRenderDevice() const { return renderDevice; }
 
 		// RT:
-		BlasHandle CreateBlas(const BlasCreateInfo& blasInfo, uint32 flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+		BlasHandle CreateBlas(const BlasCreateInfo& blasInfo, 
+			VkBuildAccelerationStructureFlagsKHR flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+
+		TlasHandle CreateTlas(const TlasCreateInfo& createInfo,
+			VkBuildAccelerationStructureFlagsKHR flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
 
 		VkAccelerationStructureKHR CreateAcceleration(VkAccelerationStructureCreateInfoKHR& info, BufferHandle* buffer);
 
 		FORCEINLINE void RtSyncAcclBuilding() { stagingManager.SyncAcclBuilding(); };
 
+		FORCEINLINE void RtBuildTlasBatch() { stagingManager.BuildTlasBatch(); };
+
 		FORCEINLINE void RtBuildBlasBatchs() { stagingManager.BuildBlasBatchs(); };
 
 		FORCEINLINE void RtCompressBatch() { stagingManager.CompressBatch(*this); };
+
+		FORCEINLINE void BuildAS() { stagingManager.BuildAll(*this); };
 
 		// ..
 
