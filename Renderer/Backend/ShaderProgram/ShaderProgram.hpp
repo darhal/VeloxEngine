@@ -28,13 +28,22 @@ namespace Renderer
 	public:
 		enum ShaderStages
 		{
-			VERTEX_SHADER = 0,
-			FRAGMENT_SHADER,
-			COMPUTE_SHADER,
-			GEOMETRY_SHADER,
-			TESSELLATION_CONTROL_SHADER,
-			TESSELLATION_EVAL_SHADER,
-			
+			VERTEX = 0,
+			FRAGMENT,
+			COMPUTE,
+			GEOMETRY,
+			TESSELLATION_CONTROL,
+			TESSELLATION_EVAL,
+			END_RASTER, // this just to mark the end of rasterization shader stages
+
+			// RT
+			RGEN,
+			RAHIT,
+			RCHIT,
+			RMISS,
+			RINT,
+			RCALL,
+
 			MAX_SHADER_STAGES
 		};
 
@@ -44,7 +53,17 @@ namespace Renderer
 			VK_SHADER_STAGE_COMPUTE_BIT,
 			VK_SHADER_STAGE_GEOMETRY_BIT,
 			VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
-			VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT
+			VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+			VkShaderStageFlagBits(~0), // this just to mark the end of rasterization shader stages
+
+			// RT:
+			VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+			VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
+			VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+			VK_SHADER_STAGE_MISS_BIT_KHR,
+			VK_SHADER_STAGE_INTERSECTION_BIT_KHR,
+			VK_SHADER_STAGE_CALLABLE_BIT_KHR,
+			VkShaderStageFlagBits(~0),
 		};
 
 		CONSTEXPR static const char* DYNAMIC_KEYWORD_PREFIX = "DYNC_";
@@ -78,29 +97,34 @@ namespace Renderer
 
 		void Compile();
 
-		uint32 GetShadersCount() const { return shadersCount; }
+		uint32 GetShadersCount() const { return (uint32)shaderStagesCreateInfo.size(); }
 
-		const VkPipelineShaderStageCreateInfo* GetShaderStages() const { return shaderStagesCreateInfo; }
+		FORCEINLINE const VkPipelineShaderStageCreateInfo* GetShaderStages() const { return shaderStagesCreateInfo.data(); }
 
-		const PipelineLayout& GetPipelineLayout() const { return piplineLayout; };
+		FORCEINLINE const PipelineLayout& GetPipelineLayout() const { return piplineLayout; };
 
-		const VertexInput& GetVertexInput() const { return vertexInput; }
+		FORCEINLINE const VertexInput& GetVertexInput() const { return vertexInput; }
 
-		VertexInput& GetVertexInput() { return vertexInput; }
+		FORCEINLINE VertexInput& GetVertexInput() { return vertexInput; }
+
+		FORCEINLINE const VkRayTracingShaderGroupCreateInfoKHR* GetShaderGroups() const { return rtShaderGroups.data(); }
+
+		FORCEINLINE const uint32 GetShaderGroupsCount() const { return (uint32)rtShaderGroups.size(); }
 	private:
-		VkPipelineShaderStageCreateInfo* GetShaderStages() { return shaderStagesCreateInfo; }
+		VkPipelineShaderStageCreateInfo* GetShaderStages() { return shaderStagesCreateInfo.data(); }
 
 		static VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& code);
 
 		void ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage, std::unordered_set<uint32>& seenDescriptorSets,
 			std::unordered_map<std::string, VkPushConstantRange>& pushConstants, uint32& oldOffset);
+
+		VkRayTracingShaderGroupTypeKHR SetShaderGroupType(VkRayTracingShaderGroupCreateInfoKHR& group, uint32 stage, uint32 index);
 	private:
-		VkPipelineShaderStageCreateInfo shaderStagesCreateInfo[MAX_SHADER_STAGES];
-		VkShaderModule shaderModules[MAX_SHADER_STAGES];
+		std::vector<VkPipelineShaderStageCreateInfo> shaderStagesCreateInfo;
+		std::vector<VkShaderModule> shaderModules;
+		std::vector<VkRayTracingShaderGroupCreateInfoKHR> rtShaderGroups;
 		PipelineLayout piplineLayout;
 		VertexInput vertexInput;
-
-		uint32 shadersCount;
 
 		friend class Pipeline;
 	};

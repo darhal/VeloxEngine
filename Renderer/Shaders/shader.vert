@@ -33,7 +33,7 @@ void main() {
 	fragTexCoord = inTexCoord;
 	FragPos = vec3(mvp.model * vec4(inPosition, 1.0));
 	Normal = mat3(transpose(inverse(mvp.model))) * inNormal;
-	viewPos = viewPos;
+	viewPos = mvp.viewPos;
 	
 	gl_Position = mvp.proj * mvp.view * mvp.model * vec4(inPosition, 1.0);
 }

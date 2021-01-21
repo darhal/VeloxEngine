@@ -41,7 +41,8 @@ namespace Renderer
 
 		FORCEINLINE const TlasCreateInfo& GetInfo() const { return tlasInfo; }
 
-		FORCEINLINE VkAccelerationStructureKHR GetApiObject() const { return apiTlas; }
+		// FORCEINLINE VkAccelerationStructureKHR GetApiObject() const { return apiTlas; }
+		FORCEINLINE const VkAccelerationStructureKHR& GetApiObject() const { return apiTlas; }
 
 		FORCEINLINE BufferHandle GetBuffer() const { return buffer; }
 		FORCEINLINE BufferHandle GetInstanceBuffer() const { return instanceBuffer; }

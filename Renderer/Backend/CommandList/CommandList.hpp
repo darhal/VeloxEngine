@@ -24,6 +24,8 @@ namespace Renderer
 	class Pipeline;
 	struct RenderPassInfo;
 
+	class Tlas;
+
 	struct DescriptorSetDirty
 	{
 		uint8 sets = 0;
@@ -43,6 +45,7 @@ namespace Renderer
 			GENERIC,
 			ASYNC_TRANSFER,
 			ASYNC_COMPUTE,
+			RAY_TRACING,
 			MAX
 		};
 	public:
@@ -57,6 +60,7 @@ namespace Renderer
 		// Compute dispatch:
 		void Dispatch(uint32 groupX, uint32 groupY, uint32 groupZ);
 
+		// Graphics settings
 		void SetViewport(const VkViewport& viewport);
 
 		void SetScissor(const VkRect2D& scissor);
@@ -104,6 +108,8 @@ namespace Renderer
 		void SetInputAttachments(uint32 set, uint32 startBinding = 0);
 
 		void PushConstants(ShaderStagesFlags stages, const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
+
+		void SetAccelerationStrucure(uint32 set, uint32 binding, const Tlas& tlas);
 
 
 		void CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, DeviceSize size, DeviceSize srcOffset = 0, DeviceSize dstOffset = 0);

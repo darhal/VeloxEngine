@@ -46,6 +46,13 @@ namespace Renderer
 
 		VkAccelerationStructureKHR CreateAcceleration(VkAccelerationStructureCreateInfoKHR& info, VkBuffer* buffer) const;
 
+		VkCommandBuffer CreateCmdBuffer(VkCommandPool pool,
+			VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+			VkCommandBufferUsageFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT) const;
+
+		VkResult SubmitCmdBuffer(uint32 queueType, VkCommandBuffer* cmdBuff, uint32 cmdCount, VkPipelineStageFlags waitStage,
+			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence = VK_NULL_HANDLE) const;
+
 		FORCEINLINE VkDeviceAddress GetBufferAddress(BufferHandle buff) const;
 
 		FORCEINLINE VkDevice GetDevice() const { return internal.device; }

@@ -15,7 +15,8 @@ Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) :
     framebufferAllocator(&renderDevice),
     transientAttachmentAllocator(*this, true),
     pipelineAllocator(this),
-    msaaSamplerCount(1)
+    msaaSamplerCount(1),
+    acclBuilder(renderDevice)
 {
     renderDevice.internal.renderContext = &renderContext.internal;
     renderContext.internal.renderDevice = &renderDevice.internal;
@@ -42,6 +43,9 @@ void Renderer::RenderBackend::InitInstance(uint32 usage)
     fenceManager.Init(&renderDevice);
     semaphoreManager.Init(&renderDevice);
     eventManager.Init(&renderDevice);
+
+    // RT: 
+    acclBuilder.Init();
 
     this->Init();
 
@@ -331,7 +335,7 @@ Renderer::BlasHandle Renderer::RenderBackend::CreateBlas(const BlasCreateInfo& b
     VkAccelerationStructureKHR blas = this->CreateAcceleration(createInfo, &buffer);
     buildInfo.dstAccelerationStructure = blas;  // Setting the where the build lands
     BlasHandle ret(objectsPool.blases.Allocate(*this, blasInfo, blas, buffer));
-    stagingManager.StageBlasBuilding(ret, buildInfo, blasInfo.accOffset.begin(), blasInfo.accOffset.Size(), flags);
+    acclBuilder.StageBlasBuilding(ret, buildInfo, blasInfo.accOffset.begin(), blasInfo.accOffset.Size(), flags);
     return ret;
 }
 
@@ -381,7 +385,7 @@ Renderer::TlasHandle Renderer::RenderBackend::CreateTlas(const TlasCreateInfo& c
     BufferHandle tlasBuffer;
     VkAccelerationStructureKHR accl = CreateAcceleration(acclCreateInfo, &tlasBuffer);
     TlasHandle ret(objectsPool.tlases.Allocate(*this, createInfo, accl, tlasBuffer, instanceBuffer));
-    stagingManager.StageTlasBuilding(ret, buildInfo, flags);
+    acclBuilder.StageTlasBuilding(ret, buildInfo, flags);
     return ret;
 }
 

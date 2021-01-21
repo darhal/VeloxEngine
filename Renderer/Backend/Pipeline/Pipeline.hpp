@@ -42,7 +42,7 @@ namespace Renderer
 		PipelineType GetPipelineType() const { return pipelineType; }
 
 		// RT:
-		void Create(const RenderDevice& device, bool);
+		void Create(const RenderDevice& device, uint32 maxDepth, uint32 maxRayPayloadSize = 256, uint32 maxRayHitAttribSize = 256);
 
 		// Compute:
 		void Create(const RenderDevice& device);

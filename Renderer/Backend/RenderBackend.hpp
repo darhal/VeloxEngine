@@ -32,6 +32,7 @@
 #include <Renderer/Backend/Pipeline/PipelineAllocator/PipelineAllocator.hpp>
 #include <Renderer/Backend/RayTracing/BLAS/BLAS.hpp>
 #include <Renderer/Backend/RayTracing/TLAS/TLAS.hpp>
+#include <Renderer/Backend/RayTracing/ASBuilder.hpp>
 
 TRE_NS_START
 
@@ -122,15 +123,15 @@ namespace Renderer
 
 		VkAccelerationStructureKHR CreateAcceleration(VkAccelerationStructureCreateInfoKHR& info, BufferHandle* buffer);
 
-		FORCEINLINE void RtSyncAcclBuilding() { stagingManager.SyncAcclBuilding(); };
+		FORCEINLINE void RtSyncAcclBuilding() { acclBuilder.SyncAcclBuilding(); };
 
-		FORCEINLINE void RtBuildTlasBatch() { stagingManager.BuildTlasBatch(); };
+		FORCEINLINE void RtBuildTlasBatch() { acclBuilder.BuildTlasBatch(); };
 
-		FORCEINLINE void RtBuildBlasBatchs() { stagingManager.BuildBlasBatchs(); };
+		FORCEINLINE void RtBuildBlasBatchs() { acclBuilder.BuildBlasBatchs(); };
 
-		FORCEINLINE void RtCompressBatch() { stagingManager.CompressBatch(*this); };
+		FORCEINLINE void RtCompressBatch() { acclBuilder.CompressBatch(*this); };
 
-		FORCEINLINE void BuildAS() { stagingManager.BuildAll(*this); };
+		FORCEINLINE void BuildAS() { acclBuilder.BuildAll(*this); };
 
 		// ..
 
@@ -243,6 +244,9 @@ namespace Renderer
 		FenceManager	 fenceManager;
 		SemaphoreManager semaphoreManager;
 		EventManager	 eventManager;
+
+		// RT:
+		AsBuilder acclBuilder;
 
 		std::unordered_map<Hash, DescriptorSetAllocator> descriptorSetAllocators;
 		std::unordered_map<Hash, RenderPass>			 renderPasses;

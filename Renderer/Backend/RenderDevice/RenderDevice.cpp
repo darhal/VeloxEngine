@@ -346,6 +346,54 @@ VkAccelerationStructureKHR Renderer::RenderDevice::CreateAcceleration(VkAccelera
     return accl;
 }
 
+VkCommandBuffer Renderer::RenderDevice::CreateCmdBuffer(VkCommandPool pool, VkCommandBufferLevel level, VkCommandBufferUsageFlags flag) const
+{
+    // Command buffer allocation:
+    VkCommandBuffer cmd;
+    VkCommandBufferAllocateInfo allocInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+    allocInfo.level = level;
+    allocInfo.commandPool = pool;
+    allocInfo.commandBufferCount = 1;
+    vkAllocateCommandBuffers(GetDevice(), &allocInfo, &cmd);
+
+    // Begin recording
+    VkCommandBufferBeginInfo beginInfo = {};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = flag;
+    beginInfo.pInheritanceInfo = NULL;
+    vkBeginCommandBuffer(cmd, &beginInfo);
+
+    return cmd;
+}
+
+VkResult Renderer::RenderDevice::SubmitCmdBuffer(uint32 queueType, VkCommandBuffer* cmdBuff, uint32 cmdCount,
+    VkPipelineStageFlags waitStage, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence) const
+{
+    for (uint32 i = 0; i < cmdCount; i++) {
+        vkEndCommandBuffer(cmdBuff[i]);
+    }
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    submitInfo.commandBufferCount = cmdCount;
+    submitInfo.pCommandBuffers = cmdBuff;
+
+
+    if (waitSemaphore != VK_NULL_HANDLE) {
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = &waitSemaphore;
+        submitInfo.pWaitDstStageMask = &waitStage;
+    }
+
+    if (signalSemaphore != VK_NULL_HANDLE) {
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = &signalSemaphore;
+    }
+
+    return vkQueueSubmit(GetQueue(TRANSFER), 1, &submitInfo, fence);
+}
+
 VkDeviceAddress Renderer::RenderDevice::GetBufferAddress(BufferHandle buff) const
 {
     VkBufferDeviceAddressInfo bufferAdrInfo;

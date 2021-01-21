@@ -24,12 +24,19 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
     std::unordered_set<uint32>& seenDescriptorSets, std::unordered_map<std::string, VkPushConstantRange>& pushConstants, 
     uint32& oldOffset)
 {
+    // This is equal to -12 and is used due to a weird bug in spvReflect (PATCH) (TODO: investigate)
+    CONSTEXPR uint32 bugPatchDiff = SPV_REFLECT_FORMAT_R64_UINT - SPV_REFLECT_FORMAT_R32_UINT;
+
     // Generate reflection data for a shader
     SpvReflectShaderModule module;
     SpvReflectResult result = spvReflectCreateShaderModule(size, sprivCode, &module);
+    
+    if (result != SPV_REFLECT_RESULT_SUCCESS)
+        return;
+
     ASSERT(result != SPV_REFLECT_RESULT_SUCCESS);
 
-    if (shaderStage == ShaderStages::VERTEX_SHADER) {
+    if (shaderStage == ShaderStages::VERTEX) {
         // Enumerate and extract shader's input variables
         uint32_t inputVarCount;
         spvReflectEnumerateInputVariables(&module, &inputVarCount, NULL);
@@ -38,7 +45,7 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
 
         for (uint32 i = 0; i < inputVarCount; i++) {
             // printf("Input var: name:%s|location:%d|format:%d\n", inputVarsReflect[i]->name, inputVarsReflect[i]->location, inputVarsReflect[i]->format);
-            vertexInput.AddAttribute(inputVarsReflect[i]->location, (VkFormat)inputVarsReflect[i]->format);
+            vertexInput.AddAttribute(inputVarsReflect[i]->location, (VkFormat)(inputVarsReflect[i]->format - bugPatchDiff));
         }
     }
 
@@ -109,8 +116,51 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
     spvReflectDestroyShaderModule(&module);
 }
 
+VkRayTracingShaderGroupTypeKHR Renderer::ShaderProgram::SetShaderGroupType(VkRayTracingShaderGroupCreateInfoKHR& group, uint32 stage, uint32 index)
+{
+    switch (stage) {
+    case RGEN:
+        group.generalShader = index;
+        group.closestHitShader = VK_SHADER_UNUSED_KHR;
+        group.anyHitShader = VK_SHADER_UNUSED_KHR;
+        group.intersectionShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+    case RMISS:
+        group.generalShader = index;
+        group.closestHitShader = VK_SHADER_UNUSED_KHR;
+        group.anyHitShader = VK_SHADER_UNUSED_KHR;
+        group.intersectionShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+    case RCALL:
+        group.generalShader = index;
+        group.closestHitShader = VK_SHADER_UNUSED_KHR;
+        group.anyHitShader = VK_SHADER_UNUSED_KHR;
+        group.intersectionShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+    case RINT:
+        group.intersectionShader = index;
+        group.closestHitShader = VK_SHADER_UNUSED_KHR;
+        group.anyHitShader = VK_SHADER_UNUSED_KHR;
+        group.generalShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+    case RAHIT:
+        group.anyHitShader = index;
+        group.closestHitShader = VK_SHADER_UNUSED_KHR;
+        group.generalShader = VK_SHADER_UNUSED_KHR;
+        group.intersectionShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+    case RCHIT:
+        group.closestHitShader = index;
+        group.generalShader = VK_SHADER_UNUSED_KHR;
+        group.anyHitShader = VK_SHADER_UNUSED_KHR;
+        group.intersectionShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+    }
+
+    return VkRayTracingShaderGroupTypeKHR(-1);
+}
+
 Renderer::ShaderProgram::ShaderProgram(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages)
-    : shadersCount(0)
 {
     const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
     std::unordered_set<uint32> seenDescriptorSets;
@@ -118,21 +168,39 @@ Renderer::ShaderProgram::ShaderProgram(RenderBackend& renderBackend, const std::
     uint32 offset = 0;
     Hasher h;
 
+    shaderStagesCreateInfo.reserve(MAX_SHADER_STAGES);
+    shaderModules.reserve(MAX_SHADER_STAGES);
+    rtShaderGroups.reserve(MAX_SHADER_STAGES);
+
     for (const auto& shaderStage : shaderStages) {
         auto shaderCode = TRE::Renderer::ReadShaderFile(shaderStage.path);
-        shaderModules[shadersCount] = CreateShaderModule(renderDevice.GetDevice(), shaderCode);
+
+        shaderModules.emplace_back(CreateShaderModule(renderDevice.GetDevice(), shaderCode));
+        shaderStagesCreateInfo.push_back({ VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO });
+        auto& currentModule = shaderModules.back();
+        auto& currentStage = shaderStagesCreateInfo.back();
+
+        currentModule = CreateShaderModule(renderDevice.GetDevice(), shaderCode);
         this->ReflectShaderCode(shaderCode.data(), shaderCode.size(), shaderStage.shaderStage, seenDescriptorSets, pushConstants, offset);
 
-        shaderStagesCreateInfo[shadersCount].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shaderStagesCreateInfo[shadersCount].pNext  = NULL;
-        shaderStagesCreateInfo[shadersCount].flags  = 0;
-        shaderStagesCreateInfo[shadersCount].stage  = VK_SHADER_STAGES[shaderStage.shaderStage];
-        shaderStagesCreateInfo[shadersCount].module = shaderModules[shadersCount];
-        shaderStagesCreateInfo[shadersCount].pName  = shaderStage.entryPoint;
-        shaderStagesCreateInfo[shadersCount].pSpecializationInfo = NULL;
+        //currentStage.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        //currentStage.pNext  = NULL;
+        //currentStage.flags  = 0;
+        currentStage.stage  = VK_SHADER_STAGES[(uint32)shaderStage.shaderStage];
+        currentStage.module = currentModule;
+        currentStage.pName  = shaderStage.entryPoint;
+        //currentStage.pSpecializationInfo = NULL;
+
+        if (shaderStage.shaderStage > END_RASTER) {
+            rtShaderGroups.push_back({ VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR });
+            auto& currentGroup = rtShaderGroups.back();
+            currentGroup.type = SetShaderGroupType(currentGroup, shaderStage.shaderStage, (uint32)shaderStagesCreateInfo.size() - 1);
+            //currentGroup.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+            //currentGroup.pNext = NULL;
+            //currentGroup.pShaderGroupCaptureReplayHandle = NULL;
+        }
 
         h.u64(shaderStage.GetHash());
-        shadersCount++;
     }
 
     for (auto& cts : pushConstants) {
@@ -150,7 +218,8 @@ void Renderer::ShaderProgram::Compile()
     Hasher h;
     h.u64(hash);
     h.u64(piplineLayout.GetHash());
-    h.u64(vertexInput.GetHash());
+    if (vertexInput.GetVertexInputDesc().vertexBindingDescriptionCount)
+        h.u64(vertexInput.GetHash());
     hash = h.Get();
 }
 

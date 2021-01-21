@@ -11,6 +11,8 @@
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 #include <Renderer/Backend/Pipeline/GraphicsState/GraphicsState.hpp>
 
+#include <Renderer/Backend/RayTracing/TLAS/TLAS.hpp>
+
 TRE_NS_START
 
 void Renderer::CommandBufferDeleter::operator()(CommandBuffer* cmd)
@@ -346,6 +348,26 @@ void Renderer::CommandBuffer::PushConstants(ShaderStagesFlags stages, const void
     vkCmdPushConstants(commandBuffer, pipelineLayout.GetApiObject(), stages, pushConstant.offset + (uint32)offset, (uint32)size, data);
 }
 
+void Renderer::CommandBuffer::SetAccelerationStrucure(uint32 set, uint32 binding, const Tlas& tlas)
+{
+    ASSERT(set >= MAX_DESCRIPTOR_SET);
+    ASSERT(binding >= MAX_DESCRIPTOR_BINDINGS);
+    auto& b = bindings.bindings[set][binding];
+
+    // TODO: maybe some checks here in the future!
+    //if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
+    //    return;
+    //}
+
+    b.resource.accl.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+    b.resource.accl.pNext = NULL;
+    b.resource.accl.accelerationStructureCount = 1;
+    b.resource.accl.pAccelerationStructures = &tlas.GetApiObject();
+
+    bindings.cache[set][binding] = (uint64)tlas.GetApiObject();
+    dirty.sets |= (1u << set);
+}
+
 void Renderer::CommandBuffer::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
 {
     auto& info = image.GetInfo();
@@ -633,6 +655,14 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
     VkWriteDescriptorSet writes[MAX_DESCRIPTOR_BINDINGS];
     uint32 writeCount = 0;
 
+    /*
+    * NOT YET IMPLEMENTED/
+    VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+    VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+    VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+    VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT = 1000138000,
+    */
+
     for (uint32 binding = 0; binding < layout.GetBindingsCount(); binding++) {
         auto& layoutBinding = layout.GetDescriptorSetLayoutBinding(binding);
 
@@ -672,7 +702,20 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
             }
 
             writeCount++;
-        } 
+        } else if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR) {
+            for (uint32 i = 0; i < layoutBinding.descriptorCount; i++) {
+                writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writes[writeCount].pNext = &bindings[binding + i].resource.accl;
+                writes[writeCount].dstSet = descSet;
+                writes[writeCount].descriptorType = layoutBinding.descriptorType;
+                writes[writeCount].descriptorCount = 1;
+                writes[writeCount].dstBinding = binding;
+                writes[writeCount].dstArrayElement = i;
+                writes[writeCount].pBufferInfo = NULL;
+                writes[writeCount].pImageInfo = NULL;
+                writes[writeCount].pTexelBufferView = NULL;
+            }
+        }
     }
 
     printf("Updating descriptor sets: writting count:%u\n", writeCount);

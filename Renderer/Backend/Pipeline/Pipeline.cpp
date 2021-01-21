@@ -6,7 +6,7 @@
 TRE_NS_START
 
 // Ray-tracing:
-void Renderer::Pipeline::Create(const RenderDevice& device, bool)
+void Renderer::Pipeline::Create(const RenderDevice& device, uint32 maxDepth, uint32 maxRayPayloadSize, uint32 maxRayHitAttribSize)
 {
     VkDynamicState dynamicStatesArray[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
@@ -28,32 +28,31 @@ void Renderer::Pipeline::Create(const RenderDevice& device, bool)
     VkRayTracingPipelineInterfaceCreateInfoKHR pipelineInterface;
     pipelineInterface.pNext = NULL;
     pipelineInterface.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_INTERFACE_CREATE_INFO_KHR;
-    pipelineInterface.maxPipelineRayPayloadSize = 1; // TODO: change this
-    pipelineInterface.maxPipelineRayHitAttributeSize = 1; // TODO: change this
+    pipelineInterface.maxPipelineRayPayloadSize = 1; // TODO: paramterize this
+    pipelineInterface.maxPipelineRayHitAttributeSize = 1; // TODO: paramterize this
 
 
     VkRayTracingPipelineCreateInfoKHR rayTraceInfo;
     rayTraceInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
     rayTraceInfo.pNext = NULL;
     rayTraceInfo.flags = 0;
+
     rayTraceInfo.stageCount = (uint32)shaderProgram->GetShadersCount();
     rayTraceInfo.pStages = shaderProgram->GetShaderStages(); //shaderStagesDesc.data();
+    rayTraceInfo.groupCount = shaderProgram->GetShaderGroupsCount();
+    rayTraceInfo.pGroups = shaderProgram->GetShaderGroups();
     rayTraceInfo.layout = shaderProgram->GetPipelineLayout().GetApiObject();
+
     rayTraceInfo.pDynamicState = &dynamicState;
+    rayTraceInfo.maxPipelineRayRecursionDepth = 2; // TODO: paramterize this
 
-    rayTraceInfo.maxPipelineRayRecursionDepth = 2; // TODO: change
-
-    //uint32_t                                    groupCount;
-    //const VkRayTracingShaderGroupCreateInfoKHR* pGroups;
-    //const VkPipelineLibraryCreateInfoKHR*       pLibraryInfo;
-
+    rayTraceInfo.pLibraryInfo = NULL;
     rayTraceInfo.pLibraryInterface = &pipelineInterface;
-    
-    
-    rayTraceInfo.basePipelineHandle = VK_NULL_HANDLE; //desc.basePipelineHandle;
-    rayTraceInfo.basePipelineIndex = -1;//desc.basePipelineIndex;
+    rayTraceInfo.basePipelineHandle = VK_NULL_HANDLE;
+    rayTraceInfo.basePipelineIndex = -1;
 
-    vkCreateRayTracingPipelinesKHR(device.GetDevice(), NULL, VK_NULL_HANDLE, 1, &rayTraceInfo, NULL, &pipeline);
+    VkDeferredOperationKHR deferredOperation = VK_NULL_HANDLE;
+    vkCreateRayTracingPipelinesKHR(device.GetDevice(), deferredOperation, VK_NULL_HANDLE, 1, &rayTraceInfo, NULL, &pipeline);
 }
 
 // Compute:

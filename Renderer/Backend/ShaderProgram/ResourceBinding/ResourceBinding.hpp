@@ -13,6 +13,7 @@ namespace Renderer
 		{
 			VkDescriptorBufferInfo buffer;
 			VkDescriptorImageInfo image;
+			VkWriteDescriptorSetAccelerationStructureKHR accl;
 			// VkBufferView buffer_view;
 		} resource;
 

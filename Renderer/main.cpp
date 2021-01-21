@@ -354,8 +354,8 @@ int main()
 
     ShaderProgram program(backend,
         {
-            {"shaders/vert.spv", ShaderProgram::VERTEX_SHADER},
-            {"shaders/frag.spv", ShaderProgram::FRAGMENT_SHADER}
+            {"shaders/vert.spv", ShaderProgram::VERTEX},
+            {"shaders/frag.spv", ShaderProgram::FRAGMENT}
         });
     program.GetVertexInput().AddBinding(
         0, sizeof(Vertex),
@@ -409,6 +409,19 @@ int main()
     backend.RtCompressBatch();
     printf("Object ID: %p\n", blas->GetApiObject());
     backend.RtSyncAcclBuilding();
+    {
+        ShaderProgram rtProgram(backend,
+            {
+                {"shaders/RT/rgen.spv", ShaderProgram::RGEN},
+                {"shaders/RT/rchit.spv", ShaderProgram::RCHIT},
+                {"shaders/RT/rmiss.spv", ShaderProgram::RMISS}
+            });
+        rtProgram.Compile();
+        Pipeline pipeline(PipelineType::RAY_TRACE, &rtProgram);
+        pipeline.Create(backend.GetRenderDevice(), 2);
+
+        // TODO: make an SBT
+    }
 
     BlasInstance instance;
     instance.blas = blas;
