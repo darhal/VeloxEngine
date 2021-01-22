@@ -109,8 +109,10 @@ namespace Renderer
 
 		void PushConstants(ShaderStagesFlags stages, const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
 
+		// Ray Tracing
 		void SetAccelerationStrucure(uint32 set, uint32 binding, const Tlas& tlas);
 
+		void TraceRays(uint32 width, uint32 height, uint32 depth);
 
 		void CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, DeviceSize size, DeviceSize srcOffset = 0, DeviceSize dstOffset = 0);
 

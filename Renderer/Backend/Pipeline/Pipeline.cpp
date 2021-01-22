@@ -2,12 +2,15 @@
 #include <Renderer/Backend/Common/Utils.hpp>
 #include <Renderer/Backend/RenderContext/RenderContext.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
+#include <Renderer/Backend/RenderBackend.hpp>
 
 TRE_NS_START
 
 // Ray-tracing:
-void Renderer::Pipeline::Create(const RenderDevice& device, uint32 maxDepth, uint32 maxRayPayloadSize, uint32 maxRayHitAttribSize)
+void Renderer::Pipeline::Create(RenderBackend& backend, uint32 maxDepth, uint32 maxRayPayloadSize, uint32 maxRayHitAttribSize)
 {
+    const RenderDevice& device = backend.GetRenderDevice();
+
     VkDynamicState dynamicStatesArray[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
@@ -53,6 +56,8 @@ void Renderer::Pipeline::Create(const RenderDevice& device, uint32 maxDepth, uin
 
     VkDeferredOperationKHR deferredOperation = VK_NULL_HANDLE;
     vkCreateRayTracingPipelinesKHR(device.GetDevice(), deferredOperation, VK_NULL_HANDLE, 1, &rayTraceInfo, NULL, &pipeline);
+
+    sbt.Init(backend, *shaderProgram, *this);
 }
 
 // Compute:

@@ -10,6 +10,7 @@
 #include <Renderer/Backend/Buffers/RingBuffer.hpp>
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 #include <Renderer/Backend/Pipeline/GraphicsState/GraphicsState.hpp>
+#include <Renderer/Core/Alignement/Alignement.hpp>
 
 #include <Renderer/Backend/RayTracing/TLAS/TLAS.hpp>
 
@@ -366,6 +367,32 @@ void Renderer::CommandBuffer::SetAccelerationStrucure(uint32 set, uint32 binding
 
     bindings.cache[set][binding] = (uint64)tlas.GetApiObject();
     dirty.sets |= (1u << set);
+}
+
+void Renderer::CommandBuffer::TraceRays(uint32 width, uint32 height, uint32 depth)
+{
+    this->FlushDescriptorSets();
+
+    const RenderDevice& device = renderBackend->GetRenderDevice();
+    const uint32_t groupHandleSize = device.GetRtProperties().shaderGroupHandleSize;  // Size of a program identifier
+    const uint32_t baseAlignment = device.GetRtProperties().shaderGroupBaseAlignment;  // Size of shader alignment
+    auto sbtAddress = pipeline->GetSBT().GetSbtAddress();
+
+    // Size of a program identifier
+    const uint32_t groupSize = Utils::AlignUp(device.GetRtProperties().shaderGroupHandleSize,
+        device.GetRtProperties().shaderGroupBaseAlignment);
+    const uint32_t groupStride = groupSize;
+
+    using Stride = VkStridedDeviceAddressRegionKHR;
+
+    std::array<Stride, 4> strideAddresses{
+        Stride{sbtAddress + 0u * groupSize, groupStride, groupSize * 1},  // raygen
+        Stride{sbtAddress + 1u * groupSize, groupStride, groupSize * 2},  // miss
+        Stride{sbtAddress + 3u * groupSize, groupStride, groupSize * 1},  // hit
+        Stride{0u, 0u, 0u} 
+    };
+
+    vkCmdTraceRaysKHR(commandBuffer, &strideAddresses[0], &strideAddresses[1], &strideAddresses[2], &strideAddresses[3], width, height, depth);
 }
 
 void Renderer::CommandBuffer::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)

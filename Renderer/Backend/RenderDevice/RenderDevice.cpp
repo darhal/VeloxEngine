@@ -29,6 +29,12 @@ int32 Renderer::RenderDevice::CreateRenderDevice(const Internal::RenderInstance&
                                             internal.queueFamilyIndices.queueFamilies[Internal::QFT_TRANSFER];
 
     vkGetPhysicalDeviceMemoryProperties(internal.gpu, &internal.memoryProperties);
+
+    internal.rtProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+    internal.gpuProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    internal.gpuProperties2.pNext = &internal.rtProperties;
+    vkGetPhysicalDeviceProperties2(internal.gpu, &internal.gpuProperties2);
+
     return CreateLogicalDevice(renderInstance, ctx, extensions, extCount, layers, layerCount);
 }
 

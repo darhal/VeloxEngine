@@ -8,12 +8,14 @@
 #include <Renderer/Backend/Pipeline/PipelineLayout/PipelineLayout.hpp> 
 #include <Renderer/Backend/RenderPass/RenderPass.hpp>
 #include <Renderer/Backend/Pipeline/Pipeline.hpp>
+#include <Renderer/Backend/RayTracing/SBT/SBT.hpp>
 
 TRE_NS_START
 
 namespace Renderer
 {
 	class RenderContext;
+	class RenderBackend;
 
 	enum class PipelineType
 	{
@@ -27,7 +29,8 @@ namespace Renderer
 	public:
 		// Generic:
 		Pipeline(PipelineType type, const ShaderProgram* program = NULL) :
-			pipelineType(type), pipeline(VK_NULL_HANDLE), shaderProgram(program), renderPass(NULL), dynamicState(0)
+			pipelineType(type), pipeline(VK_NULL_HANDLE), shaderProgram(program), renderPass(NULL), dynamicState(0),
+			sbt()
 		{
 		}
 
@@ -42,7 +45,9 @@ namespace Renderer
 		PipelineType GetPipelineType() const { return pipelineType; }
 
 		// RT:
-		void Create(const RenderDevice& device, uint32 maxDepth, uint32 maxRayPayloadSize = 256, uint32 maxRayHitAttribSize = 256);
+		void Create(RenderBackend& backend, uint32 maxDepth, uint32 maxRayPayloadSize = 256, uint32 maxRayHitAttribSize = 256);
+
+		const SBT& GetSBT() const { return sbt; }
 
 		// Compute:
 		void Create(const RenderDevice& device);
@@ -66,6 +71,8 @@ namespace Renderer
 		const ShaderProgram* shaderProgram;
 		VkPipeline			 pipeline;
 		PipelineType		 pipelineType;
+
+		SBT sbt;
 		
 		const RenderPass*	renderPass;
 		uint32				dynamicState;

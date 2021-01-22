@@ -418,9 +418,7 @@ int main()
             });
         rtProgram.Compile();
         Pipeline pipeline(PipelineType::RAY_TRACE, &rtProgram);
-        pipeline.Create(backend.GetRenderDevice(), 2);
-
-        // TODO: make an SBT
+        pipeline.Create(backend, 2);
     }
 
     BlasInstance instance;

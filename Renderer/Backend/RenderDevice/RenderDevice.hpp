@@ -70,6 +70,8 @@ namespace Renderer
 		FORCEINLINE bool IsTransferQueueSeprate() const { return internal.isTransferQueueSeprate; }
 
 		FORCEINLINE const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const { return internal.memoryProperties; }
+
+		FORCEINLINE const VkPhysicalDeviceRayTracingPipelinePropertiesKHR& GetRtProperties() const { return internal.rtProperties; }
 	private:
 		void FetchDeviceAvailableExtensions();
 
