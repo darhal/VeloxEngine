@@ -53,9 +53,12 @@ private:
 template<typename U>
 U* CommandPacket::SubmitCommand(const uint64& internal_key)
 {
+	ASSERTF(m_CmdsCount >= DEFAULT_MAX_ELEMENTS, "CommandPacket command buffer is full.");
+
 	Cmd cmd = Command::CreateCommand<U>(m_CmdsAllocator);
 	Command::StoreBackendDispatchFunction(cmd, U::DISPATCH_FUNCTION);
-	new (&m_Commands[m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount++]) Pair<uint64, Cmd>(internal_key, cmd);
+	uint32 index = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount++;
+	new (&m_Commands[index]) Pair<uint64, Cmd>(internal_key, cmd);	
 	return Command::GetCommand<U>(cmd);
 }
 

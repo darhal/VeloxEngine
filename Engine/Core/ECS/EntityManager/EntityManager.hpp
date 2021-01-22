@@ -6,7 +6,7 @@
 #include <Core/DataStructure/PackedArray/PackedArray.hpp>
 #include <Core/DataStructure/HashMap/HashMap.hpp>
 #include <Core/ECS/Archetype/Archetype.hpp>
-#include <Core/ECS/Entity/Entity.hpp>
+// #include <Core/ECS/Entity/Entity.hpp>
 #include <Core/ECS/ArchetypeQuerry/ArchetypeQuerry.hpp>
 #include <Core/ECS/EntityContainer/EntityContainer.hpp>
 
@@ -71,7 +71,7 @@ public:
 	// World :
 	World& GetWorld();
 
-private:
+public:
 	BaseComponent* AddComponentInternal(Entity& entity, uint32 component_id, BaseComponent* component);
 	bool RemoveComponentInternal(Entity& entity, uint32 component_id);
 	BaseComponent* GetComponentInternal(const Entity& entity, uint32 component_id);

@@ -13,10 +13,12 @@
 #endif
 
 #if not defined(_DEBUG) || defined(NDEBUG)
-	#define ASSERTF(condition, ...) ;
-	#define ASSERT(condition) ;
+	#define ASSERTF(condition, ...) {};
+	#define ASSERT(condition) {};
 #else
-	#include <Core/Misc/Utils/Logging.hpp>
+	#include <Engine/Core/Misc/Utils/Logging.hpp>
+
+    #define DEBUG
 
 	#if defined(OS_WINDOWS) && (CPU_ARCH == CPU_ARCH_x86_64 || CPU_ARCH == CPU_ARCH_x86)
         #include <intrin.h>
@@ -47,13 +49,13 @@
 		if ((bool)(condition)){ \
 			char assert_msg[215]; \
 			snprintf(assert_msg, 215, ##__VA_ARGS__); \
-			LOG::Write(LOG::ASSERT, "Assert occured in (%s:%d) %s.", __FILENAME__, __LINE__, assert_msg); \
+			TRE::Log::Write(TRE::Log::ASSERT, "[%s::%d::%s] %s.", __FILENAME__, __LINE__, __FUNCTION__, assert_msg); \
 			DEBUG_BREAK(); \
 		}\
 
 	#define ASSERT(condition) \
 		if ((bool)(condition)){ \
-			LOG::Write(LOG::ASSERT, "Assert occured in (%s:%d).", __FILENAME__, __LINE__); \
+			TRE::Log::Write(TRE::Log::ASSERT, "[%s::%d::%s] Assert occured (Condition: %s).", __FILENAME__, __LINE__, __FUNCTION__, #condition); \
 			DEBUG_BREAK(); \
 		} \
 

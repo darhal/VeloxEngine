@@ -20,6 +20,7 @@ CommandBucket::CommandBucket(CommandBucket&& bucket) :
 	m_Packets(std::move(bucket.m_Packets)), 
 	m_PacketAllocator(std::move(bucket.m_PacketAllocator))
 {
+	memcpy(m_ExtraBuffer, bucket.m_ExtraBuffer, sizeof(uint8) * EXTRA_BUFFER_SPACE);
 }
 
 CommandBucket& CommandBucket::operator=(CommandBucket&& bucket)
@@ -31,6 +32,7 @@ CommandBucket& CommandBucket::operator=(CommandBucket&& bucket)
 	m_Camera = bucket.m_Camera;
 	m_Packets = std::move(bucket.m_Packets);
 	m_PacketAllocator = std::move(bucket.m_PacketAllocator);
+	memcpy(m_ExtraBuffer, bucket.m_ExtraBuffer, sizeof(uint8) * EXTRA_BUFFER_SPACE);
 	return *this;
 }
 
@@ -62,45 +64,46 @@ CommandPacket& CommandBucket::GetOrCreateCommandPacket(const BucketKey& key)
 	return *res;
 }
 
-void CommandBucket::OnKeyChangeCallback(ResourcesManager& manager, const BucketKey& key, const Mat4f& proj_view, const Mat4f& proj, const Camera& camera)
+ShaderProgram& CommandBucket::OnKeyChangeCallback(ResourcesManager& manager, const BucketKey& key, const Mat4f& proj_view, const Mat4f& proj, const Camera& camera, const uint8* extra_data)
 {
 	uint32 shader_id;
 	RenderState state = RenderState::FromKey(key, &shader_id);
 	state.ApplyStates();
 
 	// Set Shader
-	ShaderProgram& shader = manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shader_id);
+	ShaderProgram& shader = manager.Get<ShaderProgram>(shader_id);
 	shader.Bind();
 	shader.SetMat4("u_ProjView", proj_view);
 	shader.SetVec3("u_ViewPosition", camera.Position);
+	return shader;
 }
 
-void CommandBucket::OnBucketFlushCallback(ResourcesManager& manager, const RenderTarget& rt)
+FBO& CommandBucket::OnBucketFlushCallback(ResourcesManager& manager, const RenderTarget& rt, const uint8* extra_data)
 {
 	// Apply framer buffer here!
 	//if (rt.m_FboID != 0) {
-	FBO& fbo = manager.Get<FBO>(ResourcesTypes::FBO, rt.m_FboID);
+	FBO& fbo = manager.Get<FBO>(rt.m_FboID);
 	fbo.Bind();
+	Clear(Buffer::COLOR | Buffer::DEPTH);
 	//}
 
 	// TODO: Maybe set viewport width and height
+	return fbo;
 }
-
 
 void CommandBucket::Flush() const
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
 	// Call call back function
 	if (m_OnBucketFlushCallback)
-		m_OnBucketFlushCallback(manager, m_RenderTarget);
+		m_OnBucketFlushCallback(manager, m_RenderTarget, m_ExtraBuffer);
 
 	const Mat4f projView = m_Projection * m_Camera.GetViewMatrix();
-	const vec3& camera_position = m_Camera.Position;
 
 	for (const auto& key_packet_pair : m_Packets) {
 		// Decode the key,  and apply render states and shader
 		if (m_OnKeyChangeCallback)
-			m_OnKeyChangeCallback(manager, key_packet_pair.first, projView, m_Projection, m_Camera);
+			m_OnKeyChangeCallback(manager, key_packet_pair.first, projView, m_Projection, m_Camera, m_ExtraBuffer);
 
 		key_packet_pair.second->Flush();
 		key_packet_pair.second->SwapBuffer();

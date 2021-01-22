@@ -19,19 +19,27 @@ void ForwardRenderer::Initialize(uint32 scr_width, uint32 scr_height)
 
 void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 {
-	ResourcesManager& manager = ResourcesManager::Instance();
-	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
+	ResourcesManager& rm = ResourcesManager::Instance();
+	{
+		ShaderProgram& shader = rm.CreateResource<ShaderProgram>(m_ShadowMappingShader,
+			Shader(File("res/Shader/Forward/shadow_depth_mapping.vs"), ShaderType::VERTEX),
+			Shader(File("res/Shader/Forward/shadow_depth_mapping.fs"), ShaderType::FRAGMENT)
+		);
+		shader.LinkProgram();
+		shader.Use();
+		shader.AddUniform("u_ProjView");
+		shader.AddUniform("u_Model");
+		shader.AddUniform("u_ViewPosition");
+	}
 
-	FboID main_fbo = manager.CreateResource<FBO>(ResourcesTypes::FBO);
-	manager.Get<FBO>(ResourcesTypes::FBO, m_DepthFbo).Invalidate(); // Set it to zero
+	FboID main_fbo = rm.AllocateResource<FBO>();
+	rm.Get<FBO>(m_DepthFbo).Invalidate(); // Set it to zero
 
 	CommandBucket& shadow_bucket = m_CommandQueue.CreateBucket();
 	CommandBucket& bucket = m_CommandQueue.CreateBucket();
 	bucket.GetProjectionMatrix() = mat4::perspective((float)bucket.GetCamera().Zoom, (float)scr_width / (float)scr_height, NEAR_PLANE, FAR_PLANE);
 
-	m_DepthMap = manager.CreateResource<Texture>(ResourcesTypes::TEXTURE);
-	Commands::CreateTextureCmd* cmd_tex = op_queue.SubmitCommand<Commands::CreateTextureCmd>();
-	cmd_tex->texture = &manager.Get<Texture>(ResourcesTypes::TEXTURE, m_DepthMap);
+	Commands::CreateTextureCmd* cmd_tex  = rm.Create<Texture>(m_DepthMap);
 	cmd_tex->settings = TextureSettings(
 		TexTarget::TEX2D, scr_width, scr_height, NULL,
 		{
@@ -40,35 +48,52 @@ void ForwardRenderer::SetupCommandBuffer(uint32 scr_width, uint32 scr_height)
 		}, DataType::FLOAT, 0, TexInternalFormat::DepthComponent, TexFormat::DepthComponent, vec4(1.f, 1.f, 1.f, 1.f)
 	);
 
-	m_DepthFbo = manager.CreateResource<FBO>(ResourcesTypes::FBO);
-	Commands::CreateFrameBufferCmd* cmd_fbo = op_queue.SubmitCommand<Commands::CreateFrameBufferCmd>();
-	cmd_fbo->fbo = &manager.Get<FBO>(ResourcesTypes::FBO, m_DepthFbo);
+	Commands::CreateFrameBufferCmd* cmd_fbo = rm.Create<FBO>(m_DepthFbo);
 	cmd_fbo->settings = FramebufferSettings(
 		{ { cmd_tex->texture, FBOAttachement::DEPTH_ATTACH } },
 		FBOTarget::FBO, NULL, FBOAttachement::DEPTH_ATTACH, {}, GL_NONE
 	);
 
 	// Setup shadow bucket
-	Mat4f lightProjection = mat4::ortho(-10.f, 10.f, -10.f, 10.f, 1.f, 7.5f);
-	Mat4f lightView = mat4::look_at(vec3(0, 3, 0), vec3(0.f, 0.f, 0.f), vec3(0.0, 1.0, 0.0));
+	Mat4f lightProjection = mat4::ortho(-10.f, 10.f, -10.f, 10.f, 1.f, 50.0f);
+	Mat4f lightView = mat4::look_at(vec3(-2.0, 8.0, -1.0), vec3(0.f, 0.f, 0.f), vec3(0.0, 1.0, 0.0));
 	shadow_bucket.GetProjectionMatrix() = lightProjection * lightView;
 	shadow_bucket.GetRenderTarget().m_FboID = m_DepthFbo;
-	shadow_bucket.SetOnBucketFlushCallback([] (ResourcesManager& m, const RenderTarget& rt){
-		FBO& fbo = m.Get<FBO>(ResourcesTypes::FBO, rt.m_FboID);
-		fbo.Bind();
+	shadow_bucket.SetOnBucketFlushCallback([](ResourcesManager& m, const RenderTarget& rt, const uint8* data) -> FBO& {
 		ClearBuffers(Buffer::DEPTH);
+		return CommandBucket::OnBucketFlushCallback(m, rt, data);
 	});
 
-	// m_MeshSystem.SetCommandBucket(&bucket);
-	// ResourcesManager::Instance().GetRenderWorld().GetSystsemList(SystemList::ACTIVE).AddSystem(&m_MeshSystem);
+	uint8* extra_data = bucket.GetExtraBuffer();
+	new (extra_data) Mat4f(shadow_bucket.GetProjectionMatrix());
+	new (extra_data + sizeof(Mat4f)) uint32(m_DepthMap); // Shadow Sampler
+	// TODO: Change this to be on flush since this have doesnt depend on the key change (Or maybe not bcuz we get the shader at the last moment)
+	bucket.SetOnKeyChangeCallback([](ResourcesManager& m, const BucketKey& key, const Mat4f& proj_view, const Mat4f& proj, const Camera& camera, const uint8* extra_data) -> ShaderProgram& {
+		ShaderProgram& shader = CommandBucket::OnKeyChangeCallback(m, key, proj_view, proj, camera, extra_data);
+		shader.SetMat4("u_LightSpaceMatrix", *reinterpret_cast<const Mat4f*>(extra_data));
+		shader.SetInt("u_ShadowMap", 5);
+
+		// Set shadow depth map:
+		const uint32& depth_map_id = *reinterpret_cast<const uint32*>(extra_data + sizeof(Mat4f));
+		Texture& shadow_map = m.Get<Texture>(depth_map_id);
+		ActivateTexture(5);
+		shadow_map.Bind();
+		return shader;
+	});
+
+	m_MeshSystem[SHADOW_PASS].m_CommandBucket = &shadow_bucket;
+	m_MeshSystem[SHADOW_PASS].m_ShaderID = m_ShadowMappingShader;
+	m_MeshSystem[SHADOW_PASS].m_MaterialID = -1;
+
+	m_MeshSystem[MAIN_PASS].m_CommandBucket = &bucket;
+	rm.GetRenderWorld().GetSystsemList(SystemList::ACTIVE).AddSystem(&m_MeshSystem[SHADOW_PASS]);
+	rm.GetRenderWorld().GetSystsemList(SystemList::ACTIVE).AddSystem(&m_MeshSystem[MAIN_PASS]);
 }
 
 void ForwardRenderer::SetupLightsBuffer()
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
-	m_LightBuffer = manager.CreateResource<VBO>(ResourcesTypes::VBO);
-	Commands::CreateVBOCmd* cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::CreateVBOCmd>();
-	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_LightBuffer);
+	Commands::CreateVBOCmd* cmd = manager.Create<VBO>(m_LightBuffer);
 	cmd->settings = VertexBufferSettings(sizeof(ILight) * MAX_LIGHTS + sizeof(uint32), BufferTarget::UNIFORM_BUFFER, BufferUsage::STATIC_DRAW);
 
 	Commands::BindBufferRangeCmd* bind_cmd = manager.GetContextOperationsQueue().SubmitCommand<Commands::BindBufferRangeCmd>();
@@ -84,13 +109,13 @@ void ForwardRenderer::SetupLightsBuffer()
 void ForwardRenderer::Draw(IPrimitiveMesh& mesh)
 {
 	// Main Pass:
-	mesh.Submit(m_CommandQueue.GetCommandBucker(MAIN_PASS));
-	// mesh.Submit(m_CommandQueue.GetCommandBucker(SHADOW_PASS));
+	mesh.Submit(m_CommandQueue.GetCommandBucket(MAIN_PASS));
+	// mesh.Submit(m_CommandQueue.GetCommandBucket(SHADOW_PASS), m_ShadowMappingShader, -1);
 }
 
 void ForwardRenderer::Render()
 {
-	m_CommandQueue.GetCommandBucker(MAIN_PASS).Finalize();
+	m_CommandQueue.GetCommandBucket(MAIN_PASS).Finalize();
 	m_CommandQueue.DispatchCommands();
 }
 

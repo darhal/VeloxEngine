@@ -34,8 +34,6 @@ struct BackendDispatch
 	static void CreateRenderBuffer(const void* data);
 
 	// Misc commands:
-	static void EditSubBuffer(const void* data);
-
 	static void DispatchCompute(const void* data);
 
 	static void UploadUniforms(const void* data);
@@ -47,6 +45,12 @@ struct BackendDispatch
 	static void MapBufferCmd(const void* data);
 
 	static void CallFunctionCmd(const void* data);
+
+	static void EditSubBuffer(const void* data);
+
+	static void BindVBO(const void* data);
+
+	static void EditSubBoundBuffer(const void* data);
 };
 
 

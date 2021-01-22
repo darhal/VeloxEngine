@@ -12,7 +12,7 @@ void Technique::UploadUnfiroms(const ShaderProgram& program) const
 void Technique::UploadUnfiroms() const
 {
     // Query shader by ID from the reource manager :
-    ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, m_ShaderID);
+    ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(m_ShaderID);
 
     this->UploadUnfiroms(shader);
 }
@@ -20,7 +20,7 @@ void Technique::UploadUnfiroms() const
 void Technique::SetupAllUniforms(const AbstractMaterial& abstract_material)
 {
     // Query shader by ID from the reource manager :
-    ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, m_ShaderID);
+    ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(m_ShaderID);
 
     // for each built in type supported by GLSL set the uniforms one by one :
     this->SetupAllUniformsFromSameType<mat4>(shader, abstract_material);

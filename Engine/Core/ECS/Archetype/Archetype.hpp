@@ -45,7 +45,7 @@ public:
 
 	FORCEINLINE const Map<ComponentTypeID, uint32>& GetTypesBufferMarker() const { return m_TypesToBuffer; }
 
-	FORCEINLINE bool IsEmpty() { return m_OccupiedChunks == NULL; }
+	FORCEINLINE bool IsEmpty() const { return m_OccupiedChunks == NULL; }
 
 	FORCEINLINE uint32 GetComponentsTypesCount() const { return m_TypesCount; }
 

@@ -1,9 +1,10 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/Misc/Defines/Types.hpp>
+#include <Engine/Core/Misc/Defines/Common.hpp>
+#include <Engine/Core/Misc/Defines/Types.hpp>
 #include <utility>
 #include <cstring>
+#include <new>
 
 FORCEINLINE static const usize CalculatePadding(const usize baseAddress, const usize alignment) 
 {

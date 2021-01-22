@@ -48,11 +48,10 @@ void CommandPacket::SortCommands()
 {
 	/*std::bitset<64> b(m_Key);
 	printf("Sorting packt with key : %llu | Bitset : ", m_Key); std::cout << b << std::endl;*/
-
 	const uint32 start = m_BufferMarker * DEFAULT_MAX_ELEMENTS;
-	const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;
+	// const uint32 end = m_BufferMarker * DEFAULT_MAX_ELEMENTS + m_CmdsCount;
 
-	std::qsort(m_Commands + start, end, sizeof(Pair<BucketKey, Cmd>), [](const void* a, const void* b) {
+	std::qsort(m_Commands + start, m_CmdsCount, sizeof(Pair<BucketKey, Cmd>), [](const void* a, const void* b) {
 		const Pair<BucketKey, Cmd>& arg1 = *static_cast<const Pair<BucketKey, Cmd>*>(a);
 		const Pair<BucketKey, Cmd>& arg2 = *static_cast<const Pair<BucketKey, Cmd>*>(b);
 

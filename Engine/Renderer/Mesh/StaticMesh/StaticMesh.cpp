@@ -10,7 +10,7 @@ StaticMesh::StaticMesh(VaoID vao) : m_VaoID(vao)
 {
 }
 
-void StaticMesh::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
+void StaticMesh::Submit(CommandBucket& CmdBucket, ShaderID shader_id, MaterialID material_id)
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
 	ModelRenderParams params = { 0, m_VaoID, (uint16)0 };
@@ -20,7 +20,7 @@ void StaticMesh::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
 	BucketKey last_key = -1;
 
 	for (SubMesh& obj : m_Meshs) {
-		const Material& material = manager.Get<Material>(ResourcesTypes::MATERIAL, obj.m_MaterialID);
+		const Material& material = manager.Get<Material>(obj.m_MaterialID);
 		const RenderState& state = material.GetRenderStates();
 		ShaderID shaderID = shader_id == ShaderID(-1) ? material.GetTechnique().GetShaderID() : shader_id;
 		BucketKey key = state.ToKey(shaderID);
@@ -45,7 +45,7 @@ void StaticMesh::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
 			packet = CmdBucket.SubmitCommand<Commands::PreDrawCallCmd>(&prepare_cmd, key, params.ToKey());
 			link_cmd = prepare_cmd;
 			prepare_cmd->vao_id = m_VaoID;
-			prepare_cmd->shader = &manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shaderID);
+			prepare_cmd->shader = &manager.Get<ShaderProgram>(shaderID);
 			prepare_cmd->model = m_ModelTransformation;
 			last_key = key;
 		}
@@ -57,7 +57,7 @@ void StaticMesh::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
 			draw_cmd->count = obj.m_Geometry.m_Count;
 			draw_cmd->offset = obj.m_Geometry.m_Offset;
 
-			draw_cmd->material = &material;
+			draw_cmd->material = material_id == MaterialID(-1) ? NULL : &material;
 			draw_cmd->prepare_cmd = prepare_cmd;
 			draw_cmd->next_cmd = NULL;
 
@@ -69,7 +69,7 @@ void StaticMesh::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
 			draw_cmd->start = obj.m_Geometry.m_Start;
 			draw_cmd->end = obj.m_Geometry.m_End;
 
-			draw_cmd->material = &material;
+			draw_cmd->material = material_id == MaterialID(-1) ? NULL : &material;
 			draw_cmd->prepare_cmd = prepare_cmd;
 			draw_cmd->next_cmd = NULL;
 

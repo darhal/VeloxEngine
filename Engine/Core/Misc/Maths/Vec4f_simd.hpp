@@ -4,7 +4,7 @@
 #include "VecN.hpp"
 #include "Vec2.hpp"
 #include "Vec3.hpp"
-#include <Core/Misc/Defines/PlatformSIMDInclude.hpp>
+#include <Engine/Core/Misc/Defines/PlatformSIMDInclude.hpp>
 
 TRE_NS_START
 

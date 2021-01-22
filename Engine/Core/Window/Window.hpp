@@ -1,13 +1,12 @@
 #pragma once
 
-#include <Core/Misc/Defines/PlatformInclude.hpp>
 #include <string>
 #include <queue>
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/Event/Event.hpp>
-#include <Core/Misc/Maths/Vec.hpp>
-#include <Core/Misc/Maths/Vec2.hpp>
-
+#include <Engine/Core/Misc/Defines/PlatformInclude.hpp>
+#include <Engine/Core/Misc/Defines/Common.hpp>
+#include <Engine/Core/Event/Event.hpp>
+#include <Engine/Core/Misc/Maths/Vec.hpp>
+#include <Engine/Core/Misc/Maths/Vec2.hpp>
 
 namespace WindowStyle
 {
@@ -25,7 +24,6 @@ namespace WindowStyle
 		return (window_style_t)((int)lft | (int)rht);
 	}
 }
-
 
 TRE_NS_START
 

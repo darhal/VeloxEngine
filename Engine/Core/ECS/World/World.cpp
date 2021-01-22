@@ -24,6 +24,7 @@ void World::UpdateSystems(float delta)
 		BaseSystem& system = *list[i];
 		
 		system.OnUpdate(delta);
+		system.FlushCommandsRecord();
 	}
 }
 

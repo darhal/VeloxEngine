@@ -7,7 +7,7 @@
 #include <iostream>
 #include "Vec.hpp"
 #include "Vec4f_simd.hpp"
-#include <Core/Misc/Defines/PlatformSIMDInclude.hpp>
+#include <Engine/Core/Misc/Defines/PlatformSIMDInclude.hpp>
 
 #undef near
 #undef far
@@ -725,7 +725,7 @@ FORCEINLINE Matrix<float, SIMD, 4, 4> Matrix<float, SIMD, 4, 4>::look_at(const V
 	res.rows[2] = _mm_setr_ps(Z.x, Z.y, Z.z, -Z.dot_product(eye));
 	res.rows[3] = _mm_setr_ps(0.f, 0.f, 0.f, 1.f);
 
-	//Colum Major
+	// Colum Major
 	/*res.rows[0] = _mm_setr_ps(X.x, Y.x, Z.x, 0.f);
 	res.rows[1] = _mm_setr_ps(X.y, Y.y, Z.y, 0.f);
 	res.rows[2] = _mm_setr_ps(X.z, Y.z, Z.z, 0.f);

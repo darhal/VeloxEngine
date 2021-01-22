@@ -16,8 +16,10 @@ TRE_NS_START
 class CommandBucket
 {
 public:
-	typedef void(*OnPacketKeyChange)(ResourcesManager&, const BucketKey&, const Mat4f&, const Mat4f&, const Camera&);
-	typedef void(*OnBucketFlush)(ResourcesManager&, const RenderTarget&);
+	typedef ShaderProgram&(*OnPacketKeyChange)(ResourcesManager&, const BucketKey&, const Mat4f&, const Mat4f&, const Camera&, const uint8*);
+	typedef FBO&(*OnBucketFlush)(ResourcesManager&, const RenderTarget&, const uint8*);
+
+	CONSTEXPR static uint32 EXTRA_BUFFER_SPACE = 256;
 public:
 	CommandBucket();
 
@@ -64,9 +66,11 @@ public:
 
 	void Finalize();
 
-	static void OnKeyChangeCallback(ResourcesManager& manager, const BucketKey& key, const Mat4f& proj_view, const Mat4f& proj, const Camera& camera);
+	FORCEINLINE uint8* GetExtraBuffer() { return m_ExtraBuffer; }
 
-	static void OnBucketFlushCallback(ResourcesManager& manager, const RenderTarget& rt);
+	static ShaderProgram& OnKeyChangeCallback(ResourcesManager& manager, const BucketKey& key, const Mat4f& proj_view, const Mat4f& proj, const Camera& camera, const uint8* extra_data);
+
+	static FBO& OnBucketFlushCallback(ResourcesManager& manager, const RenderTarget& rt, const uint8* extra_data);
 private:
 	RenderTarget m_RenderTarget;
 	OnPacketKeyChange m_OnKeyChangeCallback;
@@ -75,6 +79,7 @@ private:
 	Camera m_Camera;
 	Map<BucketKey, CommandPacket*> m_Packets;
 	MultiPoolAllocator m_PacketAllocator;
+	uint8 m_ExtraBuffer[EXTRA_BUFFER_SPACE];
 
 	CONSTEXPR static BucketKey BLEND_ENABLED = (BucketKey(1) << 63);
 };

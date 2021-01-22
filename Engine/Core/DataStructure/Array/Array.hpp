@@ -1,9 +1,9 @@
 #pragma once
 
 #include <initializer_list>
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/Misc/Defines/Debug.hpp>
-#include <Core/Memory/Utils/Utils.hpp>
+#include <Engine/Core/Misc/Defines/Common.hpp>
+#include <Engine/Core/Misc/Defines/Debug.hpp>
+#include <Engine/Core/Memory/Utils/Utils.hpp>
 #include <type_traits>
 
 TRE_NS_START

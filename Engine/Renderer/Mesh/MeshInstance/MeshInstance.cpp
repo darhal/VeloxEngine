@@ -11,7 +11,7 @@ MeshInstance::MeshInstance(uint32 instance_count, VaoID vao_id, VboID vbo_id, Ma
 {
 }
 
-void MeshInstance::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
+void MeshInstance::Submit(CommandBucket& CmdBucket, ShaderID shader_id, MaterialID material_id)
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
 	ModelRenderParams params = { 0, m_VaoID, (uint16)0 };
@@ -21,7 +21,7 @@ void MeshInstance::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
 	BucketKey last_key = -1;
 
 	for (SubMesh& obj : m_Meshs) {
-		const Material& material = manager.Get<Material>(ResourcesTypes::MATERIAL, obj.m_MaterialID);
+		const Material& material = manager.Get<Material>(material_id == -1 ? obj.m_MaterialID : material_id);
 		const RenderState& state = material.GetRenderStates();
 		uint32 blend_dist = 0;
 		ShaderID shaderID = shader_id == ShaderID(-1) ? material.GetTechnique().GetShaderID() : shader_id;
@@ -34,7 +34,7 @@ void MeshInstance::Submit(CommandBucket& CmdBucket, ShaderID shader_id)
 			packet = CmdBucket.SubmitCommand<Commands::PreInstancedDrawCallCmd>(&prepare_cmd, key, params.ToKey());
 			link_cmd = prepare_cmd;
 			prepare_cmd->vao_id = m_VaoID;
-			prepare_cmd->shader = &manager.Get<ShaderProgram>(ResourcesTypes::SHADER, shaderID);
+			prepare_cmd->shader = &manager.Get<ShaderProgram>(shaderID);
 			last_key = key;
 		}
 
@@ -78,7 +78,7 @@ void MeshInstance::UpdateTransforms(uint32 instance_id)
 	cmd->data = m_ModelTransformations + instance_id;
 	cmd->offset = sizeof(Mat4f) * instance_id;
 	cmd->size = sizeof(Mat4f);
-	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_DataVboID);
+	cmd->vbo = &manager.Get<VBO>(m_DataVboID);
 }
 
 TRE_NS_END

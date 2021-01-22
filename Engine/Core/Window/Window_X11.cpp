@@ -1,9 +1,9 @@
-#include <Core/Misc/Defines/Platform.hpp>
+#include <Engine/Core/Misc/Defines/Platform.hpp>
 
 #ifdef OS_LINUX
 
 #include "Window.hpp"
-#include <Core/Context/Context.hpp>
+#include <Engine/Core/Context/Context.hpp>
 #include <string.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>

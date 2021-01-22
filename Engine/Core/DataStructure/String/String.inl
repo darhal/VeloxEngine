@@ -10,17 +10,17 @@ BasicString<T>::BasicString()
 }
 
 template<typename T>
-BasicString<T>::BasicString(usize capacity)
+BasicString<T>::BasicString(usize capacity, usize len)
 {
 	if (capacity <= SSO_SIZE) {
 		m_Data[0] = T(0);
-		SetSmallLength(capacity);
+		SetSmallLength(len);
 	}else{
 		usize real_cap = capacity * SPARE_RATE;
 		m_Buffer    = (T*) operator new (sizeof(T) * real_cap); // allocate empty storage
 		m_Buffer[0] = T(0); // init to 0
 		m_Capacity = capacity;
-		SetNormalLength(capacity);
+		SetNormalLength(len);
 	}
 }
 
@@ -258,22 +258,24 @@ void BasicString<T>::Erase(usize pos, usize offset)
 template<typename T>
 void BasicString<T>::Insert(usize pos, const BasicString<T>& str)
 {
-	usize tlen = this->Length() - 1; // remove the trailing null
-	usize slen = str.Length();
-	this->Resize(tlen + slen - 1);
+	usize tlen = this->Length(); // remove the trailing null
+	usize slen = str.Length() - 1;
+	this->Resize(tlen + slen);
 	//Shift the last part to the end
-	BasicString<T> temp_str(tlen + 1);
-	temp_str.Copy(*this, pos, tlen + 1);
-	usize temp_len = temp_str.Length();
+	BasicString<T> temp_str(tlen - pos);
+	temp_str.Copy(*this, pos, tlen);
 	T* this_buffer = this->EditableBuffer();
 	const T* temp_buffer = temp_str.Buffer();
 	const T* str_buffer = str.Buffer();
+
 	for (usize i = pos, j = 0; j < slen; i++, j++) {
 		this_buffer[i] = str_buffer[j];
 	}
-	for (usize i = pos + slen, j = 0; j < temp_len; i++, j++) {
+
+	for (usize i = pos + slen, j = 0; j < tlen - pos; i++, j++) {
 		this_buffer[i] = temp_buffer[j];
 	}
+
 	this->SetLength(tlen + slen);
 }
 
@@ -284,33 +286,41 @@ void BasicString<T>::Copy(const BasicString<T>& str, usize pos, usize offset)
 	//ASSERTF((offset > slen), "Bad usage of String::Copy() pos or offset is out of bound.");
 	const T* buffer_ptr = str.Buffer();
 	usize end = pos + offset;
-	if (end >= slen) end = slen;
-	if (offset < SSO_SIZE) {
-		SetSmallLength(end - pos + 1);
-		for (usize i = pos, j = 0; i < end; i++, j++) {
+	if (end >= slen) end = slen - 1;
+	if (offset + 1 < SSO_SIZE) {
+		SetSmallLength(offset + 1);
+		usize i, j;
+
+		for (i = pos, j = 0; i < end; i++, j++) {
 			m_Data[j] = buffer_ptr[i];
 		}
+
+		m_Data[j] = '\0';
 	}else{
-		this->Reserve(offset);
-		SetNormalLength(end - pos + 1);
-		for (usize i = pos, j = 0; i < end; i++, j++) {
+		this->Reserve(offset + 1);
+		SetNormalLength(offset + 1);
+
+		usize i, j;
+		for (i = pos, j = 0; i < end; i++, j++) {
 			m_Buffer[j] = buffer_ptr[i];
 		}
+
+		m_Buffer[j] = '\0';
 	}
 }
 
 template<typename T>
 INLINE BasicString<T> BasicString<T>::SubString(usize pos, usize off) const
 {
-	BasicString<T> temp_str(off);
+	BasicString<T> temp_str(off + 1);
 	temp_str.Copy(*this, pos, off);
 	return temp_str;
 }
 
 template<typename T>
-INLINE ssize BasicString<T>::Find(const BasicString<T>& pattren) const
+INLINE ssize BasicString<T>::Find(const BasicString<T>& pattren, uint32 start) const
 {
-	return SearchBoyerMoore(*this, pattren);
+	return SearchBoyerMoore(*this, pattren, start);
 }
 
 template<typename T>
@@ -330,7 +340,7 @@ INLINE Vector<BasicString<T>> BasicString<T>::Split(T delimter)
 			pch = this->FindFirstHelper(pch + 1, delimter);
 		}
 
-		fragments.EmplaceBack(std::move(this->SubString(start_off, this->Length() + str_buffer - str_buffer)));
+		fragments.EmplaceBack(std::move(this->SubString(start_off, this->Length())));
 	}
 
 	return fragments;
@@ -395,6 +405,7 @@ template<typename T>
 INLINE T* BasicString<T>::FindFirstHelper(T* buffer, T delimter) 
 {
 	usize len = this->Length();
+
 	for (usize i = 0; i < len; i++) {
 		if (buffer[i] == delimter) {
 			return buffer + i;

@@ -29,9 +29,9 @@ Lets imagine its 4 here
 
 ************************************************************************************************************/
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/Misc/Defines/Debug.hpp>
-#include <Core/DataStructure/Vector/Vector.hpp>
+#include <Engine/Core/Misc/Defines/Common.hpp>
+#include <Engine/Core/Misc/Defines/Debug.hpp>
+#include <Engine/Core/DataStructure/Vector/Vector.hpp>
 #include <limits>
 #include <type_traits>
 #include <ostream>
@@ -53,7 +53,7 @@ public:
 
 	BasicString();
 
-	BasicString(usize capacity);
+	BasicString(usize capacity, usize len = 0);
 
 	template<usize S>
 	BasicString(const T(&str)[S], bool nop);
@@ -92,7 +92,7 @@ public:
 	INLINE T			   At(usize i)							const;
 	INLINE T			   Back()								const;
 	INLINE T			   Front()								const;
-	INLINE ssize		   Find(const BasicString<T>& pattren)  const;
+	INLINE ssize		   Find(const BasicString<T>& pattren, uint32 start = 0)  const;
 	INLINE BasicString<T>  SubString(usize pos, usize off)	    const;
 	INLINE bool		   	   IsEmpty()							const;
 
@@ -117,6 +117,8 @@ public:
 
 	INLINE BasicString<T>& operator+=(const BasicString<T>& other);
 	INLINE BasicString<T>& operator+=(const char* other);
+
+	INLINE bool IsSmall() const;
 public:
 	CONSTEXPR static usize SPARE_RATE = 2;
 private:
@@ -139,7 +141,6 @@ private:
 		};
 	};
 
-	INLINE bool IsSmall() const;
 	INLINE void SetLength(usize nlen);
 	INLINE void SetSmallLength(usize nlen);
 	INLINE void SetNormalLength(usize nlen);
@@ -294,23 +295,22 @@ void BadCharHeuristic(const BasicString<T>& str, ssize size, int32(&badchar)[NB_
 
 	// Fill the actual value of last occurrence  
 	// of a character  
-	const T* str_buffer = str.Buffer();
 	for (i = 0; i < size; i++)
-		badchar[(int)str_buffer[i]] = i;
+		badchar[(uint32)str[i]] = i;
 }
 
 /* A pattern searching function that uses Bad
 Character Heuristic of Boyer Moore Algorithm */
 template<typename T>
-ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat)
+ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat, uint32 start = 0)
 {
-	ssize m = (ssize)pat.Length();
-	ssize n = (ssize)txt.Length();
-	const T* txt_buffer = txt.Buffer();
-	const T* pat_buffer = pat.Buffer();
-
-	const usize NB_OF_CHARS = std::numeric_limits<T>::max() + ABS(std::numeric_limits<T>::min()) + 1;
+	CONSTEXPR usize NB_OF_CHARS = std::numeric_limits<T>::max() + ABS(std::numeric_limits<T>::min()) + 1;
 	int32 badchar[NB_OF_CHARS];
+
+	ssize m = (ssize)pat.Size();
+	ssize n = (ssize)txt.Size() - start;
+	const T* txt_buffer = txt.Buffer() + start;
+	const T* pat_buffer = pat.Buffer();
 
 	/* Fill the bad character array by calling
 	the preprocessing function BadCharHeuristic()
@@ -319,8 +319,7 @@ ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat)
 
 	ssize s = 0; // s is shift of the pattern with  
 				// respect to text  
-	while (s <= (n - m))
-	{
+	while (s <= (n - m)) {
 		ssize j = m - 1;
 
 		/* Keep reducing index j of pattern while
@@ -332,17 +331,15 @@ ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat)
 		/* If the pattern is present at current
 		shift, then index j will become -1 after
 		the above loop */
-		if (j < 0)
-		{
+		if (j < 0) {
 			/* Shift the pattern so that the next
 			character in text aligns with the last
 			occurrence of it in pattern.
 			The condition s+m < n is necessary for
 			the case when pattern occurs at the end
 			of text */
-			return s; // cout << "pattern occurs at shift = " <<  s << endl;  
+			return s; 
 			// s += (s + m < n) ? m - badchar[txt_buffer[s + m]] : 1;
-
 		} else {
 			/* Shift the pattern so that the bad character
 			in text aligns with the last occurrence of
@@ -355,6 +352,7 @@ ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat)
 			s += MAX(1, j - badchar[txt_buffer[s + j]]);
 		}
 	}
+
 	return -1;
 }
 

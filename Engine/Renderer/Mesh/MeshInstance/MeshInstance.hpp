@@ -16,13 +16,13 @@ public:
 
 	MeshInstance(MeshInstance&& other);
 
-	void Submit(CommandBucket& CmdBucket, ShaderID shader_id) final;
+	void Submit(CommandBucket& CmdBucket, ShaderID shader_id, MaterialID material_id) final;
 
 	FORCEINLINE void AddSubMesh(PrimitiveGeometry& geo, MaterialID mat);
 
 	FORCEINLINE Mat4f& GetTransformationMatrix(uint32 instance_id);
 
-	FORCEINLINE const Vector<SubMesh>& GetSubMeshes() const;
+	FORCEINLINE Vector<SubMesh>& GetSubMeshes();
 
 	FORCEINLINE VaoID GetVaoID() const { return m_VaoID; }
 
@@ -47,7 +47,7 @@ FORCEINLINE void MeshInstance::AddSubMesh(PrimitiveGeometry& geo, MaterialID mat
 	m_Meshs.EmplaceBack(geo, mat);
 }
 
-FORCEINLINE const Vector<SubMesh>& MeshInstance::GetSubMeshes() const
+FORCEINLINE Vector<SubMesh>& MeshInstance::GetSubMeshes()
 {
 	return m_Meshs;
 }

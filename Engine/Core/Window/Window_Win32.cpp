@@ -1,9 +1,9 @@
-#include <Core/Misc/Defines/Platform.hpp>
+#include <Engine/Core/Misc/Defines/Platform.hpp>
 
 #if defined(OS_WINDOWS)
 
-#include <Core/Context/Context.hpp>
-#include <Core/Window/Window.hpp>
+#include <Engine/Core/Context/Context.hpp>
+#include <Engine/Core/Window/Window.hpp>
 
 TRE::Window::Window(uint width, uint height, const std::string& title, WindowStyle::window_style_t style)
 {
@@ -14,20 +14,22 @@ TRE::Window::Window(uint width, uint height, const std::string& title, WindowSty
 	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	wc.lpszClassName = "OOGL_WINDOW";
+	wc.lpszClassName = "OGLWINDOW";
+
 	if (style & WindowStyle::Borderless) {
 		wc.style = CS_HREDRAW | CS_VREDRAW;
 	}else {
 		wc.style = CS_OWNDC;
 	}
+
 	RegisterClass(&wc);
 
 	// Configure window style
 	uint64 windowStyle = 0;
-	if (style & WindowStyle::Base) windowStyle |= WS_CAPTION | WS_MINIMIZEBOX | WS_VISIBLE;
-	if (style & WindowStyle::Close) windowStyle |= WS_CAPTION | WS_MINIMIZEBOX | WS_VISIBLE | WS_SYSMENU;
-	if (style & WindowStyle::Resize) windowStyle |= WS_CAPTION | WS_MINIMIZEBOX | WS_VISIBLE | WS_SYSMENU | WS_THICKFRAME | WS_MAXIMIZEBOX;
-	if (style & WindowStyle::Borderless) windowStyle |= WS_POPUP | WS_VISIBLE;
+	if (style & WindowStyle::Base)			windowStyle |= WS_CAPTION | WS_MINIMIZEBOX | WS_VISIBLE;
+	if (style & WindowStyle::Close)			windowStyle |= WS_CAPTION | WS_MINIMIZEBOX | WS_VISIBLE | WS_SYSMENU;
+	if (style & WindowStyle::Resize)		windowStyle |= WS_CAPTION | WS_MINIMIZEBOX | WS_VISIBLE | WS_SYSMENU | WS_THICKFRAME | WS_MAXIMIZEBOX;
+	if (style & WindowStyle::Borderless)	windowStyle |= WS_POPUP | WS_VISIBLE;
 
 	int x = 0;
 	int y = 0;
@@ -47,7 +49,7 @@ TRE::Window::Window(uint width, uint height, const std::string& title, WindowSty
 	}
 
 	// Create window
-	HWND window = CreateWindow("OOGL_WINDOW", title.c_str(), (DWORD)windowStyle, x, y, width, height, NULL, NULL, GetModuleHandle(NULL), this);
+	HWND window = CreateWindow("OGLWINDOW", title.c_str(), (DWORD)windowStyle, x, y, width, height, NULL, NULL, GetModuleHandle(NULL), this);
 	
 	// Initialize fullscreen mode
 	if (style & WindowStyle::Fullscreen)
@@ -217,7 +219,7 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
 		ev.Type = Event::TE_KEY_DOWN;
-		ev.Key.Code = TranslateKey(wParam);
+		ev.Key.Code = TranslateKey((uint)wParam);
 		ev.Key.Alt = HIWORD(GetAsyncKeyState(VK_MENU)) != 0;
 		ev.Key.Control = HIWORD(GetAsyncKeyState(VK_CONTROL)) != 0;
 		ev.Key.Shift = HIWORD(GetAsyncKeyState(VK_SHIFT)) != 0;
@@ -226,7 +228,7 @@ LRESULT TRE::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
 		ev.Type = Event::TE_KEY_UP;
-		ev.Key.Code = TranslateKey(wParam);
+		ev.Key.Code = TranslateKey((uint)wParam);
 		ev.Key.Alt = HIWORD(GetAsyncKeyState(VK_MENU)) != 0;
 		ev.Key.Control = HIWORD(GetAsyncKeyState(VK_CONTROL)) != 0;
 		ev.Key.Shift = HIWORD(GetAsyncKeyState(VK_SHIFT)) != 0;

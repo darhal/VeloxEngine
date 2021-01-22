@@ -3,7 +3,7 @@
 #include <cstring>
 #include <cstdlib>
 #include "ByteBuffer.hpp"
-#include <Core/Misc/Defines/Debug.hpp>
+#include <Engine/Core/Misc/Defines/Debug.hpp>
 
 #if defined(COMPILER_MSVC)
 	#pragma warning(disable:4067) // DISABLE VS WARNING

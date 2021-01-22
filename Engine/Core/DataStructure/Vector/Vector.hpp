@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/Misc/Defines/Debug.hpp>
-#include <Core/Memory/Utils/Utils.hpp>
-#include <Core/Misc/Maths/Maths.hpp>
+#include <Engine/Core/Misc/Defines/Common.hpp>
+#include <Engine/Core/Misc/Defines/Debug.hpp>
+#include <Engine/Core/Memory/Utils/Utils.hpp>
+#include <Engine/Core/Misc/Maths/Maths.hpp>
 #include <initializer_list>
 #include <iterator>
 
@@ -61,6 +61,7 @@ public:
 	FORCEINLINE usize Size() const;
 	FORCEINLINE T* Back() const;
 	FORCEINLINE T* Front() const;
+	FORCEINLINE T* Data() const { return this->Front(); };
 
 	FORCEINLINE void Append(const Vector<T>& other);
 	FORCEINLINE void Append(Vector<T>&& other);

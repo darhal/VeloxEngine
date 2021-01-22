@@ -12,6 +12,7 @@
 #include <Renderer/MeshLoader/ModelData/ModelMaterialData.hpp>
 
 #include <Renderer/Components/MeshComponents/StaticMeshComponent.hpp>
+#include <Renderer/Components/MeshComponents/MeshInstanceComponent.hpp>
 
 TRE_NS_START
 
@@ -20,11 +21,12 @@ class Model
 public:
 	enum VertexAttributes
 	{
-		POSITION, 
-		NORMAL, 
-		TEXTURE_COORDINATES,
-		TANGENT,
-		BITANGET,
+		POSITION = 0, 
+		NORMAL = 1, 
+		TEXTURE_COORDINATES = 2,
+		TANGENT = 3,
+		BITANGET = 4,
+		TRANSFORM = 5,
 	};
 
 	enum Processing
@@ -42,9 +44,15 @@ public:
 
 	StaticMeshComponent LoadMeshComponent(ShaderID shader_id = 0);
 
-	MeshInstance LoadInstancedMesh(uint32 instance_count, ShaderID shader_id = 0);
+	MeshInstance LoadInstancedMesh(uint32 instance_count, ShaderID shader_id = 0, Mat4f* transforms = NULL);
+
+	EntityID LoadInstancedMeshComponent(uint32 instance_count, ShaderID shader_id = 0, Mat4f* transforms = NULL);
+
+	Vector<SubMesh> LoadSubmeshs(ShaderID shader_id);
 
 	Vector<NormalVertexData> ProcessModel(uint32 processing, const Vector<VertexData>& vertices, Vector<uint32>* indices = NULL);
+
+	Vector<ModelMaterialData>& GetMaterials() { return m_Materials; }
 private:
 	Commands::CreateVAOCmd* LoadFromSettings(const ModelData& data);
 	Commands::CreateVAOCmd* LoadFromVertexData(uint32 processing, Vector<VertexData>& ver_data, Vector<uint32>* indices);

@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Core/Misc/Defines/Common.hpp"
-#include <Core/ECS/Component/BaseComponent.hpp>
 #include <Core/DataStructure/Vector/Vector.hpp>
 #include <Core/DataStructure/Tuple/Pair.hpp>
 #include <Core/ECS/Common.hpp>
 #include <Core/ECS/EntityManager/EntityManager.hpp>
+#include <Core/ECS/Component/BaseComponent.hpp>
 #include <Core/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
 
 TRE_NS_START

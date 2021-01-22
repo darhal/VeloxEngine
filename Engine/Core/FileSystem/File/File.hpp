@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/Misc/Defines/Common.hpp>
+#include <Core/FileSystem/Utils/Utility.hpp>
 #include <Core/DataStructure/String/String.hpp>
 #include <stdio.h>
 #include <stdarg.h>
@@ -29,7 +30,7 @@ public:
 
     FORCEINLINE bool LoadFile(String& path, Options options);
 
-    File(const String& path, Options foptions);
+    File(const String& path, Options foptions = Options::OPEN_READ);
 
     virtual ~File();
 
@@ -70,6 +71,8 @@ public:
 
     FORCEINLINE bool Rename(const String& newName);
 
+	FORCEINLINE String ReadAll() const;
+
     bool Delete();
 private:
 
@@ -77,9 +80,9 @@ private:
 
     FORCEINLINE void WriteHelper(const char* fmt, va_list ap) const;
 
-    static const char* const FILE_PROCESSING_OPTIONS[6];
+	CONSTEXPR static const char* const FILE_PROCESSING_OPTIONS[6] = { "r", "r+", "w", "w+", "a", "a+" };
 
-    static const int32 SEEK_POSITIONS[3]; 
+	CONSTEXPR static int32 SEEK_POSITIONS[3] = { SEEK_SET, SEEK_CUR, SEEK_END };
 
     FILE* m_File;
     String m_Filename;
@@ -152,6 +155,17 @@ FORCEINLINE bool File::GetLine(String& line_out) const
     free(line);
     return true;
 #endif
+	char* line = NULL;
+	usize len = 0;
+	ssize res = FileSystem::GetLine(&line, &len, m_File);
+
+	if (res == -1) {
+		delete[] line;
+		return false;
+	}
+
+	line_out = String(line);
+	delete[] line;
 	return false;
 }
 
@@ -177,6 +191,24 @@ FORCEINLINE bool File::Rename(const String& newName)
 FORCEINLINE bool File::SetCursor(usize cur, CursorOrigin cur_position) const
 {
     return !fseek(m_File, (long) cur, SEEK_POSITIONS[cur_position]);
+}
+
+FORCEINLINE String File::ReadAll() const
+{
+	usize sz = this->Size();
+	String data(sz);
+	char byte;
+	uint64 index = 0;
+
+	while ((byte = fgetc(m_File)) != EOF) {
+		// data[index] = byte;
+		data.PushBack(byte);
+		index++;
+	}
+
+	// data[index] = 0;
+	data.PushBack(0);
+	return data;
 }
 
 /**************************************************/

@@ -21,14 +21,10 @@ void ForwardPlusRenderer::Initialize(uint32 screen_width, uint32 screen_height)
 	ResourcesManager& manager = ResourcesManager::Instance();
 	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
 
-	m_LightBuffer = manager.CreateResource<VBO>(ResourcesTypes::VBO);
-	Commands::CreateVBOCmd* cmd = op_queue.SubmitCommand<Commands::CreateVBOCmd>();
-	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_LightBuffer);
+	Commands::CreateVBOCmd* cmd = manager.Create<VBO>(m_LightBuffer);
 	cmd->settings = VertexBufferSettings(MAX_LIGHTS * sizeof(Mat4f), BufferTarget::SHADER_STORAGE_BUFFER, BufferUsage::DYNAMIC_DRAW);
 
-	m_VisisbleLightIndicesBuffer = manager.CreateResource<VBO>(ResourcesTypes::VBO);
-	cmd = op_queue.SubmitCommand<Commands::CreateVBOCmd>();
-	cmd->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_VisisbleLightIndicesBuffer);
+	cmd = manager.Create<VBO>(m_VisisbleLightIndicesBuffer);
 	cmd->settings = VertexBufferSettings(number_of_tiles * MAX_LIGHTS * sizeof(uint32), BufferTarget::SHADER_STORAGE_BUFFER, BufferUsage::STATIC_DRAW);
 
 	this->SetupShaders();
@@ -41,9 +37,7 @@ void ForwardPlusRenderer::SetupFramebuffers(uint32 screen_width, uint32 screen_h
 	ResourcesManager& manager = ResourcesManager::Instance();
 	ContextOperationQueue& op_queue = manager.GetContextOperationsQueue();
 
-	m_DepthMap = manager.CreateResource<Texture>(ResourcesTypes::TEXTURE);
-	Commands::CreateTextureCmd* cmd_tex = op_queue.SubmitCommand<Commands::CreateTextureCmd>();
-	cmd_tex->texture = &manager.Get<Texture>(ResourcesTypes::TEXTURE, m_DepthMap);
+	Commands::CreateTextureCmd* cmd_tex = manager.Create<Texture>(m_DepthMap);
 	cmd_tex->settings = TextureSettings(
 		TexTarget::TEX2D, screen_width, screen_height, NULL,
 		{
@@ -52,9 +46,7 @@ void ForwardPlusRenderer::SetupFramebuffers(uint32 screen_width, uint32 screen_h
 		}, DataType::FLOAT, 0, TexInternalFormat::DepthComponent, TexFormat::DepthComponent, vec4(1.f, 1.f, 1.f, 1.f)
 	);
 
-	m_DepthMapFbo = manager.CreateResource<FBO>(ResourcesTypes::FBO);
-	Commands::CreateFrameBufferCmd* cmd_fbo = op_queue.SubmitCommand<Commands::CreateFrameBufferCmd>();
-	cmd_fbo->fbo = &manager.Get<FBO>(ResourcesTypes::FBO, m_DepthMapFbo);
+	Commands::CreateFrameBufferCmd* cmd_fbo = manager.Create<FBO>(m_DepthMapFbo);
 	cmd_fbo->settings = FramebufferSettings(
 		{ { cmd_tex->texture, FBOAttachement::DEPTH_ATTACH } },
 		FBOTarget::FBO, NULL, FBOAttachement::DEPTH_ATTACH, {}, GL_NONE
@@ -63,23 +55,21 @@ void ForwardPlusRenderer::SetupFramebuffers(uint32 screen_width, uint32 screen_h
 
 void ForwardPlusRenderer::SetupShaders()
 {
-	m_DepthShader = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
-		Shader("res/Shader/Forward+/depth.vert.glsl", ShaderType::VERTEX),
-		Shader("res/Shader/Forward+/depth.frag.glsl", ShaderType::FRAGMENT)
-		);
+
 	{
-		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, m_DepthShader);
+		ShaderProgram& shader = ResourcesManager::Instance().CreateResource<ShaderProgram>(m_DepthShader,
+			Shader("res/Shader/Forward+/depth.vert.glsl", ShaderType::VERTEX),
+			Shader("res/Shader/Forward+/depth.frag.glsl", ShaderType::FRAGMENT)
+		);
 		shader.LinkProgram();
 		shader.Use();
 		shader.AddUniform("u_ProjView");
 		shader.AddUniform("u_Model");
 	}
-
-	m_LightCull = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
-		std::initializer_list<Shader>{ Shader("res/Shader/Forward+/light_culling.comp.glsl", ShaderType::COMPUTE) }
-	);
 	{
-		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, m_LightCull);
+		ShaderProgram& shader = ResourcesManager::Instance().CreateResource<ShaderProgram>(m_LightCull, 
+			std::initializer_list<Shader>{ Shader("res/Shader/Forward+/light_culling.comp.glsl", ShaderType::COMPUTE) }
+		);
 		shader.LinkProgram();
 		shader.Use();
 		shader.AddUniform("u_LightCount");
@@ -88,13 +78,11 @@ void ForwardPlusRenderer::SetupShaders()
 		shader.AddUniform("u_View");
 		shader.AddUniform("u_DepthMap");
 	}
-
-	m_LightAccum = ResourcesManager::Instance().CreateResource<ShaderProgram>(ResourcesTypes::SHADER,
-		Shader("res/Shader/Forward+/light_accumulation.vert.glsl", ShaderType::VERTEX),
-		Shader("res/Shader/Forward+/light_accumulation.frag.glsl", ShaderType::FRAGMENT)
-		);
 	{
-		ShaderProgram& shader = ResourcesManager::Instance().Get<ShaderProgram>(ResourcesTypes::SHADER, m_LightAccum);
+		ShaderProgram& shader = ResourcesManager::Instance().CreateResource<ShaderProgram>(m_LightAccum,
+			Shader("res/Shader/Forward+/light_accumulation.vert.glsl", ShaderType::VERTEX),
+			Shader("res/Shader/Forward+/light_accumulation.frag.glsl", ShaderType::FRAGMENT)
+		);
 		shader.LinkProgram();
 		shader.Use();
 		shader.AddUniform("u_ProjView");
@@ -138,12 +126,12 @@ void ForwardPlusRenderer::CullLights()
 {
 	ResourcesManager& manager = ResourcesManager::Instance();
     // Get our main and only packet
-	CommandPacket& packet = m_CommandQueue.GetCommandBucker(LIGHT_CULLING_PASS).GetOrCreateCommandPacket(0);
+	CommandPacket& packet = m_CommandQueue.GetCommandBucket(LIGHT_CULLING_PASS).GetOrCreateCommandPacket(0);
 
 	// Set Uniforms (projection, set view, set depthMap), bind bufferbase for light buffers, then finally dispatch compute
 	// Submit commands in this orderer.
 	Commands::UploadUniformsCmd* setup_uniforms_cmd = packet.SubmitCommand<Commands::UploadUniformsCmd>(0);
-	setup_uniforms_cmd->shader = &manager.Get<ShaderProgram>(ResourcesTypes::SHADER, m_LightCull);
+	setup_uniforms_cmd->shader = &manager.Get<ShaderProgram>(m_LightCull);
 	setup_uniforms_cmd->m_Params = UniformsParams<int32>();
 	setup_uniforms_cmd->m_Params.AddParameter<Mat4f>(setup_uniforms_cmd->shader->GetUniform("u_View").second, Mat4f());
 	setup_uniforms_cmd->m_Params.AddParameter<Mat4f>(setup_uniforms_cmd->shader->GetUniform("u_Projection").second, Mat4f());
@@ -152,11 +140,11 @@ void ForwardPlusRenderer::CullLights()
 	// setup_uniforms_cmd->m_Params.AddParameter<Vec2<int32>>(setup_uniforms_cmd->shader->GetUniform("u_ScreenSize").second, m_DepthMap);
 
 	Commands::BindBufferBaseCmd* bind_buffer_base = packet.SubmitCommand<Commands::BindBufferBaseCmd>(0);
-	bind_buffer_base->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_LightBuffer);
+	bind_buffer_base->vbo = &manager.Get<VBO>(m_LightBuffer);
 	bind_buffer_base->binding_point = 0;
 
 	bind_buffer_base = packet.SubmitCommand<Commands::BindBufferBaseCmd>(0);
-	bind_buffer_base->vbo = &manager.Get<VBO>(ResourcesTypes::VBO, m_VisisbleLightIndicesBuffer);
+	bind_buffer_base->vbo = &manager.Get<VBO>(m_VisisbleLightIndicesBuffer);
 	bind_buffer_base->binding_point = 1;
 
 	Commands::DispatchComputeCmd* dispatchcmd = packet.SubmitCommand<Commands::DispatchComputeCmd>(0);
@@ -169,12 +157,12 @@ void ForwardPlusRenderer::CullLights()
 void ForwardPlusRenderer::Draw(IPrimitiveMesh& mesh)
 {
 	// Depth Pass:
-	mesh.Submit(m_CommandQueue.GetCommandBucker(DPETH_PASS), m_DepthShader);
+	mesh.Submit(m_CommandQueue.GetCommandBucket(DPETH_PASS), m_DepthShader);
 
 	// Compute shader phase here (It's automatic)
 
 	// Light Accumlation Pass:
-	mesh.Submit(m_CommandQueue.GetCommandBucker(LIGHT_ACCUM), m_LightAccum);
+	mesh.Submit(m_CommandQueue.GetCommandBucket(LIGHT_ACCUM), m_LightAccum);
 }
 
 void ForwardPlusRenderer::Render()

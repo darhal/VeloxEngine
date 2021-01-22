@@ -14,8 +14,7 @@ TRE_NS_START
 void BackendDispatch::PreDrawCall(const void* data)
 {
 	const Commands::PreDrawCallCmd* real_data = reinterpret_cast<const Commands::PreDrawCallCmd*>(data);
-
-	VAO& vao = ResourcesManager::Instance().Get<VAO>(ResourcesTypes::VAO, real_data->vao_id);
+	VAO& vao = ResourcesManager::Instance().Get<VAO>(real_data->vao_id);
 	vao.Bind();
 	real_data->shader->SetMat4("u_Model", real_data->model);
 
@@ -43,7 +42,6 @@ void BackendDispatch::Draw(const void* data)
 void BackendDispatch::DrawIndexed(const void* data)
 {
     const Commands::DrawIndexedCmd* real_data = reinterpret_cast<const Commands::DrawIndexedCmd*>(data);
-
 	if (real_data->material)
 		real_data->material->GetTechnique().UploadUnfiroms(*real_data->prepare_cmd->shader);
 
@@ -56,7 +54,7 @@ void BackendDispatch::InstancedPreDrawCall(const void* data)
 {
 	const Commands::PreInstancedDrawCallCmd* real_data = reinterpret_cast<const Commands::PreInstancedDrawCallCmd*>(data);
 
-	VAO& vao = ResourcesManager::Instance().Get<VAO>(ResourcesTypes::VAO, real_data->vao_id);
+	VAO& vao = ResourcesManager::Instance().Get<VAO>(real_data->vao_id);
 	vao.Bind();
 
 	Cmd next_cmd = real_data->next_cmd;
@@ -189,14 +187,6 @@ void BackendDispatch::CreateRenderBuffer(const void * data)
 
 /************************************ Misc Commands ************************************/
 
-void BackendDispatch::EditSubBuffer(const void* data)
-{
-	const Commands::EditSubBufferCmd* real_data = reinterpret_cast<const Commands::EditSubBufferCmd*>(data);
-
-	real_data->vbo->Bind();
-	Call_GL(glBufferSubData(real_data->vbo->GetBindingTarget(), real_data->offset, real_data->size, real_data->data));
-}
-
 void BackendDispatch::DispatchCompute(const void* data)
 {
 	const Commands::DispatchComputeCmd* real_data = reinterpret_cast<const Commands::DispatchComputeCmd*>(data);
@@ -251,6 +241,28 @@ void BackendDispatch::CallFunctionCmd(const void* data)
 
 	real_data->callback(real_data->data);
 	// TODO: Free real_data->data;
+}
+
+void BackendDispatch::EditSubBuffer(const void* data)
+{
+	const Commands::EditSubBufferCmd* real_data = reinterpret_cast<const Commands::EditSubBufferCmd*>(data);
+
+	real_data->vbo->Bind();
+	Call_GL(glBufferSubData(real_data->vbo->GetBindingTarget(), real_data->offset, real_data->size, real_data->data));
+}
+
+void BackendDispatch::BindVBO(const void* data)
+{
+	const Commands::EditSubBufferCmd* real_data = reinterpret_cast<const Commands::EditSubBufferCmd*>(data);
+
+	real_data->vbo->Bind();
+}
+
+void BackendDispatch::EditSubBoundBuffer(const void* data)
+{
+	const Commands::EditSubBufferCmd* real_data = reinterpret_cast<const Commands::EditSubBufferCmd*>(data);
+
+	Call_GL(glBufferSubData(real_data->vbo->GetBindingTarget(), real_data->offset, real_data->size, real_data->data));
 }
 
 TRE_NS_END

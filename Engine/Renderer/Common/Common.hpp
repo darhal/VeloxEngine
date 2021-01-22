@@ -31,14 +31,14 @@ class ShaderProgram;
 struct RenderTarget;
 
 
-typedef uint16 TextureID;
-typedef uint16 VaoID;
-typedef uint16 VboID;
-typedef uint16 RboID;
-typedef uint16 FboID;
-typedef uint16 RenderTargetID;
-typedef uint16 ShaderID;
-typedef uint16 MaterialID;
+typedef uint32 TextureID;
+typedef uint32 VaoID;
+typedef uint32 VboID;
+typedef uint32 RboID;
+typedef uint32 FboID;
+typedef uint32 RenderTargetID;
+typedef uint32 ShaderID;
+typedef uint32 MaterialID;
 
 struct RenderState;
 
@@ -60,6 +60,18 @@ namespace RenderSettings
     typedef RenderCommandBucket<uint64>			RenderCmdBuffer     ; 
     typedef ResourcesCommandBucket<uint8>		ResourcesCmdBuffer  ;
 	typedef FramebufferCommandBucket<uint64>	FramebufferCmdBuffer;
+}
+
+namespace Commands
+{
+	template<typename R>
+	struct CreateResourceCmd;
+
+	typedef CreateResourceCmd<VAO> CreateVAOCmd;
+	typedef CreateResourceCmd<Texture> CreateTextureCmd;
+	typedef CreateResourceCmd<VBO> CreateVBOCmd;
+	typedef CreateResourceCmd<FBO> CreateFrameBufferCmd;
+	typedef CreateResourceCmd<RBO> CreateRenderBufferCmd;
 }
 
 TRE_NS_END

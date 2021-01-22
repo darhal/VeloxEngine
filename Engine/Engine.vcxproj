@@ -22,32 +22,32 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{3AD572C8-3691-40CE-8DCA-F577A383F267}</ProjectGuid>
     <RootNamespace>Engine</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -70,23 +70,23 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\</OutDir>
+    <IncludePath>$(ProjectDir);$(SolutionDir);$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)Build\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\</OutDir>
+    <IncludePath>$(ProjectDir);$(SolutionDir);$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)Build\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\</OutDir>
+    <IncludePath>$(ProjectDir);$(SolutionDir);$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)Build\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\</OutDir>
+    <IncludePath>$(ProjectDir);$(SolutionDir);$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)Build\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -96,8 +96,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
-      <LanguageStandard>
-      </LanguageStandard>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -110,8 +109,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
-      <LanguageStandard>
-      </LanguageStandard>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -126,8 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
-      <LanguageStandard>
-      </LanguageStandard>
+      <LanguageStandard>stdcpp14</LanguageStandard>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
@@ -148,8 +145,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
-      <LanguageStandard>
-      </LanguageStandard>
+      <LanguageStandard>stdcpp14</LanguageStandard>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
@@ -162,9 +158,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Core\ECS\CommandFunctions\CommandFunctions.cpp" />
+    <ClCompile Include="Core\ECS\CommandRecord\CommandRecord.cpp" />
     <ClCompile Include="Core\ECS\ComponentGroup\ComponentGroup.cpp" />
     <ClCompile Include="Core\ECS\EntityContainer\EntityContainer.cpp" />
     <ClCompile Include="Core\ECS\System\BaseSystem.cpp" />
+    <ClCompile Include="Core\FileSystem\Utils\Utility.cpp" />
+    <ClCompile Include="Core\Memory\Allocators\LinearAlloc\GenericAlloc\LinearGenericAlloc.cpp" />
+    <ClCompile Include="Renderer\Systems\InstancedTransformSystem\InstancedTransformSystem.cpp" />
+    <ClCompile Include="Renderer\ShaderParser\ShaderParser.cpp" />
     <ClCompile Include="Renderer\Systems\LightSystems\LightSystem.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward\Forward.cpp" />
     <ClCompile Include="Renderer\RenderPipline\Forward+\ForwardPlus.cpp" />
@@ -298,16 +300,28 @@
     <ClCompile Include="Renderer\MeshLoader\Model\Model.cpp" />
     <ClCompile Include="Renderer\Mesh\MeshInstance\MeshInstance.cpp" />
     <ClCompile Include="Renderer\Mesh\StaticMesh\StaticMesh.cpp" />
-    <ClCompile Include="Renderer\Systems\MeshSystems\MeshSystem.cpp" />
+    <ClCompile Include="Renderer\Systems\RenderSystems\MeshRenderSystem.cpp" />
     <ClCompile Include="Tests\Main.cpp" />
     <ClCompile Include="Tests\Main2.cpp" />
     <ClCompile Include="Tests\TestingString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Core\ECS\CommandFunctions\CommandFunctions.hpp" />
+    <ClInclude Include="Core\ECS\CommandRecord\CommandRecord.hpp" />
+    <ClInclude Include="Core\ECS\Commands\Commands.hpp" />
     <ClInclude Include="Core\ECS\ComponentGroup\ComponentGroup.hpp" />
     <ClInclude Include="Core\DataStructure\PackedArray\PackedArray.hpp" />
     <ClInclude Include="Core\ECS\EntityContainer\EntityContainer.hpp" />
+    <ClInclude Include="Core\FileSystem\Utils\Utility.hpp" />
+    <ClInclude Include="Core\Memory\Allocators\LinearAlloc\GenericAlloc\LinearGenericAlloc.hpp" />
+    <ClInclude Include="Core\Profiler\Profiler.hpp" />
+    <ClInclude Include="Renderer\Components\Misc\UpdateTagComponent.hpp" />
+    <ClInclude Include="Renderer\Systems\InstancedTransformSystem\InstancedTransformSystem.hpp" />
+    <ClInclude Include="Renderer\Backend\ResourcesManager\ResourcesManagerHelper.hpp" />
+    <ClInclude Include="Renderer\Backend\ResourcesManager\ResourcesMeta\ResourcesMetadata.hpp" />
     <ClInclude Include="Renderer\Components\MeshComponents\MeshInstanceComponent.hpp" />
+    <ClInclude Include="Renderer\Components\Misc\SceneTagComponent.hpp" />
+    <ClInclude Include="Renderer\ShaderParser\ShaderParser.hpp" />
     <ClInclude Include="Renderer\Systems\LightSystems\LightSystem.hpp" />
     <ClInclude Include="Renderer\Backend\CommandBucket\ICommandBucket.hpp" />
     <ClInclude Include="Renderer\Components\LightComponents\DirectionalLightComponent\DirectionalLight.hpp" />
@@ -471,7 +485,7 @@
     <ClInclude Include="Renderer\Mesh\StaticMesh\StaticMesh.hpp" />
     <ClInclude Include="Renderer\Mesh\SubMesh\SubMesh.hpp" />
     <ClInclude Include="Renderer\RenderPipline\Renderer\IRenderer.hpp" />
-    <ClInclude Include="Renderer\Systems\MeshSystems\MeshSystem.hpp" />
+    <ClInclude Include="Renderer\Systems\RenderSystems\MeshRenderSystem.hpp" />
     <ClInclude Include="Tests\ShaderValidator.hpp" />
     <ClInclude Include="Tests\ThreadBarrier.hpp" />
   </ItemGroup>

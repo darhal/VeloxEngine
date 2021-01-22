@@ -12,9 +12,7 @@ TRE_NS_START
 /*               Static Members                   */
 /**************************************************/
 
-const char* const File::FILE_PROCESSING_OPTIONS[6] = {"r", "r+", "w", "w+", "a", "a+"};
 
-const int32 File::SEEK_POSITIONS[3] = { SEEK_SET, SEEK_CUR, SEEK_END };
 
 /**************************************************/
 /*               Public Functions                 */
@@ -103,7 +101,6 @@ usize File::Size() const
     return st.st_size;
 
 #elif defined(OS_WINDOWS)
-
     /*HANDLE hFile = CreateFile(m_Filename.Buffer(), GENERIC_READ, 
         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 
         FILE_ATTRIBUTE_NORMAL, NULL);
@@ -119,8 +116,13 @@ usize File::Size() const
 
     CloseHandle(hFile);
     return size.QuadPart;*/
-	
-	return 0;
+
+	ASSERTF(m_File == NULL, "Can't write to the file (FILE pointer is NULL)");
+	usize old_pos = ftell(m_File);
+	fseek(m_File, 0L, SEEK_END);
+	usize sz = ftell(m_File);
+	fseek(m_File, old_pos, SEEK_SET);
+	return sz;
 #else
 
     usize old_pos = ftell(m_File);

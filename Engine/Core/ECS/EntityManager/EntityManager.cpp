@@ -161,6 +161,11 @@ BaseComponent* EntityManager::GetComponentInternal(const Entity& entity, uint32 
 {
 	ArchetypeChunk* chunk = entity.GetChunk();
 	ASSERTF(!(chunk && chunk->GetArchetype().GetSignature().Get(component_id)), "Invalid usage of GetComponentInternal entity doesn't have any components or doesn't have the specified component.");
+	
+	if (!(chunk && chunk->GetArchetype().GetSignature().Get(component_id))) {
+		return NULL;
+	}
+	
 	return chunk->GetComponent(entity, component_id);
 }
 

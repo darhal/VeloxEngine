@@ -9,15 +9,15 @@ TRE_NS_START
 struct StaticMeshComponent : public Component<StaticMeshComponent>
 {
 	FORCEINLINE StaticMeshComponent(const StaticMeshComponent& other) :
-		submeshs(std::move(other.submeshs)), vao_id(other.vao_id)
+		Submeshs(std::move(other.Submeshs)), VaoID(other.VaoID)
 	{}
 
 	FORCEINLINE StaticMeshComponent(VaoID vao_id) :
-		submeshs(), vao_id(vao_id)
+		Submeshs(), VaoID(vao_id)
 	{}
 
-	Vector<SubMesh> submeshs;
-	VaoID vao_id;
+	Vector<SubMesh> Submeshs;
+	VaoID VaoID;
 };
 
 TRE_NS_END
