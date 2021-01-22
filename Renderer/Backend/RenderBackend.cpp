@@ -100,6 +100,7 @@ void Renderer::RenderBackend::Init()
         for (uint32 t = 0; t < MAX_THREADS; t++) {
             for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
                 if (queueFamilyIndices.queueFamilies[i] == UINT32_MAX) {
+                    TRE_LOGW("Skipping queue familly index %d", i);
                     continue;
                 }
 
@@ -127,7 +128,8 @@ Renderer::StaticVector<Renderer::CommandBufferHandle>& Renderer::RenderBackend::
 
 VkQueue Renderer::RenderBackend::GetQueue(CommandBuffer::Type type)
 {
-    return renderDevice.GetQueue((uint32)type);
+    uint32 typeIndex = (uint32)(type == CommandBuffer::Type::RAY_TRACING ? CommandBuffer::Type::GENERIC : type);
+    return renderDevice.GetQueue(typeIndex);
 }
 
 void Renderer::RenderBackend::Submit(CommandBufferHandle cmd, FenceHandle* fence, uint32 semaphoreCount, SemaphoreHandle* semaphores)
@@ -517,7 +519,10 @@ Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo
             ASSERTF(true, "Not supported!");
         }
     } else {
-        // TODO: add layout trasnisioning here: using staging manager:
+        if (createInfo.layout != VK_IMAGE_LAYOUT_UNDEFINED) {
+            // TODO: add layout trasnisioning here: using staging manager:
+            // stagingManager.ChangeImageLayout(*ret, info.initialLayout, createInfo.layout);
+        }
     }
 
     return ret;
@@ -585,6 +590,10 @@ bool Renderer::RenderBackend::CreateBufferInternal(VkBuffer& outBuffer, MemoryVi
         outMemoryView.alignment = 0;
 
         outMemoryView.memory = renderDevice.CreateBufferMemory(createInfo, outBuffer);
+
+        if (createInfo.domain == MemoryUsage::CPU_ONLY || createInfo.domain == MemoryUsage::CPU_CACHED || createInfo.domain == MemoryUsage::CPU_COHERENT) {
+            vkMapMemory(renderDevice.GetDevice(), outMemoryView.memory, 0, createInfo.size, 0, &outMemoryView.mappedData);
+        }
     }
 
     return true;
@@ -596,7 +605,7 @@ Renderer::BufferHandle Renderer::RenderBackend::CreateBuffer(const BufferInfo& c
     VkBuffer apiBuffer;
 
     this->CreateBufferInternal(apiBuffer, bufferMemory, createInfo);
-    BufferHandle ret(objectsPool.buffers.Allocate(apiBuffer, createInfo, bufferMemory));
+    BufferHandle ret(objectsPool.buffers.Allocate(renderDevice, apiBuffer, createInfo, bufferMemory));
 
     if (data) {
         if (createInfo.domain == MemoryUsage::CPU_ONLY || createInfo.domain == MemoryUsage::CPU_CACHED || createInfo.domain == MemoryUsage::CPU_COHERENT) {
@@ -623,7 +632,7 @@ Renderer::RingBufferHandle Renderer::RenderBackend::CreateRingBuffer(const Buffe
     // Removing padding from total size, as we dont need the last bytes for alignement
     // alignedSize * NUM_FRAMES - padding, data, usage, memoryUsage, queueFamilies
     this->CreateBufferInternal(apiBuffer, bufferMemory, info);
-    RingBufferHandle ret(objectsPool.ringBuffers.Allocate(apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
+    RingBufferHandle ret(objectsPool.ringBuffers.Allocate(renderDevice, apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
 
     if (data) {
         if (info.domain == MemoryUsage::CPU_ONLY || info.domain == MemoryUsage::CPU_CACHED || info.domain == MemoryUsage::CPU_COHERENT) {
@@ -648,8 +657,12 @@ Renderer::SamplerHandle Renderer::RenderBackend::CreateSampler(const SamplerInfo
 
 Renderer::CommandBufferHandle Renderer::RenderBackend::RequestCommandBuffer(CommandBuffer::Type type)
 {
+    uint32 typeIndex = (uint32)type;
+    if (type == CommandBuffer::Type::RAY_TRACING)
+        typeIndex = (uint32)CommandBuffer::Type::GENERIC;
+
     PerFrame& frame = Frame();
-    VkCommandBuffer buffer = frame.commandPools[0][(uint32)type].RequestCommandBuffer();
+    VkCommandBuffer buffer = frame.commandPools[0][typeIndex].RequestCommandBuffer();
     CommandBufferHandle handle(objectsPool.commandBuffers.Allocate(this, buffer, type));
     handle->Begin();
     return handle;

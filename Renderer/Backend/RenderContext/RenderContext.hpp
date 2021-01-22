@@ -44,6 +44,8 @@ namespace Renderer
 
 		FORCEINLINE Swapchain& GetSwapchain() { return swapchain; }
 
+		FORCEINLINE ImageHandle GetCurrentSwapchainImage() { return swapchain.GetSwapchainImage(internal.currentImage); };
+
 		FORCEINLINE const Swapchain& GetSwapchain() const { return swapchain; }
 
 		FORCEINLINE RenderDevice* GetRenderDevice() const { return renderDevice; }

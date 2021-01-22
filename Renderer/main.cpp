@@ -387,6 +387,11 @@ int main()
     auto adr = vkGetBufferDeviceAddressKHR(backend.GetRenderDevice().GetDevice(), &bufferAdrInfo);
     printf("Adr:%p\n", adr);*/
 
+    /*ImageCreateInfo rtImageInfo = ImageCreateInfo::RtRenderTarget(SCR_WIDTH, SCR_HEIGHT);
+    ImageHandle rtImage = backend.CreateImage(rtImageInfo);
+    ImageViewCreateInfo rtViewInfo = ImageViewCreateInfo::ImageView(rtImage);
+    ImageViewHandle rtView = backend.CreateImageView(rtViewInfo);
+
     BufferHandle acclBuffer = backend.CreateBuffer(
         { sizeof(vertecies), 
         BufferUsage::VERTEX_BUFFER | BufferUsage::STORAGE_BUFFER 
@@ -409,17 +414,6 @@ int main()
     backend.RtCompressBatch();
     printf("Object ID: %p\n", blas->GetApiObject());
     backend.RtSyncAcclBuilding();
-    {
-        ShaderProgram rtProgram(backend,
-            {
-                {"shaders/RT/rgen.spv", ShaderProgram::RGEN},
-                {"shaders/RT/rchit.spv", ShaderProgram::RCHIT},
-                {"shaders/RT/rmiss.spv", ShaderProgram::RMISS}
-            });
-        rtProgram.Compile();
-        Pipeline pipeline(PipelineType::RAY_TRACE, &rtProgram);
-        pipeline.Create(backend, 2);
-    }
 
     BlasInstance instance;
     instance.blas = blas;
@@ -427,6 +421,26 @@ int main()
     tlasInfo.blasInstances.emplace_back(instance);
     TlasHandle tlas = backend.CreateTlas(tlasInfo);
     backend.BuildAS();
+
+    ShaderProgram rtProgram(backend,
+        {
+            {"shaders/RT/rgen.spv", ShaderProgram::RGEN},
+            {"shaders/RT/rchit.spv", ShaderProgram::RCHIT},
+            {"shaders/RT/rmiss.spv", ShaderProgram::RMISS}
+        });
+    rtProgram.Compile();
+    Pipeline rtPipeline(PipelineType::RAY_TRACE, &rtProgram);
+    rtPipeline.Create(backend, 2);
+
+    auto cmd = backend.RequestCommandBuffer(CommandBuffer::Type::RAY_TRACING);
+    cmd->BindShaderProgram(rtProgram);
+    cmd->SetTexture(0, 1, *rtView);
+    cmd->SetAccelerationStrucure(0, 0, *tlas);
+    cmd->BindPipeline(rtPipeline);
+    cmd->TraceRays(SCR_WIDTH, SCR_HEIGHT);
+    FenceHandle fence;
+    backend.Submit(cmd, &fence);
+    fence->Wait();*/
 
     INIT_BENCHMARK;
 

@@ -397,7 +397,7 @@ VkResult Renderer::RenderDevice::SubmitCmdBuffer(uint32 queueType, VkCommandBuff
         submitInfo.pSignalSemaphores = &signalSemaphore;
     }
 
-    return vkQueueSubmit(GetQueue(TRANSFER), 1, &submitInfo, fence);
+    return vkQueueSubmit(GetQueue(queueType), 1, &submitInfo, fence);
 }
 
 VkDeviceAddress Renderer::RenderDevice::GetBufferAddress(BufferHandle buff) const
@@ -480,6 +480,7 @@ Renderer::Internal::QueueFamilyIndices Renderer::RenderDevice::FindQueueFamilies
             (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT)) 
         {
             indices.queueFamilies[Internal::QFT_GRAPHICS] = i;
+            // indices.queueFamilies[Internal::QFT_RAY_TRACING] = i;
         }
 
         if ((queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)) 

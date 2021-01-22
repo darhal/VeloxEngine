@@ -53,23 +53,17 @@ namespace Renderer
 		memory = renderDevice.CreateBufferMemory(info, stagingBuffers[0].apiBuffer, &alignedSize, NUM_FRAMES);
 		vkMapMemory(device, memory, 0, alignedSize * NUM_FRAMES, 0, reinterpret_cast<void**>(&mappedData));
 
-		VkCommandPoolCreateInfo commandPoolCreateInfo = {};
-		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		VkCommandPoolCreateInfo commandPoolCreateInfo{ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
 		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		commandPoolCreateInfo.queueFamilyIndex = renderDevice.GetQueueFamilyIndices().queueFamilies[TRANSFER];
 		vkCreateCommandPool(device, &commandPoolCreateInfo, NULL, &commandPool);
 
 		{
-			VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
-			commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			VkCommandBufferAllocateInfo commandBufferAllocateInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 			commandBufferAllocateInfo.commandPool = commandPool;
 			commandBufferAllocateInfo.commandBufferCount = 1;
-
-			VkFenceCreateInfo fenceCreateInfo = {};
-			fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-
-			VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-			commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			VkFenceCreateInfo fenceCreateInfo{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+			VkCommandBufferBeginInfo commandBufferBeginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 			
 			for (int i = 0; i < NUM_FRAMES; i++) {
 				vkBindBufferMemory(device, stagingBuffers[i].apiBuffer, memory, i * alignedSize);
@@ -205,8 +199,7 @@ namespace Renderer
 		stage.shouldRun = true;
 
 		// Put image pipline barrier for changing layout
-		VkImageMemoryBarrier barrier{};
-		barrier.sType				= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		VkImageMemoryBarrier barrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 		barrier.oldLayout			= oldLayout;
 		barrier.newLayout			= newLayout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -302,10 +295,9 @@ namespace Renderer
 			stage.offset = 0;
 			stage.submitted = false;
 
-			VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-			commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
+			VkCommandBufferBeginInfo commandBufferBeginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 			vkBeginCommandBuffer(stage.transferCmdBuff, &commandBufferBeginInfo);
+			//printf("Staging begin record! (%d)\n", currentBuffer);
 		}
 	}
 
@@ -345,9 +337,7 @@ namespace Renderer
 		stage.submitted = false;
 		stage.shouldRun = false;
 
-		VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
+		VkCommandBufferBeginInfo commandBufferBeginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 		vkBeginCommandBuffer(stage.transferCmdBuff, &commandBufferBeginInfo);
 	}
 
@@ -360,6 +350,7 @@ namespace Renderer
 		}
 
 		this->Wait(stagingBuffers[prevBufferIndex]);
+		//printf("Staging begin record! (%d)\n", currentBuffer);
 	}
 
 	void StagingManager::ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout)

@@ -42,7 +42,7 @@ namespace Renderer
 	public:
 		enum class Type
 		{
-			GENERIC,
+			GENERIC = 0,
 			ASYNC_TRANSFER,
 			ASYNC_COMPUTE,
 			RAY_TRACING,
@@ -112,7 +112,7 @@ namespace Renderer
 		// Ray Tracing
 		void SetAccelerationStrucure(uint32 set, uint32 binding, const Tlas& tlas);
 
-		void TraceRays(uint32 width, uint32 height, uint32 depth);
+		void TraceRays(uint32 width, uint32 height, uint32 depth = 1);
 
 		void CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, DeviceSize size, DeviceSize srcOffset = 0, DeviceSize dstOffset = 0);
 

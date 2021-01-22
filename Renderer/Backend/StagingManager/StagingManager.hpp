@@ -34,8 +34,6 @@ namespace Renderer
 
 		void Init();
 
-		void InitRT();
-
 		void Shutdown();
 
 		void Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment = 256, DeviceSize offset = 0);

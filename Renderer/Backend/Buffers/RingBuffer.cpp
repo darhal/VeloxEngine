@@ -1,11 +1,12 @@
 #include "RingBuffer.hpp"
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 
 TRE_NS_START
 
 namespace Renderer
 {
-	RingBuffer::RingBuffer(VkBuffer buffer, const BufferInfo& info, const MemoryView& mem, uint32 unitSize, uint32 ringSize)
-		: Buffer(buffer, info, mem), bufferIndex(0), ringSize(ringSize), unitSize(unitSize)
+	RingBuffer::RingBuffer(RenderDevice& deivce, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem, uint32 unitSize, uint32 ringSize)
+		: Buffer(deivce, buffer, info, mem), bufferIndex(0), ringSize(ringSize), unitSize(unitSize)
 	{
 	}
 
@@ -16,6 +17,12 @@ namespace Renderer
 		bufferIndex = (bufferIndex + 1) % ringSize;
 		void* bufferData = (uint8*)bufferMemory.mappedData + bufferMemory.offset + bufferIndex * unitSize + offset;
 		memcpy(bufferData, data, size);
+
+		VkMappedMemoryRange range{ VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
+		range.memory = bufferMemory.memory;
+		range.offset = bufferMemory.offset + bufferIndex * unitSize + offset;
+		range.size = size;
+		// vkFlushMappedMemoryRanges(device.GetDevice(), 1, &range);
 	}
 }
 

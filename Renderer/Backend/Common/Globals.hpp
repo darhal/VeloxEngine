@@ -249,11 +249,12 @@ namespace Renderer
 
 		enum QueueFamilyTypes {
 			QFT_GRAPHICS = 0,
-			QFT_TRANSFER = 1,
-			QFT_COMPUTE = 2,
-			QFT_SPARSE = 3,
-			QFT_PRESENT = 4,
-
+			QFT_TRANSFER,
+			QFT_COMPUTE,
+			// QFT_RAY_TRACING,
+			QFT_SPARSE,
+			QFT_PRESENT,
+			
 			QFT_MAX
 		};
 

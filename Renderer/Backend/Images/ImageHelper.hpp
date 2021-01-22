@@ -249,11 +249,11 @@ namespace Renderer
 		ImageViewMiscFlags misc = 0;
 		VkComponentMapping swizzle = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
 
-		static ImageViewCreateInfo ImageView(Image* img, VkImageViewType viewType)
+		static ImageViewCreateInfo ImageView(Image* img, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D)
 		{
 			ImageViewCreateInfo info;
 			info.image = img;
-			info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			info.viewType = viewType;
 			return info;
 		}
 	};
@@ -306,6 +306,17 @@ namespace Renderer
 			info.layout = HasDepthOrStencilComponent(format) ?
 				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL :
 				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			return info;
+		}
+
+		static ImageCreateInfo RtRenderTarget(uint32 width, uint32 height, VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT)
+		{
+			ImageCreateInfo info;
+			info.width = width;
+			info.height = height;
+			info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+			info.format = format;
+			info.layout = VK_IMAGE_LAYOUT_GENERAL;
 			return info;
 		}
 

@@ -150,12 +150,9 @@ void Renderer::CommandBuffer::NextRenderPass(VkSubpassContents contents)
 
 void Renderer::CommandBuffer::BindPipeline(const Pipeline& pipeline)
 {
-    ASSERT(type != Type::GENERIC);
-
+    // ASSERT(type != Type::GENERIC);
     this->pipeline = &pipeline;
-    vkCmdBindPipeline(commandBuffer, 
-        pipeline.GetPipelineType() == PipelineType::GRAPHICS ? VK_PIPELINE_BIND_POINT_GRAPHICS  : VK_PIPELINE_BIND_POINT_COMPUTE,
-        pipeline.GetApiObject());
+    vkCmdBindPipeline(commandBuffer, (VkPipelineBindPoint)pipeline.GetPipelineType(), pipeline.GetApiObject());
 }
 
 void Renderer::CommandBuffer::BindVertexBuffer(const Buffer& buffer, DeviceSize offset)
@@ -371,6 +368,10 @@ void Renderer::CommandBuffer::SetAccelerationStrucure(uint32 set, uint32 binding
 
 void Renderer::CommandBuffer::TraceRays(uint32 width, uint32 height, uint32 depth)
 {
+    ///if (true) {
+    //    this->SetTexture();
+    //}
+
     this->FlushDescriptorSets();
 
     const RenderDevice& device = renderBackend->GetRenderDevice();
@@ -714,7 +715,8 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
         } else if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER 
             || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
             || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER
-            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT) {
+            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
+            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE) {
             for (uint32 i = 0; i < layoutBinding.descriptorCount; i++) {
                 writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 writes[writeCount].pNext = NULL;
@@ -784,7 +786,7 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
     }
     
     vkCmdBindDescriptorSets(
-        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetApiObject(), 
+        commandBuffer, (VkPipelineBindPoint)pipeline->GetPipelineType(), pipeline->GetPipelineLayout().GetApiObject(),
         set, 1, &alloc.first, numDyncOffset, dyncOffset);
 
     allocatedSets[set] = alloc.first;

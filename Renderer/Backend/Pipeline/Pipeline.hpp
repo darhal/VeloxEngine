@@ -19,9 +19,9 @@ namespace Renderer
 
 	enum class PipelineType
 	{
-		GRAPHICS = 0,
-		COMPUTE,
-		RAY_TRACE,
+		GRAPHICS = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		COMPUTE = VK_PIPELINE_BIND_POINT_COMPUTE,
+		RAY_TRACE = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
 	};
 
 	class Pipeline
@@ -45,7 +45,7 @@ namespace Renderer
 		PipelineType GetPipelineType() const { return pipelineType; }
 
 		// RT:
-		void Create(RenderBackend& backend, uint32 maxDepth, uint32 maxRayPayloadSize = 256, uint32 maxRayHitAttribSize = 256);
+		void Create(RenderBackend& backend, uint32 maxDepth, uint32 maxRayPayloadSize = 1, uint32 maxRayHitAttribSize = 1);
 
 		const SBT& GetSBT() const { return sbt; }
 

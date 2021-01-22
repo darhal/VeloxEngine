@@ -7,6 +7,8 @@ TRE_NS_START
 
 namespace Renderer
 {
+	class RenderDevice;
+
 	struct BufferInfo
 	{
 		DeviceSize size      = 0;
@@ -26,7 +28,7 @@ namespace Renderer
 	class Buffer : public NoRefCount
 	{
 	public:
-		Buffer(VkBuffer buffer, const BufferInfo& info, const MemoryView& mem);
+		Buffer(RenderDevice& device, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem);
 
 		void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
 
@@ -37,6 +39,7 @@ namespace Renderer
 		FORCEINLINE const MemoryView& GetBufferMemory() const { return bufferMemory; }
 
 	protected:
+		RenderDevice& device;
 		BufferInfo bufferInfo;
 		MemoryView bufferMemory;
 		VkBuffer   apiBuffer;

@@ -31,8 +31,8 @@ void Renderer::Pipeline::Create(RenderBackend& backend, uint32 maxDepth, uint32 
     VkRayTracingPipelineInterfaceCreateInfoKHR pipelineInterface;
     pipelineInterface.pNext = NULL;
     pipelineInterface.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_INTERFACE_CREATE_INFO_KHR;
-    pipelineInterface.maxPipelineRayPayloadSize = 1; // TODO: paramterize this
-    pipelineInterface.maxPipelineRayHitAttributeSize = 1; // TODO: paramterize this
+    pipelineInterface.maxPipelineRayPayloadSize = maxRayPayloadSize;
+    pipelineInterface.maxPipelineRayHitAttributeSize = maxRayHitAttribSize;
 
 
     VkRayTracingPipelineCreateInfoKHR rayTraceInfo;
@@ -47,7 +47,7 @@ void Renderer::Pipeline::Create(RenderBackend& backend, uint32 maxDepth, uint32 
     rayTraceInfo.layout = shaderProgram->GetPipelineLayout().GetApiObject();
 
     rayTraceInfo.pDynamicState = &dynamicState;
-    rayTraceInfo.maxPipelineRayRecursionDepth = 2; // TODO: paramterize this
+    rayTraceInfo.maxPipelineRayRecursionDepth = maxDepth;
 
     rayTraceInfo.pLibraryInfo = NULL;
     rayTraceInfo.pLibraryInterface = &pipelineInterface;
