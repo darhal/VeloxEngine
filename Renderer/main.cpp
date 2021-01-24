@@ -387,7 +387,7 @@ int main()
     auto adr = vkGetBufferDeviceAddressKHR(backend.GetRenderDevice().GetDevice(), &bufferAdrInfo);
     printf("Adr:%p\n", adr);*/
 
-    /*ImageCreateInfo rtImageInfo = ImageCreateInfo::RtRenderTarget(SCR_WIDTH, SCR_HEIGHT);
+    ImageCreateInfo rtImageInfo = ImageCreateInfo::RtRenderTarget(SCR_WIDTH, SCR_HEIGHT);
     ImageHandle rtImage = backend.CreateImage(rtImageInfo);
     ImageViewCreateInfo rtViewInfo = ImageViewCreateInfo::ImageView(rtImage);
     ImageViewHandle rtView = backend.CreateImageView(rtViewInfo);
@@ -434,13 +434,13 @@ int main()
 
     auto cmd = backend.RequestCommandBuffer(CommandBuffer::Type::RAY_TRACING);
     cmd->BindShaderProgram(rtProgram);
+    cmd->BindPipeline(rtPipeline);
     cmd->SetTexture(0, 1, *rtView);
     cmd->SetAccelerationStrucure(0, 0, *tlas);
-    cmd->BindPipeline(rtPipeline);
     cmd->TraceRays(SCR_WIDTH, SCR_HEIGHT);
     FenceHandle fence;
     backend.Submit(cmd, &fence);
-    fence->Wait();*/
+    fence->Wait();
 
     INIT_BENCHMARK;
 

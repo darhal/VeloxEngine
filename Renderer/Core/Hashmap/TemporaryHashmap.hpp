@@ -31,6 +31,9 @@ namespace Renderer
 		class TemporaryHashmap
 		{
 		public:
+			TemporaryHashmap() : index(0)
+			{}
+
 			~TemporaryHashmap()
 			{
 				this->Clear();

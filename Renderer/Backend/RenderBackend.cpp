@@ -521,7 +521,7 @@ Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo
     } else {
         if (createInfo.layout != VK_IMAGE_LAYOUT_UNDEFINED) {
             // TODO: add layout trasnisioning here: using staging manager:
-            // stagingManager.ChangeImageLayout(*ret, info.initialLayout, createInfo.layout);
+            stagingManager.ChangeImageLayout(*ret, info.initialLayout, createInfo.layout);
         }
     }
 
