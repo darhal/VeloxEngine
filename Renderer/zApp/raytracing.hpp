@@ -1,0 +1,29 @@
+#pragma once
+
+#include "pch.hpp"
+
+
+#include <vulkan/vulkan.h>
+#include <vector>
+#include <iostream>
+#include <chrono>
+#include <future>
+#include <Renderer/Window/Window.hpp>
+#include <Renderer/Backend/RenderBackend.hpp>
+#include <Renderer/Backend/SwapChain/SwapChain.hpp>
+#include <Renderer/Backend/Buffers/Buffer.hpp>
+#include <Renderer/Backend/Pipeline/Pipeline.hpp>
+#include <Renderer/Backend/Common/Utils.hpp>
+#include <Renderer/Misc/Color/Color.hpp>
+
+#include <Engine/Core/Misc/Maths/Maths.hpp>
+#include <Engine/Core/Misc/Utils/Logging.hpp>
+#include "cube.hpp"
+
+#include "Shared.hpp"
+
+struct CameraUBO;
+
+void updateCameraUBO(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBufferHandle buffer, CameraUBO& ubo);
+
+int rt();

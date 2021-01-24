@@ -18,7 +18,7 @@ namespace Renderer
 
 		static FORCEINLINE BufferInfo UniformBuffer(DeviceSize size)
 		{
-			return BufferInfo{ size, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_ONLY , QueueFamilyFlag::NONE };
+			return BufferInfo{ size, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_COHERENT , QueueFamilyFlag::NONE };
 		}
 	};
 

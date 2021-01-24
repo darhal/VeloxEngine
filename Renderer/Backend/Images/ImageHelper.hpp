@@ -314,7 +314,7 @@ namespace Renderer
 			ImageCreateInfo info;
 			info.width = width;
 			info.height = height;
-			info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+			info.usage =  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 			info.format = format;
 			info.layout = VK_IMAGE_LAYOUT_GENERAL;
 			return info;

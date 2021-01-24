@@ -20,6 +20,50 @@ VkShaderModule Renderer::ShaderProgram::CreateShaderModule(VkDevice device, cons
     return shaderModule;
 }
 
+VkRayTracingShaderGroupTypeKHR Renderer::ShaderProgram::SetShaderGroupType(VkRayTracingShaderGroupCreateInfoKHR& group, uint32 stage, uint32 index)
+{
+    switch (stage) {
+    case RGEN:
+        group.generalShader = index;
+        group.closestHitShader = VK_SHADER_UNUSED_KHR;
+        group.anyHitShader = VK_SHADER_UNUSED_KHR;
+        group.intersectionShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+    case RMISS:
+        group.generalShader = index;
+        group.closestHitShader = VK_SHADER_UNUSED_KHR;
+        group.anyHitShader = VK_SHADER_UNUSED_KHR;
+        group.intersectionShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+    case RCALL:
+        group.generalShader = index;
+        group.closestHitShader = VK_SHADER_UNUSED_KHR;
+        group.anyHitShader = VK_SHADER_UNUSED_KHR;
+        group.intersectionShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+    case RINT:
+        group.intersectionShader = index;
+        group.closestHitShader = VK_SHADER_UNUSED_KHR;
+        group.anyHitShader = VK_SHADER_UNUSED_KHR;
+        group.generalShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+    case RAHIT:
+        group.anyHitShader = index;
+        group.closestHitShader = VK_SHADER_UNUSED_KHR;
+        group.generalShader = VK_SHADER_UNUSED_KHR;
+        group.intersectionShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+    case RCHIT:
+        group.closestHitShader = index;
+        group.generalShader = VK_SHADER_UNUSED_KHR;
+        group.anyHitShader = VK_SHADER_UNUSED_KHR;
+        group.intersectionShader = VK_SHADER_UNUSED_KHR;
+        return VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+    }
+
+    return VkRayTracingShaderGroupTypeKHR(-1);
+}
+
 void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage, 
     std::unordered_set<uint32>& seenDescriptorSets, std::unordered_map<std::string, VkPushConstantRange>& pushConstants, 
     uint32& oldOffset)
@@ -44,8 +88,10 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
         spvReflectEnumerateInputVariables(&module, &inputVarCount, inputVarsReflect);
 
         for (uint32 i = 0; i < inputVarCount; i++) {
-            // printf("Input var: name:%s|location:%d|format:%d\n", inputVarsReflect[i]->name, inputVarsReflect[i]->location, inputVarsReflect[i]->format);
-            vertexInput.AddAttribute(inputVarsReflect[i]->location, (VkFormat)(inputVarsReflect[i]->format - bugPatchDiff));
+            if (inputVarsReflect[i]->location != UINT32_MAX) {
+                printf("Input var: name:%s|location:%d|format:%d\n", inputVarsReflect[i]->name, inputVarsReflect[i]->location, inputVarsReflect[i]->format);
+                vertexInput.AddAttribute(inputVarsReflect[i]->location, (VkFormat)(inputVarsReflect[i]->format - bugPatchDiff));
+            }
         }
     }
 
@@ -114,50 +160,6 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
     // delete[] descriptorSetsReflect;
     // delete[] pushConstantsReflect;
     spvReflectDestroyShaderModule(&module);
-}
-
-VkRayTracingShaderGroupTypeKHR Renderer::ShaderProgram::SetShaderGroupType(VkRayTracingShaderGroupCreateInfoKHR& group, uint32 stage, uint32 index)
-{
-    switch (stage) {
-    case RGEN:
-        group.generalShader = index;
-        group.closestHitShader = VK_SHADER_UNUSED_KHR;
-        group.anyHitShader = VK_SHADER_UNUSED_KHR;
-        group.intersectionShader = VK_SHADER_UNUSED_KHR;
-        return VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
-    case RMISS:
-        group.generalShader = index;
-        group.closestHitShader = VK_SHADER_UNUSED_KHR;
-        group.anyHitShader = VK_SHADER_UNUSED_KHR;
-        group.intersectionShader = VK_SHADER_UNUSED_KHR;
-        return VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
-    case RCALL:
-        group.generalShader = index;
-        group.closestHitShader = VK_SHADER_UNUSED_KHR;
-        group.anyHitShader = VK_SHADER_UNUSED_KHR;
-        group.intersectionShader = VK_SHADER_UNUSED_KHR;
-        return VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
-    case RINT:
-        group.intersectionShader = index;
-        group.closestHitShader = VK_SHADER_UNUSED_KHR;
-        group.anyHitShader = VK_SHADER_UNUSED_KHR;
-        group.generalShader = VK_SHADER_UNUSED_KHR;
-        return VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
-    case RAHIT:
-        group.anyHitShader = index;
-        group.closestHitShader = VK_SHADER_UNUSED_KHR;
-        group.generalShader = VK_SHADER_UNUSED_KHR;
-        group.intersectionShader = VK_SHADER_UNUSED_KHR;
-        return VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
-    case RCHIT:
-        group.closestHitShader = index;
-        group.generalShader = VK_SHADER_UNUSED_KHR;
-        group.anyHitShader = VK_SHADER_UNUSED_KHR;
-        group.intersectionShader = VK_SHADER_UNUSED_KHR;
-        return VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
-    }
-
-    return VkRayTracingShaderGroupTypeKHR(-1);
 }
 
 Renderer::ShaderProgram::ShaderProgram(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages)

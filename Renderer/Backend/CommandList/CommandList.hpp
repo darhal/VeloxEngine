@@ -140,6 +140,10 @@ namespace Renderer
 
 		void CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, const VectorView<VkBufferImageCopy>& copies);
 
+		void CopyImage(const Image& srcImage, const Image& dstImage, const VkExtent3D& extent, uint32 srcMipLevel = 0, uint32 dstMipLevel = 0,
+			const VkOffset3D& srcOffset = {0, 0, 0}, const VkOffset3D& dstOffset = {0, 0, 0});
+
+		void CopyImage(const Image& srcImage, const Image& dstImage, const VectorView<VkImageCopy>& regions);
 
 		// Prepare an image to have its mipmap generated.
 		// Puts the top level into TRANSFER_SRC_OPTIMAL, and the all the remaining levels are set to TRANSFER_DST_OPTIMAL

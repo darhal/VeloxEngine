@@ -368,6 +368,7 @@ void Renderer::CommandBuffer::SetAccelerationStrucure(uint32 set, uint32 binding
 
 void Renderer::CommandBuffer::TraceRays(uint32 width, uint32 height, uint32 depth)
 {
+    // TODO: out image!
     ///if (true) {
     //    this->SetTexture();
     //}
@@ -543,7 +544,8 @@ void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buf
     this->CopyImageToBuffer(srcImage, dstBuffer, { &copy, 1 });
 }
 
-void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, VkDeviceSize bufferOffset, uint32 mipLevel, uint32_t bufferRowLength, uint32_t bufferImageHeight)
+void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, VkDeviceSize bufferOffset, 
+    uint32 mipLevel, uint32_t bufferRowLength, uint32_t bufferImageHeight)
 {
     const auto& info = srcImage.GetInfo();
     VkBufferImageCopy copy;
@@ -562,6 +564,29 @@ void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buf
     vkCmdCopyImageToBuffer(commandBuffer, srcImage.GetApiObject(),
         srcImage.GetLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL),
         dstBuffer.GetApiObject(), copies.size, copies.data);
+}
+
+void Renderer::CommandBuffer::CopyImage(const Image& srcImage, const Image& dstImage, const VkExtent3D& extent, 
+    uint32 srcMipLevel, uint32 dstMipLevel, const VkOffset3D& srcOffset, const VkOffset3D& dstOffset)
+{
+    VkImageCopy copy;
+    const auto& srcInfo = srcImage.GetInfo();
+    const auto& dstInfo = dstImage.GetInfo();
+    copy.srcSubresource = { FormatToAspectMask(srcInfo.format), srcMipLevel, 0, srcInfo.layers};
+    copy.srcOffset = srcOffset;
+    copy.dstSubresource = { FormatToAspectMask(dstInfo.format), dstMipLevel, 0, dstInfo.layers };
+    copy.dstOffset = dstOffset;
+    copy.extent = extent;
+    this->CopyImage(srcImage, dstImage, VectorView<VkImageCopy>{&copy, 1});
+}
+
+void Renderer::CommandBuffer::CopyImage(const Image& srcImage, const Image& dstImage, const VectorView<VkImageCopy>& regions)
+{
+    vkCmdCopyImage(commandBuffer,
+        srcImage.GetApiObject(), srcImage.GetInfo().layout,
+        dstImage.GetApiObject(), dstImage.GetInfo().layout,
+        regions.size, regions.data
+    );
 }
 
 void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, const VkOffset3D& dstOffset, const VkOffset3D& dstExtent,
@@ -693,6 +718,7 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
 
     for (uint32 binding = 0; binding < layout.GetBindingsCount(); binding++) {
         auto& layoutBinding = layout.GetDescriptorSetLayoutBinding(binding);
+        printf("Layout binding type: %d\n", layoutBinding.descriptorType);
 
         if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
             || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
@@ -744,6 +770,8 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
                 writes[writeCount].pImageInfo = NULL;
                 writes[writeCount].pTexelBufferView = NULL;
             }
+
+            writeCount++;
         }
     }
 
