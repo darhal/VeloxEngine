@@ -11,5 +11,5 @@ hitAttributeEXT vec3 attribs;
 
 void main()
 {
-  prd.hitValue = vec3(0.2, 0.5, 0.5);
+  prd.hitValue = vec3(0.5, 0.0, 0.0);
 }

@@ -307,7 +307,7 @@ Renderer::BlasHandle Renderer::RenderBackend::CreateBlas(const BlasCreateInfo& b
     buildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
     buildInfo.pNext = NULL;
     buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-    buildInfo.flags = 0;
+    buildInfo.flags = flags;
     buildInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
     buildInfo.srcAccelerationStructure = VK_NULL_HANDLE;
     buildInfo.dstAccelerationStructure = VK_NULL_HANDLE;

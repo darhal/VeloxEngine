@@ -91,7 +91,9 @@ namespace Renderer
 			attribsCount++;
 		}
 
-		void AddBinding(const uint32 binding, const uint32 stride, const uint32 locations, const std::initializer_list<uint32>& offsets, const InputRate inputRate = VERTEX_RATE)
+		void AddBinding(const uint32 binding, const uint32 stride, const uint32 locations, 
+			const std::initializer_list<uint32>& offsets, 
+			const InputRate inputRate = VERTEX_RATE)
 		{
 			uint32& bindingCount = vertexInputInfo.vertexBindingDescriptionCount;
 			bindingDescription[bindingCount].binding	= binding;

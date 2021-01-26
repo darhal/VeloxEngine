@@ -217,9 +217,9 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
     auto& b = bindings.bindings[set][binding];
 
     // TODO: for the cache I dont think we need to place the VK object but instead a hash of the vk object and its state (wether its written or not)
-    if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
+    /*if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
         return;
-    }
+    }*/
 
     b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetApiObject(), offset, range };
     b.dynamicOffset   = 0;
@@ -241,17 +241,17 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
 
     // Think about what if everything is the same just the offset changed! we shouldnt then update dirty set instead just update the set
     // that have the dynamic offset set in it
-    if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
+    /*if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
         b.dynamicOffset = buffer.GetCurrentOffset();
         dirty.dynamicSets |= 1u << set;
-    }else{
+    }else{*/
         // update everything
         b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetApiObject(), offset, range };
         b.dynamicOffset = buffer.GetCurrentOffset();
 
         bindings.cache[set][binding] = (uint64)buffer.GetApiObject();
         dirty.sets |= (1u << set);
-    }
+    //}
 }
 
 void Renderer::CommandBuffer::SetStorageBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range)
@@ -381,16 +381,15 @@ void Renderer::CommandBuffer::TraceRays(uint32 width, uint32 height, uint32 dept
     auto sbtAddress = pipeline->GetSBT().GetSbtAddress();
 
     // Size of a program identifier
-    const uint32_t groupSize = Utils::AlignUp(device.GetRtProperties().shaderGroupHandleSize,
-        device.GetRtProperties().shaderGroupBaseAlignment);
+    const uint32_t groupSize = Utils::AlignUp(groupHandleSize, baseAlignment);
     const uint32_t groupStride = groupSize;
 
     using Stride = VkStridedDeviceAddressRegionKHR;
 
     std::array<Stride, 4> strideAddresses{
         Stride{sbtAddress + 0u * groupSize, groupStride, groupSize * 1},  // raygen
-        Stride{sbtAddress + 1u * groupSize, groupStride, groupSize * 2},  // miss
-        Stride{sbtAddress + 3u * groupSize, groupStride, groupSize * 1},  // hit
+        Stride{sbtAddress + 1u * groupSize, groupStride, groupSize * 1},  // miss
+        Stride{sbtAddress + 2u * groupSize, groupStride, groupSize * 1},  // hit
         Stride{0u, 0u, 0u} 
     };
 
@@ -718,7 +717,6 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
 
     for (uint32 binding = 0; binding < layout.GetBindingsCount(); binding++) {
         auto& layoutBinding = layout.GetDescriptorSetLayoutBinding(binding);
-        printf("Layout binding type: %d\n", layoutBinding.descriptorType);
 
         if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
             || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
@@ -872,9 +870,10 @@ void Renderer::CommandBuffer::RebindDescriptorSet(uint32 set)
         }
     }
 
+    auto sets = &allocatedSets[set];
     vkCmdBindDescriptorSets(
-        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetApiObject(),
-        set, 1, &allocatedSets[set], numDyncOffset, dyncOffset);
+        commandBuffer, (VkPipelineBindPoint)pipeline->GetPipelineType(), pipeline->GetPipelineLayout().GetApiObject(),
+        set, 1, sets, numDyncOffset, dyncOffset);
 }
 
 void Renderer::CommandBuffer::InitViewportScissor(const RenderPassInfo& info, const Framebuffer* fb)

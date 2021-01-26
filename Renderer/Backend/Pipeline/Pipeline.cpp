@@ -46,11 +46,10 @@ void Renderer::Pipeline::Create(RenderBackend& backend, uint32 maxDepth, uint32 
     rayTraceInfo.pGroups = shaderProgram->GetShaderGroups();
     rayTraceInfo.layout = shaderProgram->GetPipelineLayout().GetApiObject();
 
-    rayTraceInfo.pDynamicState = &dynamicState;
     rayTraceInfo.maxPipelineRayRecursionDepth = maxDepth;
-
+    rayTraceInfo.pDynamicState = NULL;//&dynamicState;
     rayTraceInfo.pLibraryInfo = NULL;
-    rayTraceInfo.pLibraryInterface = &pipelineInterface;
+    rayTraceInfo.pLibraryInterface = NULL; // &pipelineInterface;
     rayTraceInfo.basePipelineHandle = VK_NULL_HANDLE;
     rayTraceInfo.basePipelineIndex = -1;
 

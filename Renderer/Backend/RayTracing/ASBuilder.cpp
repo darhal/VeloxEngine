@@ -234,7 +234,7 @@ void Renderer::AsBuilder::BuildBlasBatch(bool compact)
 	RtStaging::Batch& batch = stage->batch[compact];
 	auto& pBuildOffset = stage->pBuildOffset;
 	size_t nbBlas = batch.batchInfo.size();
-
+	
 	// Sanity check:
 	if (batch.batchInfo.size() == 0) {
 		return;

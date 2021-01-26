@@ -19,7 +19,7 @@ void Renderer::SBT::Init(RenderBackend& backend, const ShaderProgram& program, P
 	uint32_t sbtSize = groupCount * groupSizeAligned;
 
 	std::vector<uint8_t> shaderHandleStorage(sbtSize);
-	vkGetRayTracingShaderGroupHandlesKHR(backend.GetRenderDevice().GetDevice(), pipline.GetApiObject(), 0,
+	vkGetRayTracingShaderGroupHandlesKHR(device.GetDevice(), pipline.GetApiObject(), 0,
 		groupCount, sbtSize, shaderHandleStorage.data());
 
 	BufferCreateInfo info;
@@ -32,8 +32,25 @@ void Renderer::SBT::Init(RenderBackend& backend, const ShaderProgram& program, P
 		address = device.GetBufferAddress(sbtBuffer);
 	}
 
-	for (uint32_t g = 0; g < groupCount; g++) {
+	int j = 1;
+	for (uint8 i : shaderHandleStorage) {
+		printf("%d ", i);
+		if (!(j%8)) {
+			j = 1;
+			printf("\n");
+		} else {
+			j++;
+		}
+	}
+
+	/*for (uint32_t g = 0; g < groupCount; g++) {
 		sbtBuffer->WriteToBuffer(groupHandleSize, shaderHandleStorage.data() + g * groupHandleSize, groupSizeAligned * g);
+	}*/
+
+	auto* pData = reinterpret_cast<uint8_t*>(sbtBuffer->GetBufferMemory().mappedData);
+	for (uint32_t g = 0; g < groupCount; g++) {
+		memcpy(pData, shaderHandleStorage.data() + g * groupHandleSize, groupHandleSize);
+		pData += groupSizeAligned;
 	}
 }
 

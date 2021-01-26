@@ -72,7 +72,7 @@ namespace Renderer
 		VkPipeline			 pipeline;
 		PipelineType		 pipelineType;
 
-		SBT sbt;
+		SBT					sbt;
 		
 		const RenderPass*	renderPass;
 		uint32				dynamicState;

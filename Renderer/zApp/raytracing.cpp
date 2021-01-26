@@ -29,7 +29,7 @@ struct CameraUBO
 #define CUBE
 
 
-void updateCameraUBO(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBufferHandle buffer, CameraUBO& ubo)
+void updateCameraUBO(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::BufferHandle buffer, CameraUBO& ubo)
 {
     const TRE::Renderer::Swapchain::SwapchainData& swapchainData = backend.GetRenderContext().GetSwapchain().GetSwapchainData();
     ubo.view = glm::lookAt(glm::vec3(1.0f, 1.0f, 0.7f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -37,11 +37,15 @@ void updateCameraUBO(const TRE::Renderer::RenderBackend& backend, TRE::Renderer:
     // mvp.proj    = glm::ortho(0, 1, 0, 1, 0, 1);
     ubo.proj[1][1] *= -1;
 
-    ubo.projInverse = glm::inverse(ubo.proj);
     ubo.viewInverse = glm::inverse(ubo.view);
+    ubo.projInverse = glm::inverse(ubo.proj);
+
+    //ubo.viewInverse = glm::transpose(ubo.viewInverse);
+    //ubo.projInverse = glm::transpose(ubo.projInverse);
     buffer->WriteToBuffer(sizeof(ubo), &ubo);
 }
 
+#define STOP_POINT(str) printf(str); printf("\n"); getchar();
 
 int rt()
 {
@@ -64,7 +68,8 @@ int rt()
     }
 
     TRE_LOGI("Engine is up and running ...");
-    Vertex vertecies[12 * 3];
+    //STOP_POINT("ENGINE INIT");
+    
 
 #if !defined(CUBE)
     size_t vertexSize = sizeof(vertices[0]) * vertices.size();
@@ -77,11 +82,16 @@ int rt()
         { vertexSize + indexSize, BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER | BufferUsage::INDEX_BUFFER },
         data);
 #else
+    Vertex vertecies[12 * 3];;
+    vec3 verteciesData[12 * 3];
+
     for (int32_t i = 0; i < 12 * 3; i++) {
         vertecies[i].pos = TRE::vec3{ g_vertex_buffer_data[i * 3], g_vertex_buffer_data[i * 3 + 1], g_vertex_buffer_data[i * 3 + 2] };
         vertecies[i].tex = TRE::vec2{ g_uv_buffer_data[2 * i], g_uv_buffer_data[2 * i + 1] };
         vertecies[i].color = TRE::vec3{ 81.f / 255.f, 254.f / 255.f, 115.f / 255.f };
         vertecies[i].normal = TRE::vec3{ g_normal_buffer_data[i * 3], g_normal_buffer_data[i * 3 + 1], g_normal_buffer_data[i * 3 + 2] };
+
+        verteciesData[i] = vertecies[i].pos;
     }
 
     std::vector<uint32> indicies(12 * 3);
@@ -90,7 +100,7 @@ int rt()
 #endif
     GraphicsState state;
 
-    RingBufferHandle ubo = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(CameraUBO)), 3);
+    BufferHandle ubo = backend.CreateBuffer(BufferInfo::UniformBuffer(sizeof(CameraUBO)));
 
     ImageCreateInfo rtImageInfo = ImageCreateInfo::RtRenderTarget(SCR_WIDTH, SCR_HEIGHT);
     ImageHandle rtImage = backend.CreateImage(rtImageInfo);
@@ -108,37 +118,42 @@ int rt()
     );
     BufferHandle acclIndexBuffer = backend.CreateBuffer(
         { indicies.size() * sizeof(uint32),
-        BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_BUILD_INPUT_READ_ONLY,
+        BufferUsage::INDEX_BUFFER | BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_BUILD_INPUT_READ_ONLY,
         MemoryUsage::GPU_ONLY }
     );
-    backend.GetStagingManager().Stage(acclBuffer->GetApiObject(), &vertecies, sizeof(Vertex) * 12 * 3);
-    backend.GetStagingManager().Stage(acclIndexBuffer->GetApiObject(), indicies.data(), sizeof(uint32) * 12 * 3);
+    backend.GetStagingManager().Stage(acclBuffer->GetApiObject(), &vertecies, sizeof(vertecies));
+    backend.GetStagingManager().Stage(acclIndexBuffer->GetApiObject(), indicies.data(), indicies.size() * sizeof(uint32));
     backend.GetStagingManager().Flush();
     backend.GetStagingManager().WaitCurrent();
 
+    //STOP_POINT("Staging Manager Flushing Buffer");
+
     /*VkDeviceAddress vertexData,
-        VkDeviceSize vertexStride, uint32 vertexCount,
-        VkDeviceAddress transformData = VK_NULL_HANDLE,
-        VkDeviceAddress indexData = VK_NULL_HANDLE,
-        const AsOffset & offset = { 0, 0, 0, 0 },
-        uint32 flags = VK_GEOMETRY_OPAQUE_BIT_KHR,
-        VkFormat vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
-        VkIndexType indexType = VK_INDEX_TYPE_UINT32*/
+			VkDeviceSize vertexStride, uint32 vertexCount,
+			VkDeviceAddress transformData = VK_NULL_HANDLE,
+			VkDeviceAddress indexData = VK_NULL_HANDLE,
+			const AsOffset& offset = {0, 0, 0, 0},
+			uint32 flags = VK_GEOMETRY_OPAQUE_BIT_KHR,
+			VkFormat vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
+			VkIndexType indexType = VK_INDEX_TYPE_UINT32*/
 
     BlasCreateInfo info;
     info.AddGeometry(
         backend.GetRenderDevice().GetBufferAddress(acclBuffer),
-        sizeof(Vertex), 12 * 3, NULL, 
-        backend.GetRenderDevice().GetBufferAddress(acclIndexBuffer), { 12, 0, 0, 0 }
+        sizeof(Vertex), 12*3, NULL, 
+        backend.GetRenderDevice().GetBufferAddress(acclIndexBuffer), 
+        { 12, 0, 0, 0 }
     );
 
-    BlasHandle blas = backend.CreateBlas(info, VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR);
+    BlasHandle blas = backend.CreateBlas(info, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
     //VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR);
     backend.RtBuildBlasBatchs();
     printf("Object ID: %p\n", blas->GetApiObject());
     backend.RtCompressBatch();
     printf("Object ID: %p\n", blas->GetApiObject());
     backend.RtSyncAcclBuilding();
+
+    //STOP_POINT("Building Accl Structure");
 
     BlasInstance instance;
     instance.blas = blas;
@@ -167,13 +182,15 @@ int rt()
         });
     postProgram.Compile();
 
+    // STOP_POINT("Building Accl Structure (TLAS)");
+
     INIT_BENCHMARK;
 
     time_t lasttime = time(NULL);
     // TODO: shader specilization constants 
     CameraUBO uboData{};
     updateCameraUBO(backend, ubo, uboData);
-
+    // D:/EngineDev/TrikytaEngine3D/Build/Renderer/x64/Debug/Renderer.exe
     while (window.isOpen()) {
         window.getEvent(ev);
 
@@ -189,21 +206,26 @@ int rt()
                 state.SaveChanges();
             }
         }
-
+        
         backend.BeginFrame();
+        //STOP_POINT("Begin Frame");
 
         auto cmd = backend.RequestCommandBuffer(CommandBuffer::Type::RAY_TRACING);
         cmd->BindShaderProgram(rtProgram);
         cmd->BindPipeline(rtPipeline);
         cmd->SetAccelerationStrucure(0, 0, *tlas);
         cmd->SetTexture(0, 1, *rtView);
-        cmd->SetUniformBuffer(0, 2, *ubo);
-        //cmd->PushConstants();
-        cmd->PushConstants(VK_SHADER_STAGE_RAYGEN_BIT_KHR, &uboData, sizeof(uboData));
+        cmd->SetUniformBuffer(1, 0, *ubo);
+        // cmd->PushConstants(VK_SHADER_STAGE_RAYGEN_BIT_KHR, &uboData, sizeof(uboData));
         cmd->TraceRays(SCR_WIDTH, SCR_HEIGHT);
         SemaphoreHandle semaphore;
         backend.Submit(cmd, NULL, 1, &semaphore);
         backend.AddWaitSemapore(CommandBuffer::Type::GENERIC, semaphore, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+        /*FenceHandle fence;
+        backend.Submit(cmd, &fence);
+        fence->Wait();*/
+        
+        //STOP_POINT("Submitting RT CMD");
 
         auto cmd1 = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
         cmd1->BindShaderProgram(postProgram);
@@ -220,11 +242,10 @@ int rt()
         cmd1->EndRenderPass();
         backend.Submit(cmd1);
 
+        //STOP_POINT("Submitting Post render CMD");
         backend.EndFrame();
         printFPS();
     }
-
-
 
 #if !defined(CUBE)
     delete[] data;

@@ -10,24 +10,26 @@ layout(location = 0) rayPayloadEXT hitPayload prd;
 layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 layout(binding = 1, set = 0, rgba32f) uniform image2D image;
 
-/*layout(binding = 2, set = 0) uniform CameraProperties
+layout(binding = 0, set = 1) uniform CameraProperties
 {
   mat4 view;
   mat4 proj;
   mat4 viewInverse;
   mat4 projInverse;
-} cam;*/
+} cam;
 
-layout(push_constant) uniform CameraPropertiesPC
+/*layout(push_constant) uniform CameraPropertiesPC
 {
     mat4 view;
 	mat4 proj;
 	mat4 viewInverse;
 	mat4 projInverse;
-} cam;
+} cam;*/
 
 void main() 
 {
+	// prd.hitValue = vec3(0.5, 0.5, 0.0);
+	
     const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
     const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
     vec2 d = inUV * 2.0 - 1.0;
@@ -55,5 +57,5 @@ void main()
 	
 	imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(prd.hitValue, 1.0));
 	
-	// imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(0.0, 0.5, 0.5, 1.0));
+	//imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(0.5, 0.5, 0.0, 1.0));
 }

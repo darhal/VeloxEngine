@@ -98,18 +98,18 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
     // Enumerate descriptors:
     uint32 descSetCount;
     spvReflectEnumerateDescriptorSets(&module, &descSetCount, NULL);
-    SpvReflectDescriptorSet* descriptorSetsReflect = (SpvReflectDescriptorSet*)malloc(sizeof(SpvReflectDescriptorSet) * descSetCount);
-    spvReflectEnumerateDescriptorSets(&module, &descSetCount, &descriptorSetsReflect);
+    SpvReflectDescriptorSet** descriptorSetsReflect = (SpvReflectDescriptorSet**)malloc(sizeof(SpvReflectDescriptorSet*) * descSetCount);
+    spvReflectEnumerateDescriptorSets(&module, &descSetCount, descriptorSetsReflect);
 
     for (uint32 i = 0; i < descSetCount; i++) {
-        if (seenDescriptorSets.find(descriptorSetsReflect[i].set) == seenDescriptorSets.end()) {
-            seenDescriptorSets.emplace(descriptorSetsReflect[i].set);
+        if (seenDescriptorSets.find(descriptorSetsReflect[i]->set) == seenDescriptorSets.end()) {
+            seenDescriptorSets.emplace(descriptorSetsReflect[i]->set);
             piplineLayout.AddDescriptorSetLayout();
-            printf("Set : %d -  Binding count: %d\n", descriptorSetsReflect[i].set, descriptorSetsReflect[i].binding_count);
+            printf("Set : %d -  Binding count: %d\n", descriptorSetsReflect[i]->set, descriptorSetsReflect[i]->binding_count);
         }
         
-        for (uint32 j = 0; j < descriptorSetsReflect[i].binding_count; j++) {
-            SpvReflectDescriptorBinding* bindings = descriptorSetsReflect[i].bindings[j];
+        for (uint32 j = 0; j < descriptorSetsReflect[i]->binding_count; j++) {
+            SpvReflectDescriptorBinding* bindings = descriptorSetsReflect[i]->bindings[j];
             DescriptorType descriptorType = (DescriptorType)bindings->descriptor_type;
             bool isUniform = bindings->descriptor_type == (uint32)DescriptorType::UNIFORM_BUFFER ||
                                 bindings->descriptor_type == (uint32)DescriptorType::STORAGE_BUFFER;
@@ -129,15 +129,15 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
     // Enumerate push constants:
     uint32 pushConstCount;
     spvReflectEnumeratePushConstants(&module, &pushConstCount, NULL);
-    SpvReflectBlockVariable* pushConstantsReflect = (SpvReflectBlockVariable*)malloc(sizeof(SpvReflectBlockVariable) * pushConstCount);
-    spvReflectEnumeratePushConstants(&module, &pushConstCount, &pushConstantsReflect);
+    SpvReflectBlockVariable** pushConstantsReflect = (SpvReflectBlockVariable**)malloc(sizeof(SpvReflectBlockVariable*) * pushConstCount);
+    spvReflectEnumeratePushConstants(&module, &pushConstCount, pushConstantsReflect);
 
     for (uint32 i = 0; i < pushConstCount; i++) {
-        const char* typeName = pushConstantsReflect[i].type_description->type_name;
+        const char* typeName = pushConstantsReflect[i]->type_description->type_name;
 
         auto ret = pushConstants.emplace(
             std::pair<std::string, VkPushConstantRange>{ typeName, 
-            { VkShaderStageFlags(VK_SHADER_STAGES[shaderStage]), pushConstantsReflect[i].offset, pushConstantsReflect[i].size } });
+            { VkShaderStageFlags(VK_SHADER_STAGES[shaderStage]), pushConstantsReflect[i]->offset, pushConstantsReflect[i]->size } });
 
         if (!ret.second) {
             ret.first->second.stageFlags |= VK_SHADER_STAGES[shaderStage];
@@ -146,8 +146,8 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
             //    pushConstantsReflect[i].type_description->type_name, VK_SHADER_STAGES[shaderStage], 
             //    ret.first->second.offset, ret.first->second.size);
         } else {
-            ret.first->second.offset += pushConstantsReflect[i].members->offset; 
-            oldOffset += pushConstantsReflect[i].size;  // TODO: possiblity of patching SPIRV code here to add the offset automatically
+            ret.first->second.offset += pushConstantsReflect[i]->members->offset;
+            oldOffset += pushConstantsReflect[i]->size;  // TODO: possiblity of patching SPIRV code here to add the offset automatically
            
             //printf("\tPush constant: Type: %s | Stage: %d | Offset: %d | Size: %d\n", 
             //    pushConstantsReflect[i].type_description->type_name, VK_SHADER_STAGES[shaderStage], 
@@ -159,6 +159,8 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
     // Destroy the reflection data when no longer required.
     // delete[] descriptorSetsReflect;
     // delete[] pushConstantsReflect;
+    free(descriptorSetsReflect);
+    free(pushConstantsReflect);
     spvReflectDestroyShaderModule(&module);
 }
 
