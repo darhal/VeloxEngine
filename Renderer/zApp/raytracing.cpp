@@ -83,15 +83,12 @@ int rt()
         data);
 #else
     Vertex vertecies[12 * 3];;
-    vec3 verteciesData[12 * 3];
 
     for (int32_t i = 0; i < 12 * 3; i++) {
         vertecies[i].pos = TRE::vec3{ g_vertex_buffer_data[i * 3], g_vertex_buffer_data[i * 3 + 1], g_vertex_buffer_data[i * 3 + 2] };
         vertecies[i].tex = TRE::vec2{ g_uv_buffer_data[2 * i], g_uv_buffer_data[2 * i + 1] };
         vertecies[i].color = TRE::vec3{ 81.f / 255.f, 254.f / 255.f, 115.f / 255.f };
         vertecies[i].normal = TRE::vec3{ g_normal_buffer_data[i * 3], g_normal_buffer_data[i * 3 + 1], g_normal_buffer_data[i * 3 + 2] };
-
-        verteciesData[i] = vertecies[i].pos;
     }
 
     std::vector<uint32> indicies(12 * 3);
@@ -101,6 +98,9 @@ int rt()
     GraphicsState state;
 
     BufferHandle ubo = backend.CreateBuffer(BufferInfo::UniformBuffer(sizeof(CameraUBO)));
+    CameraUBO uboData{};
+    updateCameraUBO(backend, ubo, uboData);
+    //ubo = backend.CreateBuffer({ sizeof(CameraUBO), BufferUsage::UNIFORM_BUFFER, MemoryUsage::GPU_ONLY }, &uboData);
 
     ImageCreateInfo rtImageInfo = ImageCreateInfo::RtRenderTarget(SCR_WIDTH, SCR_HEIGHT);
     ImageHandle rtImage = backend.CreateImage(rtImageInfo);
@@ -108,7 +108,7 @@ int rt()
     ImageViewHandle rtView = backend.CreateImageView(rtViewInfo);
 
     // Out texture
-    SamplerHandle outTexture = backend.CreateSampler(SamplerInfo::Sampler2D(rtImage));
+    SamplerHandle outTexture = backend.CreateSampler(SamplerInfo::Sampler2DV2(rtImage));
 
     BufferHandle acclBuffer = backend.CreateBuffer(
         { sizeof(vertecies),
@@ -158,6 +158,7 @@ int rt()
     BlasInstance instance;
     instance.blas = blas;
     auto t = glm::mat4(1.f);
+    t = glm::transpose(t);
     memcpy(instance.transform, &t, sizeof(glm::mat4));
     TlasCreateInfo tlasInfo;
     tlasInfo.blasInstances.emplace_back(instance);
@@ -188,8 +189,7 @@ int rt()
 
     time_t lasttime = time(NULL);
     // TODO: shader specilization constants 
-    CameraUBO uboData{};
-    updateCameraUBO(backend, ubo, uboData);
+
     // D:/EngineDev/TrikytaEngine3D/Build/Renderer/x64/Debug/Renderer.exe
     while (window.isOpen()) {
         window.getEvent(ev);
@@ -217,7 +217,7 @@ int rt()
         cmd->SetTexture(0, 1, *rtView);
         cmd->SetUniformBuffer(1, 0, *ubo);
         // cmd->PushConstants(VK_SHADER_STAGE_RAYGEN_BIT_KHR, &uboData, sizeof(uboData));
-        cmd->TraceRays(SCR_WIDTH, SCR_HEIGHT);
+        cmd->TraceRays(SCR_WIDTH, SCR_HEIGHT, 1);
         SemaphoreHandle semaphore;
         backend.Submit(cmd, NULL, 1, &semaphore);
         backend.AddWaitSemapore(CommandBuffer::Type::GENERIC, semaphore, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);

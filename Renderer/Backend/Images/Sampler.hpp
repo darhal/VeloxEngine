@@ -53,6 +53,25 @@ namespace Renderer
             return info;
         }
 
+        static FORCEINLINE SamplerInfo Sampler2DV2(Image* img = NULL)
+        {
+            SamplerInfo info{};
+            info.magFilter = VK_FILTER_NEAREST;
+            info.minFilter = VK_FILTER_NEAREST;
+
+            info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+            info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+            info.mipLodBias = 0.0f;
+            info.minLod = 0.0f;
+            info.maxLod = img ? (float)img->GetInfo().levels : 0.0f;
+            
+            info.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+            return info;
+        }
+
         static FORCEINLINE void FillVkSamplerCreateInfo(const SamplerInfo& samplerInfo, VkSamplerCreateInfo& createInfo)
         {
             createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
