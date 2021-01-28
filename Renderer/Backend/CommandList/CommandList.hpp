@@ -191,6 +191,9 @@ namespace Renderer
 			VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 
 			VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
+		void ChangeImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout,
+			VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+			VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
 		FORCEINLINE VkCommandBuffer GetApiObject() const { return commandBuffer; }
 

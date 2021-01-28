@@ -748,6 +748,14 @@ void Renderer::CommandBuffer::ChangeImageLayout(const Image& image, VkImageLayou
         1, &imageMemoryBarrier);
 }
 
+void Renderer::CommandBuffer::ChangeImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, 
+    VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask)
+{
+    const auto& info = image.GetInfo();
+    VkImageSubresourceRange subresourceRange = { FormatToAspectMask(info.format), 0, info.levels, 0, info.layers };
+    ChangeImageLayout(image, oldLayout, newLayout, subresourceRange, srcStageMask, dstStageMask);
+}
+
 void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings)
 {
     ASSERT(set >= MAX_DESCRIPTOR_SET);
