@@ -27,9 +27,15 @@ void Renderer::SBT::Init(RenderBackend& backend, const ShaderProgram& program, P
 	info.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::SHADER_BINDING_TABLE;
 	info.domain = MemoryUsage::CPU_COHERENT;
 
-	if (!sbtBuffer || sbtBuffer->GetBufferInfo().size != sbtSize) { // Update
+	/*if (!sbtBuffer || sbtBuffer->GetBufferInfo().size != sbtSize) { // Update
 		sbtBuffer = backend.CreateBuffer(info);
 		address = device.GetBufferAddress(sbtBuffer);
+	}*/
+
+	for (uint32 i = 0; i < 3; i++) {
+		sbtBuffer[i] = backend.CreateBuffer(info);
+		sbtBuffer[i]->WriteToBuffer(groupHandleSize, shaderHandleStorage.data() + groupSizeAligned * i);
+		address[i] = device.GetBufferAddress(sbtBuffer[i]);
 	}
 
 	int j = 1;
@@ -47,11 +53,11 @@ void Renderer::SBT::Init(RenderBackend& backend, const ShaderProgram& program, P
 		sbtBuffer->WriteToBuffer(groupHandleSize, shaderHandleStorage.data() + g * groupHandleSize, groupSizeAligned * g);
 	}*/
 
-	auto* pData = reinterpret_cast<uint8_t*>(sbtBuffer->GetBufferMemory().mappedData);
+	/*auto* pData = reinterpret_cast<uint8_t*>(sbtBuffer->GetBufferMemory().mappedData);
 	for (uint32_t g = 0; g < groupCount; g++) {
 		memcpy(pData, shaderHandleStorage.data() + g * groupHandleSize, groupHandleSize);
 		pData += groupSizeAligned;
-	}
+	}*/
 }
 
 TRE_NS_END

@@ -210,7 +210,7 @@ VkBool32 Renderer::RenderInstance::DebugCallback(
         TRE_LOGW("[VALIDATION LAYER]: %s --> %s", pCallbackData->pMessageIdName, pCallbackData->pMessage);
     } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         TRE_LOGE("[VALIDATION LAYER]: %s --> %s", pCallbackData->pMessageIdName, pCallbackData->pMessage);
-        // ASSERT(true); // stop on errors
+        ASSERT(true); // stop on errors
     } else if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
         TRE_LOGI("[VALIDATION LAYER]:GENERAL: %s --> %s", pCallbackData->pMessageIdName, pCallbackData->pMessage);
     } else {

@@ -72,6 +72,8 @@ namespace Renderer
 		FORCEINLINE const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const { return internal.memoryProperties; }
 
 		FORCEINLINE const VkPhysicalDeviceRayTracingPipelinePropertiesKHR& GetRtProperties() const { return internal.rtProperties; }
+
+		FORCEINLINE const VkPhysicalDeviceAccelerationStructureFeaturesKHR& GetAcclFeatures() const { return internal.accelFeatures; }
 	private:
 		void FetchDeviceAvailableExtensions();
 

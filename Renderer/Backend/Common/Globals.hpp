@@ -325,7 +325,11 @@ namespace Renderer
 			VkPhysicalDeviceProperties2			gpuProperties2;
 
 			// RT
-			VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtProperties;
+			VkPhysicalDeviceRayTracingPipelinePropertiesKHR  rtProperties;
+			VkPhysicalDeviceFeatures2						 deviceFeatures2;
+			VkPhysicalDeviceAccelerationStructureFeaturesKHR accelFeatures;
+			VkPhysicalDeviceRayTracingPipelineFeaturesKHR	 rtPipelineFeatures;
+			VkPhysicalDeviceBufferDeviceAddressFeatures		 buffAdrFeatures;
 
 			VkDevice							device;
 			QueueFamilyIndices					queueFamilyIndices;

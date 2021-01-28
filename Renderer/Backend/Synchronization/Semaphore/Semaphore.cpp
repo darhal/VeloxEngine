@@ -5,7 +5,8 @@ TRE_NS_START
 
 void Renderer::SemaphoreDeleter::operator()(Semaphore* semaphore)
 {
-	semaphore->backend.GetObjectsPool().semaphores.Free(semaphore);
+	if (semaphore->clean)
+		semaphore->backend.GetObjectsPool().semaphores.Free(semaphore);
 }
 
 Renderer::Semaphore::~Semaphore()

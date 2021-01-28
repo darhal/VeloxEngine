@@ -51,7 +51,7 @@ void Renderer::Pipeline::Create(RenderBackend& backend, uint32 maxDepth, uint32 
     rayTraceInfo.pLibraryInfo = NULL;
     rayTraceInfo.pLibraryInterface = NULL; // &pipelineInterface;
     rayTraceInfo.basePipelineHandle = VK_NULL_HANDLE;
-    rayTraceInfo.basePipelineIndex = -1;
+    rayTraceInfo.basePipelineIndex = 0;
 
     VkDeferredOperationKHR deferredOperation = VK_NULL_HANDLE;
     vkCreateRayTracingPipelinesKHR(device.GetDevice(), deferredOperation, VK_NULL_HANDLE, 1, &rayTraceInfo, NULL, &pipeline);

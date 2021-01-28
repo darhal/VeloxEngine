@@ -110,10 +110,10 @@ namespace Renderer
 		FORCEINLINE const VkRayTracingShaderGroupCreateInfoKHR* GetShaderGroups() const { return rtShaderGroups.data(); }
 
 		FORCEINLINE const uint32 GetShaderGroupsCount() const { return (uint32)rtShaderGroups.size(); }
-	private:
-		VkPipelineShaderStageCreateInfo* GetShaderStages() { return shaderStagesCreateInfo.data(); }
 
 		static VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& code);
+	private:
+		VkPipelineShaderStageCreateInfo* GetShaderStages() { return shaderStagesCreateInfo.data(); }
 
 		void ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage, std::unordered_set<uint32>& seenDescriptorSets,
 			std::unordered_map<std::string, VkPushConstantRange>& pushConstants, uint32& oldOffset);

@@ -20,13 +20,17 @@ namespace Renderer
 		~Semaphore();
 
 		FORCEINLINE VkSemaphore GetApiObject() const { return semaphore; }
+
+		void SetNoClean() { clean = false; };
 	private:
 		Semaphore(RenderBackend& backend, VkSemaphore semaphore) :
-			backend(backend), semaphore(semaphore)
+			backend(backend), semaphore(semaphore), clean(true)
 		{};
+		
 	private:
 		RenderBackend& backend;
 		VkSemaphore semaphore;
+		bool clean;
 
 		friend struct SemaphoreDeleter;
 		friend class Utils::ObjectPool<Semaphore>;

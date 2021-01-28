@@ -18,12 +18,19 @@ namespace Renderer
 
 		void Init(RenderBackend& backend, const ShaderProgram& program, Pipeline& pipline);
 
-		BufferHandle GetSbtBuffer() const { return sbtBuffer; };
+		// BufferHandle GetSbtBuffer() const { return sbtBuffer; };
 
-		VkDeviceAddress GetSbtAddress() const { return address; }
-	private:
-		BufferHandle sbtBuffer;
-		VkDeviceAddress address;
+		// VkDeviceAddress GetSbtAddress() const { return address; }
+
+		BufferHandle GetSbtBuffer(uint32 i) const { return sbtBuffer[i]; };
+
+		VkDeviceAddress GetSbtAddress(uint32 i) const { return address[i]; }
+
+		const VkStridedDeviceAddressRegionKHR& GetSbtEntry(uint32 i) const { return sbtEntries[i]; }
+	//private:
+		BufferHandle sbtBuffer[4];
+		VkDeviceAddress address[4];
+		VkStridedDeviceAddressRegionKHR sbtEntries[4];
 	};
 }
 

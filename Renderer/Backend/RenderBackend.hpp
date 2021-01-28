@@ -159,9 +159,15 @@ namespace Renderer
 	
 		CommandBufferHandle RequestCommandBuffer(CommandBuffer::Type type = CommandBuffer::Type::GENERIC);
 
-		void Submit(CommandBufferHandle cmd, FenceHandle* fence  = NULL, uint32 semaphoreCount = 0, SemaphoreHandle* semaphores = NULL);
+		SemaphoreHandle GetImageAcquiredSemaphore();
 
-		void SubmitQueue(CommandBuffer::Type type, FenceHandle* fence = NULL, uint32 semaphoreCount = 0, SemaphoreHandle* semaphores = NULL);
+		SemaphoreHandle GetDrawCompletedSemaphore();
+
+		void Submit(CommandBufferHandle cmd, FenceHandle* fence  = NULL, uint32 semaphoreCount = 0, SemaphoreHandle* semaphores = NULL, 
+			bool swapchainSemaphore = false);
+
+		void SubmitQueue(CommandBuffer::Type type, FenceHandle* fence = NULL, uint32 semaphoreCount = 0, SemaphoreHandle* semaphores = NULL, 
+			bool lastSubmit = false);
 
 		void AddWaitSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages, bool flush = false);
 

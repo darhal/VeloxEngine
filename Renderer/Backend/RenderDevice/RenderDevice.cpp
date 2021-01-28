@@ -107,15 +107,15 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
 
     // Enable some device features:
     // TODO: check if the GPU supports this feature
-    VkPhysicalDeviceFeatures2 deviceFeatures2;
-    VkPhysicalDeviceAccelerationStructureFeaturesKHR accelFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR };
-    VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR };
-    VkPhysicalDeviceBufferDeviceAddressFeatures buffAdrFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES };
-    deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    deviceFeatures2.pNext = &accelFeatures;
-    accelFeatures.pNext = &rtPipelineFeatures;
-    rtPipelineFeatures.pNext = &buffAdrFeatures;
-    vkGetPhysicalDeviceFeatures2(internal.gpu, &deviceFeatures2);
+    internal.accelFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+    internal.rtPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+    internal.buffAdrFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+
+    internal.deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    internal.deviceFeatures2.pNext = &internal.accelFeatures;
+    internal.accelFeatures.pNext = &internal.rtPipelineFeatures;
+    internal.rtPipelineFeatures.pNext = &internal.buffAdrFeatures;
+    vkGetPhysicalDeviceFeatures2(internal.gpu, &internal.deviceFeatures2);
 
     //deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
     //deviceFeatures2.features.fillModeNonSolid = VK_TRUE;
@@ -126,7 +126,7 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
 
     VkDeviceCreateInfo createInfo;
     createInfo.sType                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.pNext                    = &deviceFeatures2;
+    createInfo.pNext                    = &internal.deviceFeatures2;
     createInfo.flags                    = 0;
     createInfo.pEnabledFeatures         = NULL;//&deviceFeatures2.features;
 

@@ -83,7 +83,7 @@ void Renderer::CommandBuffer::BeginRenderPass(VkClearColorValue clearColor)
 
 void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubpassContents contents)
 {
-    ASSERT(type != Type::GENERIC);
+    ASSERT(type == Type::ASYNC_COMPUTE || type == Type::ASYNC_TRANSFER);
 
     renderPass = &renderBackend->RequestRenderPass(info);
     framebuffer = &renderBackend->RequestFramebuffer(info, renderPass);
@@ -366,6 +366,26 @@ void Renderer::CommandBuffer::SetAccelerationStrucure(uint32 set, uint32 binding
     dirty.sets |= (1u << set);
 }
 
+void Renderer::CommandBuffer::SetAccelerationStrucure(uint32 set, uint32 binding, VkAccelerationStructureKHR* tlas)
+{
+    ASSERT(set >= MAX_DESCRIPTOR_SET);
+    ASSERT(binding >= MAX_DESCRIPTOR_BINDINGS);
+    auto& b = bindings.bindings[set][binding];
+
+    // TODO: maybe some checks here in the future!
+    //if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
+    //    return;
+    //}
+
+    b.resource.accl.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+    b.resource.accl.pNext = NULL;
+    b.resource.accl.accelerationStructureCount = 1;
+    b.resource.accl.pAccelerationStructures = tlas;
+
+    bindings.cache[set][binding] = (uint64)(*tlas);
+    dirty.sets |= (1u << set);
+}
+
 void Renderer::CommandBuffer::TraceRays(uint32 width, uint32 height, uint32 depth)
 {
     // TODO: out image!
@@ -378,7 +398,7 @@ void Renderer::CommandBuffer::TraceRays(uint32 width, uint32 height, uint32 dept
     const RenderDevice& device = renderBackend->GetRenderDevice();
     const uint32_t groupHandleSize = device.GetRtProperties().shaderGroupHandleSize;  // Size of a program identifier
     const uint32_t baseAlignment = device.GetRtProperties().shaderGroupBaseAlignment;  // Size of shader alignment
-    auto sbtAddress = pipeline->GetSBT().GetSbtAddress();
+    const auto& sbt = pipeline->GetSBT();
 
     // Size of a program identifier
     const uint32_t groupSize = Utils::AlignUp(groupHandleSize, baseAlignment);
@@ -386,15 +406,35 @@ void Renderer::CommandBuffer::TraceRays(uint32 width, uint32 height, uint32 dept
 
     using Stride = VkStridedDeviceAddressRegionKHR;
 
-    std::array<Stride, 4> strideAddresses{
+    /*std::array<Stride, 4> strideAddresses{
         Stride{sbtAddress + 0u * groupSize, groupStride, groupSize * 1},  // raygen
         Stride{sbtAddress + 1u * groupSize, groupStride, groupSize * 1},  // miss
         Stride{sbtAddress + 2u * groupSize, groupStride, groupSize * 1},  // hit
         Stride{0u, 0u, 0u} 
+    };*/
+
+    std::array<Stride, 4> strideAddresses{
+        Stride{sbt.GetSbtAddress(0), groupSize, groupSize},  // raygen
+        Stride{sbt.GetSbtAddress(1), groupSize, groupSize},  // miss
+        Stride{sbt.GetSbtAddress(2), groupSize, groupSize},  // hit
+        Stride{0u, 0u, 0u}
     };
 
     vkCmdTraceRaysKHR(commandBuffer, &strideAddresses[0], &strideAddresses[1], &strideAddresses[2], &strideAddresses[3], width, height, depth);
 }
+
+void Renderer::CommandBuffer::TraceRays(VkPipeline pipeline, const SBT& sbt, uint32 width, uint32 height, uint32 depth)
+{
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
+    this->FlushDescriptorSets();
+
+    auto& raygen = sbt.GetSbtEntry(0);
+    auto& raymiss = sbt.GetSbtEntry(1);
+    auto& rayhist = sbt.GetSbtEntry(2);
+    auto& raycall = sbt.GetSbtEntry(3);
+    vkCmdTraceRaysKHR(commandBuffer, &raygen, &raymiss, &rayhist, &raycall, width, height, depth);
+}
+
 
 void Renderer::CommandBuffer::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
 {
@@ -582,8 +622,8 @@ void Renderer::CommandBuffer::CopyImage(const Image& srcImage, const Image& dstI
 void Renderer::CommandBuffer::CopyImage(const Image& srcImage, const Image& dstImage, const VectorView<VkImageCopy>& regions)
 {
     vkCmdCopyImage(commandBuffer,
-        srcImage.GetApiObject(), srcImage.GetInfo().layout,
-        dstImage.GetApiObject(), dstImage.GetInfo().layout,
+        srcImage.GetApiObject(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        dstImage.GetApiObject(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         regions.size, regions.data
     );
 }
@@ -698,6 +738,31 @@ void Renderer::CommandBuffer::ImageBarrier(const Image& image, VkImageLayout old
     barrier.subresourceRange = { FormatToAspectMask(image.GetInfo().format), 0, image.GetInfo().levels, 0, image.GetInfo().layers };
 
     vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, NULL, 0, NULL, 1, &barrier);
+}
+
+void Renderer::CommandBuffer::ChangeImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, 
+    VkImageSubresourceRange subresourceRange, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask)
+{
+    VkImageMemoryBarrier imageMemoryBarrier;
+    imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    imageMemoryBarrier.pNext = NULL;
+    imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageMemoryBarrier.oldLayout = oldLayout;
+    imageMemoryBarrier.newLayout = newLayout;
+    imageMemoryBarrier.image = image.GetApiObject();
+    imageMemoryBarrier.subresourceRange = subresourceRange;
+    imageMemoryBarrier.srcAccessMask = ImageOldLayoutToPossibleSrcAccess(oldLayout);
+    imageMemoryBarrier.dstAccessMask = ImageNewLayoutToPossibleDstAccess(newLayout, &imageMemoryBarrier);
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        srcStageMask,
+        dstStageMask,
+        0,
+        0, NULL,
+        0, NULL,
+        1, &imageMemoryBarrier);
 }
 
 void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings)

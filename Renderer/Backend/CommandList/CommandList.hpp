@@ -24,6 +24,7 @@ namespace Renderer
 	class Pipeline;
 	struct RenderPassInfo;
 
+	class SBT;
 	class Tlas;
 
 	struct DescriptorSetDirty
@@ -112,7 +113,11 @@ namespace Renderer
 		// Ray Tracing
 		void SetAccelerationStrucure(uint32 set, uint32 binding, const Tlas& tlas);
 
+		void SetAccelerationStrucure(uint32 set, uint32 binding, VkAccelerationStructureKHR* tlas);
+
 		void TraceRays(uint32 width, uint32 height, uint32 depth = 1);
+
+		void TraceRays(VkPipeline pipeline, const SBT& sbt, uint32 width, uint32 height, uint32 depth = 1);
 
 		void CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, DeviceSize size, DeviceSize srcOffset = 0, DeviceSize dstOffset = 0);
 
@@ -181,6 +186,10 @@ namespace Renderer
 
 		void ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags srcStage, 
 			VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
+
+		void ChangeImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange,
+			VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 
+			VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
 
 		FORCEINLINE VkCommandBuffer GetApiObject() const { return commandBuffer; }

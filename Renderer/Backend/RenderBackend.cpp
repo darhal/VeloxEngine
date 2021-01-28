@@ -132,19 +132,22 @@ VkQueue Renderer::RenderBackend::GetQueue(CommandBuffer::Type type)
     return renderDevice.GetQueue(typeIndex);
 }
 
-void Renderer::RenderBackend::Submit(CommandBufferHandle cmd, FenceHandle* fence, uint32 semaphoreCount, SemaphoreHandle* semaphores)
+void Renderer::RenderBackend::Submit(CommandBufferHandle cmd, FenceHandle* fence, uint32 semaphoreCount, 
+    SemaphoreHandle* semaphores, bool swapchainSemaphore )
 {
     cmd->End();
 
     PerFrame& frame = Frame();
-    CommandBufferHandle& handle = frame.submissions[(uint32)cmd->GetType()].EmplaceBack(std::move(cmd));
+    uint32 type = (uint32)cmd->GetType();
+    CommandBufferHandle& handle = frame.submissions[type].EmplaceBack(std::move(cmd));
 
-    if (fence || semaphoreCount) {
-        this->SubmitQueue(handle->GetType(), fence, semaphoreCount, semaphores);
+    if (fence || semaphoreCount || swapchainSemaphore) {
+        this->SubmitQueue((CommandBuffer::Type)type, fence, semaphoreCount, semaphores, swapchainSemaphore);
     }
 }
 
-void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle* fence, uint32 semaphoreCount, SemaphoreHandle* semaphores)
+void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle* fence, uint32 semaphoreCount, 
+    SemaphoreHandle* semaphores, bool lastSubmit)
 {
     if (type != CommandBuffer::Type::ASYNC_TRANSFER)
         this->FlushQueue(CommandBuffer::Type::ASYNC_TRANSFER);
@@ -185,9 +188,10 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
         signals.EmplaceBack(sem);
     }
 
-    if (swapchainCommandBuffer) {
-        auto cmdBuff = swapchainCommandBuffer->GetApiObject();
-        data.waitStages.PushBack(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    if (swapchainCommandBuffer || lastSubmit) {
+        VkPipelineStageFlagBits stage = swapchainCommandBuffer ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT 
+            : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        data.waitStages.PushBack(stage);
         waits.EmplaceBack(renderContext.GetImageAcquiredSemaphore());
         signals.EmplaceBack(renderContext.GetDrawCompletedSemaphore());
     }
@@ -291,13 +295,17 @@ void Renderer::RenderBackend::EndFrame()
     for (uint32 type : subOrder) {
         if (frame.submissions[type].Size()) {
             CommandBuffer::Type qType = (CommandBuffer::Type)type;
-            this->SubmitQueue(qType, &fence);
+            this->SubmitQueue(qType);
             frame.waitFences.EmplaceBack(fence->GetApiObject());
             frame.recycleFences.EmplaceBack(fence->GetApiObject());
         }
     }
 
-    this->SubmitQueue(CommandBuffer::Type::GENERIC);
+    auto& submissions = this->GetQueueSubmissions(CommandBuffer::Type::GENERIC);
+    if (submissions.Size() != 0) {
+        this->SubmitQueue(CommandBuffer::Type::GENERIC, NULL, 0, NULL, true);
+    }
+
     renderContext.EndFrame(renderDevice);
 }
 
@@ -458,6 +466,7 @@ Renderer::ImageHandle Renderer::RenderBackend::CreateImage(const ImageCreateInfo
     info.samples     = createInfo.samples;
     info.usage       = createInfo.usage;
     info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    info.queueFamilyIndexCount = 0;
 
     switch(createInfo.domain) {
     case ImageDomain::PHYSICAL:
@@ -663,9 +672,23 @@ Renderer::CommandBufferHandle Renderer::RenderBackend::RequestCommandBuffer(Comm
 
     PerFrame& frame = Frame();
     VkCommandBuffer buffer = frame.commandPools[0][typeIndex].RequestCommandBuffer();
-    CommandBufferHandle handle(objectsPool.commandBuffers.Allocate(this, buffer, type));
+    CommandBufferHandle handle(objectsPool.commandBuffers.Allocate(this, buffer, (CommandBuffer::Type)typeIndex));
     handle->Begin();
     return handle;
+}
+
+Renderer::SemaphoreHandle Renderer::RenderBackend::GetImageAcquiredSemaphore()
+{
+    SemaphoreHandle ptr(objectsPool.semaphores.Allocate(*this, renderContext.GetImageAcquiredSemaphore()));
+    ptr->SetNoClean();
+    return ptr;
+}
+
+Renderer::SemaphoreHandle Renderer::RenderBackend::GetDrawCompletedSemaphore()
+{
+    SemaphoreHandle ptr(objectsPool.semaphores.Allocate(*this, renderContext.GetDrawCompletedSemaphore()));
+    ptr->SetNoClean();
+    return ptr;
 }
 
 Renderer::DescriptorSetAllocator* Renderer::RenderBackend::RequestDescriptorSetAllocator(const DescriptorSetLayout& layout)

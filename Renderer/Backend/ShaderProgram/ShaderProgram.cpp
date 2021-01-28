@@ -183,8 +183,6 @@ Renderer::ShaderProgram::ShaderProgram(RenderBackend& renderBackend, const std::
         shaderStagesCreateInfo.push_back({ VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO });
         auto& currentModule = shaderModules.back();
         auto& currentStage = shaderStagesCreateInfo.back();
-
-        currentModule = CreateShaderModule(renderDevice.GetDevice(), shaderCode);
         this->ReflectShaderCode(shaderCode.data(), shaderCode.size(), shaderStage.shaderStage, seenDescriptorSets, pushConstants, offset);
 
         //currentStage.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
