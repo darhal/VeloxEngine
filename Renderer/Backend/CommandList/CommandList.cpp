@@ -396,31 +396,14 @@ void Renderer::CommandBuffer::TraceRays(uint32 width, uint32 height, uint32 dept
     this->FlushDescriptorSets();
 
     const RenderDevice& device = renderBackend->GetRenderDevice();
-    const uint32_t groupHandleSize = device.GetRtProperties().shaderGroupHandleSize;  // Size of a program identifier
-    const uint32_t baseAlignment = device.GetRtProperties().shaderGroupBaseAlignment;  // Size of shader alignment
     const auto& sbt = pipeline->GetSBT();
 
-    // Size of a program identifier
-    const uint32_t groupSize = Utils::AlignUp(groupHandleSize, baseAlignment);
-    const uint32_t groupStride = groupSize;
-
-    using Stride = VkStridedDeviceAddressRegionKHR;
-
-    /*std::array<Stride, 4> strideAddresses{
-        Stride{sbtAddress + 0u * groupSize, groupStride, groupSize * 1},  // raygen
-        Stride{sbtAddress + 1u * groupSize, groupStride, groupSize * 1},  // miss
-        Stride{sbtAddress + 2u * groupSize, groupStride, groupSize * 1},  // hit
-        Stride{0u, 0u, 0u} 
-    };*/
-
-    std::array<Stride, 4> strideAddresses{
-        Stride{sbt.GetSbtAddress(0), groupSize, groupSize},  // raygen
-        Stride{sbt.GetSbtAddress(1), groupSize, groupSize},  // miss
-        Stride{sbt.GetSbtAddress(2), groupSize, groupSize},  // hit
-        Stride{0u, 0u, 0u}
-    };
-
-    vkCmdTraceRaysKHR(commandBuffer, &strideAddresses[0], &strideAddresses[1], &strideAddresses[2], &strideAddresses[3], width, height, depth);
+    vkCmdTraceRaysKHR(commandBuffer, 
+        &sbt.GetSbtEntry(0), 
+        &sbt.GetSbtEntry(1),
+        &sbt.GetSbtEntry(2),
+        &sbt.GetSbtEntry(3),
+        width, height, depth);
 }
 
 void Renderer::CommandBuffer::TraceRays(VkPipeline pipeline, const SBT& sbt, uint32 width, uint32 height, uint32 depth)

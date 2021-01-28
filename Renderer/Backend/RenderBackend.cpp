@@ -213,7 +213,7 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
         vkFence = (*fence)->GetApiObject();
     }
 
-    if (swapchainCommandBuffer) {
+    if (swapchainCommandBuffer || lastSubmit) {
         vkFence = renderContext.GetFrameFence();
     }
 
@@ -273,6 +273,7 @@ void Renderer::RenderBackend::BeginFrame()
     }
 
     renderContext.BeginFrame(renderDevice, stagingManager);
+
     framebufferAllocator.BeginFrame();
     transientAttachmentAllocator.BeginFrame();
 

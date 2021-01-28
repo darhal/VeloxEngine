@@ -100,7 +100,7 @@ namespace Renderer
 
 		~RenderBackend();
 
-		void InitInstance(uint32 usage);
+		void InitInstance(uint32 usage = 0);
 
 		void BeginFrame();
 

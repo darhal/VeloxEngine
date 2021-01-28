@@ -122,7 +122,6 @@ void Renderer::AsBuilder::BuildTlasBatch()
 	auto cmdBuff = renderDevice.CreateCmdBuffer(stage->cmdPool);
 
 	if (fenceSet) {
-		printf("TLAS:Waiting for fence\n");
 		vkWaitForFences(renderDevice.GetDevice(), 1, &stage->fence, VK_TRUE, UINT64_MAX);
 		vkResetFences(renderDevice.GetDevice(), 1, &stage->fence);
 		stage->submitted = false;
@@ -305,7 +304,6 @@ void Renderer::AsBuilder::CompressBatch(RenderBackend& backend)
 	}
 
 	if (fenceSet) {
-		printf("Waiting for fence\n");
 		vkWaitForFences(renderDevice.GetDevice(), 1, &stage->fence, VK_TRUE, UINT64_MAX);
 		vkResetFences(renderDevice.GetDevice(), 1, &stage->fence);
 		stage->submitted = false;

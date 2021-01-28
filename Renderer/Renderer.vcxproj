@@ -218,6 +218,7 @@
     <ClInclude Include="Core\Logs\Logs.hpp" />
     <ClInclude Include="Core\StaticString\StaticString.hpp" />
     <ClInclude Include="Core\StaticVector\StaticVector.hpp" />
+    <ClInclude Include="zApp\Camera.hpp" />
     <ClInclude Include="zApp\cube.hpp" />
     <ClInclude Include="Backend\Images\Image.hpp" />
     <ClInclude Include="Backend\Images\ImageHelper.hpp" />
@@ -546,6 +547,7 @@
     <ClCompile Include="Window\Window_Win32.cpp" />
     <ClCompile Include="zApp\raster.cpp" />
     <ClCompile Include="zApp\raytracing.cpp" />
+    <ClCompile Include="zApp\rt2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="glm\detail\func_common.inl" />

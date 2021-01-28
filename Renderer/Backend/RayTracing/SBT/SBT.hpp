@@ -22,14 +22,14 @@ namespace Renderer
 
 		// VkDeviceAddress GetSbtAddress() const { return address; }
 
-		BufferHandle GetSbtBuffer(uint32 i) const { return sbtBuffer[i]; };
+		BufferHandle GetSbtBuffer() const { return sbtBuffer; };
 
-		VkDeviceAddress GetSbtAddress(uint32 i) const { return address[i]; }
+		VkDeviceAddress GetSbtAddress() const { return address; }
 
 		const VkStridedDeviceAddressRegionKHR& GetSbtEntry(uint32 i) const { return sbtEntries[i]; }
 	//private:
-		BufferHandle sbtBuffer[4];
-		VkDeviceAddress address[4];
+		BufferHandle sbtBuffer;
+		VkDeviceAddress address;
 		VkStridedDeviceAddressRegionKHR sbtEntries[4];
 	};
 }

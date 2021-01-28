@@ -50,6 +50,8 @@ namespace Renderer
 
 		FORCEINLINE RenderDevice* GetRenderDevice() const { return renderDevice; }
 
+		FORCEINLINE const VkExtent2D& GetSwapchainExtent() const { return swapchain.swapchainData.swapChainExtent; }
+
 		void BeginFrame(const RenderDevice& renderDevice, StagingManager& stagingManager);
 
 		void EndFrame(const RenderDevice& renderDevice);
