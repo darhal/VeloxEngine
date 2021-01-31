@@ -57,6 +57,11 @@ public:
 	void Present();
 
 	void* GetNativeHandle();
+
+#if defined(OS_LINUX)
+	::Window GetWindowHandle() const { return window;}
+#endif
+
 public:
 	Vec2<uint32> windowSize;
 	Vec2<int32> windowPosition;

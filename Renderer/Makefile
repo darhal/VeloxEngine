@@ -23,7 +23,7 @@ OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
 DEPS = $(OBJECTS:.o=.d)
 
 # flags #
-COMPILE_FLAGS = -std=c++17 -msse2 -O3
+COMPILE_FLAGS = -std=c++17 -msse2 -O3 -g
 INCLUDES = -I $(PROJECT_PATH)
 # Space-separated pkg-config libraries used by this project
 LIBS = -lm -lX11 -lXrandr -pthread -lXi -ldl -lvulkan

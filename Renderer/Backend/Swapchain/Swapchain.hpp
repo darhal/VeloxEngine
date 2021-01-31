@@ -94,7 +94,7 @@ namespace Renderer
         VkPresentModeKHR ChooseSwapPresentMode(const TRE::Vector<VkPresentModeKHR>& availablePresentModes);
         VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, const VkExtent2D& extent);
 
-        FORCEINLINE VkFramebuffer GetCurrentFramebuffer() const;
+        VkFramebuffer GetCurrentFramebuffer() const;
 
         FORCEINLINE const SwapchainData& GetSwapchainData() const { return swapchainData; }
 

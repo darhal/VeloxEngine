@@ -1,7 +1,7 @@
 #include "ShaderProgram.hpp"
 #include <Renderer/Backend/Common/Utils.hpp>
 #include <Renderer/Backend/RenderBackend.hpp>
-#include <Renderer/Backend/ShaderProgram/ShaderReflect/spirv_reflect.h>
+#include <Renderer/Backend/ShaderProgram/ShaderReflect/spirv_reflect.hpp>
 
 TRE_NS_START
 

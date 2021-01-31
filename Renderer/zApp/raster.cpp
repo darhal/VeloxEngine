@@ -117,7 +117,7 @@ int raster()
     Event ev;
     TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
     RenderBackend backend{ &window };
-    backend.InitInstance(RenderBackend::RAY_TRACING);
+    backend.InitInstance();
     // backend.SetSamplerCount(2);
 
     if (backend.GetMSAASamplerCount() == 1) {
@@ -167,7 +167,7 @@ int raster()
 
     // TODO: NEED WORK ON MEMORY FREEING!! (THIS IS DONE) (However we need to detect dedicated allocations from non dedicated allocs!)
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load("assets/box1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load("Assets/box1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     ImageHandle texture = backend.CreateImage(ImageCreateInfo::Texture2D(texWidth, texHeight, true), pixels);
@@ -187,8 +187,8 @@ int raster()
 
     ShaderProgram program(backend,
         {
-            {"shaders/vert.spv", ShaderProgram::VERTEX},
-            {"shaders/frag.spv", ShaderProgram::FRAGMENT}
+            {"Shaders/vert.spv", ShaderProgram::VERTEX},
+            {"Shaders/frag.spv", ShaderProgram::FRAGMENT}
         });
     program.GetVertexInput().AddBinding(
         0, sizeof(Vertex),

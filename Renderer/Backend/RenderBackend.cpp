@@ -45,7 +45,8 @@ void Renderer::RenderBackend::InitInstance(uint32 usage)
     eventManager.Init(&renderDevice);
 
     // RT: 
-    acclBuilder.Init();
+    if (usage & RAY_TRACING) 
+        acclBuilder.Init();
 
     this->Init();
 

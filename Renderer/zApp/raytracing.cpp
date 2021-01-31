@@ -4,14 +4,6 @@
 #include <iostream>
 #include <chrono>
 #include <future>
-#include <Renderer/Window/Window.hpp>
-#include <Renderer/Backend/RenderBackend.hpp>
-#include <Renderer/Backend/Swapchain/Swapchain.hpp>
-#include <Renderer/Backend/Buffers/Buffer.hpp>
-#include <Renderer/Backend/Pipeline/Pipeline.hpp>
-#include <Renderer/Backend/Common/Utils.hpp>
-#include <Renderer/Misc/Color/Color.hpp>
-#include <Renderer/Core/Alignement/Alignement.hpp>
 
 #include "Shared.hpp"
 #include "Camera.hpp"
@@ -39,7 +31,7 @@ struct CameraUBO
 
 bool operator!=(const VkExtent2D& e1, const VkExtent2D& e2)
 {
-    return e1.width != e2.width || e2.height != e2.height;
+    return e1.width != e2.width || e1.height != e2.height;
 }
 
 using namespace TRE::Renderer;

@@ -114,7 +114,7 @@ Window::Window(uint width, uint height, const std::string& title, WindowStyle::w
 
 void* TRE::Window::GetNativeHandle()
 {
-	return (void*)window;
+	return (void*)display;
 }
 
 Window::~Window()
@@ -211,6 +211,11 @@ void Window::EnableFullscreen(bool enabled, int width, int height)
 		XRRSetScreenConfig(display, config, RootWindow(display, screen), oldVideoMode, currentRotation, CurrentTime);
 		XRRFreeScreenConfigInfo(config);
 	}
+}
+
+void TRE::Window::WaitEvents()
+{
+
 }
 
 void Window::WindowEvent(const XEvent& event)

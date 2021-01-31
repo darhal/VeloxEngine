@@ -29,7 +29,7 @@ namespace Renderer
 		{\
 			VkResult r;\
 			if ((r = cmd) != VK_SUCCESS) {\
-				printf("[VK ERROR]: %s\n", GetVulkanResultString(r));\
+				TRE_LOGE("[VK ERROR]: %s", GetVulkanResultString(r));\
 			}\
 		}\
 
@@ -40,7 +40,7 @@ namespace Renderer
 #if defined(OS_WINDOWS)
 		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 #elif defined(OS_LINUX)
-		VK_KHR_XLIB_SURFACE_EXTENSION_NAME
+		VK_KHR_XLIB_SURFACE_EXTENSION_NAME,
 #endif
 #if defined(DEBUG) && defined(VALIDATION_LAYERS)
 		VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
@@ -90,7 +90,7 @@ namespace Renderer
 	CONSTEXPR static uint32	MAX_DESCRIPTOR_SET		= 4;
 	CONSTEXPR static uint32	MAX_DESCRIPTOR_BINDINGS = 16;
 	CONSTEXPR static uint32 MAX_DESCRIPTOR_TYPES	= 11;
-	CONSTEXPR static uint32 MAX_SETS_PER_POOL		= 16;
+	CONSTEXPR static uint32 MAX_SETS_PER_POOL		= 1; // this have to be 1 on Intel graphics dunno why!
 	CONSTEXPR static uint32 MAX_PUSH_CONSTANT_SIZE  = 128;
 	CONSTEXPR static uint32 MAX_SHADER_CONSTANTS    = 16;
 

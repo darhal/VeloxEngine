@@ -53,7 +53,7 @@ namespace Renderer
 		VkResult SubmitCmdBuffer(uint32 queueType, VkCommandBuffer* cmdBuff, uint32 cmdCount, VkPipelineStageFlags waitStage,
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence = VK_NULL_HANDLE) const;
 
-		FORCEINLINE VkDeviceAddress GetBufferAddress(BufferHandle buff) const;
+		VkDeviceAddress GetBufferAddress(BufferHandle buff) const;
 
 		FORCEINLINE VkDevice GetDevice() const { return internal.device; }
 

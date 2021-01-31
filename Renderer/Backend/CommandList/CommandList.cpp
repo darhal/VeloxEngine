@@ -11,7 +11,6 @@
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 #include <Renderer/Backend/Pipeline/GraphicsState/GraphicsState.hpp>
 #include <Renderer/Core/Alignement/Alignement.hpp>
-
 #include <Renderer/Backend/RayTracing/TLAS/TLAS.hpp>
 
 TRE_NS_START
