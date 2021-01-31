@@ -3,7 +3,7 @@
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/RenderContext/RenderContext.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Backend/SwapChain/SwapChain.hpp>
+#include <Renderer/Backend/Swapchain/Swapchain.hpp>
 #include <Renderer/Backend/Images/Image.hpp>
 
 TRE_NS_START

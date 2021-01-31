@@ -1,4 +1,4 @@
-#include "Tlas.hpp"
+#include "TLAS.hpp"
 #include <Renderer/Backend/RenderBackend.hpp>
 
 TRE_NS_START

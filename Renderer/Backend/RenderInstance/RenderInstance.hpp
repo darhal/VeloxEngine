@@ -1,11 +1,14 @@
 #pragma once
 
-#include <Renderer/Common.hpp>
-#include <Renderer/Backend/Common/Globals.hpp>
-#include <Engine/Core/DataStructure/Array/Array.hpp>
-#include <Renderer/Core/StaticString/StaticString.hpp>
 #include <initializer_list>
 #include <unordered_set>
+
+// #include <Engine/Core/DataStructure/Array/Array.hpp>
+
+#include <Renderer/Common.hpp>
+#include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Core/StaticString/StaticString.hpp>
+
 
 TRE_NS_START
 

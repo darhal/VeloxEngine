@@ -12,7 +12,8 @@ namespace Renderer
         int32 CreateWindowSurface(const RenderInstance& instance, RenderContext& ctx, const VkAllocationCallbacks* allocator = NULL);
 
         void DestroryWindowSurface(VkInstance renderInstance, VkSurfaceKHR surface);
-
+        
+#if defined(OS_WINDOWS)
         typedef VkFlags VkWin32SurfaceCreateFlagsKHR;
 
         typedef struct VkWin32SurfaceCreateInfoKHR
@@ -25,6 +26,7 @@ namespace Renderer
         } VkWin32SurfaceCreateInfoKHR;
 
         typedef VkResult(APIENTRY* PFN_vkCreateWin32SurfaceKHR)(VkInstance, const VkWin32SurfaceCreateInfoKHR*, const VkAllocationCallbacks*, VkSurfaceKHR*);
+#endif
     }
 };
 

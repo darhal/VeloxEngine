@@ -1,5 +1,4 @@
 #if defined(RT_PROTO)
-#include "pch.hpp"
 
 #include <vulkan/vulkan.h>
 #include <vector>

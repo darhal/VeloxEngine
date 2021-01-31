@@ -11,12 +11,12 @@
 
 struct Vertex
 {
-    TRE::vec3 pos;
-    TRE::vec3 color;
-    TRE::vec2 tex;
-    TRE::vec3 normal;
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec2 tex;
+    glm::vec3 normal;
 
-    Vertex(const TRE::vec3& pos, const TRE::vec3 color, TRE::vec2 tex, TRE::vec3 normal) :
+    Vertex(const glm::vec3& pos, const glm::vec3 color, glm::vec2 tex, glm::vec3 normal) :
         pos(pos), color(color), tex(tex), normal(normal)
     {
     }
@@ -64,13 +64,13 @@ static TRE::Renderer::RenderPassInfo GetRenderPass(TRE::Renderer::RenderBackend&
 
 static void printFPS(float dt = 0.f)
 {
-    static std::chrono::time_point<std::chrono::steady_clock> oldTime = std::chrono::high_resolution_clock::now();
+    static std::chrono::time_point<std::chrono::steady_clock> oldTime = std::chrono::steady_clock::now();
     static int fps;
 
     fps++;
 
-    if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - oldTime) >= std::chrono::seconds{ 1 }) {
-        oldTime = std::chrono::high_resolution_clock::now();
+    if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - oldTime) >= std::chrono::seconds{ 1 }) {
+        oldTime = std::chrono::steady_clock::now();
         std::cout << "FPS: " << fps << " - dt: " << dt << "ms" << std::endl;
         fps = 0;
     }

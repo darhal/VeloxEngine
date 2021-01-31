@@ -4,18 +4,20 @@
 #include <array>
 #include <initializer_list>
 
-#include <Renderer/Common.hpp>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
-#include <Engine/Core/Misc/Maths/Common.hpp>
+// #include <Engine/Core/Misc/Maths/Common.hpp>
+
+#include <Renderer/Common.hpp>
 #include <Renderer/Core/ObjectPool/ObjectPool.hpp>
 #include <Renderer/Core/Allocators/StackAllocator.hpp>
 #include <Renderer/Core/Hash/Hash.hpp>
 #include <Renderer/Core/Handle/Handle.hpp>
 #include <Renderer/Core/Hash/Hashable.hpp>
 #include <Renderer/Core/StaticVector/StaticVector.hpp>
+#include <Renderer/Core/ArrayView/ArrayView.hpp>
+
 #include "Utils.hpp"
 #include "Loader/Extensions.hpp"
-#include <Renderer/Core/ArrayView/ArrayView.hpp>
 
 TRE_NS_START
 
@@ -34,8 +36,12 @@ namespace Renderer
 	const std::initializer_list<const char*> VK_REQ_EXT = {
 		VK_KHR_SURFACE_EXTENSION_NAME,
 		VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 
+#if defined(OS_WINDOWS)
+		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#elif defined(OS_LINUX)
+		VK_KHR_XLIB_SURFACE_EXTENSION_NAME
+#endif
 #if defined(DEBUG) && defined(VALIDATION_LAYERS)
 		VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 		VK_EXT_DEBUG_REPORT_EXTENSION_NAME,

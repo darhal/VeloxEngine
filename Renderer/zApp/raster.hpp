@@ -1,14 +1,15 @@
 #pragma once
 
-#include "pch.hpp"
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <iostream>
 #include <chrono>
 #include <future>
+
+#include <Renderer/Common.hpp>
 #include <Renderer/Window/Window.hpp>
 #include <Renderer/Backend/RenderBackend.hpp>
-#include <Renderer/Backend/SwapChain/SwapChain.hpp>
+#include <Renderer/Backend/Swapchain/Swapchain.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Pipeline/Pipeline.hpp>
 #include <Renderer/Backend/Common/Utils.hpp>

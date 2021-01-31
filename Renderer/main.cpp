@@ -25,11 +25,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #include <glm/gtc/matrix_transform.hpp>
 #include <Renderer/Misc/stb_image.hpp>
 
-//#define RASTER
+#define RASTER
 #ifdef RASTER
-#include <zApp/raster.hpp>
+#include <Renderer/zApp/raster.hpp>
 #else
-#include <zApp/raytracing.hpp>
+#include <Renderer/zApp/raytracing.hpp>
 #endif
 
 int main()

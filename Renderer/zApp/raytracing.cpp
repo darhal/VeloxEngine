@@ -1,4 +1,3 @@
-#include "pch.hpp"
 
 #include <vulkan/vulkan.h>
 #include <vector>
@@ -7,7 +6,7 @@
 #include <future>
 #include <Renderer/Window/Window.hpp>
 #include <Renderer/Backend/RenderBackend.hpp>
-#include <Renderer/Backend/SwapChain/SwapChain.hpp>
+#include <Renderer/Backend/Swapchain/Swapchain.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Pipeline/Pipeline.hpp>
 #include <Renderer/Backend/Common/Utils.hpp>
@@ -73,7 +72,7 @@ int rt()
     using namespace TRE;
 
     Event ev;
-    Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
+    TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
     RenderBackend backend{ &window };
     backend.InitInstance(RenderBackend::RAY_TRACING);
     // backend.SetSamplerCount(2);
@@ -89,10 +88,10 @@ int rt()
     Vertex vertecies[12 * 3];;
 
     for (int32_t i = 0; i < 12 * 3; i++) {
-        vertecies[i].pos = TRE::vec3{ g_vertex_buffer_data[i * 3], g_vertex_buffer_data[i * 3 + 1], g_vertex_buffer_data[i * 3 + 2] };
-        vertecies[i].tex = TRE::vec2{ g_uv_buffer_data[2 * i], g_uv_buffer_data[2 * i + 1] };
-        vertecies[i].color = TRE::vec3{ 81.f / 255.f, 254.f / 255.f, 115.f / 255.f };
-        vertecies[i].normal = TRE::vec3{ g_normal_buffer_data[i * 3], g_normal_buffer_data[i * 3 + 1], g_normal_buffer_data[i * 3 + 2] };
+        vertecies[i].pos = glm::vec3{ g_vertex_buffer_data[i * 3], g_vertex_buffer_data[i * 3 + 1], g_vertex_buffer_data[i * 3 + 2] };
+        vertecies[i].tex = glm::vec2{ g_uv_buffer_data[2 * i], g_uv_buffer_data[2 * i + 1] };
+        vertecies[i].color = glm::vec3{ 81.f / 255.f, 254.f / 255.f, 115.f / 255.f };
+        vertecies[i].normal = glm::vec3{ g_normal_buffer_data[i * 3], g_normal_buffer_data[i * 3 + 1], g_normal_buffer_data[i * 3 + 2] };
     }
 
     std::vector<uint32> indicies(12 * 3);

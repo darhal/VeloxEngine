@@ -10,8 +10,9 @@ int32 Renderer::Internal::CreateWindowSurface(const RenderInstance& renderInstan
 	ASSERT(renderInstance.instance == NULL);
 
     VkInstance instance = renderInstance.instance;
-
     VkResult err;
+
+#if defined(OS_WINDOWS)
     VkWin32SurfaceCreateInfoKHR sci{};
     PFN_vkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR;
 
@@ -31,6 +32,7 @@ int32 Renderer::Internal::CreateWindowSurface(const RenderInstance& renderInstan
     if (err) {
         ASSERTF(true, "Win32: Failed to create Vulkan surface: %s", GetVulkanResultString(err));
     }
+#endif
 
     return err;
 }

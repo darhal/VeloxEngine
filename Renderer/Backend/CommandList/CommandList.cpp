@@ -1,7 +1,7 @@
 #include "CommandList.hpp"
 #include <Renderer/Backend/RenderBackend.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Backend/Pipeline/pipeline.hpp>
+#include <Renderer/Backend/Pipeline/Pipeline.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Descriptors/DescriptorSetAlloc.hpp>
 #include <Renderer/Backend/Images/Image.hpp>
