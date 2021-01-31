@@ -34,6 +34,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 int main()
 {
+    // this is a test
 #ifdef RASTER
     raster();
 #else
