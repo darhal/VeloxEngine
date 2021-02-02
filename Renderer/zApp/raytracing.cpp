@@ -120,7 +120,7 @@ int rt()
     BlasCreateInfo info;
     info.AddGeometry(
         backend.GetRenderDevice().GetBufferAddress(acclBuffer),
-        sizeof(Vertex), 12*3, NULL, 
+        sizeof(Vertex), 12*3, VK_NULL_HANDLE,
         backend.GetRenderDevice().GetBufferAddress(acclIndexBuffer), 
         { 12, 0, 0, 0 }
     );

@@ -18,6 +18,7 @@
 #include <Renderer/Core/Alignement/Alignement.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 #include <Renderer/Backend/CommandList/CommandList.hpp>
+#include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 
 struct Vertex
 {

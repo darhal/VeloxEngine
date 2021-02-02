@@ -35,7 +35,7 @@ namespace Renderer
 
 		FORCEINLINE const Image* GetImage() const { return info.image; }
 	private:
-		ImageView() = default;
+        ImageView() = delete;
 	private:
 		RenderBackend&	    backend;
 		ImageViewCreateInfo info;
@@ -77,7 +77,7 @@ namespace Renderer
 
 		FORCEINLINE bool IsSwapchainImage() const { return swapchainLayout != VK_IMAGE_LAYOUT_UNDEFINED; }
 	private:
-		Image() = default;
+        Image() = delete;
 	private:
 		RenderBackend& backend;
 		ImageCreateInfo info;
