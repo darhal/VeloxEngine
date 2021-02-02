@@ -12,6 +12,8 @@ TRE_NS_START
 
 Window::Window(uint width, uint height, const std::string& title, WindowStyle::window_style_t style)
 {
+    XInitThreads();
+
 	// Connect to X server
 	display = XOpenDisplay(NULL);
 	screen = DefaultScreen(display);
@@ -172,9 +174,13 @@ bool Window::getEvent(Event& ev)
 {
 	// Fetch new events
 	XEvent event;
-	while (XCheckIfEvent(display, &event, &CheckEvent, reinterpret_cast<XPointer>(window))){
+    /*while (XCheckIfEvent(display, &event, &CheckEvent, reinterpret_cast<XPointer>(window))){
 		WindowEvent(event);
-	}
+    }*/
+
+    while (XCheckWindowEvent(display, window, UINT64_MAX, &event)) {
+        WindowEvent(event);
+    }
 
 	// Return oldest event - if available
 	if (events.empty()) 
@@ -359,6 +365,9 @@ void Window::WindowEvent(const XEvent& event)
 		ev.Mouse.X = mousePosition.x;
 		ev.Mouse.Y = mousePosition.y;
 		break;
+    case DestroyNotify:
+        open = false;
+        break;
 	}
 
 	// Add event to internal queue
