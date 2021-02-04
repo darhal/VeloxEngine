@@ -459,8 +459,11 @@ bool Renderer::RenderDevice::IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR
 
     VkPhysicalDeviceFeatures supportedFeatures;
     vkGetPhysicalDeviceFeatures(gpu, &supportedFeatures);
+    VkPhysicalDeviceProperties devProp;
+    vkGetPhysicalDeviceProperties(gpu, &devProp);
+    bool isDiscrete = devProp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 
-	return indices.IsComplete() && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+	return indices.IsComplete() && swapChainAdequate && supportedFeatures.samplerAnisotropy && isDiscrete;
 }
 
 Renderer::Internal::QueueFamilyIndices Renderer::RenderDevice::FindQueueFamilies(VkPhysicalDevice p_gpu, VkSurfaceKHR p_surface)
