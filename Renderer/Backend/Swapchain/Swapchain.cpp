@@ -130,10 +130,11 @@ void Renderer::Swapchain::DestroySwapchain()
 
 void Renderer::Swapchain::CleanupSwapchain()
 {
-    /*const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
+    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
+    const auto& renderContext = renderBackend.GetRenderContext();
     VkDevice device = renderDevice.GetDevice();
 
-    for (size_t i = 0; i < imagesCount; i++) {
+    /*for (size_t i = 0; i < imagesCount; i++) {
         vkDestroyFramebuffer(device, swapchainData.swapChainFramebuffers[i], NULL);
         vkDestroyImageView(device, swapchainData.swapChainImageViews[i], NULL);
     }
@@ -161,11 +162,11 @@ void Renderer::Swapchain::RecreateSwapchain()
         height = renderContext.GetWindow()->getSize().y;
     }
 
-    // framebufferResized = false;
+    framebufferResized = false;
     CreateSwapchain();
 }
 
-void Renderer::Swapchain::UpdateSwapchain()
+void Renderer::Swapchain::QueueSwapchainUpdate()
 {
     framebufferResized = true;
     // RecreateSwapchainInternal(*engine.renderContext, *engine.renderInstance, *engine.renderDevice);
@@ -181,6 +182,7 @@ void Renderer::Swapchain::CreateSyncObjects()
 
     VkFenceCreateInfo fenceInfo{};
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     for (size_t i = 0; i < renderContext.GetNumFrames(); i++) {

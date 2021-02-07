@@ -76,7 +76,7 @@ namespace Renderer
 
         void CleanupSwapchain();
 
-        void UpdateSwapchain();
+        void QueueSwapchainUpdate();
 
         void RecreateSwapchain();
 
@@ -107,6 +107,8 @@ namespace Renderer
         FORCEINLINE const VkExtent2D& GetExtent() const { return swapchainData.swapChainExtent; }
 
         FORCEINLINE VkFormat GetFormat() const { return swapchainData.swapChainImageFormat; }
+
+        FORCEINLINE bool ResizeRequested() const { return framebufferResized; }
     private:
         VkFormat FindSupportedFormat(const std::initializer_list<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 

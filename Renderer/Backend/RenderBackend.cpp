@@ -170,6 +170,7 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
     StaticVector<VkSemaphore> waits;
     StaticVector<VkSemaphore> signals;
     VkFence vkFence = VK_NULL_HANDLE;
+    bool swapchainResize = renderContext.GetSwapchain().ResizeRequested();
 
     for (auto& sem : data.waitSemaphores) {
         waits.PushBack(sem->GetApiObject());
@@ -189,7 +190,7 @@ void Renderer::RenderBackend::SubmitQueue(CommandBuffer::Type type, FenceHandle*
         signals.EmplaceBack(sem);
     }
 
-    if (swapchainCommandBuffer || lastSubmit) {
+    if ((swapchainCommandBuffer || lastSubmit) && !swapchainResize) {
         VkPipelineStageFlagBits stage = swapchainCommandBuffer ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT 
             : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
         data.waitStages.PushBack(stage);

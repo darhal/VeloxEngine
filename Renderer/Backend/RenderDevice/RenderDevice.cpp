@@ -461,7 +461,7 @@ bool Renderer::RenderDevice::IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR
     vkGetPhysicalDeviceFeatures(gpu, &supportedFeatures);
     VkPhysicalDeviceProperties devProp;
     vkGetPhysicalDeviceProperties(gpu, &devProp);
-    bool isDiscrete = devProp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+    bool isDiscrete = 1; // devProp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 
 	return indices.IsComplete() && swapChainAdequate && supportedFeatures.samplerAnisotropy && isDiscrete;
 }
@@ -519,11 +519,12 @@ Renderer::Internal::QueueFamilyIndices Renderer::RenderDevice::FindQueueFamilies
         indices.queueFamilies[Internal::QFT_TRANSFER] = indices.queueFamilies[Internal::QFT_GRAPHICS];
     }
 
-    //printf("Complete! (Graphics: %d | Transfer: %d | Compute: %d)\n", 
-    //    indices.queueFamilies[Internal::QFT_GRAPHICS], 
-    //    indices.queueFamilies[Internal::QFT_TRANSFER],
-    //    indices.queueFamilies[Internal::QFT_COMPUTE]
-    //);
+    printf("Complete! (Graphics: %d | Transfer: %d | Compute: %d | Present: %d)\n",
+        indices.queueFamilies[Internal::QFT_GRAPHICS],
+        indices.queueFamilies[Internal::QFT_TRANSFER],
+        indices.queueFamilies[Internal::QFT_COMPUTE],
+        indices.queueFamilies[Internal::QFT_PRESENT]
+    );
     return indices;
 }
 

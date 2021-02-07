@@ -922,7 +922,7 @@ int rt()
         window.getEvent(ev);
 
         if (ev.Type == TRE::Event::TE_RESIZE) {
-            backend.GetRenderContext().GetSwapchain().UpdateSwapchain();
+            backend.GetRenderContext().GetSwapchain().QueueSwapchainUpdate();
             continue;
         } else if (ev.Type == TRE::Event::TE_KEY_UP) {
             if (ev.Key.Code == TRE::Key::L) {

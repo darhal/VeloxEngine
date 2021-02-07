@@ -197,6 +197,7 @@ int raster()
     );
     program.Compile();
 
+    updateMVP(backend, uniformBuffer);
     INIT_BENCHMARK;
 
     time_t lasttime = time(NULL);
@@ -206,8 +207,9 @@ int raster()
         window.getEvent(ev);
 
         if (ev.Type == TRE::Event::TE_RESIZE) {
-            backend.GetRenderContext().GetSwapchain().UpdateSwapchain();
-            continue;
+            // printf("Event resize\n");
+            // backend.GetRenderContext().GetSwapchain().QueueSwapchainUpdate();
+            // continue;
         } else if (ev.Type == TRE::Event::TE_KEY_UP) {
             if (ev.Key.Code == TRE::Key::L) {
                 state.GetRasterizationState().polygonMode = VK_POLYGON_MODE_LINE;
@@ -219,6 +221,7 @@ int raster()
         }
 
         backend.BeginFrame();
+
         RenderFrame(backend, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
 
         /*for (int32_t i = 0; i < 12 * 3; i++) {
@@ -234,6 +237,8 @@ int raster()
 #if !defined(CUBE)
     delete[] data;
 #endif
+#if defined(OS_WINDOWS)
     getchar();
+#endif
     return 0;
 }

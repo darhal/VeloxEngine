@@ -50,7 +50,8 @@ void Renderer::RenderContext::BeginFrame(const RenderDevice& renderDevice, Stagi
     stagingManager.Flush();
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        swapchain.RecreateSwapchain();
+        swapchain.QueueSwapchainUpdate();
+        // printf("[BEGIN FRAME] Swapchain resized!\n");
         return;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         ASSERTF(true, "Failed to acquire swap chain image!\n");
@@ -110,21 +111,25 @@ void Renderer::RenderContext::EndFrame(const RenderDevice& renderDevice)
     }*/
 
     // Presenting:
-    VkPresentInfoKHR presentInfo{};
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = renderDevice.IsPresentQueueSeprate() ?
-        &swapchainData.imageOwnershipSemaphores[currentFrame] :
-        &swapchainData.drawCompleteSemaphores[currentFrame];
-    presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains    = &swapchain.swapchain;
-    presentInfo.pImageIndices  = &currentBuffer;
+    VkResult result = VK_SUCCESS;
 
-    VkResult result = vkQueuePresentKHR(queues[Internal::QFT_PRESENT], &presentInfo);
+    if (!swapchain.framebufferResized){
+        VkPresentInfoKHR presentInfo{};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = renderDevice.IsPresentQueueSeprate() ?
+            &swapchainData.imageOwnershipSemaphores[currentFrame] :
+            &swapchainData.drawCompleteSemaphores[currentFrame];
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains    = &swapchain.swapchain;
+        presentInfo.pImageIndices  = &currentBuffer;
+
+        result = vkQueuePresentKHR(queues[Internal::QFT_PRESENT], &presentInfo);
+    }
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || swapchain.framebufferResized) {
-        swapchain.framebufferResized = false;
         swapchain.RecreateSwapchain();
+        // printf("[END FRAME] Swapchain resized! %d\n", result);
     } else if (result != VK_SUCCESS) {
         ASSERTF(true, "Failed to present swap chain image!");
     }

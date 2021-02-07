@@ -163,7 +163,7 @@ int rt()
         }
 
         if (ev.Type == TRE::Event::TE_RESIZE || currExtent != lastExtent) {
-            backend.GetRenderContext().GetSwapchain().UpdateSwapchain();
+            backend.GetRenderContext().GetSwapchain().QueueSwapchainUpdate();
 
             rtImage = backend.CreateImage(ImageCreateInfo::RtRenderTarget(currExtent.width, currExtent.height));
             rtView = backend.CreateImageView(ImageViewCreateInfo::ImageView(rtImage));
