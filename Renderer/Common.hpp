@@ -27,7 +27,7 @@
 #endif
 
 // #undef DEBUG
-// #define DEBUG
+#define DEBUG
 
 #define VALIDATION_LAYERS
 //#undef VALIDATION_LAYERS

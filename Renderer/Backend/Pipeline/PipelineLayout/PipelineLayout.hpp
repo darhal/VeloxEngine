@@ -11,6 +11,7 @@ namespace Renderer
 {
 	class DescriptorSetAllocator;
 	class RenderBackend;
+	class RenderDevice;
 
 	class PipelineLayout
 	{
@@ -18,6 +19,8 @@ namespace Renderer
 		PipelineLayout() : descriptorSetLayoutCount(0), pushConstantsCount(0), pipelineLayout(VK_NULL_HANDLE) {}
 
 		void Create(RenderBackend& backend);
+
+		void Destroy(const RenderDevice& renderDevice);
 
 		VkPipelineLayout GetApiObject() const
 		{

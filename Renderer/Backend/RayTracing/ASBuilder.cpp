@@ -364,4 +364,9 @@ void Renderer::AsBuilder::BuildAll(RenderBackend& backend)
 	this->BuildTlasBatch();
 }
 
+void Renderer::AsBuilder::Shutdown()
+{
+    // TODO: finish this!
+}
+
 TRE_NS_END

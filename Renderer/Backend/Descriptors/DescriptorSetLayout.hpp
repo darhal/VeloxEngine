@@ -63,6 +63,15 @@ namespace Renderer
 			return descriptorSetLayout;
 		}
 
+		void Destroy(const VkDevice& vkDevice)
+        {
+		    if (descriptorSetLayout) {
+		        vkDestroyDescriptorSetLayout(vkDevice, descriptorSetLayout, NULL);
+		        descriptorSetLayout = VK_NULL_HANDLE;
+		        bindingsCount = 0;
+		    }
+        }
+
 		VkDescriptorSetLayout GetApiObject() const { return descriptorSetLayout; }
 
 		const VkDescriptorSetLayoutBinding* const GetDescriptorSetLayoutBindings() const { return layoutBindings; }

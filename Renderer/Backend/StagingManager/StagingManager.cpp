@@ -22,7 +22,6 @@ namespace Renderer
 	void StagingManager::Shutdown()
 	{
 		VkDevice device = renderDevice.GetDevice();
-
 		vkUnmapMemory(device, memory);
 
 		for (uint32 i = 0; i < NUM_FRAMES; i++) {
@@ -84,7 +83,7 @@ namespace Renderer
 
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
 		DeviceSize newOffset = stage->offset + size;
-		DeviceSize padding = (alignment - (newOffset % alignment)) % alignment;
+		DeviceSize padding = alignment ? (alignment - (newOffset % alignment)) % alignment : 0;
 		stage->offset += padding;
 
 		if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {
@@ -111,7 +110,7 @@ namespace Renderer
 
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
 		DeviceSize offset = stage->offset + size;
-		DeviceSize padding = (alignment - (offset % alignment)) % alignment;
+		DeviceSize padding = alignment ? (alignment - (offset % alignment)) % alignment : 0;
 		stage->offset += padding;
 
 		if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {
@@ -141,7 +140,7 @@ namespace Renderer
 
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
 		DeviceSize newOffset = stage->offset + size;
-		DeviceSize padding = (alignment - (newOffset % alignment)) % alignment;
+		DeviceSize padding = alignment? (alignment - (newOffset % alignment)) % alignment : 0;
 		stage->offset += padding;
 
 		if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {

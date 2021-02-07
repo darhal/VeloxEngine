@@ -75,6 +75,8 @@ namespace Renderer
 
 			TRE::Vector<VkDeviceMemory>	  freedMemory;
 
+			TRE::Vector<VkAccelerationStructureKHR> destroyedAccls;
+
 			bool shouldDestroy = false;
 		};
 
@@ -99,6 +101,10 @@ namespace Renderer
 		RenderBackend(TRE::Window* wnd);
 
 		~RenderBackend();
+
+		void Shutdown();
+
+		void DestroyAllFrames();
 
 		void InitInstance(uint32 usage = 0);
 
@@ -179,9 +185,9 @@ namespace Renderer
 
 		DescriptorSetAllocator* RequestDescriptorSetAllocator(const DescriptorSetLayout& layout);
 
-		Pipeline& RequestPipeline(const ShaderProgram& program, const RenderPass& rp, const GraphicsState& state);
+		Pipeline& RequestPipeline(ShaderProgram& program, const RenderPass& rp, const GraphicsState& state);
 
-		Pipeline& RequestPipeline(const ShaderProgram& program);
+		Pipeline& RequestPipeline(ShaderProgram& program);
 
 		// Render pass and framebuffer functionalities:
 		const Framebuffer& RequestFramebuffer(const RenderPassInfo& info, const RenderPass* rp = NULL);
@@ -264,6 +270,7 @@ namespace Renderer
 		HandlePool		objectsPool;
 
 		uint32 msaaSamplerCount;
+		uint32 enabledFeatures;
 
 		friend class Image;
 		friend class Swapchain;

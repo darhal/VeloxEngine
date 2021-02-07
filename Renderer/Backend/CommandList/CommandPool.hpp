@@ -28,6 +28,8 @@ namespace Renderer
 		VkCommandBuffer RequestCommandBuffer();
 
 		VkCommandBuffer RequestSecondaryCommandBuffer();
+
+		void Destroy();
 	private:
 		RenderDevice* renderDevice;
 		VkCommandPool pool;

@@ -20,6 +20,9 @@
 #include <Renderer/Backend/CommandList/CommandList.hpp>
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 
+const unsigned int SCR_WIDTH = 640; //1920 / 2;
+const unsigned int SCR_HEIGHT = 480; //1080 / 2;
+
 struct Vertex
 {
     glm::vec3 pos;

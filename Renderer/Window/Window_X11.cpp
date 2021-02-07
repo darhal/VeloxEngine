@@ -177,7 +177,7 @@ bool Window::getEvent(Event& ev)
     while (XCheckIfEvent(display, &event, &CheckEvent, reinterpret_cast<XPointer>(window))){
 		WindowEvent(event);
     }
-    
+
 	// Return oldest event - if available
 	if (events.empty()) 
 		return false;

@@ -23,12 +23,19 @@ namespace Renderer
 		void BeginFrame();
 
 		void Clear();
+
+		void Destroy();
 	private:
 		struct FramebufferNode : Utils::ListNode<FramebufferNode>, Utils::HashmapNode<FramebufferNode>, Framebuffer
 		{
 			FramebufferNode(const RenderDevice& device, const RenderPass& rp, const RenderPassInfo& info)
 				: Framebuffer(device, rp, info)
 			{
+			}
+
+			~FramebufferNode()
+			{
+			    Framebuffer::~Framebuffer();
 			}
 		};
 

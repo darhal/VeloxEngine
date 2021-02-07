@@ -40,4 +40,4 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     const TRE::Renderer::BufferHandle lightBuffer);
 
 
-int raster();
+int raster(TRE::Renderer::RenderBackend& backend);

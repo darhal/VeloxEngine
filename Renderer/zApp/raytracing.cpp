@@ -12,8 +12,6 @@
 #define CUBE
 #define STOP_POINT(str) printf(str); printf("\n"); getchar();
 
-const unsigned int SCR_WIDTH = 640; //1920 / 2;
-const unsigned int SCR_HEIGHT = 480; //1080 / 2;
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -58,16 +56,13 @@ void updateCameraUBO(const TRE::Renderer::RenderBackend& backend, TRE::Renderer:
     buffer->WriteToBuffer(sizeof(ubo), &ubo);
 }
 
-int rt()
+int rt(RenderBackend& backend)
 {
     using namespace TRE::Renderer;
     using namespace TRE;
 
+    auto& window = *backend.GetRenderContext().GetWindow();
     Event ev;
-    TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
-    RenderBackend backend{ &window };
-    backend.InitInstance(RenderBackend::RAY_TRACING);
-    // backend.SetSamplerCount(2);
 
     if (backend.GetMSAASamplerCount() == 1) {
         TRE_LOGI("Anti-Aliasing: Disabled");

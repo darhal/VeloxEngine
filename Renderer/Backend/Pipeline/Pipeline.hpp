@@ -28,17 +28,19 @@ namespace Renderer
 	{
 	public:
 		// Generic:
-		Pipeline(PipelineType type, const ShaderProgram* program = NULL) :
-			pipelineType(type), pipeline(VK_NULL_HANDLE), shaderProgram(program), renderPass(NULL), dynamicState(0),
+		Pipeline(PipelineType type, ShaderProgram* program = NULL) :
+		    renderDevice(NULL), pipelineType(type), pipeline(VK_NULL_HANDLE), shaderProgram(program), renderPass(NULL), dynamicState(0),
 			sbt()
 		{
 		}
+
+		~Pipeline();
 
 		FORCEINLINE VkPipeline GetApiObject() const { return pipeline; }
 
 		const PipelineLayout& GetPipelineLayout() const { return shaderProgram->GetPipelineLayout(); }
 
-		void SetShaderProgram(const ShaderProgram* program) { shaderProgram = program; }
+		void SetShaderProgram(ShaderProgram* program) { shaderProgram = program; }
 
 		const ShaderProgram* GetShaderProgram() const { return shaderProgram; }
 
@@ -68,7 +70,8 @@ namespace Renderer
 
 		bool IsStateDynamic(VkDynamicState state) const { return dynamicState & (1 << state); }
 	protected:
-		const ShaderProgram* shaderProgram;
+	    const RenderDevice*  renderDevice;
+		ShaderProgram* shaderProgram;
 		VkPipeline			 pipeline;
 		PipelineType		 pipelineType;
 

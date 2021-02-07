@@ -19,6 +19,8 @@ namespace Renderer
 		VkSemaphore RequestSemaphore();
 		
 		void Recycle(VkSemaphore semaphore);
+
+		void Destroy();
 	private:
 		RenderDevice* device;
 		std::vector<VkSemaphore> semaphores;

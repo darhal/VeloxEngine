@@ -62,6 +62,8 @@ namespace Renderer
 
 		void Init();
 
+        void Shutdown();
+
 		// RT Functionality:
 		void StageBlasBuilding(Blas* blas, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo,
 			const VkAccelerationStructureBuildRangeInfoKHR* ranges, uint32 rangesCount = 1,

@@ -87,7 +87,7 @@ namespace Renderer
 		void BindDescriptorSet(const Pipeline& pipeline, const std::initializer_list<VkDescriptorSet>& descriptors, 
 			const std::initializer_list<uint32>& dyncOffsets);
 
-		void BindShaderProgram(const ShaderProgram& program);
+		void BindShaderProgram(ShaderProgram& program);
 
 		// Graphics State functions:
 		void SetGraphicsState(GraphicsState& state);
@@ -265,7 +265,7 @@ namespace Renderer
 		RenderBackend* renderBackend;
 
 		GraphicsState* state;
-		const ShaderProgram* program;
+		ShaderProgram* program;
 		const Pipeline* pipeline;
 		const RenderPass* renderPass;
 		const Framebuffer* framebuffer;

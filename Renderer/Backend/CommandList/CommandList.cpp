@@ -199,7 +199,7 @@ void Renderer::CommandBuffer::SetGraphicsState(GraphicsState& state)
     this->state = &state;
 }
 
-void Renderer::CommandBuffer::BindShaderProgram(const ShaderProgram& program)
+void Renderer::CommandBuffer::BindShaderProgram(ShaderProgram& program)
 {
     if (this->program && this->program->GetHash() == program.GetHash())
         return;

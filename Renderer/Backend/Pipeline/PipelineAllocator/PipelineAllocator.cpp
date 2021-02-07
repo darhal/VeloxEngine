@@ -7,7 +7,7 @@ Renderer::PipelineAllocator::PipelineAllocator(RenderBackend* backend) : renderB
 {
 }
 
-Renderer::Pipeline& Renderer::PipelineAllocator::RequestPipline(const ShaderProgram& program, const RenderPass& rp, const GraphicsState& state)
+Renderer::Pipeline& Renderer::PipelineAllocator::RequestPipline(ShaderProgram& program, const RenderPass& rp, const GraphicsState& state)
 {
 	// Graphics pipeline:
 	Hasher h;
@@ -27,7 +27,7 @@ Renderer::Pipeline& Renderer::PipelineAllocator::RequestPipline(const ShaderProg
 	return pipline;
 }
 
-Renderer::Pipeline& Renderer::PipelineAllocator::RequestPipline(const ShaderProgram& program)
+Renderer::Pipeline& Renderer::PipelineAllocator::RequestPipline(ShaderProgram& program)
 {
 	// Compute pipeline:
 	Hasher h;
@@ -50,6 +50,11 @@ void Renderer::PipelineAllocator::BeginFrame()
 void Renderer::PipelineAllocator::Clear()
 {
 	pipelineCache.clear();
+}
+
+void Renderer::PipelineAllocator::Destroy()
+{
+    pipelineCache.clear();
 }
 
 

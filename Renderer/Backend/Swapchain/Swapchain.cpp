@@ -122,10 +122,17 @@ void Renderer::Swapchain::DestroySwapchain()
         vkDestroySemaphore(renderDevice.GetDevice(), swapchainData.drawCompleteSemaphores[i], NULL);
         vkDestroySemaphore(renderDevice.GetDevice(), swapchainData.imageAcquiredSemaphores[i], NULL);
         vkDestroyFence(renderDevice.GetDevice(), swapchainData.fences[i], NULL);
+
+        if (renderDevice.IsPresentQueueSeprate()) {
+            vkDestroySemaphore(renderDevice.GetDevice(), swapchainData.imageOwnershipSemaphores[i], NULL);
+        }
+
+        if (renderDevice.IsTransferQueueSeprate()) {
+            vkDestroySemaphore(renderDevice.GetDevice(), swapchainData.transferSemaphores[i], NULL);
+        }
     }
 
-    // TODO: verify this later
-    // vkDestroyCommandPool(renderDevice.GetDevice(), ctx.contextData.commandPool, NULL);
+    vkDestroyFence(renderDevice.GetDevice(), swapchainData.transferSyncFence, NULL);
 }
 
 void Renderer::Swapchain::CleanupSwapchain()

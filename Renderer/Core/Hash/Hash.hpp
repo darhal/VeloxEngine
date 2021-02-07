@@ -36,6 +36,16 @@ namespace Renderer
 					h = (h * 0x100000001b3ull) ^ data_[i];
 			}
 
+			template<typename T>
+			FORCEINLINE void Data(const T& data)
+            {
+			    size_t size = sizeof(data) / sizeof(uint8);
+                const uint8* byteData = (const uint8*)&data;
+
+                for (size_t i = 0; i < size; i++)
+                    u32(uint8_t(byteData[i]));
+            }
+
 			FORCEINLINE void u32(uint32_t value)
 			{
 				h = (h * 0x100000001b3ull) ^ value;

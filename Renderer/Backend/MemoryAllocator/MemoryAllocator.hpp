@@ -30,6 +30,8 @@ namespace Renderer
 		void Free(AllocKey key);
 
 		MemoryView GetMemoryViewFromAllocKey(AllocKey key);
+
+		void Destroy();
 	private:
 		struct BindingInfo
 		{
@@ -41,7 +43,7 @@ namespace Renderer
 		
 		struct Chunk
 		{
-			VkDeviceMemory			 memory;
+			VkDeviceMemory			 memory = VK_NULL_HANDLE;
 			VkDeviceSize			 totalSize;
 			void*					 mappedData;
 

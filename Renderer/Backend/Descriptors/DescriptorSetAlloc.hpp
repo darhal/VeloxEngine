@@ -29,6 +29,8 @@ namespace Renderer
 
 		void BeginFrame();
 
+        void Destroy();
+
 		FORCEINLINE const DescriptorSetLayout& GetDescriptorSetLayout() const { return descriptorSetLayout; }
 	private:
 		void AllocatePool();

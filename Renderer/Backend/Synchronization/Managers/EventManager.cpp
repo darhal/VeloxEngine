@@ -5,8 +5,7 @@ TRE_NS_START
 
 Renderer::EventManager::~EventManager()
 {
-	for (VkEvent e : events)
-		vkDestroyEvent(device->GetDevice(), e, NULL);
+	this->Destroy();
 }
 
 void Renderer::EventManager::Init(RenderDevice* device)
@@ -31,6 +30,14 @@ VkEvent Renderer::EventManager::RequestEvent()
 void Renderer::EventManager::Recycle(VkEvent event)
 {
 	events.push_back(event);
+}
+
+void Renderer::EventManager::Destroy()
+{
+    for (VkEvent e : events)
+        vkDestroyEvent(device->GetDevice(), e, NULL);
+
+    events.clear();
 }
 
 TRE_NS_END

@@ -24,6 +24,7 @@ Renderer::RenderBackend::RenderBackend(TRE::Window* wnd) :
 
 void Renderer::RenderBackend::InitInstance(uint32 usage)
 {
+    enabledFeatures = usage;
     StaticVector<const char*> deviceExt;
 
     if (usage & RAY_TRACING) {
@@ -82,17 +83,6 @@ void Renderer::RenderBackend::InitInstance(uint32 usage)
     TRE_LOGI("Device ID......: 0x%x", renderDevice.internal.gpuProperties.deviceID);
 }
 
-Renderer::RenderBackend::~RenderBackend()
-{
-    vkDeviceWaitIdle(renderDevice.internal.device);
-
-    renderContext.DestroyRenderContext(renderInstance.internal, renderDevice.internal, renderContext.internal);
-
-    stagingManager.Shutdown();
-    renderDevice.DestroryRenderDevice();
-    renderInstance.DestroyRenderInstance();
-}
-
 void Renderer::RenderBackend::Init()
 {
     const Internal::QueueFamilyIndices& queueFamilyIndices = renderDevice.GetQueueFamilyIndices();
@@ -110,6 +100,45 @@ void Renderer::RenderBackend::Init()
             }
         }
     }
+}
+
+Renderer::RenderBackend::~RenderBackend()
+{
+    vkDeviceWaitIdle(renderDevice.internal.device);
+
+    this->Shutdown();
+
+    renderContext.DestroyRenderContext(renderInstance.internal, renderDevice.internal, renderContext.internal);
+    renderDevice.DestroryRenderDevice();
+    renderInstance.DestroyRenderInstance();
+}
+
+void Renderer::RenderBackend::Shutdown()
+{
+    VkDevice device =  renderDevice.GetDevice();
+    for (const auto& rp : renderPasses) {
+        vkDestroyRenderPass(device, rp.second.GetApiObject(), NULL);
+    }
+
+    for (auto& descSetAlloc : descriptorSetAllocators) {
+        descSetAlloc.second.Destroy();
+    }
+
+    framebufferAllocator.Destroy();
+    transientAttachmentAllocator.Destroy();
+    pipelineAllocator.Destroy();
+    fenceManager.Destroy();
+    semaphoreManager.Destroy();
+    eventManager.Destroy();
+    gpuMemoryAllocator.Destroy();
+
+    stagingManager.Shutdown();
+
+    if (enabledFeatures & RAY_TRACING) {
+        acclBuilder.Shutdown();
+    }
+
+    this->DestroyAllFrames();
 }
 
 Renderer::CommandBuffer::Type Renderer::RenderBackend::GetPhysicalQueueType(CommandBuffer::Type type)
@@ -663,7 +692,7 @@ Renderer::SamplerHandle Renderer::RenderBackend::CreateSampler(const SamplerInfo
     VkSamplerCreateInfo info;
     SamplerInfo::FillVkSamplerCreateInfo(createInfo, info);
     vkCreateSampler(renderDevice.GetDevice(), &info, NULL, &sampler);
-    SamplerHandle ret(objectsPool.samplers.Allocate(sampler, createInfo));
+    SamplerHandle ret(objectsPool.samplers.Allocate(*this, sampler, createInfo));
     return ret;
 }
 
@@ -710,12 +739,12 @@ Renderer::DescriptorSetAllocator* Renderer::RenderBackend::RequestDescriptorSetA
     return &res.first->second;
 }
 
-Renderer::Pipeline& Renderer::RenderBackend::RequestPipeline(const ShaderProgram& program, const RenderPass& rp, const GraphicsState& state)
+Renderer::Pipeline& Renderer::RenderBackend::RequestPipeline(ShaderProgram& program, const RenderPass& rp, const GraphicsState& state)
 {
    return pipelineAllocator.RequestPipline(program, rp, state);
 }
 
-Renderer::Pipeline& Renderer::RenderBackend::RequestPipeline(const ShaderProgram& program)
+Renderer::Pipeline& Renderer::RenderBackend::RequestPipeline(ShaderProgram& program)
 {
     return pipelineAllocator.RequestPipline(program);
 }
@@ -859,6 +888,12 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
 
     VkDevice dev = renderDevice.GetDevice();
 
+    for (auto& rp : frame.destroyedRenderPasses)
+        vkDestroyRenderPass(dev, rp, NULL);
+
+    for (auto& dsc : frame.destroyedDescriptorPool)
+        vkDestroyDescriptorPool(dev, dsc, NULL);
+
     for (auto& fb : frame.destroyedFramebuffers)
         vkDestroyFramebuffer(dev, fb, NULL);
 
@@ -867,6 +902,12 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
 
     for (auto& img : frame.destroyedImages)
         vkDestroyImage(dev, img, NULL);
+
+    for (auto& view : frame.destroyedBufferViews)
+        vkDestroyBufferView(dev, view, NULL);
+
+    for (auto& buff : frame.destroyedBuffers)
+        vkDestroyBuffer(dev, buff, NULL);
 
     for (auto& mem : frame.freedMemory)
         vkFreeMemory(dev, mem, NULL);
@@ -881,6 +922,13 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
     for (auto& fence : frame.recycleFences)
         fenceManager.Recycle(fence);
 
+    if (enabledFeatures & RAY_TRACING) {
+        for (auto& accl : frame.destroyedAccls)
+            vkDestroyAccelerationStructureKHR(dev, accl, NULL);
+
+        frame.destroyedAccls.Clear();
+    }
+
     frame.destroyedFramebuffers.Clear();
     frame.destroyedImageViews.Clear();
     frame.destroyedImages.Clear();
@@ -888,6 +936,11 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
     frame.destroyedSemaphores.Clear();
     frame.recycleSemaphores.Clear();
     frame.recycleFences.Clear();
+
+    frame.destroyedBuffers.Clear();
+    frame.destroyedBufferViews.Clear();
+    frame.destroyedRenderPasses.Clear();
+    frame.destroyedDescriptorPool.Clear();
     frame.shouldDestroy = false;
 }
 
@@ -935,6 +988,36 @@ void Renderer::RenderBackend::DestroryEvent(VkEvent event)
 {
     Frame().destroyedEvents.EmplaceBack(event);
     Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderBackend::DestroyAllFrames()
+{
+    for (PerFrame& frame : perFrame) {
+        frame.shouldDestroy = true;
+
+        for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
+            frame.commandPools[0][i].Destroy();
+            frame.submissions[i].Clear();
+        }
+
+        this->DestroyPendingObjects(frame);
+    }
+
+    objectsPool.commandBuffers.Clear();
+    objectsPool.buffers.Clear();
+    objectsPool.ringBuffers.Clear();
+    objectsPool.images.Clear();
+    objectsPool.imageViews.Clear();
+    objectsPool.samplers.Clear();
+    objectsPool.fences.Clear();
+    objectsPool.semaphores.Clear();
+    objectsPool.events.Clear();
+
+    // RT:
+    if (enabledFeatures & RAY_TRACING) {
+        objectsPool.blases.Clear();
+        objectsPool.tlases.Clear();
+    }
 }
 
 TRE_NS_END

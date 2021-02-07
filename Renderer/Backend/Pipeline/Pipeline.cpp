@@ -10,6 +10,7 @@ TRE_NS_START
 void Renderer::Pipeline::Create(RenderBackend& backend, uint32 maxDepth, uint32 maxRayPayloadSize, uint32 maxRayHitAttribSize)
 {
     const RenderDevice& device = backend.GetRenderDevice();
+    renderDevice = &device;
 
     VkDynamicState dynamicStatesArray[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
@@ -57,11 +58,15 @@ void Renderer::Pipeline::Create(RenderBackend& backend, uint32 maxDepth, uint32 
     vkCreateRayTracingPipelinesKHR(device.GetDevice(), deferredOperation, VK_NULL_HANDLE, 1, &rayTraceInfo, NULL, &pipeline);
 
     sbt.Init(backend, *shaderProgram, *this);
+
+    shaderProgram->DestroyShaderModules();
 }
 
 // Compute:
 void Renderer::Pipeline::Create(const RenderDevice& device)
 {
+    renderDevice = &device;
+
     VkComputePipelineCreateInfo info;
     info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     info.pNext = NULL;
@@ -72,11 +77,15 @@ void Renderer::Pipeline::Create(const RenderDevice& device)
     info.basePipelineIndex = -1;
 
     vkCreateComputePipelines(device.GetDevice(), VK_NULL_HANDLE, 1, &info, NULL, &pipeline);
+
+    shaderProgram->DestroyShaderModules();
 }
 
 // Graphics
 void Renderer::Pipeline::Create(const RenderContext& renderContext, const VertexInput& vertexInput, const GraphicsState& state)
 {
+    renderDevice = renderContext.GetRenderDevice();
+
     VkViewport viewport;
     VkRect2D scissor;
 
@@ -161,12 +170,26 @@ void Renderer::Pipeline::Create(const RenderContext& renderContext, const Vertex
         ASSERTF(true, "Failed to create graphics pipeline!");
     }
 
+    shaderProgram->DestroyShaderModules();
     printf("Creating new pipline\n");
 }
 
 void Renderer::Pipeline::Create(const RenderContext& renderContext, const GraphicsState& state)
 {
     this->Create(renderContext, shaderProgram->GetVertexInput(), state);
+}
+
+Renderer::Pipeline::~Pipeline()
+{
+    if (renderDevice) {
+        if (shaderProgram) {
+            shaderProgram->Destroy();
+        }
+
+        if (pipeline) {
+            vkDestroyPipeline(renderDevice->GetDevice(), pipeline, NULL);
+        }
+    }
 }
 
 TRE_NS_END

@@ -97,17 +97,27 @@ namespace Renderer
 
     typedef SamplerInfo SamplerCreateInfo;
 
-	class Sampler : public NoRefCount
+    struct SamplerDeleter
+    {
+        void operator()(class Sampler* sampler);
+    };
+
+	class Sampler : public Utils::RefCounterEnabled<Sampler, SamplerDeleter, HandleCounter>
 	{
 	public:
-        Sampler(VkSampler sampler, const SamplerInfo& info);
+        friend struct SamplerDeleter;
+
+        Sampler(RenderBackend& backend, VkSampler sampler, const SamplerInfo& info);
 
         const SamplerInfo& GetInfo() const { return info; }
 
         VkSampler GetApiObject() const { return sampler; }
 	private:
+        RenderBackend& backend;
         SamplerInfo info;
         VkSampler sampler;
+
+        friend class RenderBackend;
 	};
 
     using SamplerHandle = Handle<Sampler>;

@@ -5,8 +5,7 @@ TRE_NS_START
 
 Renderer::SemaphoreManager::~SemaphoreManager()
 {
-	for (VkSemaphore sem : semaphores)
-		vkDestroySemaphore(device->GetDevice(), sem, NULL);
+	this->Destroy();
 }
 
 void Renderer::SemaphoreManager::Init(RenderDevice* device)
@@ -32,6 +31,14 @@ void Renderer::SemaphoreManager::Recycle(VkSemaphore semaphore)
 {
 	if (semaphore != VK_NULL_HANDLE)
 		semaphores.push_back(semaphore);
+}
+
+void Renderer::SemaphoreManager::Destroy()
+{
+    for (VkSemaphore sem : semaphores)
+        vkDestroySemaphore(device->GetDevice(), sem, NULL);
+
+    semaphores.clear();
 }
 
 TRE_NS_END

@@ -15,6 +15,9 @@
 #include "Shared.hpp"
 #include "raster.hpp"
 
+using namespace TRE::Renderer;
+using namespace TRE;
+
 /*std::vector<Vertex> vertices = {
     { TRE::vec3{-0.5f, -0.5f, 0.f},  TRE::vec3{1.0f, 0.0f, 0.0f},  TRE::vec2{0.0f, 0.0f} },
     { TRE::vec3{0.5f, -0.5f, 0.f},   TRE::vec3{0.0f, 1.0f, 0.0f},  TRE::vec2{1.0f, 0.0f} },
@@ -61,14 +64,14 @@ void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingB
 }
 
 void RenderFrame(TRE::Renderer::RenderBackend& backend,
-    const TRE::Renderer::ShaderProgram& program,
-    TRE::Renderer::GraphicsState& state,
-    const TRE::Renderer::BufferHandle vertexIndexBuffer,
-    // VkDescriptorSet descriptorSet,
-    const TRE::Renderer::RingBufferHandle uniformBuffer,
-    const TRE::Renderer::ImageViewHandle texture,
-    const TRE::Renderer::SamplerHandle sampler,
-    const TRE::Renderer::BufferHandle lightBuffer)
+                 TRE::Renderer::ShaderProgram& program,
+                 TRE::Renderer::GraphicsState& state,
+                 const TRE::Renderer::BufferHandle vertexIndexBuffer,
+                 // VkDescriptorSet descriptorSet,
+                 const TRE::Renderer::RingBufferHandle uniformBuffer,
+                 const TRE::Renderer::ImageViewHandle texture,
+                 const TRE::Renderer::SamplerHandle sampler,
+                 const TRE::Renderer::BufferHandle lightBuffer)
 {
     using namespace TRE::Renderer;
 
@@ -106,19 +109,10 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 }
 
 
-int raster()
+int raster(RenderBackend& backend)
 {
-    const unsigned int SCR_WIDTH = 640; //1920 / 2;
-    const unsigned int SCR_HEIGHT = 480; //1080 / 2;
-
-    using namespace TRE::Renderer;
-    using namespace TRE;
-
+    auto& window = *backend.GetRenderContext().GetWindow();
     Event ev;
-    TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
-    RenderBackend backend{ &window };
-    backend.InitInstance();
-    // backend.SetSamplerCount(2);
 
     if (backend.GetMSAASamplerCount() == 1) {
         TRE_LOGI("Anti-Aliasing: Disabled");

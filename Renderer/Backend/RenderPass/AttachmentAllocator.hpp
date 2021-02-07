@@ -24,6 +24,8 @@ namespace Renderer
 		void Clear();
 
 		void BeginFrame();
+
+		void Destroy();
 	private:
 		struct AttachmentNode : Utils::HashmapNode<AttachmentNode>, Utils::ListNode<AttachmentNode>
 		{

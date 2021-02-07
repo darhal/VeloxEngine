@@ -97,7 +97,6 @@ namespace Renderer
 
 					if (node->GetIndex() != index) {
 						rings[index].MoveToFront(rings[node->GetIndex()], node);
-
 						node->SetIndex(index);
 					}
 

@@ -29,4 +29,24 @@ void Renderer::PipelineLayout::Create(RenderBackend& backend)
 	}
 }
 
+void Renderer::PipelineLayout::Destroy(const Renderer::RenderDevice &renderDevice)
+{
+    if (pipelineLayout) {
+        vkDestroyPipelineLayout(renderDevice.GetDevice(), pipelineLayout, NULL);
+        pipelineLayout = VK_NULL_HANDLE;
+    }
+
+    if (descriptorSetLayoutCount) {
+        for (uint32 i = 0; i < descriptorSetLayoutCount; i++) {
+            descriptorSetLayouts[i].Destroy(renderDevice.GetDevice());
+            descriptorSetAlloc[i]->Destroy();
+        }
+
+        descriptorSetLayoutCount = 0;
+    }
+
+    pushConstantsCount = 0;
+
+}
+
 TRE_NS_END

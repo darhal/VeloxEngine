@@ -19,12 +19,7 @@ Renderer::CommandPool::CommandPool() : renderDevice(NULL), pool(VK_NULL_HANDLE),
 
 Renderer::CommandPool::~CommandPool()
 {
-	if (!buffers.empty())
-		vkFreeCommandBuffers(renderDevice->GetDevice(), pool, (uint32)buffers.size(), buffers.data());
-	if (!secondaryBuffers.empty())
-		vkFreeCommandBuffers(renderDevice->GetDevice(), pool, (uint32)secondaryBuffers.size(), secondaryBuffers.data());
-	if (pool != VK_NULL_HANDLE)
-		vkDestroyCommandPool(renderDevice->GetDevice(), pool, nullptr);
+    this->Destroy();
 }
 
 Renderer::CommandPool::CommandPool(CommandPool&& other) noexcept
@@ -94,6 +89,20 @@ VkCommandBuffer Renderer::CommandPool::RequestSecondaryCommandBuffer()
 		secondaryIndex++;
 		return cmd;
 	}
+}
+
+void Renderer::CommandPool::Destroy()
+{
+    if (!buffers.empty())
+        vkFreeCommandBuffers(renderDevice->GetDevice(), pool, (uint32)buffers.size(), buffers.data());
+    if (!secondaryBuffers.empty())
+        vkFreeCommandBuffers(renderDevice->GetDevice(), pool, (uint32)secondaryBuffers.size(), secondaryBuffers.data());
+    if (pool != VK_NULL_HANDLE)
+        vkDestroyCommandPool(renderDevice->GetDevice(), pool, nullptr);
+
+    pool = VK_NULL_HANDLE;
+    buffers.clear();
+    secondaryBuffers.clear();
 }
 
 TRE_NS_END

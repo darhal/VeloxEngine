@@ -52,11 +52,16 @@ void Renderer::MemoryAllocator::AllocPool::DeallocateChunk()
 	for (uint32 i = 0; i < chunks.size(); i++) {
 		Chunk& chunk = chunks[i];
 
+		if (!chunk.memory){
+            continue;
+        }
+
 		if (renderDevice->memoryProperties.memoryTypes[memoryTypeIndex].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
 			vkUnmapMemory(renderDevice->device, chunk.memory);
 		}
 
 		vkFreeMemory(renderDevice->device, chunk.memory, NULL);
+        chunk.memory = VK_NULL_HANDLE;
 	}
 }
 
@@ -71,7 +76,8 @@ Renderer::MemoryView Renderer::MemoryAllocator::AllocPool::GetMemoryView(AllocKe
 
 	memView.size = chunks[chunkIndex].bindingList[bindingIndex].size;
 	memView.offset = chunks[chunkIndex].bindingList[bindingIndex].offset;
-	memView.padding = chunks[chunkIndex].bindingList[bindingIndex].alignment;
+	memView.padding = chunks[chunkIndex].bindingList[bindingIndex].padding;
+	memView.alignment = chunks[chunkIndex].bindingList[bindingIndex].alignment;;
 
 	return memView;
 }
@@ -193,6 +199,23 @@ void Renderer::MemoryAllocator::Free(AllocKey key)
 Renderer::MemoryView Renderer::MemoryAllocator::GetMemoryViewFromAllocKey(AllocKey key)
 {
 	return allocatedList[key.GetMemoryTypeIndex()].GetMemoryView(key);
+}
+
+void Renderer::MemoryAllocator::Destroy() {
+    for (uint32 i = 0; i < renderDevice->memoryProperties.memoryTypeCount; i++) {
+        // TODO: fix this
+        // allocatedList[i].DeallocateChunk();
+
+        /*for (auto& chunk : allocatedList[i].chunks) {
+            if (chunk.memory) {
+                if (chunk.mappedData) {
+                    vkUnmapMemory(renderDevice->device, chunk.memory);
+                }
+
+                vkFreeMemory(renderDevice->device, chunk.memory, NULL);
+            }
+        }*/
+    }
 }
 
 TRE_NS_END

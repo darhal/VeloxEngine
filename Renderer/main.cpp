@@ -24,6 +24,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <Renderer/Misc/stb_image.hpp>
+#include <Renderer/zApp/Shared.hpp>
 
 #define RASTER
 #ifdef RASTER
@@ -34,11 +35,18 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 int main()
 {
-    // this is a test
+    using namespace TRE::Renderer;
+    using namespace TRE;
+
+    TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
+    RenderBackend backend{ &window };
+    backend.InitInstance();
+    // backend.SetSamplerCount(2);
+
 #ifdef RASTER
-    raster();
+    raster(backend);
 #else
-    rt();
+    rt(backend);
 #endif
 }
 

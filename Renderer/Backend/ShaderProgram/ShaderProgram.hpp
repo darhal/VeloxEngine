@@ -16,6 +16,7 @@ TRE_NS_START
 namespace Renderer
 {
 	class RenderBackend;
+	class RenderDevice;
 
 	/*struct PushConstantKey
 	{
@@ -99,6 +100,10 @@ namespace Renderer
 
 		uint32 GetShadersCount() const { return (uint32)shaderStagesCreateInfo.size(); }
 
+		void DestroyShaderModules();
+
+		void Destroy();
+
 		FORCEINLINE const VkPipelineShaderStageCreateInfo* GetShaderStages() const { return shaderStagesCreateInfo.data(); }
 
 		FORCEINLINE const PipelineLayout& GetPipelineLayout() const { return piplineLayout; };
@@ -120,6 +125,7 @@ namespace Renderer
 
 		VkRayTracingShaderGroupTypeKHR SetShaderGroupType(VkRayTracingShaderGroupCreateInfoKHR& group, uint32 stage, uint32 index);
 	private:
+	    const RenderDevice* renderDevice;
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStagesCreateInfo;
 		std::vector<VkShaderModule> shaderModules;
 		std::vector<VkRayTracingShaderGroupCreateInfoKHR> rtShaderGroups;

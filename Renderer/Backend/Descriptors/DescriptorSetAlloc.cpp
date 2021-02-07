@@ -98,6 +98,17 @@ void Renderer::DescriptorSetAllocator::BeginFrame()
     descriptorCache.BeginFrame();
 }
 
+void Renderer::DescriptorSetAllocator::Destroy()
+{
+    if (renderDevice) {
+        for (const auto& pool : descriptorSetPools) {
+            vkDestroyDescriptorPool(renderDevice->GetDevice(), pool, NULL);
+        }
+
+        descriptorSetPools.clear();
+    }
+}
+
 TRE_NS_END
 
 

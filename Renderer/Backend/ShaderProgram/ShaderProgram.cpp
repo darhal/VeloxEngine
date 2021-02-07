@@ -7,11 +7,10 @@ TRE_NS_START
 
 VkShaderModule Renderer::ShaderProgram::CreateShaderModule(VkDevice device, const std::vector<char>& code)
 {
-    VkShaderModuleCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    VkShaderModule shaderModule;
+    VkShaderModuleCreateInfo createInfo{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
     createInfo.codeSize = code.size();
     createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
-    VkShaderModule shaderModule;
 
     if (vkCreateShaderModule(device, &createInfo, NULL, &shaderModule) != VK_SUCCESS) {
         ASSERTF(true, "failed to create shader module!");
@@ -64,7 +63,7 @@ VkRayTracingShaderGroupTypeKHR Renderer::ShaderProgram::SetShaderGroupType(VkRay
     return VkRayTracingShaderGroupTypeKHR(-1);
 }
 
-void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage, 
+void Renderer::ShaderProgram::ReflectShaderCode(const void* spirvCode, size_t size, ShaderStages shaderStage,
     std::unordered_set<uint32>& seenDescriptorSets, std::unordered_map<std::string, VkPushConstantRange>& pushConstants, 
     uint32& oldOffset)
 {
@@ -73,7 +72,7 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
 
     // Generate reflection data for a shader
     SpvReflectShaderModule module;
-    SpvReflectResult result = spvReflectCreateShaderModule(size, sprivCode, &module);
+    SpvReflectResult result = spvReflectCreateShaderModule(size, spirvCode, &module);
     
     if (result != SPV_REFLECT_RESULT_SUCCESS)
         return;
@@ -128,9 +127,9 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
 
     // Enumerate push constants:
     uint32 pushConstCount;
-    spvReflectEnumeratePushConstants(&module, &pushConstCount, NULL);
+    spvReflectEnumeratePushConstantBlocks(&module, &pushConstCount, NULL);
     SpvReflectBlockVariable** pushConstantsReflect = (SpvReflectBlockVariable**)malloc(sizeof(SpvReflectBlockVariable*) * pushConstCount);
-    spvReflectEnumeratePushConstants(&module, &pushConstCount, pushConstantsReflect);
+    spvReflectEnumeratePushConstantBlocks(&module, &pushConstCount, pushConstantsReflect);
 
     for (uint32 i = 0; i < pushConstCount; i++) {
         const char* typeName = pushConstantsReflect[i]->type_description->type_name;
@@ -157,16 +156,14 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* sprivCode, size_t si
 
     
     // Destroy the reflection data when no longer required.
-    // delete[] descriptorSetsReflect;
-    // delete[] pushConstantsReflect;
     free(descriptorSetsReflect);
     free(pushConstantsReflect);
     spvReflectDestroyShaderModule(&module);
 }
 
-Renderer::ShaderProgram::ShaderProgram(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages)
+Renderer::ShaderProgram::ShaderProgram(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages) :
+    Hashable(), renderDevice(&renderBackend.GetRenderDevice())
 {
-    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
     std::unordered_set<uint32> seenDescriptorSets;
     std::unordered_map<std::string, VkPushConstantRange> pushConstants;
     uint32 offset = 0;
@@ -179,27 +176,21 @@ Renderer::ShaderProgram::ShaderProgram(RenderBackend& renderBackend, const std::
     for (const auto& shaderStage : shaderStages) {
         auto shaderCode = TRE::Renderer::ReadShaderFile(shaderStage.path);
 
-        shaderModules.emplace_back(CreateShaderModule(renderDevice.GetDevice(), shaderCode));
+        shaderModules.emplace_back(CreateShaderModule(renderDevice->GetDevice(), shaderCode));
         shaderStagesCreateInfo.push_back({ VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO });
         auto& currentModule = shaderModules.back();
         auto& currentStage = shaderStagesCreateInfo.back();
         this->ReflectShaderCode(shaderCode.data(), shaderCode.size(), shaderStage.shaderStage, seenDescriptorSets, pushConstants, offset);
 
-        //currentStage.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        //currentStage.pNext  = NULL;
-        //currentStage.flags  = 0;
+
         currentStage.stage  = VK_SHADER_STAGES[(uint32)shaderStage.shaderStage];
         currentStage.module = currentModule;
         currentStage.pName  = shaderStage.entryPoint;
-        //currentStage.pSpecializationInfo = NULL;
 
         if (shaderStage.shaderStage > END_RASTER) {
             rtShaderGroups.push_back({ VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR });
             auto& currentGroup = rtShaderGroups.back();
             currentGroup.type = SetShaderGroupType(currentGroup, shaderStage.shaderStage, (uint32)shaderStagesCreateInfo.size() - 1);
-            //currentGroup.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
-            //currentGroup.pNext = NULL;
-            //currentGroup.pShaderGroupCaptureReplayHandle = NULL;
         }
 
         h.u64(shaderStage.GetHash());
@@ -223,6 +214,23 @@ void Renderer::ShaderProgram::Compile()
     if (vertexInput.GetVertexInputDesc().vertexBindingDescriptionCount)
         h.u64(vertexInput.GetHash());
     hash = h.Get();
+}
+
+void Renderer::ShaderProgram::Destroy()
+{
+    if (renderDevice) {
+        this->DestroyShaderModules();
+        piplineLayout.Destroy(*renderDevice);
+    }
+}
+
+void Renderer::ShaderProgram::DestroyShaderModules()
+{
+    for (auto module : shaderModules) {
+        vkDestroyShaderModule(renderDevice->GetDevice(), module, NULL);
+    }
+
+    shaderModules.clear();
 }
 
 TRE_NS_END
