@@ -1,0 +1,3 @@
+/home/omar/Projects/TrikytaEngine3D/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/omar/Projects/TrikytaEngine3D/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/omar/Projects/TrikytaEngine3D/cmake-build-debug/CMakeFiles/Renderer.dir
