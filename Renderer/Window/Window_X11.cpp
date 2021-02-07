@@ -88,13 +88,13 @@ Window::Window(uint width, uint height, const std::string& title, WindowStyle::w
 		XChangeProperty(display, window, windowHints, windowHints, 32, PropModeReplace, ptr, 5);
 	}
 
-	// Add input handler for close button
+    // Show window
+    XMapWindow(display, window);
+    XFlush(display);
+
+    // Add input handler for close button
 	close = XInternAtom(display, "WM_DELETE_WINDOW", false);
 	XSetWMProtocols(display, window, &close, 1);
-
-	// Show window
-	XMapWindow(display, window);
-	XFlush(display);
 
 	// Handle fullscreen input
 	if (fullscreen){
@@ -174,21 +174,16 @@ bool Window::getEvent(Event& ev)
 {
 	// Fetch new events
 	XEvent event;
-    /*while (XCheckIfEvent(display, &event, &CheckEvent, reinterpret_cast<XPointer>(window))){
+    while (XCheckIfEvent(display, &event, &CheckEvent, reinterpret_cast<XPointer>(window))){
 		WindowEvent(event);
-    }*/
-
-    while (XCheckWindowEvent(display, window, UINT64_MAX, &event)) {
-        WindowEvent(event);
     }
-
+    
 	// Return oldest event - if available
 	if (events.empty()) 
 		return false;
 
 	ev = events.front();
 	events.pop();
-
 	return true;
 }
 
@@ -237,7 +232,7 @@ void Window::WindowEvent(const XEvent& event)
 	switch (event.type)
 	{
 	case ClientMessage:
-		if ((event.xclient.format == 32) && (event.xclient.data.l[0]) == static_cast<long>(close))
+		if (Atom(event.xclient.data.l[0]) == close)
 		{
 			if (fullscreen) EnableFullscreen(false);
 			open = false;
