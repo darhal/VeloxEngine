@@ -13,4 +13,12 @@ Renderer::Sampler::Sampler(RenderBackend& backend, VkSampler sampler, const Samp
 {
 }
 
+Renderer::Sampler::~Sampler()
+{
+    if (sampler != VK_NULL_HANDLE) {
+        backend.DestroySampler(sampler);
+        sampler = VK_NULL_HANDLE;
+    }
+}
+
 TRE_NS_END

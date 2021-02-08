@@ -133,6 +133,11 @@ void Renderer::Swapchain::DestroySwapchain()
     }
 
     vkDestroyFence(renderDevice.GetDevice(), swapchainData.transferSyncFence, NULL);
+
+    for (uint32 i = 0; i < MAX_IMAGES_COUNT; i++) {
+        // deleteing the image handles
+        swapchainData.swapchainImages[i] = ImageHandle(NULL);
+    }
 }
 
 void Renderer::Swapchain::CleanupSwapchain()

@@ -7,7 +7,7 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RenderDevice;
+    class RenderBackend;
 
 	struct BufferInfo
 	{
@@ -25,10 +25,19 @@ namespace Renderer
 	typedef BufferInfo BufferCreateInfo;
 	class RenderDevice;
 
-	class Buffer : public NoRefCount
+    struct BufferDeleter
+    {
+        void operator()(class Buffer* buff);
+    };
+
+    class Buffer : public Utils::RefCounterEnabled<Buffer, BufferDeleter, HandleCounter>
 	{
 	public:
-		Buffer(RenderDevice& device, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem);
+        friend class BufferDeleter;
+
+        Buffer(RenderBackend& backend, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem);
+
+        virtual ~Buffer();
 
 		void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
 
@@ -39,7 +48,7 @@ namespace Renderer
 		FORCEINLINE const MemoryView& GetBufferMemory() const { return bufferMemory; }
 
 	protected:
-		RenderDevice& device;
+        RenderBackend& backend;
 		BufferInfo bufferInfo;
 		MemoryView bufferMemory;
 		VkBuffer   apiBuffer;

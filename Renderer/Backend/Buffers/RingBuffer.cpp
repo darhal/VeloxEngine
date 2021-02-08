@@ -5,8 +5,8 @@ TRE_NS_START
 
 namespace Renderer
 {
-	RingBuffer::RingBuffer(RenderDevice& deivce, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem, uint32 unitSize, uint32 ringSize)
-		: Buffer(deivce, buffer, info, mem), bufferIndex(0), ringSize(ringSize), unitSize(unitSize)
+    RingBuffer::RingBuffer(RenderBackend& backend, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem, uint32 unitSize, uint32 ringSize)
+        : Buffer(backend, buffer, info, mem), bufferIndex(0), ringSize(ringSize), unitSize(unitSize)
 	{
 	}
 

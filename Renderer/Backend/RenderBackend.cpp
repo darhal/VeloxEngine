@@ -106,9 +106,8 @@ Renderer::RenderBackend::~RenderBackend()
 {
     vkDeviceWaitIdle(renderDevice.internal.device);
 
-    this->Shutdown();
-
     renderContext.DestroyRenderContext(renderInstance.internal, renderDevice.internal, renderContext.internal);
+    this->Shutdown();
     renderDevice.DestroryRenderDevice();
     renderInstance.DestroyRenderInstance();
 }
@@ -646,7 +645,7 @@ Renderer::BufferHandle Renderer::RenderBackend::CreateBuffer(const BufferInfo& c
     VkBuffer apiBuffer;
 
     this->CreateBufferInternal(apiBuffer, bufferMemory, createInfo);
-    BufferHandle ret(objectsPool.buffers.Allocate(renderDevice, apiBuffer, createInfo, bufferMemory));
+    BufferHandle ret(objectsPool.buffers.Allocate(*this, apiBuffer, createInfo, bufferMemory));
 
     if (data) {
         if (createInfo.domain == MemoryUsage::CPU_ONLY || createInfo.domain == MemoryUsage::CPU_CACHED || createInfo.domain == MemoryUsage::CPU_COHERENT) {
@@ -673,7 +672,7 @@ Renderer::RingBufferHandle Renderer::RenderBackend::CreateRingBuffer(const Buffe
     // Removing padding from total size, as we dont need the last bytes for alignement
     // alignedSize * NUM_FRAMES - padding, data, usage, memoryUsage, queueFamilies
     this->CreateBufferInternal(apiBuffer, bufferMemory, info);
-    RingBufferHandle ret(objectsPool.ringBuffers.Allocate(renderDevice, apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
+    RingBufferHandle ret(objectsPool.ringBuffers.Allocate(*this, apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
 
     if (data) {
         if (info.domain == MemoryUsage::CPU_ONLY || info.domain == MemoryUsage::CPU_CACHED || info.domain == MemoryUsage::CPU_COHERENT) {
@@ -909,18 +908,11 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
     for (auto& buff : frame.destroyedBuffers)
         vkDestroyBuffer(dev, buff, NULL);
 
-    for (auto& mem : frame.freedMemory)
-        vkFreeMemory(dev, mem, NULL);
-
     for (auto& sem : frame.destroyedSemaphores)
         vkDestroySemaphore(dev, sem, NULL);
 
-    for (auto& sem : frame.recycleSemaphores)
-        semaphoreManager.Recycle(sem);
-
-    // vkResetFences(dev, (uint32)frame.recycleFences.Size(), frame.recycleFences.Data());
-    for (auto& fence : frame.recycleFences)
-        fenceManager.Recycle(fence);
+    for (auto& sampler : frame.destroyedSamplers)
+        vkDestroySampler(dev, sampler, NULL);
 
     if (enabledFeatures & RAY_TRACING) {
         for (auto& accl : frame.destroyedAccls)
@@ -928,6 +920,18 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
 
         frame.destroyedAccls.Clear();
     }
+
+    // Free memory:
+    for (auto& mem : frame.freedMemory)
+        vkFreeMemory(dev, mem, NULL);
+
+    // Recycle:
+    for (auto& sem : frame.recycleSemaphores)
+        semaphoreManager.Recycle(sem);
+
+    // vkResetFences(dev, (uint32)frame.recycleFences.Size(), frame.recycleFences.Data());
+    for (auto& fence : frame.recycleFences)
+        fenceManager.Recycle(fence);
 
     frame.destroyedFramebuffers.Clear();
     frame.destroyedImageViews.Clear();
@@ -937,6 +941,7 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
     frame.recycleSemaphores.Clear();
     frame.recycleFences.Clear();
 
+    frame.destroyedSamplers.Clear();
     frame.destroyedBuffers.Clear();
     frame.destroyedBufferViews.Clear();
     frame.destroyedRenderPasses.Clear();
@@ -987,6 +992,24 @@ void Renderer::RenderBackend::DestroySemaphore(VkSemaphore sem)
 void Renderer::RenderBackend::DestroryEvent(VkEvent event)
 {
     Frame().destroyedEvents.EmplaceBack(event);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderBackend::DestroyBuffer(VkBuffer buffer)
+{
+    Frame().destroyedBuffers.EmplaceBack(buffer);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderBackend::DestroyBufferView(VkBufferView view)
+{
+    Frame().destroyedBufferViews.EmplaceBack(view);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderBackend::DestroySampler(VkSampler sampler)
+{
+    Frame().destroyedSamplers.EmplaceBack(sampler);
     Frame().shouldDestroy = true;
 }
 

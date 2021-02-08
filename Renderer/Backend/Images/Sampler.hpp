@@ -109,6 +109,8 @@ namespace Renderer
 
         Sampler(RenderBackend& backend, VkSampler sampler, const SamplerInfo& info);
 
+        ~Sampler();
+
         const SamplerInfo& GetInfo() const { return info; }
 
         VkSampler GetApiObject() const { return sampler; }

@@ -59,21 +59,22 @@ namespace Renderer
 
 			StaticVector<VkFence>		  waitFences;
 
-			TRE::Vector<VkPipeline>       destroyedPipelines;
-			TRE::Vector<VkFramebuffer>    destroyedFramebuffers;
-			TRE::Vector<VkImage>	      destroyedImages;
-			TRE::Vector<VkImageView>      destroyedImageViews;
-			TRE::Vector<VkBuffer>		  destroyedBuffers;
-			TRE::Vector<VkBufferView>	  destroyedBufferViews;
-			TRE::Vector<VkRenderPass>	  destroyedRenderPasses;
-			TRE::Vector<VkDescriptorPool> destroyedDescriptorPool;
-			TRE::Vector<VkSemaphore>	  destroyedSemaphores;
-			TRE::Vector<VkEvent>		  destroyedEvents;
+            TRE::Vector<VkPipeline>       destroyedPipelines;
+            TRE::Vector<VkFramebuffer>    destroyedFramebuffers;
+            TRE::Vector<VkImage>	      destroyedImages;
+            TRE::Vector<VkImageView>      destroyedImageViews;
+            TRE::Vector<VkBuffer>		  destroyedBuffers;
+            TRE::Vector<VkBufferView>	  destroyedBufferViews;
+            TRE::Vector<VkRenderPass>	  destroyedRenderPasses;
+            TRE::Vector<VkDescriptorPool> destroyedDescriptorPool;
+            TRE::Vector<VkSemaphore>	  destroyedSemaphores;
+            TRE::Vector<VkEvent>		  destroyedEvents;
+            TRE::Vector<VkSampler>        destroyedSamplers;
 
-			TRE::Vector<VkFence>		  recycleFences;
-			TRE::Vector<VkSemaphore>	  recycleSemaphores;
+            TRE::Vector<VkFence>		  recycleFences;
+            TRE::Vector<VkSemaphore>	  recycleSemaphores;
 
-			TRE::Vector<VkDeviceMemory>	  freedMemory;
+            TRE::Vector<VkDeviceMemory>	  freedMemory;
 
 			TRE::Vector<VkAccelerationStructureKHR> destroyedAccls;
 
@@ -213,6 +214,12 @@ namespace Renderer
 		void DestroySemaphore(VkSemaphore sem);
 
 		void DestroryEvent(VkEvent event);
+
+        void DestroyBuffer(VkBuffer buffer);
+
+        void DestroyBufferView(VkBufferView view);
+
+        void DestroySampler(VkSampler sampler);
 
 		FORCEINLINE uint32 GetMSAASamplerCount() const { return msaaSamplerCount; }
 

@@ -10,8 +10,10 @@ Renderer::ImageView::ImageView(RenderBackend& backend, VkImageView view, const I
 
 Renderer::ImageView::~ImageView()
 {
-	// printf("Destroying image view!\n");
-	backend.DestroyImageView(apiImageView);
+    if (apiImageView){
+        backend.DestroyImageView(apiImageView);
+        apiImageView = VK_NULL_HANDLE;
+    }
 }
 
 Renderer::Image::Image(RenderBackend& backend, VkImage image, const ImageCreateInfo& info, const MemoryView& memory) :
@@ -44,6 +46,7 @@ Renderer::Image::~Image()
 	if (apiImage != VK_NULL_HANDLE && !IsSwapchainImage()) {
 		backend.DestroyImage(apiImage);
 		backend.FreeMemory(imageMemory.memory);
+        apiImage = VK_NULL_HANDLE;
 		// printf("Destroying image!\n");
 	}
 }
@@ -86,6 +89,7 @@ void Renderer::ImageViewDeleter::operator()(ImageView* view)
 void Renderer::ImageDeleter::operator()(Image* img)
 {
 	img->backend.GetObjectsPool().images.Free(img);
+    img->defaultView = ImageViewHandle(NULL); // deleting the view
 }
 
 
