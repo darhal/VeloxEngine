@@ -6,6 +6,7 @@ TRE_NS_START
 void Renderer::SamplerDeleter::operator()(Sampler* sampler)
 {
 	sampler->backend.GetObjectsPool().samplers.Free(sampler);
+    // sampler->sampler = VK_NULL_HANDLE;
 }
 
 Renderer::Sampler::Sampler(RenderBackend& backend, VkSampler sampler, const SamplerInfo& info) :

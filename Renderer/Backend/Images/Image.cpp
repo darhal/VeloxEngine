@@ -10,7 +10,7 @@ Renderer::ImageView::ImageView(RenderBackend& backend, VkImageView view, const I
 
 Renderer::ImageView::~ImageView()
 {
-    if (apiImageView){
+    if (apiImageView) {
         backend.DestroyImageView(apiImageView);
         apiImageView = VK_NULL_HANDLE;
     }
@@ -25,7 +25,8 @@ Renderer::Image::Image(RenderBackend& backend, VkImage image, VkImageView defaul
 	backend(backend),
 	apiImage(image),
 	info(createInfo),
-	imageMemory{}, swapchainLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+    imageMemory{},
+    swapchainLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 {
 	if (defaultView != VK_NULL_HANDLE) {
 		ImageViewCreateInfo info;

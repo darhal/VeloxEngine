@@ -887,35 +887,37 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
 
     VkDevice dev = renderDevice.GetDevice();
 
-    for (auto& rp : frame.destroyedRenderPasses)
+    for (auto rp : frame.destroyedRenderPasses)
         vkDestroyRenderPass(dev, rp, NULL);
 
-    for (auto& dsc : frame.destroyedDescriptorPool)
+    for (auto dsc : frame.destroyedDescriptorPool)
         vkDestroyDescriptorPool(dev, dsc, NULL);
 
-    for (auto& fb : frame.destroyedFramebuffers)
+    for (auto fb : frame.destroyedFramebuffers)
         vkDestroyFramebuffer(dev, fb, NULL);
 
-    for (auto& view : frame.destroyedImageViews)
+    for (auto view : frame.destroyedImageViews) {
         vkDestroyImageView(dev, view, NULL);
+    }
 
-    for (auto& img : frame.destroyedImages)
+    for (auto img : frame.destroyedImages)
         vkDestroyImage(dev, img, NULL);
 
-    for (auto& view : frame.destroyedBufferViews)
+    for (auto view : frame.destroyedBufferViews)
         vkDestroyBufferView(dev, view, NULL);
 
-    for (auto& buff : frame.destroyedBuffers)
+    for (auto buff : frame.destroyedBuffers)
         vkDestroyBuffer(dev, buff, NULL);
 
-    for (auto& sem : frame.destroyedSemaphores)
+    for (auto sem : frame.destroyedSemaphores)
         vkDestroySemaphore(dev, sem, NULL);
 
-    for (auto& sampler : frame.destroyedSamplers)
+    for (auto sampler : frame.destroyedSamplers) {
         vkDestroySampler(dev, sampler, NULL);
+    }
 
     if (enabledFeatures & RAY_TRACING) {
-        for (auto& accl : frame.destroyedAccls)
+        for (auto accl : frame.destroyedAccls)
             vkDestroyAccelerationStructureKHR(dev, accl, NULL);
 
         frame.destroyedAccls.Clear();

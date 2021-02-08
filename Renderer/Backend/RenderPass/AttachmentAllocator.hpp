@@ -30,7 +30,7 @@ namespace Renderer
 		struct AttachmentNode : Utils::HashmapNode<AttachmentNode>, Utils::ListNode<AttachmentNode>
 		{
 			explicit AttachmentNode(ImageHandle handle) : handle(std::move(handle)) {};
-			
+
 			ImageHandle handle;
 		};
 
