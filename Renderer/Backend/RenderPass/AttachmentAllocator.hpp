@@ -27,7 +27,7 @@ namespace Renderer
 
 		void Destroy();
 	private:
-		struct AttachmentNode : Utils::HashmapNode<AttachmentNode>, Utils::ListNode<AttachmentNode>
+        struct AttachmentNode : public Utils::HashmapNode<AttachmentNode>, Utils::ListNode<AttachmentNode>
 		{
 			explicit AttachmentNode(ImageHandle handle) : handle(std::move(handle)) {};
 

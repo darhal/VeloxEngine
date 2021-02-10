@@ -44,8 +44,8 @@ namespace Renderer
 		struct Chunk
 		{
 			VkDeviceMemory			 memory = VK_NULL_HANDLE;
-			VkDeviceSize			 totalSize;
-			void*					 mappedData;
+            VkDeviceSize			 totalSize = 0;
+            void*					 mappedData = NULL;
 
 			std::vector<BindingInfo> bindingList;
 		};

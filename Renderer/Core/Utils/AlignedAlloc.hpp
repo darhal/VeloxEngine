@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Renderer/Common.hpp>
+#include <new>
 
 TRE_NS_START
 
@@ -10,6 +11,8 @@ namespace Renderer
     {
         FORCEINLINE void* AlignedAlloc(size_t size, size_t alignement)
         {
+            ASSERTF((alignement & (alignement - 1)), "Alignement (value=%u) isn't power of 2", (uint32)alignement);
+
             void** place;
             uintptr_t addr = 0;
             void* ptr = ::operator new(alignement + size + sizeof(uintptr_t));
@@ -17,10 +20,11 @@ namespace Renderer
             if (ptr == NULL)
                 return NULL;
 
-            addr = ((uintptr_t)ptr + sizeof(uintptr_t) + alignement) & ~(alignement - 1);
+            addr = ((uintptr_t)ptr + sizeof(void*) + alignement) & ~(alignement - 1);
             place = (void**)addr;
             place[-1] = ptr;
 
+            // void* addr = (void*)::operator new(size, (std::align_val)alignement);
             return (void*)addr;
         }
 
@@ -28,8 +32,10 @@ namespace Renderer
         {
             if (ptr != NULL) {
                 void** p = (void**)ptr;
-                free(p[-1]);
+                ::operator delete(p[-1]);
             }
+
+            //::operator delete ptr;
         }
     }
 }

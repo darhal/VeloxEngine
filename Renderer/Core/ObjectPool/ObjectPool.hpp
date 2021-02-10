@@ -21,7 +21,7 @@ namespace Renderer
 				if (empty.empty()) {
 					uint32 num_objects = 64;
 
-					T* ptr = static_cast<T*>(AlignedAlloc(num_objects * sizeof(T), MAX(64, alignof(T))));
+                    T* ptr = static_cast<T*>(AlignedAlloc(num_objects * sizeof(T), MAX(4, alignof(T))));
 
 					if (!ptr)
 						return NULL;
@@ -40,6 +40,13 @@ namespace Renderer
 				return ptr;
 			}
 
+            ~ObjectPool()
+            {
+                // memory.clear();
+                for (T* ptr : memory)
+                    AlignedFree(ptr);
+            }
+
 			void Free(T* ptr)
 			{
 				ptr->~T();
@@ -49,12 +56,8 @@ namespace Renderer
 			void Clear()
 			{
 				empty.clear();
-				// memory.clear();
-
-				for (T* chunk : memory) {
-					AlignedFree(chunk);
-				}
 			}
+
 		protected:
 			struct AlignedAllocDeleter
 			{
@@ -65,8 +68,8 @@ namespace Renderer
 			};
 
 			std::vector<T*> empty;
-			// std::vector<std::unique_ptr<T, AlignedAllocDeleter>> memory;
-			std::vector<T*> memory;
+            // std::vector<std::unique_ptr<T, AlignedAllocDeleter>> memory;
+            std::vector<T*> memory;
 		};
 	}
 }

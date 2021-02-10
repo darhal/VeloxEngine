@@ -4,6 +4,9 @@ project(TrikytaEngine3D)
 
 set(CMAKE_CXX_STANDARD 17)
 
+#set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+#set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+
 include_directories(${PROJECT_SOURCE_DIR})
 
 file(GLOB_RECURSE RENDERER_SRC CONFIGURE_DEPENDS

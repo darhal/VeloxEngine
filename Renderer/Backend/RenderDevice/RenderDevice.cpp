@@ -461,7 +461,7 @@ bool Renderer::RenderDevice::IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR
     vkGetPhysicalDeviceFeatures(gpu, &supportedFeatures);
     VkPhysicalDeviceProperties devProp;
     vkGetPhysicalDeviceProperties(gpu, &devProp);
-    bool isDiscrete = devProp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+    bool isDiscrete = 1; // devProp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 
 	return indices.IsComplete() && swapChainAdequate && supportedFeatures.samplerAnisotropy && isDiscrete;
 }

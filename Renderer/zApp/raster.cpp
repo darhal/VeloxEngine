@@ -111,6 +111,9 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 
 int raster(RenderBackend& backend)
 {
+    void* ptr = TRE::Renderer::Utils::AlignedAlloc(16, 4);
+    Utils::AlignedFree(ptr);
+
     auto& window = *backend.GetRenderContext().GetWindow();
     Event ev;
 
