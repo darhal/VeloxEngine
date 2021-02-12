@@ -109,8 +109,7 @@ namespace Renderer
 
         void Shutdown();
 
-		int32 CreateRenderDevice(
-            const RenderInstance& renderInstance,
+		int32 CreateRenderDevice(const RenderInstance& renderInstance,
 			const char** extensions = NULL, uint32 extCount = 0, const char** layers = NULL, uint32 layerCount = 0);
 
 		void DestroryRenderDevice();

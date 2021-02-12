@@ -27,6 +27,7 @@ namespace Renderer
             VkSemaphore						imageAcquiredSemaphores[MAX_FRAMES];
             VkSemaphore						drawCompleteSemaphores[MAX_FRAMES];
             VkFence							fences[MAX_FRAMES];
+            VkFence                         imageFences[MAX_IMAGES_COUNT];
 
             // To use when using seprate presentation queue:
             VkSemaphore						imageOwnershipSemaphores[MAX_FRAMES];

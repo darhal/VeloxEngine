@@ -201,7 +201,7 @@ int raster(RenderBackend& backend)
     INIT_BENCHMARK;
 
     time_t lasttime = time(NULL);
-    // TODO: shader specilization constants 
+    // TODO: shader specilization constants
 
     while (window.isOpen()) {
         window.getEvent(ev);

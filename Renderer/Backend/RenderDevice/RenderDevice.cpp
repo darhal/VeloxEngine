@@ -766,7 +766,6 @@ void Renderer::RenderDevice::ClearFrame()
         frame.submissions[i].Clear();
     }
 
-    // objectsPool.commandBuffers.Clear();
     this->DestroyPendingObjects(frame);
 }
 
@@ -780,6 +779,7 @@ void Renderer::RenderDevice::BeginFrame()
         frame.waitFences.Clear();
     }
 
+    renderContext->BeginFrame(*this);
     stagingManager.Wait(stagingManager.GetCurrentStagingBuffer());
     stagingManager.Flush();
 
@@ -815,8 +815,6 @@ void Renderer::RenderDevice::EndFrame()
     if (submissions.Size() != 0) {
         this->SubmitQueue(CommandBuffer::Type::GENERIC, NULL, 0, NULL, true);
     }
-
-    // renderContext->EndFrame(renderDevice);
 }
 
 Renderer::BlasHandle Renderer::RenderDevice::CreateBlas(const BlasCreateInfo& blasInfo, VkBuildAccelerationStructureFlagsKHR flags)

@@ -65,7 +65,8 @@ void Renderer::RenderBackend::InitInstance(uint32 usage)
 
     TRE_LOGI("GPU............: %s", renderDevice.internal.gpuProperties.deviceName);
     TRE_LOGI("Vendor.........: %s", vendor(renderDevice.internal.gpuProperties.vendorID).c_str());
-    TRE_LOGI("Driver.........: %d.%d", VK_VERSION_MAJOR(renderDevice.internal.gpuProperties.driverVersion), VK_VERSION_MINOR(renderDevice.internal.gpuProperties.driverVersion));
+    TRE_LOGI("Driver.........: %d.%d", VK_VERSION_MAJOR(renderDevice.internal.gpuProperties.driverVersion),
+             VK_VERSION_MINOR(renderDevice.internal.gpuProperties.driverVersion));
     TRE_LOGI("Device ID......: 0x%x", renderDevice.internal.gpuProperties.deviceID);
 }
 
@@ -82,7 +83,6 @@ Renderer::RenderBackend::~RenderBackend()
 
 void Renderer::RenderBackend::BeginFrame()
 {
-    renderContext.BeginFrame(renderDevice);
     renderDevice.BeginFrame();
 }
 

@@ -7,7 +7,7 @@
 TRE_NS_START
 
 Renderer::Swapchain::Swapchain(RenderBackend& backend) :
-    renderBackend(backend), swapchain(VK_NULL_HANDLE)
+    renderBackend(backend), swapchain(VK_NULL_HANDLE), swapchainData{0}
 {
 }
 

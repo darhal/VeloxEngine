@@ -38,15 +38,21 @@ void Renderer::RenderContext::DestroyRenderContext(const Internal::RenderInstanc
 
 void Renderer::RenderContext::BeginFrame(const RenderDevice& renderDevice)
 {
-    const Swapchain::SwapchainData& swapchainData = swapchain.swapchainData;
+    Swapchain::SwapchainData& swapchainData = swapchain.swapchainData;
     VkDevice device = renderDevice.GetDevice();
     uint32 currentFrame = internal.currentFrame;
 
     vkWaitForFences(device, 1, &swapchainData.fences[currentFrame], VK_TRUE, UINT64_MAX);
-    vkResetFences(device, 1, &swapchainData.fences[currentFrame]);
 
     VkResult result = vkAcquireNextImageKHR(device, swapchain.GetApiObject(), UINT64_MAX, 
         swapchainData.imageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &internal.currentImage);
+
+    if (swapchainData.imageFences[internal.currentImage] != VK_NULL_HANDLE) {
+        vkWaitForFences(device, 1, &swapchainData.imageFences[internal.currentImage], VK_TRUE, UINT64_MAX);
+    }
+
+    swapchainData.imageFences[internal.currentImage] = swapchainData.imageFences[currentFrame];
+    vkResetFences(device, 1, &swapchainData.fences[currentFrame]);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         swapchain.QueueSwapchainUpdate();
@@ -135,6 +141,8 @@ void Renderer::RenderContext::EndFrame(const RenderDevice& renderDevice)
 
     internal.previousFrame = internal.currentFrame;
     internal.currentFrame = (currentFrame + 1) % internal.numFramesInFlight;
+
+    // vkDeviceWaitIdle(renderDevice.GetDevice());
 }
 
 TRE_NS_END
