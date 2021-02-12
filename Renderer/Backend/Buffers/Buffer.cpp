@@ -25,7 +25,7 @@ Renderer::Buffer::~Buffer()
 {
     if (apiBuffer != VK_NULL_HANDLE) {
         backend.DestroyBuffer(apiBuffer);
-        // backend.FreeMemory(bufferMemory.memory);
+        backend.FreeMemory(bufferMemory.allocKey);
         apiBuffer = VK_NULL_HANDLE;
     }
 }

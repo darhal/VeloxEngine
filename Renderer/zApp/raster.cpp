@@ -170,6 +170,7 @@ int raster(RenderBackend& backend)
     ImageHandle texture = backend.CreateImage(ImageCreateInfo::Texture2D(texWidth, texHeight, true), pixels);
     ImageViewHandle textureView = backend.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
     SamplerHandle sampler = backend.CreateSampler(SamplerInfo::Sampler2D(texture));
+    free(pixels);
 
     RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 3);
     GraphicsState state;

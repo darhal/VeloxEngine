@@ -53,7 +53,7 @@ namespace Renderer
 
 			struct QueueData
 			{
-				StaticVector<SemaphoreHandle> waitSemaphores;
+                StaticVector<SemaphoreHandle>      waitSemaphores;
 				StaticVector<VkPipelineStageFlags> waitStages;
 			} queueData[(uint32)CommandBuffer::Type::MAX];
 
