@@ -75,6 +75,7 @@ namespace Renderer
             TRE::Vector<VkSemaphore>	  recycleSemaphores;
 
             TRE::Vector<VkDeviceMemory>	  freedMemory;
+            TRE::Vector<MemoryAllocator::AllocKey> freeAllocatedMemory;
 
 			TRE::Vector<VkAccelerationStructureKHR> destroyedAccls;
 
@@ -208,6 +209,8 @@ namespace Renderer
 		void DestroyFramebuffer(VkFramebuffer fb);
 
 		void FreeMemory(VkDeviceMemory memory);
+
+        void FreeMemory(Renderer::MemoryAllocator::AllocKey key);
 
 		void RecycleSemaphore(VkSemaphore sem);
 

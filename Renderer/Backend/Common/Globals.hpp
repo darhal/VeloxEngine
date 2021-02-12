@@ -218,6 +218,8 @@ namespace Renderer
 		DeviceSize		padding;
 		void*			mappedData;
 		uint32			alignment;
+
+        uint32 allocKey;
 	};
 
 	template<typename T>

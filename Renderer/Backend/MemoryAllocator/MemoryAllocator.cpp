@@ -52,7 +52,6 @@ void Renderer::MemoryAllocator::AllocPool::DeallocateChunk()
 	for (uint32 i = 0; i < chunks.size(); i++) {
         // if (i >= 1) continue;
         Chunk& chunk = chunks[i];
-        printf("\t Freeing chunk: %d (mem:0x%" PRIx64 ")\n", i, chunk.memory);
 
         if (!chunk.memory) {
             continue;
@@ -61,7 +60,6 @@ void Renderer::MemoryAllocator::AllocPool::DeallocateChunk()
         if (chunk.mappedData) {
 			vkUnmapMemory(renderDevice->device, chunk.memory);
 		}
-
 
         vkFreeMemory(renderDevice->device, chunk.memory, NULL);
         chunk.memory = VK_NULL_HANDLE;
@@ -81,6 +79,7 @@ Renderer::MemoryView Renderer::MemoryAllocator::AllocPool::GetMemoryView(AllocKe
 	memView.offset = chunks[chunkIndex].bindingList[bindingIndex].offset;
 	memView.padding = chunks[chunkIndex].bindingList[bindingIndex].padding;
     memView.alignment = chunks[chunkIndex].bindingList[bindingIndex].alignment;
+    memView.allocKey = key.key;
 
 	return memView;
 }
@@ -112,8 +111,7 @@ Renderer::MemoryAllocator::Chunk* Renderer::MemoryAllocator::AllocPool::CreateNe
 		vkMapMemory(renderDevice->device, chunk.memory, 0, totalSize, 0, &chunk.mappedData);
 	}
 
-    printf("Creating: memeory (mem:0x%" PRIx64 ") / Type Index: %d\n", chunk.memory, memoryTypeIndex);
-	chunks.emplace_back(chunk);
+    chunks.emplace_back(chunk);
 	return &chunks.back();
 }
 
@@ -197,7 +195,7 @@ Renderer::MemoryView Renderer::MemoryAllocator::Allocate(uint32 memoryTypeIndex,
 
 void Renderer::MemoryAllocator::Free(AllocKey key)
 {
-
+    // TODO:
 }
 
 Renderer::MemoryView Renderer::MemoryAllocator::GetMemoryViewFromAllocKey(AllocKey key)
@@ -207,19 +205,7 @@ Renderer::MemoryView Renderer::MemoryAllocator::GetMemoryViewFromAllocKey(AllocK
 
 void Renderer::MemoryAllocator::Destroy() {
     for (uint32 i = 0; i < renderDevice->memoryProperties.memoryTypeCount; i++) {
-        // TODO: fix this
-        printf("Type index: %d\n", i);
         allocatedList[i].DeallocateChunk();
-
-        /*for (auto& chunk : allocatedList[i].chunks) {
-            if (chunk.memory) {
-                if (chunk.mappedData) {
-                    vkUnmapMemory(renderDevice->device, chunk.memory);
-                }
-
-                vkFreeMemory(renderDevice->device, chunk.memory, NULL);
-            }
-        }*/
     }
 }
 

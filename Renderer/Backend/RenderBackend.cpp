@@ -927,6 +927,10 @@ void Renderer::RenderBackend::DestroyPendingObjects(PerFrame& frame)
     for (auto& mem : frame.freedMemory)
         vkFreeMemory(dev, mem, NULL);
 
+    // Free allocated memory:
+    for (auto allocKey : frame.freeAllocatedMemory)
+        gpuMemoryAllocator.Free(allocKey);
+
     // Recycle:
     for (auto& sem : frame.recycleSemaphores)
         semaphoreManager.Recycle(sem);
@@ -976,6 +980,13 @@ void Renderer::RenderBackend::FreeMemory(VkDeviceMemory memory)
 {
     PerFrame& frame = this->Frame();
     frame.freedMemory.EmplaceBack(memory);
+    frame.shouldDestroy = true;
+}
+
+void Renderer::RenderBackend::FreeMemory(Renderer::MemoryAllocator::AllocKey key)
+{
+    PerFrame& frame = this->Frame();
+    frame.freeAllocatedMemory.EmplaceBack(key);
     frame.shouldDestroy = true;
 }
 

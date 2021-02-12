@@ -46,9 +46,8 @@ Renderer::Image::~Image()
 {
 	if (apiImage != VK_NULL_HANDLE && !IsSwapchainImage()) {
 		backend.DestroyImage(apiImage);
-		backend.FreeMemory(imageMemory.memory);
+        backend.FreeMemory(imageMemory.allocKey);
         apiImage = VK_NULL_HANDLE;
-		// printf("Destroying image!\n");
 	}
 }
 

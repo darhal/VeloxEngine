@@ -10,14 +10,20 @@ namespace Renderer
 	class RENDERER_API MemoryAllocator
 	{
 	public:
-		CONSTEXPR static DeviceSize TOTAL_MEM_SIZE = 1024 * 4;
+        CONSTEXPR static DeviceSize TOTAL_MEM_SIZE = 1024 * 1024 * 4;
 
 		struct AllocKey
 		{
 			FORCEINLINE uint32 GetBindingIndex() { return key & (((uint32)1 << 15) - 1); };
+
 			FORCEINLINE uint32 GetChunkIndex() { return (key & (((uint32)1 << 27) - 1)) >> 15; };
+
 			FORCEINLINE uint32 GetMemoryTypeIndex() { return key >> 27; };
+
 			AllocKey(uint32 memTypeIndex, uint32 chunk, uint32 binding) : key((memTypeIndex << 27) | (chunk << 15) | (binding)) {}
+
+            AllocKey(uint32 key) : key(key) {}
+
 			uint32 key;
 		};
 	public:
