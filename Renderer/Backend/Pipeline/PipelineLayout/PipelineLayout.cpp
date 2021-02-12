@@ -1,18 +1,16 @@
 #include "PipelineLayout.hpp"
-#include <Renderer/Backend/RenderBackend.hpp>
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 
 TRE_NS_START
 
-void Renderer::PipelineLayout::Create(RenderBackend& backend)
+void Renderer::PipelineLayout::Create(RenderDevice& device)
 {
-	const RenderDevice& renderDevice = backend.GetRenderDevice();
-
 	StackAlloc<VkDescriptorSetLayout, MAX_DESCRIPTOR_SET> vkDescSetAlloc;
 	VkDescriptorSetLayout* layouts = vkDescSetAlloc.Allocate(descriptorSetLayoutCount);
 
 	for (uint32 i = 0; i < descriptorSetLayoutCount; i++) {
-		layouts[i] = descriptorSetLayouts[i].Create(renderDevice.GetDevice());
-		descriptorSetAlloc[i] = backend.RequestDescriptorSetAllocator(descriptorSetLayouts[i]);
+        layouts[i] = descriptorSetLayouts[i].Create(device.GetDevice());
+        descriptorSetAlloc[i] = device.RequestDescriptorSetAllocator(descriptorSetLayouts[i]);
 	}
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -24,12 +22,12 @@ void Renderer::PipelineLayout::Create(RenderBackend& backend)
 	pipelineLayoutInfo.pushConstantRangeCount = pushConstantsCount;
 	pipelineLayoutInfo.pPushConstantRanges = pushConstantsRanges;
 
-	if (vkCreatePipelineLayout(renderDevice.GetDevice(), &pipelineLayoutInfo, NULL, &pipelineLayout) != VK_SUCCESS) {
+    if (vkCreatePipelineLayout(device.GetDevice(), &pipelineLayoutInfo, NULL, &pipelineLayout) != VK_SUCCESS) {
 		ASSERTF(true, "failed to create pipeline layout!");
 	}
 }
 
-void Renderer::PipelineLayout::Destroy(const Renderer::RenderDevice &renderDevice)
+void Renderer::PipelineLayout::Destroy(const Renderer::RenderDevice& renderDevice)
 {
     if (pipelineLayout) {
         vkDestroyPipelineLayout(renderDevice.GetDevice(), pipelineLayout, NULL);

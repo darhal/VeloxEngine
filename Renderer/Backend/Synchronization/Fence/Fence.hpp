@@ -7,7 +7,7 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RenderBackend;
+    class RenderDevice;
 
 	struct FenceDeleter
 	{
@@ -27,11 +27,11 @@ namespace Renderer
 
 		FORCEINLINE bool BeenWaiting() const { return beenWaiting; }
 	private:
-		Fence(RenderBackend& backend, VkFence fence)
-			: backend(backend), fence(fence), beenWaiting(false)
+        Fence(RenderDevice& device, VkFence fence)
+            : device(device), fence(fence), beenWaiting(false)
 		{}
 	private:
-		RenderBackend& backend;
+        RenderDevice& device;
 		VkFence fence;
 		bool beenWaiting;
 

@@ -47,12 +47,12 @@ namespace Renderer
 		PipelineType GetPipelineType() const { return pipelineType; }
 
 		// RT:
-		void Create(RenderBackend& backend, uint32 maxDepth, uint32 maxRayPayloadSize = 1, uint32 maxRayHitAttribSize = 1);
+        void Create(RenderDevice& device, uint32 maxDepth, uint32 maxRayPayloadSize = 1, uint32 maxRayHitAttribSize = 1);
 
 		const SBT& GetSBT() const { return sbt; }
 
 		// Compute:
-		void Create(const RenderDevice& device);
+        void Create(RenderDevice& device);
 
 		// Graphics:
 		void Create(
@@ -70,8 +70,8 @@ namespace Renderer
 
 		bool IsStateDynamic(VkDynamicState state) const { return dynamicState & (1 << state); }
 	protected:
-	    const RenderDevice*  renderDevice;
-		ShaderProgram* shaderProgram;
+        RenderDevice*  renderDevice;
+        ShaderProgram*       shaderProgram;
 		VkPipeline			 pipeline;
 		PipelineType		 pipelineType;
 

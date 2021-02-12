@@ -3,18 +3,14 @@
 
 TRE_NS_START
 
-Renderer::CommandPool::CommandPool(RenderDevice* device, uint32 queueFamilyIndex) : 
-	renderDevice(device), index(0), secondaryIndex(0)
+Renderer::CommandPool::CommandPool(RenderDevice* device, uint32 queueFamilyIndex) :
+    device(device), index(0), secondaryIndex(0)
 {
 	VkCommandPoolCreateInfo info = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
 	info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 	info.queueFamilyIndex = queueFamilyIndex;
 
-	vkCreateCommandPool(renderDevice->GetDevice(), &info, NULL, &pool);
-}
-
-Renderer::CommandPool::CommandPool() : renderDevice(NULL), pool(VK_NULL_HANDLE), index(0), secondaryIndex(0)
-{
+    vkCreateCommandPool(device->GetDevice(), &info, NULL, &pool);
 }
 
 Renderer::CommandPool::~CommandPool()
@@ -22,7 +18,7 @@ Renderer::CommandPool::~CommandPool()
     this->Destroy();
 }
 
-Renderer::CommandPool::CommandPool(CommandPool&& other) noexcept
+/*Renderer::CommandPool::CommandPool(CommandPool&& other) noexcept
 {
 	*this = std::move(other);
 }
@@ -43,12 +39,12 @@ Renderer::CommandPool& Renderer::CommandPool::operator=(CommandPool&& other) noe
 		other.index = 0;
 	}
 	return *this;
-}
+}*/
 
 void Renderer::CommandPool::Reset()
 {
 	if (index > 0 || secondaryIndex > 0)
-		vkResetCommandPool(renderDevice->GetDevice(), pool, 0);
+        vkResetCommandPool(device->GetDevice(), pool, 0);
 
 	index = 0;
 	secondaryIndex = 0;
@@ -66,7 +62,7 @@ VkCommandBuffer Renderer::CommandPool::RequestCommandBuffer()
 		info.commandPool = pool;
 		info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		info.commandBufferCount = 1;
-		vkAllocateCommandBuffers(renderDevice->GetDevice(), &info, &cmd);
+        vkAllocateCommandBuffers(device->GetDevice(), &info, &cmd);
 		buffers.push_back(cmd);
 		index++;
 		return cmd;
@@ -84,7 +80,7 @@ VkCommandBuffer Renderer::CommandPool::RequestSecondaryCommandBuffer()
 		info.commandPool = pool;
 		info.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
 		info.commandBufferCount = 1;
-		vkAllocateCommandBuffers(renderDevice->GetDevice(), &info, &cmd);
+        vkAllocateCommandBuffers(device->GetDevice(), &info, &cmd);
 		secondaryBuffers.push_back(cmd);
 		secondaryIndex++;
 		return cmd;
@@ -93,12 +89,14 @@ VkCommandBuffer Renderer::CommandPool::RequestSecondaryCommandBuffer()
 
 void Renderer::CommandPool::Destroy()
 {
+    VkDevice dev = device->GetDevice();
+
     if (!buffers.empty())
-        vkFreeCommandBuffers(renderDevice->GetDevice(), pool, (uint32)buffers.size(), buffers.data());
+        vkFreeCommandBuffers(dev, pool, (uint32)buffers.size(), buffers.data());
     if (!secondaryBuffers.empty())
-        vkFreeCommandBuffers(renderDevice->GetDevice(), pool, (uint32)secondaryBuffers.size(), secondaryBuffers.data());
+        vkFreeCommandBuffers(dev, pool, (uint32)secondaryBuffers.size(), secondaryBuffers.data());
     if (pool != VK_NULL_HANDLE)
-        vkDestroyCommandPool(renderDevice->GetDevice(), pool, nullptr);
+        vkDestroyCommandPool(dev, pool, nullptr);
 
     pool = VK_NULL_HANDLE;
     buffers.clear();

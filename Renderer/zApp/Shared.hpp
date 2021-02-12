@@ -46,17 +46,17 @@ const std::vector<uint16_t> indices = {
      //0, 1, 2, 3, 7, 1, 5, 4, 7, 6, 2, 4, 0, 1
 };
 
-static TRE::Renderer::RenderPassInfo GetRenderPass(TRE::Renderer::RenderBackend& backend, TRE::Renderer::RenderPassInfo::Subpass& subpass)
+static TRE::Renderer::RenderPassInfo GetRenderPass(TRE::Renderer::RenderDevice& dev, TRE::Renderer::RenderPassInfo::Subpass& subpass)
 {
     using namespace TRE::Renderer;
-    RenderPassInfo rpi = backend.GetSwapchainRenderPass(SwapchainRenderPass::DEPTH);
+    RenderPassInfo rpi = dev.GetSwapchainRenderPass(SwapchainRenderPass::DEPTH);
 
-    if (backend.GetMSAASamplerCount() != 1) {
+    /*if (backend.GetMSAASamplerCount() != 1) {
         rpi.colorAttachments[1] = &backend.GetTransientAttachment(
-            backend.GetRenderContext().GetSwapchain().GetExtent().width,
-            backend.GetRenderContext().GetSwapchain().GetExtent().height,
-            backend.GetRenderContext().GetSwapchain().GetFormat(),
-            0, backend.GetMSAASamplerCount());
+            dev.GetRenderContext()->GetSwapchain().GetExtent().width,
+            dev.GetRenderContext()->GetSwapchain().GetExtent().height,
+            dev.GetRenderContext()->GetSwapchain().GetFormat(),
+            0, backend.GetMSAASamplerCount()1);
 
         rpi.clearAttachments = 1u << 1;
         rpi.storeAttachments = 1u << 1;
@@ -70,7 +70,7 @@ static TRE::Renderer::RenderPassInfo GetRenderPass(TRE::Renderer::RenderBackend&
         rpi.subpasses = &subpass;
         rpi.subpassesCount = 1;
         rpi.colorAttachmentCount = 2;
-    }
+    }*/
 
     return rpi;
 }

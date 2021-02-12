@@ -7,7 +7,7 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RenderBackend;
+    class RenderDevice;
 
 	struct SemaphoreDeleter
 	{
@@ -23,12 +23,12 @@ namespace Renderer
 
 		void SetNoClean() { clean = false; };
 	private:
-		Semaphore(RenderBackend& backend, VkSemaphore semaphore) :
-			backend(backend), semaphore(semaphore), clean(true)
+        Semaphore(RenderDevice& device, VkSemaphore semaphore) :
+            device(device), semaphore(semaphore), clean(true)
 		{};
 		
 	private:
-		RenderBackend& backend;
+        RenderDevice& device;
 		VkSemaphore semaphore;
 		bool clean;
 

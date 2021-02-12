@@ -1,13 +1,12 @@
 #include "SBT.hpp"
-#include <Renderer/Backend/RenderBackend.hpp>
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 #include <Renderer/Core/Alignement/Alignement.hpp>
 
 TRE_NS_START
 
-void Renderer::SBT::Init(RenderBackend& backend, const ShaderProgram& program, Pipeline& pipline)
+void Renderer::SBT::Init(RenderDevice& device, const ShaderProgram& program, Pipeline& pipline)
 {
-	const RenderDevice& device = backend.GetRenderDevice();
 	auto groupCount = program.GetShaderGroupsCount();
 
 	uint32_t groupHandleSize = device.GetRtProperties().shaderGroupHandleSize;  // Size of a program identifier
@@ -28,7 +27,7 @@ void Renderer::SBT::Init(RenderBackend& backend, const ShaderProgram& program, P
 	info.domain = MemoryUsage::CPU_COHERENT;
 
 	if (!sbtBuffer || sbtBuffer->GetBufferInfo().size != sbtSize) { // Update
-		sbtBuffer = backend.CreateBuffer(info);
+        sbtBuffer = device.CreateBuffer(info);
 		address = device.GetBufferAddress(sbtBuffer);
 	}
 

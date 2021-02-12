@@ -3,7 +3,7 @@
 
 TRE_NS_START
 
-Renderer::PipelineAllocator::PipelineAllocator(RenderBackend* backend) : renderBackend(backend)
+Renderer::PipelineAllocator::PipelineAllocator(RenderDevice& device) : device(device)
 {
 }
 
@@ -21,7 +21,7 @@ Renderer::Pipeline& Renderer::PipelineAllocator::RequestPipline(ShaderProgram& p
 	if (ret.second) {
 		pipline.SetRenderPass(&rp);
 		// pipline.SetShaderProgram(&program);
-		pipline.Create(renderBackend->GetRenderContext(), state);
+        pipline.Create(*device.GetRenderContext(), state);
 	}
 
 	return pipline;
@@ -37,7 +37,7 @@ Renderer::Pipeline& Renderer::PipelineAllocator::RequestPipline(ShaderProgram& p
 	Pipeline& pipline = ret.first->second;
 
 	if (ret.second) {
-		pipline.Create(renderBackend->GetRenderDevice());
+        pipline.Create(device);
 	}
 
 	return pipline;

@@ -4,11 +4,10 @@
 #include <Renderer/Backend/CommandList/CommandList.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 #include <Renderer/Backend/RayTracing/TLAS/TLAS.hpp>
-#include <Renderer/Backend/RenderBackend.hpp>
 
 TRE_NS_START
 
-Renderer::AsBuilder::AsBuilder(const RenderDevice& device) : 
+Renderer::AsBuilder::AsBuilder(RenderDevice& device) :
 	renderDevice(device), maxScratchSize(MAX_UPLOAD_BUFFER_SIZE), currentStaging(0)
 {
 }
@@ -27,10 +26,10 @@ void Renderer::AsBuilder::Init()
 	stagingInfo.usage = BufferUsage::TRANSFER_SRC;
 
 	for (int i = 0; i < NUM_FRAMES; i++) {
-		rtStaging[i].scratchBuffer = renderDevice.CreateBuffer(info);
+        rtStaging[i].scratchBuffer = renderDevice.CreateBufferHelper(info);
         rtStaging[i].address = VK_NULL_HANDLE;
 		rtStaging[i].submitted = false;
-		rtStaging[i].stagingBuffer = renderDevice.CreateBuffer(stagingInfo);
+        rtStaging[i].stagingBuffer = renderDevice.CreateBufferHelper(stagingInfo);
 
 		VkCommandPoolCreateInfo commandPoolCreateInfo = {};
 		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -289,7 +288,7 @@ void Renderer::AsBuilder::BuildBlasBatch(bool compact)
 	stage->submitted = true;
 }
 
-void Renderer::AsBuilder::CompressBatch(RenderBackend& backend)
+void Renderer::AsBuilder::CompressBatch()
 {
 	RtStaging* stage = &rtStaging[currentStaging];
 	RtStaging::Batch& batch = stage->batch[1]; // compact batch
@@ -335,7 +334,7 @@ void Renderer::AsBuilder::CompressBatch(RenderBackend& backend)
 		VkAccelerationStructureCreateInfoKHR asCreateInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
 		asCreateInfo.size = compactSizes[idx];
 		asCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-		auto as = backend.CreateAcceleration(asCreateInfo, &buffHandle);
+        auto as = renderDevice.CreateAcceleration(asCreateInfo, &buffHandle);
 
 		// Copy the original BLAS to a compact version
 		VkCopyAccelerationStructureInfoKHR copyInfo{ VK_STRUCTURE_TYPE_COPY_ACCELERATION_STRUCTURE_INFO_KHR };
@@ -357,10 +356,10 @@ void Renderer::AsBuilder::CompressBatch(RenderBackend& backend)
 	stage->submitted = true;
 }
 
-void Renderer::AsBuilder::BuildAll(RenderBackend& backend)
+void Renderer::AsBuilder::BuildAll()
 {
 	this->BuildBlasBatchs();
-	this->CompressBatch(backend);
+    this->CompressBatch();
 	this->BuildTlasBatch();
 }
 

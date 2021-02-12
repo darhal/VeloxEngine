@@ -7,7 +7,7 @@
 TRE_NS_START
 
 Renderer::Swapchain::Swapchain(RenderBackend& backend) :
-    renderBackend(backend)
+    renderBackend(backend), swapchain(VK_NULL_HANDLE)
 {
 }
 
@@ -248,6 +248,7 @@ void Renderer::Swapchain::CreateSwapchainResources()
 
 void Renderer::Swapchain::CreateSwapchainResources(const VkImage* images)
 {
+    auto& device = renderBackend.GetRenderDevice();
     VkFormat format = swapchainData.swapChainImageFormat;
     const auto info = ImageCreateInfo::RenderTarget(swapchainData.swapChainExtent.width, swapchainData.swapChainExtent.height, format);
 
@@ -267,78 +268,16 @@ void Renderer::Swapchain::CreateSwapchainResources(const VkImage* images)
         view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
 
         VkImageView image_view;
-        vkCreateImageView(renderBackend.GetRenderDevice().GetDevice(), &view_info, NULL, &image_view);
+        vkCreateImageView(device.GetDevice(), &view_info, NULL, &image_view);
 
-        swapchainData.swapchainImages[i] = ImageHandle(renderBackend.objectsPool.images.Allocate(renderBackend, images[i], image_view, info, VK_IMAGE_VIEW_TYPE_2D));
+        swapchainData.swapchainImages[i] = ImageHandle(device.objectsPool.images.Allocate(device, images[i], image_view, info, VK_IMAGE_VIEW_TYPE_2D));
         swapchainData.swapchainImages[i]->SetSwapchainLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
 }
 
-Renderer::ImageHandle Renderer::Swapchain::GetSwapchainImage(uint32 i)
+Renderer::ImageHandle Renderer::Swapchain::GetSwapchainImage(uint32 i) const
 {
     return swapchainData.swapchainImages[i];
-}
-
-void Renderer::Swapchain::CreateSwapchainRenderPass()
-{
-    const RenderDevice& renderDevice = renderBackend.GetRenderDevice();
-
-    VkAttachmentDescription depthAttachment{};
-    depthAttachment.format = FindSupportedDepthStencilFormat();
-    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference depthAttachmentRef{};
-    depthAttachmentRef.attachment = 1;
-    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = swapchainData.swapChainImageFormat;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkAttachmentDescription attachments[] = { colorAttachment, depthAttachment};
-
-    VkRenderPassCreateInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount  = 2;
-    renderPassInfo.pAttachments     = attachments;
-    renderPassInfo.subpassCount     = 1;
-    renderPassInfo.pSubpasses       = &subpass;
-    renderPassInfo.dependencyCount  = 1;
-    renderPassInfo.pDependencies    = &dependency;
-
-    if (vkCreateRenderPass(renderDevice.GetDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create render pass!");
-    }
 }
 
 void Renderer::Swapchain::CreateDepthResources()
@@ -397,7 +336,8 @@ VkFramebuffer Renderer::Swapchain::GetCurrentFramebuffer() const
     return swapchainData.swapChainFramebuffers[renderContext.GetCurrentImageIndex()]; 
 }
 
-VkFormat Renderer::Swapchain::FindSupportedFormat(const std::initializer_list<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+VkFormat Renderer::Swapchain::FindSupportedFormat(const std::initializer_list<VkFormat>& candidates, VkImageTiling tiling,
+                                                  VkFormatFeatureFlags features) const
 {
     for (VkFormat format : candidates) {
         VkFormatProperties props;
@@ -414,7 +354,7 @@ VkFormat Renderer::Swapchain::FindSupportedFormat(const std::initializer_list<Vk
     return VK_FORMAT_UNDEFINED;
 }
 
-VkFormat Renderer::Swapchain::FindSupportedDepthStencilFormat()
+VkFormat Renderer::Swapchain::FindSupportedDepthStencilFormat() const
 {
     return this->FindSupportedFormat(
         { VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT },
@@ -423,7 +363,7 @@ VkFormat Renderer::Swapchain::FindSupportedDepthStencilFormat()
     );
 }
 
-VkFormat Renderer::Swapchain::FindSupportedDepthFormat()
+VkFormat Renderer::Swapchain::FindSupportedDepthFormat() const
 {
     return this->FindSupportedFormat(
         { VK_FORMAT_D32_SFLOAT, VK_FORMAT_X8_D24_UNORM_PACK32, VK_FORMAT_D16_UNORM },

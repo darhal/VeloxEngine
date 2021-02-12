@@ -17,11 +17,11 @@ TRE_NS_START
 
 void Renderer::CommandBufferDeleter::operator()(CommandBuffer* cmd)
 {
-    cmd->renderBackend->GetObjectsPool().commandBuffers.Free(cmd);
+    cmd->device.GetObjectsPool().commandBuffers.Free(cmd);
 }
 
-Renderer::CommandBuffer::CommandBuffer(RenderBackend* backend, VkCommandBuffer buffer, Type type) :
-    renderBackend(backend), commandBuffer(buffer), type(type), allocatedSets{}, dirty{},
+Renderer::CommandBuffer::CommandBuffer(RenderDevice& device, VkCommandBuffer buffer, Type type) :
+    device(device), commandBuffer(buffer), type(type), allocatedSets{}, dirty{},
     program(NULL), state(NULL), pipeline(NULL), stateUpdate(false), renderToSwapchain(false)
 {
 }
@@ -62,16 +62,18 @@ void Renderer::CommandBuffer::SetScissor(const VkRect2D& scissor)
 
 void Renderer::CommandBuffer::BeginRenderPass(VkClearColorValue clearColor)
 {
+    const auto& swapchain = device.GetRenderContext()->GetSwapchain();
+
     VkClearValue clearValue[2];
     clearValue[0].color = clearColor;
     clearValue[1].depthStencil = { 1.f, 0 };
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass        = renderBackend->GetRenderContext().GetSwapchain().GetRenderPass();
-    renderPassInfo.framebuffer       = renderBackend->GetRenderContext().GetSwapchain().GetCurrentFramebuffer();
+    renderPassInfo.renderPass        = swapchain.GetRenderPass();
+    renderPassInfo.framebuffer       = swapchain.GetCurrentFramebuffer();
     renderPassInfo.renderArea.offset = { 0, 0 };
-    renderPassInfo.renderArea.extent = renderBackend->GetRenderContext().GetSwapchain().GetExtent();
+    renderPassInfo.renderArea.extent = swapchain.GetExtent();
     renderPassInfo.clearValueCount   = 2;
     renderPassInfo.pClearValues      = clearValue;
 
@@ -84,8 +86,8 @@ void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubp
 {
     ASSERT(type == Type::ASYNC_COMPUTE || type == Type::ASYNC_TRANSFER);
 
-    renderPass = &renderBackend->RequestRenderPass(info);
-    framebuffer = &renderBackend->RequestFramebuffer(info, renderPass);
+    renderPass = &device.RequestRenderPass(info);
+    framebuffer = &device.RequestFramebuffer(info, renderPass);
     this->InitViewportScissor(info, framebuffer);
 
     VkClearValue clearValues[MAX_ATTACHMENTS + 1];
@@ -393,8 +395,6 @@ void Renderer::CommandBuffer::TraceRays(uint32 width, uint32 height, uint32 dept
     //}
 
     this->FlushDescriptorSets();
-
-    const RenderDevice& device = renderBackend->GetRenderDevice();
     const auto& sbt = pipeline->GetSBT();
 
     vkCmdTraceRaysKHR(commandBuffer, 
@@ -635,7 +635,7 @@ void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, cons
 
 Renderer::EventHandle Renderer::CommandBuffer::SignalEvent(VkPipelineStageFlags stages)
 {
-    auto event = renderBackend->RequestPiplineEvent();
+    auto event = device.RequestPiplineEvent();
     vkCmdSetEvent(commandBuffer, event->GetApiObject(), stages);
     event->SetStages(stages);
     return event;
@@ -829,7 +829,7 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
     }
 
     printf("Updating descriptor sets: writting count:%u\n", writeCount);
-    vkUpdateDescriptorSets(renderBackend->GetRenderDevice().GetDevice(), writeCount, writes, 0, NULL);
+    vkUpdateDescriptorSets(device.GetDevice(), writeCount, writes, 0, NULL);
 }
 
 void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
@@ -957,7 +957,7 @@ void Renderer::CommandBuffer::BindPipeline()
             state->SaveChanges();
         }
 
-        this->BindPipeline(renderBackend->RequestPipeline(*program, *renderPass, *state));
+        this->BindPipeline(device.RequestPipeline(*program, *renderPass, *state));
 
         if (pipeline->IsStateDynamic(VK_DYNAMIC_STATE_VIEWPORT)) {
             this->SetViewport(viewport);
@@ -984,7 +984,7 @@ void Renderer::CommandBuffer::BindPipeline()
             vkCmdSetDepthBounds(commandBuffer, state->depthStencilState.minDepthBounds, state->depthStencilState.maxDepthBounds);
         }
     } else {
-        this->BindPipeline(renderBackend->RequestPipeline(*program));
+        this->BindPipeline(device.RequestPipeline(*program));
     }
 }
 

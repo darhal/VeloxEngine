@@ -37,7 +37,7 @@ using namespace TRE;
 
 bool HandleCameraEvent(Camera& camera, TRE::Event& e);
 
-void updateCameraUBO(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::BufferHandle buffer, Camera& cam)
+void updateCameraUBO(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::BufferHandle buffer, Camera& cam)
 {
     /*const TRE::Renderer::Swapchain::SwapchainData& swapchainData = backend.GetRenderContext().GetSwapchain().GetSwapchainData();
     auto view = glm::lookAt(glm::vec3(1.0f, 1.0f, 0.7f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -64,11 +64,13 @@ int rt(RenderBackend& backend)
     auto& window = *backend.GetRenderContext().GetWindow();
     Event ev;
 
-    if (backend.GetMSAASamplerCount() == 1) {
+    auto& dev = backend.GetRenderDevice();
+
+    /*if (backend.GetMSAASamplerCount() == 1) {
         TRE_LOGI("Anti-Aliasing: Disabled");
     } else {
         TRE_LOGI("Anti-Aliasing: MSAA x%d", backend.GetMSAASamplerCount());
-    }
+    }*/
 
     TRE_LOGI("Engine is up and running ...");
     
@@ -90,27 +92,27 @@ int rt(RenderBackend& backend)
     Camera camera;
     camera.SetPrespective(60.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 512.0f, true);
 
-    BufferHandle ubo = backend.CreateBuffer(BufferInfo::UniformBuffer(sizeof(CameraUBO)));
-    updateCameraUBO(backend, ubo, camera);
+    BufferHandle ubo = dev.CreateBuffer(BufferInfo::UniformBuffer(sizeof(CameraUBO)));
+    updateCameraUBO(dev, ubo, camera);
 
-    auto rtImage = backend.CreateImage(ImageCreateInfo::RtRenderTarget(SCR_WIDTH, SCR_HEIGHT));
-    auto rtView = backend.CreateImageView(ImageViewCreateInfo::ImageView(rtImage));
+    auto rtImage = dev.CreateImage(ImageCreateInfo::RtRenderTarget(SCR_WIDTH, SCR_HEIGHT));
+    auto rtView = dev.CreateImageView(ImageViewCreateInfo::ImageView(rtImage));
 
-    BufferHandle acclBuffer = backend.CreateBuffer(
+    BufferHandle acclBuffer = dev.CreateBuffer(
         { sizeof(vertecies),
         BufferUsage::VERTEX_BUFFER | BufferUsage::STORAGE_BUFFER
         | BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_BUILD_INPUT_READ_ONLY,
         MemoryUsage::GPU_ONLY }
     );
-    BufferHandle acclIndexBuffer = backend.CreateBuffer(
+    BufferHandle acclIndexBuffer = dev.CreateBuffer(
         { indicies.size() * sizeof(uint32),
         BufferUsage::INDEX_BUFFER | BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_BUILD_INPUT_READ_ONLY,
         MemoryUsage::GPU_ONLY }
     );
-    backend.GetStagingManager().Stage(acclBuffer->GetApiObject(), &vertecies, sizeof(vertecies));
-    backend.GetStagingManager().Stage(acclIndexBuffer->GetApiObject(), indicies.data(), indicies.size() * sizeof(uint32));
-    backend.GetStagingManager().Flush();
-    backend.GetStagingManager().WaitCurrent();
+    dev.GetStagingManager().Stage(acclBuffer->GetApiObject(), &vertecies, sizeof(vertecies));
+    dev.GetStagingManager().Stage(acclIndexBuffer->GetApiObject(), indicies.data(), indicies.size() * sizeof(uint32));
+    dev.GetStagingManager().Flush();
+    dev.GetStagingManager().WaitCurrent();
 
     BlasCreateInfo info;
     info.AddGeometry(
@@ -120,10 +122,10 @@ int rt(RenderBackend& backend)
         { 12, 0, 0, 0 }
     );
 
-    BlasHandle blas = backend.CreateBlas(info, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-    backend.RtBuildBlasBatchs();
-    backend.RtCompressBatch();
-    backend.RtSyncAcclBuilding();
+    BlasHandle blas = dev.CreateBlas(info, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+    dev.RtBuildBlasBatchs();
+    dev.RtCompressBatch();
+    dev.RtSyncAcclBuilding();
 
     BlasInstance instance;
     instance.blas = blas;
@@ -131,11 +133,11 @@ int rt(RenderBackend& backend)
     memcpy(instance.transform, &t, sizeof(glm::mat4));
     TlasCreateInfo tlasInfo;
     tlasInfo.blasInstances.emplace_back(instance);
-    TlasHandle tlas = backend.CreateTlas(tlasInfo);
-    backend.BuildAS();
-    backend.RtSyncAcclBuilding();
+    TlasHandle tlas = dev.CreateTlas(tlasInfo);
+    dev.BuildAS();
+    dev.RtSyncAcclBuilding();
 
-    ShaderProgram rtProgram(backend,
+    ShaderProgram rtProgram(dev,
         {
             {"shaders/RT/rgen.spv", ShaderProgram::RGEN},
             {"shaders/RT/rmiss.spv", ShaderProgram::RMISS},
@@ -143,7 +145,7 @@ int rt(RenderBackend& backend)
         });
     rtProgram.Compile();
     Pipeline rtPipeline(PipelineType::RAY_TRACE, &rtProgram);
-    rtPipeline.Create(backend, 2);
+    rtPipeline.Create(dev, 2);
 
     RenderContext& ctx = backend.GetRenderContext();
     auto lastExtent = ctx.GetSwapchainExtent();
@@ -154,22 +156,22 @@ int rt(RenderBackend& backend)
         auto currExtent = ctx.GetSwapchainExtent();
 
         if (HandleCameraEvent(camera, ev)) {
-            updateCameraUBO(backend, ubo, camera);
+            updateCameraUBO(dev, ubo, camera);
         }
 
         if (ev.Type == TRE::Event::TE_RESIZE || currExtent != lastExtent) {
-            backend.GetRenderContext().GetSwapchain().QueueSwapchainUpdate();
+            ctx.GetSwapchain().QueueSwapchainUpdate();
 
-            rtImage = backend.CreateImage(ImageCreateInfo::RtRenderTarget(currExtent.width, currExtent.height));
-            rtView = backend.CreateImageView(ImageViewCreateInfo::ImageView(rtImage));
+            rtImage = dev.CreateImage(ImageCreateInfo::RtRenderTarget(currExtent.width, currExtent.height));
+            rtView = dev.CreateImageView(ImageViewCreateInfo::ImageView(rtImage));
 
-            backend.GetStagingManager().Flush();
+            dev.GetStagingManager().Flush();
 
             camera.SetPrespective(60.0f, (float)currExtent.width / (float)currExtent.height, 0.1f, 512.0f, true);
-            updateCameraUBO(backend, ubo, camera);
+            updateCameraUBO(dev, ubo, camera);
             lastExtent = currExtent;
 
-            backend.GetStagingManager().WaitCurrent();
+            dev.GetStagingManager().WaitCurrent();
             printf("Image re-created!\n");
             continue;
         } else if (ev.Type == TRE::Event::TE_KEY_UP) {
@@ -184,7 +186,7 @@ int rt(RenderBackend& backend)
 
         backend.BeginFrame();
         
-        auto cmd = backend.RequestCommandBuffer(CommandBuffer::Type::RAY_TRACING);
+        auto cmd = dev.RequestCommandBuffer(CommandBuffer::Type::RAY_TRACING);
 
         cmd->BindShaderProgram(rtProgram);
         cmd->BindPipeline(rtPipeline);
@@ -200,7 +202,7 @@ int rt(RenderBackend& backend)
         cmd->ChangeImageLayout(*ctx.GetCurrentSwapchainImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
         cmd->ChangeImageLayout(*rtImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
         
-        backend.Submit(cmd);
+        dev.Submit(cmd);
         backend.EndFrame();
 
         auto tEnd = std::chrono::high_resolution_clock::now();

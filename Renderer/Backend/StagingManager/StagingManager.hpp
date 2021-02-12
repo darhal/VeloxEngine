@@ -11,7 +11,6 @@ namespace Renderer
 	class RenderDevice;
 	class Blas;
 	class Tlas;
-	class RenderBackend;
 
 	struct StagingBuffer
 	{
@@ -28,7 +27,7 @@ namespace Renderer
 	class RENDERER_API StagingManager
 	{
 	public:
-		StagingManager(const RenderDevice& renderDevice);
+        StagingManager(RenderDevice& renderDevice);
 
 		~StagingManager();
 
@@ -72,7 +71,7 @@ namespace Renderer
 		VkCommandPool	commandPool;
 		uint32			currentBuffer;
 		
-		const RenderDevice& renderDevice;
+        RenderDevice& renderDevice;
 		
 		CONSTEXPR static uint32 MAX_UPLOAD_BUFFER_SIZE = 64 * 1024 * 1024;
 	};

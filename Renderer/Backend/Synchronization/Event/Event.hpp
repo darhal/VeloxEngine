@@ -7,7 +7,7 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RenderBackend;
+    class RenderDevice;
 	class PipelineEvent;
 
 	struct EventDeleter
@@ -29,13 +29,13 @@ namespace Renderer
 
 		FORCEINLINE VkEvent GetApiObject() const { return event; }
 	private:
-		PipelineEvent(RenderBackend& backend, VkEvent event) :
-			backend(backend), event(event), stages(0)
+        PipelineEvent(RenderDevice& device, VkEvent event) :
+            device(device), event(event), stages(0)
 		{
 		}
 
 	private:
-		RenderBackend& backend;
+        RenderDevice& device;
 		VkEvent event;
 		VkPipelineStageFlags stages;
 

@@ -9,7 +9,7 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RenderBackend;
+    class RenderDevice;
 
 	struct BlasInstance
 	{
@@ -36,7 +36,7 @@ namespace Renderer
 	public:
 		friend struct TlasDeleter;
 
-		Tlas(RenderBackend& backend, const TlasCreateInfo& tlasInfo, VkAccelerationStructureKHR tlas, 
+        Tlas(RenderDevice& device, const TlasCreateInfo& tlasInfo, VkAccelerationStructureKHR tlas,
 			BufferHandle buffer, BufferHandle instancesBuffer);
 
 		FORCEINLINE const TlasCreateInfo& GetInfo() const { return tlasInfo; }
@@ -47,14 +47,14 @@ namespace Renderer
 		FORCEINLINE BufferHandle GetBuffer() const { return buffer; }
 		FORCEINLINE BufferHandle GetInstanceBuffer() const { return instanceBuffer; }
 	private:
-		RenderBackend& backend;
+        RenderDevice& device;
 		TlasCreateInfo tlasInfo;
 		VkAccelerationStructureKHR apiTlas;
 		BufferHandle buffer;
 		BufferHandle instanceBuffer;
 		
 
-		friend class RenderBackend;
+        friend class RenderDevice;
 		friend class StagingManager;
 	};
 

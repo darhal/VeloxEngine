@@ -161,8 +161,8 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* spirvCode, size_t si
     spvReflectDestroyShaderModule(&module);
 }
 
-Renderer::ShaderProgram::ShaderProgram(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages) :
-    Hashable(), renderDevice(&renderBackend.GetRenderDevice())
+Renderer::ShaderProgram::ShaderProgram(RenderDevice& device, const std::initializer_list<ShaderStage>& shaderStages) :
+    Hashable(), device(device)
 {
     std::unordered_set<uint32> seenDescriptorSets;
     std::unordered_map<std::string, VkPushConstantRange> pushConstants;
@@ -176,7 +176,7 @@ Renderer::ShaderProgram::ShaderProgram(RenderBackend& renderBackend, const std::
     for (const auto& shaderStage : shaderStages) {
         auto shaderCode = TRE::Renderer::ReadShaderFile(shaderStage.path);
 
-        shaderModules.emplace_back(CreateShaderModule(renderDevice->GetDevice(), shaderCode));
+        shaderModules.emplace_back(CreateShaderModule(device.GetDevice(), shaderCode));
         shaderStagesCreateInfo.push_back({ VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO });
         auto& currentModule = shaderModules.back();
         auto& currentStage = shaderStagesCreateInfo.back();
@@ -201,7 +201,7 @@ Renderer::ShaderProgram::ShaderProgram(RenderBackend& renderBackend, const std::
         piplineLayout.AddPushConstantRange(pushConstantRange.stageFlags, pushConstantRange.offset, pushConstantRange.size);
     }
 
-    piplineLayout.Create(renderBackend);
+    piplineLayout.Create(device);
     hash = h.Get();
 }
 
@@ -218,16 +218,14 @@ void Renderer::ShaderProgram::Compile()
 
 void Renderer::ShaderProgram::Destroy()
 {
-    if (renderDevice) {
-        this->DestroyShaderModules();
-        piplineLayout.Destroy(*renderDevice);
-    }
+    this->DestroyShaderModules();
+    piplineLayout.Destroy(device);
 }
 
 void Renderer::ShaderProgram::DestroyShaderModules()
 {
     for (auto module : shaderModules) {
-        vkDestroyShaderModule(renderDevice->GetDevice(), module, NULL);
+        vkDestroyShaderModule(device.GetDevice(), module, NULL);
     }
 
     shaderModules.clear();

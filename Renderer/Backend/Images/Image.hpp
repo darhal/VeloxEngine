@@ -8,7 +8,7 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RenderBackend;
+    class RenderDevice;
 
 	struct ImageViewDeleter
 	{
@@ -25,7 +25,7 @@ namespace Renderer
 	public:
 		friend struct ImageViewDeleter;
 
-		ImageView(RenderBackend& backend, VkImageView view, const ImageViewCreateInfo& info);
+        ImageView(RenderDevice& dev, VkImageView view, const ImageViewCreateInfo& info);
 
 		~ImageView();
 
@@ -37,11 +37,11 @@ namespace Renderer
 	private:
         ImageView() = delete;
 	private:
-		RenderBackend&	    backend;
+        RenderDevice&       device;
 		ImageViewCreateInfo info;
 		VkImageView			apiImageView;
 
-		friend class RenderBackend;
+        friend class RenderDevice;
 	};
 
 	using ImageViewHandle = Handle<ImageView>;
@@ -51,9 +51,9 @@ namespace Renderer
 	public:
 		friend struct ImageDeleter;
 
-		Image(RenderBackend& backend, VkImage image, const ImageCreateInfo& info, const MemoryView& memory);
+        Image(RenderDevice& device, VkImage image, const ImageCreateInfo& info, const MemoryView& memory);
 
-		Image(RenderBackend& backend, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType);
+        Image(RenderDevice& device, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType);
 
 		~Image();
 
@@ -79,14 +79,14 @@ namespace Renderer
 	private:
         Image() = delete;
 	private:
-		RenderBackend& backend;
+        RenderDevice&       device;
 		ImageCreateInfo info;
 		MemoryView imageMemory;
 		VkImage apiImage;
 		ImageViewHandle defaultView;
 		VkImageLayout swapchainLayout;
 
-		friend class RenderBackend;
+        friend class RenderDevice;
 		friend class StagingManager;
 	};
 

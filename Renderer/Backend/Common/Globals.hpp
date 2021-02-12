@@ -132,6 +132,11 @@ namespace Renderer
 
 	typedef VkDeviceSize DeviceSize;
 
+    enum Features
+    {
+        RAY_TRACING = 0x1,
+    };
+
 	enum MemoryProperty
 	{
 		DEVICE_LOCAL	= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,

@@ -10,12 +10,13 @@ TRE_NS_START
 
 namespace Renderer
 {
+    class RenderDevice;
+
 	class Buffer;
 	class RingBuffer;
 	class Image;
 	class ImageView;
 	class Sampler;
-	class RenderBackend;
 	class DescriptorSetLayout;
 	class RenderPass;
 	class Framebuffer;
@@ -52,7 +53,7 @@ namespace Renderer
 	public:
 		friend struct CommandBufferDeleter;
 
-		CommandBuffer(RenderBackend* backend, VkCommandBuffer buffer, Type type);
+        CommandBuffer(RenderDevice& device, VkCommandBuffer buffer, Type type);
 
 		void Begin();
 
@@ -262,7 +263,7 @@ namespace Renderer
 	private:
 		ResouceBindings bindings;
 		DescriptorSetDirty dirty;
-		RenderBackend* renderBackend;
+        RenderDevice& device;
 
 		GraphicsState* state;
 		ShaderProgram* program;

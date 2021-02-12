@@ -1,16 +1,17 @@
 #include "TLAS.hpp"
-#include <Renderer/Backend/RenderBackend.hpp>
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 
 TRE_NS_START
 
+
 void Renderer::TlasDeleter::operator()(Tlas* tlas)
 {
-	tlas->backend.GetObjectsPool().tlases.Free(tlas);
+    tlas->device.GetObjectsPool().tlases.Free(tlas);
 }
 
-Renderer::Tlas::Tlas(RenderBackend& backend, const TlasCreateInfo& tlasInfo, 
+Renderer::Tlas::Tlas(RenderDevice& device, const TlasCreateInfo& tlasInfo,
 	VkAccelerationStructureKHR tlas, BufferHandle buffer, BufferHandle instanceBuffer) :
-	backend(backend), tlasInfo(tlasInfo), apiTlas(tlas), buffer(buffer), instanceBuffer(instanceBuffer)
+    device(device), tlasInfo(tlasInfo), apiTlas(tlas), buffer(buffer), instanceBuffer(instanceBuffer)
 {
 }
 

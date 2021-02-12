@@ -7,7 +7,7 @@ TRE_NS_START
 
 namespace Renderer
 {
-    class RenderBackend;
+    class RenderDevice;
 
 	struct BufferInfo
 	{
@@ -23,7 +23,6 @@ namespace Renderer
 	};
 
 	typedef BufferInfo BufferCreateInfo;
-	class RenderDevice;
 
     struct BufferDeleter
     {
@@ -35,7 +34,7 @@ namespace Renderer
 	public:
         friend class BufferDeleter;
 
-        Buffer(RenderBackend& backend, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem);
+        Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem);
 
         virtual ~Buffer();
 
@@ -48,12 +47,12 @@ namespace Renderer
 		FORCEINLINE const MemoryView& GetBufferMemory() const { return bufferMemory; }
 
 	protected:
-        RenderBackend& backend;
-		BufferInfo bufferInfo;
-		MemoryView bufferMemory;
-		VkBuffer   apiBuffer;
+        RenderDevice& device;
+        BufferInfo    bufferInfo;
+        MemoryView    bufferMemory;
+        VkBuffer      apiBuffer;
 
-		friend class RenderBackend;
+        friend class RenderDevice;
 		friend class StagingManager;
 	};
 

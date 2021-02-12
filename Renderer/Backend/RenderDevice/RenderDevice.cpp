@@ -4,17 +4,37 @@
 #include <unordered_set>
 #include <Renderer/Backend/Common/Utils.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
+#include <Renderer/Backend/RenderInstance/RenderInstance.hpp>
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 
 TRE_NS_START
 
-Renderer::RenderDevice::RenderDevice() : internal{ 0 }
+Renderer::RenderDevice::RenderDevice(RenderContext* ctx) :
+    internal{ 0 },
+    renderContext(ctx),
+    stagingManager{ *this },
+    acclBuilder(*this),
+    framebufferAllocator(this),
+    transientAttachmentAllocator(*this, true),
+    pipelineAllocator(*this)
 {
 
 }
 
-int32 Renderer::RenderDevice::CreateRenderDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx, 
+Renderer::RenderDevice::~RenderDevice()
+{
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////              Basic functionality:            //////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int32 Renderer::RenderDevice::CreateRenderDevice(const RenderInstance& renderInstance,
     const char** extensions, uint32 extCount, const char** layers, uint32 layerCount)
 {
+    RenderContext& ctx = *renderContext;
+
     internal.gpu = PickGPU(renderInstance, ctx);
     ASSERTF(internal.gpu == VK_NULL_HANDLE, "Couldn't pick a GPU.");
 
@@ -22,7 +42,7 @@ int32 Renderer::RenderDevice::CreateRenderDevice(const Internal::RenderInstance&
     vkGetPhysicalDeviceFeatures(internal.gpu, &internal.gpuFeatures);
     vkGetPhysicalDeviceProperties(internal.gpu, &internal.gpuProperties);
 
-    internal.queueFamilyIndices     = FindQueueFamilies(internal.gpu, ctx.surface);
+    internal.queueFamilyIndices     = FindQueueFamilies(internal.gpu, ctx.GetSurface());
     internal.isPresentQueueSeprate  = internal.queueFamilyIndices.queueFamilies[Internal::QFT_GRAPHICS] != 
                                             internal.queueFamilyIndices.queueFamilies[Internal::QFT_PRESENT];
     internal.isTransferQueueSeprate = internal.queueFamilyIndices.queueFamilies[Internal::QFT_GRAPHICS] !=
@@ -34,8 +54,7 @@ int32 Renderer::RenderDevice::CreateRenderDevice(const Internal::RenderInstance&
     internal.gpuProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
     internal.gpuProperties2.pNext = &internal.rtProperties;
     vkGetPhysicalDeviceProperties2(internal.gpu, &internal.gpuProperties2);
-
-    return CreateLogicalDevice(renderInstance, ctx, extensions, extCount, layers, layerCount);
+    return CreateLogicalDevice(renderInstance, extensions, extCount, layers, layerCount);
 }
 
 void Renderer::RenderDevice::DestroryRenderDevice()
@@ -43,10 +62,10 @@ void Renderer::RenderDevice::DestroryRenderDevice()
     vkDestroyDevice(internal.device, NULL);
 }
 
-int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx,
+int32 Renderer::RenderDevice::CreateLogicalDevice(const RenderInstance& renderInstance,
     const char** extensions, uint32 extCount, const char** layers, uint32 layerCount)
 {
-    ASSERT(renderInstance.instance == VK_NULL_HANDLE);
+    ASSERT(renderInstance.GetApiObject() == VK_NULL_HANDLE);
 
     StaticVector<const char*> extensionsArr;
     StaticVector<const char*> layersArr;
@@ -140,7 +159,7 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
     createInfo.ppEnabledLayerNames      = layersArr.begin();
 
     VkResult res = vkCreateDevice(internal.gpu, &createInfo, NULL, &internal.device);
-    load_VK_EXTENSION_SUBSET(renderInstance.instance, vkGetInstanceProcAddr, internal.device, vkGetDeviceProcAddr);
+    load_VK_EXTENSION_SUBSET(renderInstance.GetApiObject(), vkGetInstanceProcAddr, internal.device, vkGetDeviceProcAddr);
 
     if (res != VK_SUCCESS) {
         ASSERTF(true, "Couldn't create a logical device (%s)!", GetVulkanResultString(res));
@@ -154,6 +173,37 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const Internal::RenderInstance
     }
 
     return 0;
+}
+
+void Renderer::RenderDevice::Init(uint32 enabledFeatures)
+{
+    this->enabledFeatures = enabledFeatures;
+
+    stagingManager.Init();
+    gpuMemoryAllocator.Init(internal);
+    fenceManager.Init(this);
+    semaphoreManager.Init(this);
+    eventManager.Init(this);
+
+    // RT:
+    if (enabledFeatures & RAY_TRACING)
+        acclBuilder.Init();
+
+    const Internal::QueueFamilyIndices& queueFamilyIndices = this->GetQueueFamilyIndices();
+
+    for (uint32 f = 0; f < renderContext->GetNumFrames(); f++) {
+        for (uint32 t = 0; t < MAX_THREADS; t++) {
+            for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
+                if (queueFamilyIndices.queueFamilies[i] == UINT32_MAX) {
+                    TRE_LOGW("Skipping queue familly index %d", i);
+                    continue;
+                }
+
+                PerFrame& frame = perFrame[f];
+                new (&frame.commandPools[t][i]) CommandPool(this, queueFamilyIndices.queueFamilies[i]);
+            }
+        }
+    }
 }
 
 VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkImage image, MemoryUsage memoryDomain) const
@@ -268,7 +318,7 @@ uint32 Renderer::RenderDevice::FindMemoryTypeIndex(uint32 typeFilter, MemoryUsag
     return FindMemoryType(typeFilter, required);
 }
 
-VkBuffer Renderer::RenderDevice::CreateBuffer(const BufferInfo& info) const
+VkBuffer Renderer::RenderDevice::CreateBufferHelper(const BufferInfo& info) const
 {
     StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
 
@@ -343,7 +393,7 @@ VkAccelerationStructureKHR Renderer::RenderDevice::CreateAcceleration(VkAccelera
     bufferInfo.size = info.size;
     bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_STORAGE;
     bufferInfo.domain = MemoryUsage::GPU_ONLY;
-    *buffer = this->CreateBuffer(bufferInfo);
+    *buffer = this->CreateBufferHelper(bufferInfo);
     this->CreateBufferMemory(bufferInfo, *buffer);
     info.buffer = *buffer;
 
@@ -409,12 +459,13 @@ VkDeviceAddress Renderer::RenderDevice::GetBufferAddress(BufferHandle buff) cons
     return vkGetBufferDeviceAddressKHR(this->GetDevice(), &bufferAdrInfo);
 }
 
-VkPhysicalDevice Renderer::RenderDevice::PickGPU(const Internal::RenderInstance& renderInstance, const Internal::RenderContext& ctx, FPN_RankGPU p_pick_func)
+VkPhysicalDevice Renderer::RenderDevice::PickGPU(const RenderInstance& renderInstance,
+                                                 const RenderContext& ctx, FPN_RankGPU p_pick_func)
 {
-    ASSERT(ctx.surface == NULL);
-    ASSERT(renderInstance.instance == NULL);
+    ASSERT(ctx.GetSurface() == NULL);
+    ASSERT(renderInstance.GetApiObject() == NULL);
 
-    VkInstance instance = renderInstance.instance;
+    VkInstance instance = renderInstance.GetApiObject();
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     uint32 deviceCount = 0;
 
@@ -428,7 +479,7 @@ VkPhysicalDevice Renderer::RenderDevice::PickGPU(const Internal::RenderInstance&
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
     for (const VkPhysicalDevice& device : devices) {
-        if (p_pick_func(device, ctx.surface)) {
+        if (p_pick_func(device, ctx.GetSurface())) {
             physicalDevice = device;
             break;
         }
@@ -527,5 +578,960 @@ Renderer::Internal::QueueFamilyIndices Renderer::RenderDevice::FindQueueFamilies
     );
     return indices;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////             Device functionality:            //////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+void Renderer::RenderDevice::Shutdown()
+{
+    VkDevice device =  this->GetDevice();
+    vkDeviceWaitIdle(device);
+
+    for (const auto& rp : renderPasses) {
+        vkDestroyRenderPass(device, rp.second.GetApiObject(), NULL);
+    }
+
+    for (auto& descSetAlloc : descriptorSetAllocators) {
+        descSetAlloc.second.Destroy();
+    }
+
+    framebufferAllocator.Destroy();
+    transientAttachmentAllocator.Destroy();
+    pipelineAllocator.Destroy();
+    fenceManager.Destroy();
+    semaphoreManager.Destroy();
+    eventManager.Destroy();
+    gpuMemoryAllocator.Destroy();
+
+    stagingManager.Shutdown();
+
+    if (enabledFeatures & RAY_TRACING) {
+        acclBuilder.Shutdown();
+    }
+
+    this->DestroyAllFrames();
+
+    // Destroy vulkan device:
+    this->DestroryRenderDevice();
+}
+
+Renderer::CommandBuffer::Type Renderer::RenderDevice::GetPhysicalQueueType(CommandBuffer::Type type)
+{
+    return type;
+}
+
+Renderer::RenderDevice::PerFrame::QueueData& Renderer::RenderDevice::GetQueueData(CommandBuffer::Type type)
+{
+    return Frame().queueData[(uint32)type];
+}
+
+Renderer::StaticVector<Renderer::CommandBufferHandle>& Renderer::RenderDevice::GetQueueSubmissions(CommandBuffer::Type type)
+{
+    return Frame().submissions[(uint32)type];
+}
+
+VkQueue Renderer::RenderDevice::GetQueue(CommandBuffer::Type type)
+{
+    uint32 typeIndex = (uint32)(type == CommandBuffer::Type::RAY_TRACING ? CommandBuffer::Type::GENERIC : type);
+    return GetQueue(typeIndex);
+}
+
+void Renderer::RenderDevice::Submit(CommandBufferHandle cmd, FenceHandle* fence, uint32 semaphoreCount,
+    SemaphoreHandle* semaphores, bool swapchainSemaphore )
+{
+    cmd->End();
+
+    PerFrame& frame = Frame();
+    uint32 type = (uint32)cmd->GetType();
+    CommandBufferHandle& handle = frame.submissions[type].EmplaceBack(std::move(cmd));
+
+    if (fence || semaphoreCount || swapchainSemaphore) {
+        this->SubmitQueue((CommandBuffer::Type)type, fence, semaphoreCount, semaphores, swapchainSemaphore);
+    }
+}
+
+void Renderer::RenderDevice::SubmitQueue(CommandBuffer::Type type, FenceHandle* fence, uint32 semaphoreCount,
+    SemaphoreHandle* semaphores, bool lastSubmit)
+{
+    if (type != CommandBuffer::Type::ASYNC_TRANSFER)
+        this->FlushQueue(CommandBuffer::Type::ASYNC_TRANSFER);
+
+    auto& data = this->GetQueueData(type);
+    auto& submissions = this->GetQueueSubmissions(type);
+
+    if (submissions.Size() == 0) {
+        if (fence || semaphoreCount) {
+            // this->SubmitEmpty(type, fence, semaphoreCount, semaphores);
+        }
+
+        return;
+    }
+
+    CommandBufferHandle swapchainCommandBuffer;
+    StaticVector<VkSubmitInfo> submits;
+    StaticVector<VkCommandBuffer> cmds;
+    StaticVector<VkSemaphore> waits;
+    StaticVector<VkSemaphore> signals;
+    VkFence vkFence = VK_NULL_HANDLE;
+    bool swapchainResize = renderContext->GetSwapchain().ResizeRequested();
+
+    for (auto& sem : data.waitSemaphores) {
+        waits.PushBack(sem->GetApiObject());
+    }
+
+    for (auto& sub : submissions) {
+        if (sub->UsesSwapchain()) {
+            swapchainCommandBuffer = sub;
+        }
+
+        cmds.PushBack(sub->GetApiObject());
+    }
+
+    for (uint32 i = 0; i < semaphoreCount; i++) {
+        VkSemaphore sem = semaphoreManager.RequestSemaphore();
+        semaphores[i] = SemaphoreHandle(objectsPool.semaphores.Allocate(*this, sem));
+        signals.EmplaceBack(sem);
+    }
+
+    if ((swapchainCommandBuffer || lastSubmit) && !swapchainResize) {
+        VkPipelineStageFlagBits stage = swapchainCommandBuffer ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+            : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        data.waitStages.PushBack(stage);
+        waits.EmplaceBack(renderContext->GetImageAcquiredSemaphore());
+        signals.EmplaceBack(renderContext->GetDrawCompletedSemaphore());
+    }
+
+    auto& submit = submits.EmplaceBack();
+    submit = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+    submit.waitSemaphoreCount = waits.Size();
+    submit.pWaitSemaphores = waits.Data();
+    submit.pWaitDstStageMask = data.waitStages.Data();
+    submit.commandBufferCount = cmds.Size();
+    submit.pCommandBuffers = cmds.Data();
+    submit.signalSemaphoreCount = signals.Size();
+    submit.pSignalSemaphores = signals.Data();
+
+    ASSERTF(fence && swapchainCommandBuffer, "Can't submit command buffers that draw to swapchain with a fance");
+
+    if (fence) {
+        *fence = this->RequestFence();
+        vkFence = (*fence)->GetApiObject();
+    }
+
+    if (swapchainCommandBuffer || lastSubmit) {
+        vkFence = renderContext->GetFrameFence();
+    }
+
+    vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
+
+    submissions.Clear();
+    data.waitSemaphores.Clear();
+    data.waitStages.Clear();
+}
+
+void Renderer::RenderDevice::AddWaitSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages, bool flush)
+{
+    ASSERT(stages == 0);
+
+    if (flush) {
+        this->FlushQueue(type);
+    }
+
+    auto& data = GetQueueData(type);
+    data.waitSemaphores.EmplaceBack(semaphore);
+    data.waitStages.PushBack(stages);
+}
+
+void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type)
+{
+    this->SubmitQueue(type);
+}
+
+void Renderer::RenderDevice::FlushQueues()
+{
+    this->FlushQueue(CommandBuffer::Type::ASYNC_TRANSFER);
+    this->FlushQueue(CommandBuffer::Type::ASYNC_COMPUTE);
+    this->FlushQueue(CommandBuffer::Type::GENERIC);
+}
+
+void Renderer::RenderDevice::ClearFrame()
+{
+    PerFrame& frame = Frame();
+
+    for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
+        frame.commandPools[0][i].Reset();
+        frame.submissions[i].Clear();
+    }
+
+    // objectsPool.commandBuffers.Clear();
+    this->DestroyPendingObjects(frame);
+}
+
+void Renderer::RenderDevice::BeginFrame()
+{
+    PerFrame& frame = Frame();
+
+    if (!frame.waitFences.Empty()) {
+        vkWaitForFences(GetDevice(), frame.waitFences.Size(), frame.waitFences.Data(), VK_TRUE, UINT64_MAX);
+        vkResetFences(GetDevice(), frame.waitFences.Size(), frame.waitFences.Data());
+        frame.waitFences.Clear();
+    }
+
+    stagingManager.Wait(stagingManager.GetCurrentStagingBuffer());
+    stagingManager.Flush();
+
+    framebufferAllocator.BeginFrame();
+    transientAttachmentAllocator.BeginFrame();
+
+    for (auto& allocator : descriptorSetAllocators)
+        allocator.second.BeginFrame();
+
+    this->ClearFrame();
+}
+
+void Renderer::RenderDevice::EndFrame()
+{
+    CONSTEXPR uint32 subOrder[] = {
+        (uint32)CommandBuffer::Type::ASYNC_TRANSFER,
+        (uint32)CommandBuffer::Type::ASYNC_COMPUTE
+    };
+
+    PerFrame& frame = this->Frame();
+    FenceHandle fence;
+
+    for (uint32 type : subOrder) {
+        if (frame.submissions[type].Size()) {
+            CommandBuffer::Type qType = (CommandBuffer::Type)type;
+            this->SubmitQueue(qType);
+            frame.waitFences.EmplaceBack(fence->GetApiObject());
+            frame.recycleFences.EmplaceBack(fence->GetApiObject());
+        }
+    }
+
+    auto& submissions = this->GetQueueSubmissions(CommandBuffer::Type::GENERIC);
+    if (submissions.Size() != 0) {
+        this->SubmitQueue(CommandBuffer::Type::GENERIC, NULL, 0, NULL, true);
+    }
+
+    // renderContext->EndFrame(renderDevice);
+}
+
+Renderer::BlasHandle Renderer::RenderDevice::CreateBlas(const BlasCreateInfo& blasInfo, VkBuildAccelerationStructureFlagsKHR flags)
+{
+    VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
+    buildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+    buildInfo.pNext = NULL;
+    buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+    buildInfo.flags = flags;
+    buildInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+    buildInfo.srcAccelerationStructure = VK_NULL_HANDLE;
+    buildInfo.dstAccelerationStructure = VK_NULL_HANDLE;
+    buildInfo.geometryCount  = blasInfo.acclGeo.Size();
+    buildInfo.pGeometries = blasInfo.acclGeo.begin();
+    buildInfo.ppGeometries = NULL;
+
+    StaticVector<uint32, 256> maxPrimCount;
+    maxPrimCount.Resize(blasInfo.accOffset.Size());
+
+    for (uint32 tt = 0; tt < blasInfo.accOffset.Size(); tt++)
+        maxPrimCount[tt] = blasInfo.accOffset[tt].primitiveCount;  // Number of primitives/triangles
+
+    VkAccelerationStructureBuildSizesInfoKHR sizeInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
+    vkGetAccelerationStructureBuildSizesKHR(this->GetDevice(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+        &buildInfo, maxPrimCount.begin(), &sizeInfo);
+
+    // Create acceleration structure object. Not yet bound to memory.
+    VkAccelerationStructureCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
+    createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+    createInfo.size = sizeInfo.accelerationStructureSize; // Will be used to allocate memory.
+
+    // Actual allocation of buffer and acceleration structure. Note: This relies on createInfo.offset == 0
+    // and fills in createInfo.buffer with the buffer allocated to store the BLAS. The underlying
+    // vkCreateAccelerationStructureKHR call then consumes the buffer value.
+    BufferHandle buffer;
+    VkAccelerationStructureKHR blas = this->CreateAcceleration(createInfo, &buffer);
+    buildInfo.dstAccelerationStructure = blas;  // Setting the where the build lands
+    BlasHandle ret(objectsPool.blases.Allocate(*this, blasInfo, blas, buffer));
+    acclBuilder.StageBlasBuilding(ret, buildInfo, blasInfo.accOffset.begin(), blasInfo.accOffset.Size(), flags);
+    return ret;
+}
+
+Renderer::TlasHandle Renderer::RenderDevice::CreateTlas(const TlasCreateInfo& createInfo, VkBuildAccelerationStructureFlagsKHR flags)
+{
+    BufferInfo bufferInfo;
+    bufferInfo.size = createInfo.blasInstances.size() * sizeof(VkAccelerationStructureInstanceKHR);
+    bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS;
+    bufferInfo.domain = MemoryUsage::GPU_ONLY;
+    BufferHandle instanceBuffer = this->CreateBuffer(bufferInfo);
+    VkDeviceAddress instanceAddress = this->GetBufferAddress(instanceBuffer);
+
+    // Create VkAccelerationStructureGeometryInstancesDataKHR
+    // This wraps a device pointer to the above uploaded instances.
+    VkAccelerationStructureGeometryInstancesDataKHR instancesVk{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR };
+    instancesVk.arrayOfPointers = VK_FALSE;
+    instancesVk.data.deviceAddress = instanceAddress;
+
+    // Put the above into a VkAccelerationStructureGeometryKHR. We need to put the
+    // instances struct in a union and label it as instance data.
+    VkAccelerationStructureGeometryKHR topASGeometry{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR };
+    topASGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+    topASGeometry.geometry.instances = instancesVk;
+
+    // Find sizes
+    VkAccelerationStructureBuildGeometryInfoKHR buildInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
+    buildInfo.flags = flags;
+    buildInfo.mode = /*update ? VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR :*/ VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+    buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+    buildInfo.srcAccelerationStructure = VK_NULL_HANDLE;
+    buildInfo.geometryCount = 1;
+    buildInfo.pGeometries = &topASGeometry;
+
+    uint32_t count = (uint32_t)createInfo.blasInstances.size();
+    VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
+    vkGetAccelerationStructureBuildSizesKHR(
+        this->GetDevice(),
+        VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+        &buildInfo, &count, &sizeInfo
+    );
+
+    // Create TLAS:
+    VkAccelerationStructureCreateInfoKHR acclCreateInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
+    acclCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+    acclCreateInfo.size = sizeInfo.accelerationStructureSize;
+
+    BufferHandle tlasBuffer;
+    VkAccelerationStructureKHR accl = CreateAcceleration(acclCreateInfo, &tlasBuffer);
+    TlasHandle ret(objectsPool.tlases.Allocate(*this, createInfo, accl, tlasBuffer, instanceBuffer));
+    acclBuilder.StageTlasBuilding(ret, buildInfo, flags);
+    return ret;
+}
+
+VkAccelerationStructureKHR Renderer::RenderDevice::CreateAcceleration(VkAccelerationStructureCreateInfoKHR& info, BufferHandle* buffer)
+{
+    BufferCreateInfo bufferInfo;
+    bufferInfo.size = info.size;
+    bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_STORAGE;
+    bufferInfo.domain = MemoryUsage::GPU_ONLY;
+    *buffer = this->CreateBuffer(bufferInfo);
+    info.buffer = (*buffer)->GetApiObject();
+
+    VkAccelerationStructureKHR accl;
+    CALL_VK(vkCreateAccelerationStructureKHR(this->GetDevice(), &info, NULL, &accl));
+    return accl;
+}
+
+Renderer::FenceHandle Renderer::RenderDevice::RequestFence()
+{
+    VkFence fence = fenceManager.RequestClearedFence();
+    FenceHandle h(objectsPool.fences.Allocate(*this, fence));
+    return h;
+}
+
+void Renderer::RenderDevice::ResetFence(VkFence fence, bool isWaited)
+{
+    if (isWaited) {
+        vkResetFences(this->GetDevice(), 1, &fence);
+        fenceManager.Recycle(fence);
+    } else {
+        Frame().recycleFences.EmplaceBack(fence);
+        Frame().shouldDestroy = true;
+    }
+}
+
+Renderer::SemaphoreHandle Renderer::RenderDevice::RequestSemaphore()
+{
+    VkSemaphore sem = semaphoreManager.RequestSemaphore();
+    SemaphoreHandle ptr(objectsPool.semaphores.Allocate(*this, sem));
+    return ptr;
+}
+
+Renderer::PiplineEventHandle Renderer::RenderDevice::RequestPiplineEvent()
+{
+    VkEvent event = eventManager.RequestEvent();
+    PiplineEventHandle ptr(objectsPool.events.Allocate(*this, event));
+    return ptr;
+}
+
+Renderer::ImageHandle Renderer::RenderDevice::CreateImage(const ImageCreateInfo& createInfo, const void* data)
+{
+    MemoryUsage memUsage = MemoryUsage::USAGE_UNKNOWN;
+
+    VkImageCreateInfo info;
+    info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    info.pNext       = NULL;
+    info.flags       = createInfo.flags;
+    info.imageType   = createInfo.type;
+    info.format      = createInfo.format;
+    info.extent      = { createInfo.width, createInfo.height, createInfo.depth };
+    info.mipLevels   = createInfo.levels;
+    info.arrayLayers = createInfo.layers;
+    info.samples     = createInfo.samples;
+    info.usage       = createInfo.usage;
+    info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    info.queueFamilyIndexCount = 0;
+
+    switch(createInfo.domain) {
+    case ImageDomain::PHYSICAL:
+        memUsage = MemoryUsage::GPU_ONLY;
+        info.tiling = VK_IMAGE_TILING_OPTIMAL;
+        info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        break;
+    case ImageDomain::TRANSIENT:
+        memUsage = MemoryUsage::GPU_ONLY;
+        info.tiling = VK_IMAGE_TILING_OPTIMAL;
+        info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        info.usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+        break;
+    case ImageDomain::LINEAR_HOST:
+        memUsage = MemoryUsage::CPU_ONLY;
+        info.tiling = VK_IMAGE_TILING_LINEAR;
+        info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+        break;
+    case ImageDomain::LINEAR_HOST_CACHED:
+        memUsage = MemoryUsage::CPU_CACHED;
+        info.tiling = VK_IMAGE_TILING_LINEAR;
+        info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+        break;
+    }
+
+    StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
+    info.sharingMode = (VkSharingMode)(createInfo.queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
+
+    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
+        if (Internal::QUEUE_FAMILY_FLAGS[i] & createInfo.queueFamilies) {
+            queueFamilyIndices.AllocateInit(1, this->GetQueueFamilyIndices().queueFamilies[i]);
+        }
+    }
+
+    if (info.sharingMode == VK_SHARING_MODE_CONCURRENT) {
+        info.queueFamilyIndexCount = (uint32)queueFamilyIndices.GetElementCount();
+        info.pQueueFamilyIndices = queueFamilyIndices.GetData();
+    }
+
+    VkImage apiImage;
+    if (vkCreateImage(this->GetDevice(), &info, NULL, &apiImage) != VK_SUCCESS) {
+        ASSERTF(true, "failed to create a image!");
+    }
+
+    MemoryView imageMemory;
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(this->GetDevice(), apiImage, &memRequirements);
+    uint32 memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, memUsage);
+    imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, memRequirements.alignment);
+    vkBindImageMemory(this->GetDevice(), apiImage, imageMemory.memory, imageMemory.offset);
+
+    ImageHandle ret = ImageHandle(objectsPool.images.Allocate(*this, apiImage, createInfo, imageMemory));
+
+    if (data) {
+        if (memUsage == MemoryUsage::GPU_ONLY) {
+            stagingManager.Stage(*ret, data, createInfo.width * createInfo.height * FormatToChannelCount(createInfo.format));
+        } else {
+            // TODO: add uploading directly from CPU
+            ASSERTF(true, "Not supported!");
+        }
+    } else {
+        if (createInfo.layout != VK_IMAGE_LAYOUT_UNDEFINED) {
+            // TODO: add layout trasnisioning here: using staging manager:
+            stagingManager.ChangeImageLayout(*ret, info.initialLayout, createInfo.layout);
+        }
+    }
+
+    return ret;
+}
+
+Renderer::ImageViewHandle Renderer::RenderDevice::CreateImageView(const ImageViewCreateInfo& createInfo)
+{
+    ImageViewCreateInfo info = createInfo;
+    const auto& imageCreateInfo = createInfo.image->GetInfo();
+
+    if (createInfo.format == VK_FORMAT_UNDEFINED) {
+        info.format = imageCreateInfo.format;
+    }
+
+    if (createInfo.viewType == VK_IMAGE_VIEW_TYPE_MAX_ENUM) {
+        info.viewType = GetImageViewType(imageCreateInfo, &createInfo);
+    }
+
+    if (createInfo.levels == VK_REMAINING_MIP_LEVELS) {
+        info.levels = imageCreateInfo.levels - createInfo.baseLevel;
+    }
+
+    if (createInfo.layers == VK_REMAINING_ARRAY_LAYERS) {
+        info.layers = imageCreateInfo.layers - createInfo.baseLayer;
+    }
+
+    VkImageViewCreateInfo viewInfo;
+    viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.pNext      = NULL;
+    viewInfo.flags      = 0;
+    viewInfo.image      = info.image->GetApiObject();
+    viewInfo.viewType   = info.viewType;
+    viewInfo.format     = info.format;
+    viewInfo.components = info.swizzle;
+
+    viewInfo.subresourceRange = {
+        FormatToAspectMask(viewInfo.format),
+        info.baseLevel, info.levels,
+        info.baseLayer, info.layers
+    };
+
+    VkImageView apiImageView;
+    vkCreateImageView(this->GetDevice(), &viewInfo, NULL, &apiImageView);
+
+    ImageViewHandle ret(objectsPool.imageViews.Allocate(*this, apiImageView, info));
+    return ret;
+}
+
+bool Renderer::RenderDevice::CreateBufferInternal(VkBuffer& outBuffer, MemoryView& outMemoryView, const BufferInfo& createInfo)
+{
+    outBuffer = this->CreateBufferHelper(createInfo);
+
+    // TODO: fix this!! this is quick and dirty way
+    if (!(createInfo.usage & BufferUsage::SHADER_DEVICE_ADDRESS)) {
+        VkMemoryRequirements memRequirements;
+        vkGetBufferMemoryRequirements(this->GetDevice(), outBuffer, &memRequirements);
+        uint32 memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, createInfo.domain);
+        outMemoryView = gpuMemoryAllocator.Allocate(memoryTypeIndex, createInfo.size, memRequirements.alignment);
+        vkBindBufferMemory(this->GetDevice(), outBuffer, outMemoryView.memory, outMemoryView.offset);
+    } else {
+        outMemoryView.offset = 0;
+        outMemoryView.size = createInfo.size;
+        outMemoryView.padding = 0;
+        outMemoryView.mappedData = NULL;
+        outMemoryView.alignment = 0;
+
+        outMemoryView.memory = this->CreateBufferMemory(createInfo, outBuffer);
+
+        if (createInfo.domain == MemoryUsage::CPU_ONLY || createInfo.domain == MemoryUsage::CPU_CACHED || createInfo.domain == MemoryUsage::CPU_COHERENT) {
+            vkMapMemory(this->GetDevice(), outMemoryView.memory, 0, createInfo.size, 0, &outMemoryView.mappedData);
+        }
+    }
+
+    return true;
+}
+
+Renderer::BufferHandle Renderer::RenderDevice::CreateBuffer(const BufferInfo& createInfo, const void* data)
+{
+    MemoryView bufferMemory;
+    VkBuffer apiBuffer;
+
+    this->CreateBufferInternal(apiBuffer, bufferMemory, createInfo);
+    BufferHandle ret(objectsPool.buffers.Allocate(*this, apiBuffer, createInfo, bufferMemory));
+
+    if (data) {
+        if (createInfo.domain == MemoryUsage::CPU_ONLY || createInfo.domain == MemoryUsage::CPU_CACHED || createInfo.domain == MemoryUsage::CPU_COHERENT) {
+            ret->WriteToBuffer(createInfo.size, data);
+        } else {
+            stagingManager.Stage(ret->apiBuffer, data, createInfo.size, bufferMemory.alignment);
+        }
+    }
+
+    return ret;
+}
+
+Renderer::RingBufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo& createInfo, const uint32 ringSize, const void* data)
+{
+    BufferInfo info = createInfo;
+    const DeviceSize alignment = this->internal.gpuProperties.limits.minUniformBufferOffsetAlignment;
+    const DeviceSize padding = (alignment - (info.size % alignment)) % alignment;
+    const DeviceSize alignedSize = info.size + padding;
+    info.size = alignedSize * ringSize; //- padding; // here we must remove padding as we dont need it at the end but (otherwise waste of memory)
+                                                     // this is going to complicate our calulations later so better keep it
+    MemoryView bufferMemory;
+    VkBuffer apiBuffer;
+
+    // Removing padding from total size, as we dont need the last bytes for alignement
+    // alignedSize * NUM_FRAMES - padding, data, usage, memoryUsage, queueFamilies
+    this->CreateBufferInternal(apiBuffer, bufferMemory, info);
+    RingBufferHandle ret(objectsPool.ringBuffers.Allocate(*this, apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
+
+    if (data) {
+        if (info.domain == MemoryUsage::CPU_ONLY || info.domain == MemoryUsage::CPU_CACHED || info.domain == MemoryUsage::CPU_COHERENT) {
+            ret->WriteToBuffer(createInfo.size, data);
+        } else {
+            stagingManager.Stage(ret->apiBuffer, data, createInfo.size, bufferMemory.alignment);
+        }
+    }
+
+    return ret;
+}
+
+Renderer::SamplerHandle Renderer::RenderDevice::CreateSampler(const SamplerInfo& createInfo)
+{
+    VkSampler sampler;
+    VkSamplerCreateInfo info;
+    SamplerInfo::FillVkSamplerCreateInfo(createInfo, info);
+    vkCreateSampler(this->GetDevice(), &info, NULL, &sampler);
+    SamplerHandle ret(objectsPool.samplers.Allocate(*this, sampler, createInfo));
+    return ret;
+}
+
+Renderer::CommandBufferHandle Renderer::RenderDevice::RequestCommandBuffer(CommandBuffer::Type type)
+{
+    uint32 typeIndex = (uint32)type;
+    if (type == CommandBuffer::Type::RAY_TRACING)
+        typeIndex = (uint32)CommandBuffer::Type::GENERIC;
+
+    PerFrame& frame = Frame();
+    VkCommandBuffer buffer = frame.commandPools[0][typeIndex].RequestCommandBuffer();
+    CommandBufferHandle handle(objectsPool.commandBuffers.Allocate(*this, buffer, (CommandBuffer::Type)typeIndex));
+    handle->Begin();
+    return handle;
+}
+
+Renderer::SemaphoreHandle Renderer::RenderDevice::GetImageAcquiredSemaphore()
+{
+    SemaphoreHandle ptr(objectsPool.semaphores.Allocate(*this, renderContext->GetImageAcquiredSemaphore()));
+    ptr->SetNoClean();
+    return ptr;
+}
+
+Renderer::SemaphoreHandle Renderer::RenderDevice::GetDrawCompletedSemaphore()
+{
+    SemaphoreHandle ptr(objectsPool.semaphores.Allocate(*this, renderContext->GetDrawCompletedSemaphore()));
+    ptr->SetNoClean();
+    return ptr;
+}
+
+Renderer::DescriptorSetAllocator* Renderer::RenderDevice::RequestDescriptorSetAllocator(const DescriptorSetLayout& layout)
+{
+    Hasher h;
+    h.Data(reinterpret_cast<const uint32*>(layout.GetDescriptorSetLayoutBindings()), sizeof(VkDescriptorSetLayoutBinding) * layout.GetBindingsCount());
+
+    // For the weird return value check: https://en.cppreference.com/w/cpp/container/unordered_map/emplace
+    const auto ctor_arg = std::pair<RenderDevice*, const DescriptorSetLayout&>(this, layout);
+    const auto& res = descriptorSetAllocators.emplace(h.Get(), ctor_arg);
+
+    if (res.second) {
+        res.first->second.Init();
+    }
+
+    return &res.first->second;
+}
+
+Renderer::Pipeline& Renderer::RenderDevice::RequestPipeline(ShaderProgram& program, const RenderPass& rp, const GraphicsState& state)
+{
+   return pipelineAllocator.RequestPipline(program, rp, state);
+}
+
+Renderer::Pipeline& Renderer::RenderDevice::RequestPipeline(ShaderProgram& program)
+{
+    return pipelineAllocator.RequestPipline(program);
+}
+
+void Renderer::RenderDevice::CreateShaderProgram(const std::initializer_list<ShaderProgram::ShaderStage>& shaderStages, ShaderProgram* shaderProgramOut)
+{
+    // shaderProgramOut->Create(*this, shaderStages);
+}
+
+const Renderer::RenderPass& Renderer::RenderDevice::RequestRenderPass(const RenderPassInfo& info, bool compatible)
+{
+    Hasher h;
+    VkFormat formats[MAX_ATTACHMENTS];
+    VkFormat depthStencilFormat;
+    uint32 lazy = 0;
+    uint32 optimal = 0;
+
+    for (uint32 i = 0; i < info.colorAttachmentCount; i++) {
+        ASSERT(!info.colorAttachments[i]);
+        formats[i] = info.colorAttachments[i]->GetInfo().format;
+
+        if (info.colorAttachments[i]->GetImage()->GetInfo().domain == ImageDomain::TRANSIENT) {
+            lazy |= 1u << i;
+        }
+
+        if (info.colorAttachments[i]->GetImage()->GetInfo().layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+            optimal |= 1u << i;
+        }
+
+        // This can change external subpass dependencies, so it must always be hashed.
+        h.u32(info.colorAttachments[i]->GetImage()->GetSwapchainLayout());
+    }
+
+    if (info.depthStencil) {
+        if (info.depthStencil->GetImage()->GetInfo().domain == ImageDomain::TRANSIENT)
+            lazy |= 1u << info.colorAttachmentCount;
+        if (info.depthStencil->GetImage()->GetInfo().layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+            optimal |= 1u << info.colorAttachmentCount;
+    }
+
+    h.u32(info.baseLayer);
+    h.u32(info.layersCount);
+    h.u32(info.subpassesCount);
+
+    for (unsigned i = 0; i < info.subpassesCount; i++) {
+        h.u32(info.subpasses[i].colorAttachmentsCount);
+        h.u32(info.subpasses[i].inputAttachmentsCount);
+        h.u32(info.subpasses[i].resolveAttachmentsCount);
+        h.u32(static_cast<uint32_t>(info.subpasses[i].depthStencilMode));
+
+        for (unsigned j = 0; j < info.subpasses[i].colorAttachmentsCount; j++)
+            h.u32(info.subpasses[i].colorAttachments[j]);
+        for (unsigned j = 0; j < info.subpasses[i].inputAttachmentsCount; j++)
+            h.u32(info.subpasses[i].inputAttachments[j]);
+        for (unsigned j = 0; j < info.subpasses[i].resolveAttachmentsCount; j++)
+            h.u32(info.subpasses[i].resolveAttachments[j]);
+    }
+
+    depthStencilFormat = info.depthStencil ? info.depthStencil->GetInfo().format : VK_FORMAT_UNDEFINED;
+    h.Data(formats, info.colorAttachmentCount * sizeof(VkFormat));
+    h.u32(info.colorAttachmentCount);
+    h.u32(depthStencilFormat);
+
+    // Compatible render passes do not care about load/store, or image layouts.
+    if (!compatible) {
+        h.u32(info.opFlags);
+        h.u32(info.clearAttachments);
+        h.u32(info.loadAttachments);
+        h.u32(info.storeAttachments);
+        h.u32(optimal);
+    }
+
+    // Lazy flag can change external subpass dependencies, which is not compatible.
+    h.u32(lazy);
+
+    Hash hash = h.Get();
+    auto rp = renderPasses.find(hash);
+
+    if (rp != renderPasses.end()) {
+        return rp->second;
+    }
+
+    auto rp2 = renderPasses.emplace(hash, RenderPass(*this, info));
+    // printf("Creating render pass ID: %llu.\n", hash);
+    rp2.first->second.hash = h.Get();
+    return rp2.first->second;
+}
+
+const Renderer::Framebuffer& Renderer::RenderDevice::RequestFramebuffer(const RenderPassInfo& info, const RenderPass* rp)
+{
+    if (!rp) {
+        rp = &this->RequestRenderPass(info);
+    }
+
+    return framebufferAllocator.RequestFramebuffer(*rp, info);
+}
+
+Renderer::RenderPassInfo Renderer::RenderDevice::GetSwapchainRenderPass(SwapchainRenderPass style)
+{
+    const auto& swapchain = renderContext->GetSwapchain();
+    uint32 msaaSamplerCount = 1; // TODO: Change this!
+
+    RenderPassInfo info;
+    info.colorAttachmentCount = 1;
+    info.colorAttachments[0] = swapchain.GetSwapchainImage(renderContext->GetCurrentImageIndex())->GetView();
+    info.clearColor[0] = { 0.051f, 0.051f, 0.051f, 0.0f };
+    info.clearAttachments = 1u << 0;
+    info.storeAttachments = 1u << 0;
+
+    switch (style) {
+    case SwapchainRenderPass::DEPTH:
+    {
+        info.opFlags |= RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT;
+        info.depthStencil =
+            &GetTransientAttachment(swapchain.GetExtent().width,
+                swapchain.GetExtent().height, swapchain.FindSupportedDepthFormat(), 0, msaaSamplerCount);
+        break;
+    }
+
+    case SwapchainRenderPass::DEPTH_STENCIL:
+    {
+        info.opFlags |= RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT;
+        info.depthStencil =
+            &GetTransientAttachment(swapchain.GetExtent().width,
+                swapchain.GetExtent().height, swapchain.FindSupportedDepthStencilFormat(), 0, msaaSamplerCount);
+        break;
+    }
+    default:
+        break;
+    }
+
+    return info;
+}
+
+Renderer::ImageView& Renderer::RenderDevice::GetTransientAttachment(uint32 width, uint32 height, VkFormat format, uint32 index, uint32 samples, uint32 layers)
+{
+    return transientAttachmentAllocator.RequestAttachment(width, height, format, index, samples, layers);
+}
+
+void Renderer::RenderDevice::DestroyPendingObjects(PerFrame& frame)
+{
+    if (!frame.shouldDestroy)
+        return;
+
+    VkDevice dev = this->GetDevice();
+
+    for (auto rp : frame.destroyedRenderPasses)
+        vkDestroyRenderPass(dev, rp, NULL);
+
+    for (auto dsc : frame.destroyedDescriptorPool)
+        vkDestroyDescriptorPool(dev, dsc, NULL);
+
+    for (auto fb : frame.destroyedFramebuffers)
+        vkDestroyFramebuffer(dev, fb, NULL);
+
+    for (auto view : frame.destroyedImageViews) {
+        vkDestroyImageView(dev, view, NULL);
+    }
+
+    for (auto img : frame.destroyedImages)
+        vkDestroyImage(dev, img, NULL);
+
+    for (auto view : frame.destroyedBufferViews)
+        vkDestroyBufferView(dev, view, NULL);
+
+    for (auto buff : frame.destroyedBuffers)
+        vkDestroyBuffer(dev, buff, NULL);
+
+    for (auto sem : frame.destroyedSemaphores)
+        vkDestroySemaphore(dev, sem, NULL);
+
+    for (auto sampler : frame.destroyedSamplers) {
+        vkDestroySampler(dev, sampler, NULL);
+    }
+
+    if (enabledFeatures & RAY_TRACING) {
+        for (auto accl : frame.destroyedAccls)
+            vkDestroyAccelerationStructureKHR(dev, accl, NULL);
+
+        frame.destroyedAccls.Clear();
+    }
+
+    // Free memory:
+    for (auto& mem : frame.freedMemory)
+        vkFreeMemory(dev, mem, NULL);
+
+    // Free allocated memory:
+    for (auto allocKey : frame.freeAllocatedMemory)
+        gpuMemoryAllocator.Free(allocKey);
+
+    // Recycle:
+    for (auto& sem : frame.recycleSemaphores)
+        semaphoreManager.Recycle(sem);
+
+    // vkResetFences(dev, (uint32)frame.recycleFences.Size(), frame.recycleFences.Data());
+    for (auto& fence : frame.recycleFences)
+        fenceManager.Recycle(fence);
+
+    frame.destroyedFramebuffers.Clear();
+    frame.destroyedImageViews.Clear();
+    frame.destroyedImages.Clear();
+    frame.freedMemory.Clear();
+    frame.destroyedSemaphores.Clear();
+    frame.recycleSemaphores.Clear();
+    frame.recycleFences.Clear();
+
+    frame.destroyedSamplers.Clear();
+    frame.destroyedBuffers.Clear();
+    frame.destroyedBufferViews.Clear();
+    frame.destroyedRenderPasses.Clear();
+    frame.destroyedDescriptorPool.Clear();
+    frame.shouldDestroy = false;
+}
+
+void Renderer::RenderDevice::DestroyImage(VkImage image)
+{
+    PerFrame& frame = this->Frame();
+    frame.destroyedImages.EmplaceBack(image);
+    frame.shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::DestroyImageView(VkImageView view)
+{
+    PerFrame& frame = this->Frame();
+    frame.destroyedImageViews.EmplaceBack(view);
+    frame.shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::DestroyFramebuffer(VkFramebuffer fb)
+{
+    PerFrame& frame = this->Frame();
+    frame.destroyedFramebuffers.EmplaceBack(fb);
+    frame.shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::FreeMemory(VkDeviceMemory memory)
+{
+    PerFrame& frame = this->Frame();
+    frame.freedMemory.EmplaceBack(memory);
+    frame.shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::FreeMemory(Renderer::MemoryAllocator::AllocKey key)
+{
+    PerFrame& frame = this->Frame();
+    frame.freeAllocatedMemory.EmplaceBack(key);
+    frame.shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::RecycleSemaphore(VkSemaphore sem)
+{
+    Frame().recycleSemaphores.EmplaceBack(sem);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::DestroySemaphore(VkSemaphore sem)
+{
+    Frame().destroyedSemaphores.EmplaceBack(sem);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::DestroryEvent(VkEvent event)
+{
+    Frame().destroyedEvents.EmplaceBack(event);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::DestroyBuffer(VkBuffer buffer)
+{
+    Frame().destroyedBuffers.EmplaceBack(buffer);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::DestroyBufferView(VkBufferView view)
+{
+    Frame().destroyedBufferViews.EmplaceBack(view);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::DestroySampler(VkSampler sampler)
+{
+    Frame().destroyedSamplers.EmplaceBack(sampler);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::DestroyAllFrames()
+{
+    for (PerFrame& frame : perFrame) {
+        frame.shouldDestroy = true;
+
+        for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
+            frame.commandPools[0][i].Destroy();
+            frame.submissions[i].Clear();
+        }
+
+        this->DestroyPendingObjects(frame);
+    }
+
+    objectsPool.commandBuffers.Clear();
+    objectsPool.buffers.Clear();
+    objectsPool.ringBuffers.Clear();
+    objectsPool.images.Clear();
+    objectsPool.imageViews.Clear();
+    objectsPool.samplers.Clear();
+    objectsPool.fences.Clear();
+    objectsPool.semaphores.Clear();
+    objectsPool.events.Clear();
+
+    // RT:
+    if (enabledFeatures & RAY_TRACING) {
+        objectsPool.blases.Clear();
+        objectsPool.tlases.Clear();
+    }
+}
+
 
 TRE_NS_END

@@ -3,14 +3,12 @@
 #include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/CommandList/CommandList.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Backend/RayTracing/TLAS/TLAS.hpp>
-#include <Renderer/Backend/RenderBackend.hpp>
 
 TRE_NS_START
 
 namespace Renderer
 {
-	StagingManager::StagingManager(const RenderDevice& renderDevice) : 
+    StagingManager::StagingManager(RenderDevice& renderDevice) :
 		renderDevice(renderDevice), currentBuffer(0)
 	{
 	}
@@ -45,7 +43,7 @@ namespace Renderer
 		for (int i = 0; i < NUM_FRAMES; ++i) {
 			stagingBuffers[i].offset = 0;
 			stagingBuffers[i].shouldRun = false;
-			stagingBuffers[i].apiBuffer = renderDevice.CreateBuffer(info);
+            stagingBuffers[i].apiBuffer = renderDevice.CreateBufferHelper(info);
 		}
 
 		VkDeviceSize alignedSize = 0;
@@ -226,7 +224,7 @@ namespace Renderer
 	void StagingManager::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
 	{
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-		CommandBuffer cmd(NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
+        CommandBuffer cmd(renderDevice, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
 
 		cmd.PrepareGenerateMipmapBarrier(image, baseLevelLayout, srcStage, srcAccess, needTopLevelBarrier);
 	}
@@ -234,7 +232,7 @@ namespace Renderer
 	void StagingManager::GenerateMipmap(const Image& image)
 	{
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-		CommandBuffer cmd(NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
+        CommandBuffer cmd(renderDevice, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
 
 		cmd.GenerateMipmap(image);
 	}
@@ -243,7 +241,7 @@ namespace Renderer
 		VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess)
 	{
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-		CommandBuffer cmd(NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
+        CommandBuffer cmd(renderDevice, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
 
 		cmd.ImageBarrier(image, oldLayout, newLayout, srcStage, srcAccess, dstStage, dstAccess);
 	}

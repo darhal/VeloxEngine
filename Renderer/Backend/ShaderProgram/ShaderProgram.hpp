@@ -15,7 +15,6 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RenderBackend;
 	class RenderDevice;
 
 	/*struct PushConstantKey
@@ -90,7 +89,7 @@ namespace Renderer
 			ShaderStages shaderStage;
 		};
 	public:
-		ShaderProgram(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages);
+        ShaderProgram(RenderDevice& device, const std::initializer_list<ShaderStage>& shaderStages);
 
 		ShaderProgram(const ShaderProgram&) = delete;
 
@@ -125,7 +124,7 @@ namespace Renderer
 
 		VkRayTracingShaderGroupTypeKHR SetShaderGroupType(VkRayTracingShaderGroupCreateInfoKHR& group, uint32 stage, uint32 index);
 	private:
-	    const RenderDevice* renderDevice;
+        RenderDevice& device;
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStagesCreateInfo;
 		std::vector<VkShaderModule> shaderModules;
 		std::vector<VkRayTracingShaderGroupCreateInfoKHR> rtShaderGroups;

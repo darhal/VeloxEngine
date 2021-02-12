@@ -27,6 +27,8 @@ namespace Renderer
 
 		void DestroyRenderInstance();
 
+        FORCEINLINE VkInstance GetApiObject() const { return internal.instance; }
+
 	private:
 		void FetchAvailbleInstanceExtensions();
 

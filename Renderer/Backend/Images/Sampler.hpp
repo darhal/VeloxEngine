@@ -107,7 +107,7 @@ namespace Renderer
 	public:
         friend struct SamplerDeleter;
 
-        Sampler(RenderBackend& backend, VkSampler sampler, const SamplerInfo& info);
+        Sampler(RenderDevice& device, VkSampler sampler, const SamplerInfo& info);
 
         ~Sampler();
 
@@ -115,11 +115,11 @@ namespace Renderer
 
         VkSampler GetApiObject() const { return sampler; }
 	private:
-        RenderBackend& backend;
+        RenderDevice& device;
         SamplerInfo info;
         VkSampler sampler;
 
-        friend class RenderBackend;
+        friend class RenderDevice;
 	};
 
     using SamplerHandle = Handle<Sampler>;

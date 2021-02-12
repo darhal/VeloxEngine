@@ -9,14 +9,14 @@ namespace Renderer
 {
 	class ShaderProgram;
 	class Pipeline;
-	class RenderBackend;
+    class RenderDevice;
 
 	class SBT
 	{
 	public:
 		SBT() = default;
 
-		void Init(RenderBackend& backend, const ShaderProgram& program, Pipeline& pipline);
+        void Init(RenderDevice& device, const ShaderProgram& program, Pipeline& pipline);
 
 		// BufferHandle GetSbtBuffer() const { return sbtBuffer; };
 

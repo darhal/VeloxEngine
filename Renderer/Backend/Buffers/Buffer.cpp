@@ -1,6 +1,6 @@
 #include "Buffer.hpp"
 #include <Renderer/Backend/Swapchain/Swapchain.hpp>
-#include <Renderer/Backend/RenderBackend.hpp>
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 #include <Renderer/Core/Alignement/Alignement.hpp>
 #include "Renderer/Backend/Buffers/RingBuffer.hpp"
 
@@ -11,21 +11,21 @@ void Renderer::BufferDeleter::operator()(Buffer* buff)
     // TODO: this is just ad-hoc solution the Buffer and RingBuffer class can be mixed togther in one class
     RingBuffer* rbuff = dynamic_cast<RingBuffer*>(buff);
     if (rbuff)
-        buff->backend.GetObjectsPool().buffers.Free(rbuff);
+        buff->device.GetObjectsPool().buffers.Free(rbuff);
     else
-        buff->backend.GetObjectsPool().buffers.Free(buff);
+        buff->device.GetObjectsPool().buffers.Free(buff);
 }
 
-Renderer::Buffer::Buffer(RenderBackend& backend, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem) :
-    backend(backend), apiBuffer(buffer), bufferInfo(info), bufferMemory(mem)
+Renderer::Buffer::Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem) :
+    device(dev), apiBuffer(buffer), bufferInfo(info), bufferMemory(mem)
 {
 }
 
 Renderer::Buffer::~Buffer()
 {
     if (apiBuffer != VK_NULL_HANDLE) {
-        backend.DestroyBuffer(apiBuffer);
-        backend.FreeMemory(bufferMemory.allocKey);
+        device.DestroyBuffer(apiBuffer);
+        device.FreeMemory(bufferMemory.allocKey);
         apiBuffer = VK_NULL_HANDLE;
     }
 }

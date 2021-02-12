@@ -11,7 +11,7 @@ namespace Renderer
 	class RingBuffer : public Buffer
 	{
 	public:
-        RingBuffer(RenderBackend& backend, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem, uint32 unitSize, uint32 ringSize);
+        RingBuffer(RenderDevice& device, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem, uint32 unitSize, uint32 ringSize);
 
 		void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
 

@@ -52,7 +52,7 @@ namespace Renderer
 
 		FORCEINLINE const VkExtent2D& GetSwapchainExtent() const { return swapchain.swapchainData.swapChainExtent; }
 
-		void BeginFrame(const RenderDevice& renderDevice, StagingManager& stagingManager);
+        void BeginFrame(const RenderDevice& renderDevice);
 
 		void EndFrame(const RenderDevice& renderDevice);
 	private:

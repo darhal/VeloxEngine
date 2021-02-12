@@ -12,14 +12,14 @@ namespace Renderer
 	class RENDERER_API CommandPool
 	{
 	public:
-		CommandPool();
+        CommandPool() = default;
 
-		CommandPool(RenderDevice* device, uint32 queueFamilyIndex);
+        CommandPool(RenderDevice* device, uint32 queueFamilyIndex);
 
 		~CommandPool();
 
-		CommandPool(CommandPool&&) noexcept;
-		CommandPool& operator=(CommandPool&&) noexcept;
+        CommandPool(CommandPool&&) = delete;
+        CommandPool& operator=(CommandPool&&) = delete;
 		CommandPool(const CommandPool&) = delete;
 		void operator=(const CommandPool&) = delete;
 
@@ -31,7 +31,7 @@ namespace Renderer
 
 		void Destroy();
 	private:
-		RenderDevice* renderDevice;
+        RenderDevice* device;
 		VkCommandPool pool;
 		std::vector<VkCommandBuffer> buffers;
 		std::vector<VkCommandBuffer> secondaryBuffers;

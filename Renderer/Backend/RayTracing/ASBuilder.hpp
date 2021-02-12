@@ -9,7 +9,6 @@ namespace Renderer
 	class RenderDevice;
 	class Blas;
 	class Tlas;
-	class RenderBackend;
 
 	class AsBuilder
 	{
@@ -58,7 +57,7 @@ namespace Renderer
 			bool submitted;
 		};
 	public:
-		AsBuilder(const RenderDevice& device);
+        AsBuilder(RenderDevice& device);
 
 		void Init();
 
@@ -76,13 +75,13 @@ namespace Renderer
 
 		void BuildBlasBatch(bool compact);
 
-		void CompressBatch(RenderBackend& backend);
+        void CompressBatch();
 
 		void BuildBlasBatchs();
 
 		void SyncAcclBuilding();
 
-		void BuildAll(RenderBackend& backend);
+        void BuildAll();
 	private:
 		// RT Functionality:
 		RtStaging rtStaging[NUM_FRAMES];
@@ -92,7 +91,7 @@ namespace Renderer
 		VkDeviceMemory stagingMemory;
 		uint8* stagingMappedData;
 
-		const RenderDevice& renderDevice;
+        RenderDevice& renderDevice;
 
 		CONSTEXPR static uint32 MAX_UPLOAD_BUFFER_SIZE = 64 * 1024 * 1024;
 	};

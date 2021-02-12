@@ -28,13 +28,15 @@ void Renderer::RenderContext::InitRenderContext(const Internal::RenderInstance& 
     swapchain.CreateSwapchain();
 }
 
-void Renderer::RenderContext::DestroyRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice, Internal::RenderContext& renderContext)
+void Renderer::RenderContext::DestroyRenderContext(const Internal::RenderInstance& renderInstance,
+                                                   const Internal::RenderDevice& renderDevice,
+                                                   Internal::RenderContext& renderContext)
 {
     swapchain.DestroySwapchain();
     Internal::DestroryWindowSurface(renderInstance.instance, renderContext.surface);
 }
 
-void Renderer::RenderContext::BeginFrame(const RenderDevice& renderDevice, StagingManager& stagingManager)
+void Renderer::RenderContext::BeginFrame(const RenderDevice& renderDevice)
 {
     const Swapchain::SwapchainData& swapchainData = swapchain.swapchainData;
     VkDevice device = renderDevice.GetDevice();
@@ -45,9 +47,6 @@ void Renderer::RenderContext::BeginFrame(const RenderDevice& renderDevice, Stagi
 
     VkResult result = vkAcquireNextImageKHR(device, swapchain.GetApiObject(), UINT64_MAX, 
         swapchainData.imageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &internal.currentImage);
-    
-    stagingManager.Wait(stagingManager.GetCurrentStagingBuffer());
-    stagingManager.Flush();
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         swapchain.QueueSwapchainUpdate();

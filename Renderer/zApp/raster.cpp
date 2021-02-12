@@ -37,13 +37,13 @@ using namespace TRE;
 
 #define CUBE
 
-void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingBufferHandle buffer, const glm::vec3& pos)
+void updateMVP(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::RingBufferHandle buffer, const glm::vec3& pos)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    const TRE::Renderer::Swapchain::SwapchainData& swapchainData = backend.GetRenderContext().GetSwapchain().GetSwapchainData();
+    const TRE::Renderer::Swapchain::SwapchainData& swapchainData = dev.GetRenderContext()->GetSwapchain().GetSwapchainData();
 
     MVP mvp{};
 
@@ -63,7 +63,7 @@ void updateMVP(const TRE::Renderer::RenderBackend& backend, TRE::Renderer::RingB
     buffer->WriteToBuffer(sizeof(mvp), &mvp);
 }
 
-void RenderFrame(TRE::Renderer::RenderBackend& backend,
+void RenderFrame(TRE::Renderer::RenderDevice& dev,
                  TRE::Renderer::ShaderProgram& program,
                  TRE::Renderer::GraphicsState& state,
                  const TRE::Renderer::BufferHandle vertexIndexBuffer,
@@ -75,8 +75,8 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 {
     using namespace TRE::Renderer;
 
-    CommandBufferHandle cmd = backend.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
-    updateMVP(backend, uniformBuffer);
+    CommandBufferHandle cmd = dev.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
+    updateMVP(dev, uniformBuffer);
 
     cmd->BindShaderProgram(program);
     cmd->SetGraphicsState(state);
@@ -84,10 +84,10 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
     cmd->SetDepthTest(true, true);
     cmd->SetDepthCompareOp(VK_COMPARE_OP_LESS);
     cmd->SetCullMode(VK_CULL_MODE_NONE);
-    state.GetMultisampleState().rasterizationSamples = VkSampleCountFlagBits(backend.GetMSAASamplerCount());
+    // state.GetMultisampleState().rasterizationSamples = VkSampleCountFlagBits(backend.GetMSAASamplerCount());
 
     RenderPassInfo::Subpass subpass;
-    cmd->BeginRenderPass(GetRenderPass(backend, subpass));
+    cmd->BeginRenderPass(GetRenderPass(dev, subpass));
 
     cmd->BindVertexBuffer(*vertexIndexBuffer);
 #if !defined(CUBE)
@@ -105,7 +105,7 @@ void RenderFrame(TRE::Renderer::RenderBackend& backend,
 #endif
 
     cmd->EndRenderPass();
-    backend.Submit(cmd);
+    dev.Submit(cmd);
 }
 
 
@@ -117,11 +117,13 @@ int raster(RenderBackend& backend)
     auto& window = *backend.GetRenderContext().GetWindow();
     Event ev;
 
-    if (backend.GetMSAASamplerCount() == 1) {
+    RenderDevice& dev = backend.GetRenderDevice();
+
+    /*if (backend.GetMSAASamplerCount() == 1) {
         TRE_LOGI("Anti-Aliasing: Disabled");
     } else {
         TRE_LOGI("Anti-Aliasing: MSAA x%d", backend.GetMSAASamplerCount());
-    }
+    }*/
 
     TRE_LOGI("Engine is up and running ...");
     Vertex vertecies[12 * 3];
@@ -144,11 +146,11 @@ int raster(RenderBackend& backend)
         vertecies[i].normal = glm::vec3{ g_normal_buffer_data[i * 3], g_normal_buffer_data[i * 3 + 1], g_normal_buffer_data[i * 3 + 2] };
     }
 
-    BufferHandle vertexIndexBuffer = backend.CreateBuffer({ sizeof(vertecies), BufferUsage::VERTEX_BUFFER }, vertecies);
-    BufferHandle cpuVertexBuffer = backend.CreateBuffer({ sizeof(vertecies), BufferUsage::TRANSFER_SRC, MemoryUsage::CPU_ONLY }, vertecies);
+    BufferHandle vertexIndexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::VERTEX_BUFFER }, vertecies);
+    BufferHandle cpuVertexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::TRANSFER_SRC, MemoryUsage::CPU_ONLY }, vertecies);
 
     glm::vec4 lightInfo[] = { glm::vec4(1.f, 0.5f, 0.5f, 0.f), glm::vec4(1.f, 1.f, 1.f, 0.f) };
-    BufferHandle lightBuffer = backend.CreateBuffer({ sizeof(lightInfo), BufferUsage::STORAGE_BUFFER }, lightInfo);
+    BufferHandle lightBuffer = dev.CreateBuffer({ sizeof(lightInfo), BufferUsage::STORAGE_BUFFER }, lightInfo);
 #endif
     const uint32 checkerboard[] = {
         0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
@@ -167,12 +169,12 @@ int raster(RenderBackend& backend)
     stbi_uc* pixels = stbi_load("Assets/box1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
-    ImageHandle texture = backend.CreateImage(ImageCreateInfo::Texture2D(texWidth, texHeight, true), pixels);
-    ImageViewHandle textureView = backend.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
-    SamplerHandle sampler = backend.CreateSampler(SamplerInfo::Sampler2D(texture));
+    ImageHandle texture = dev.CreateImage(ImageCreateInfo::Texture2D(texWidth, texHeight, true), pixels);
+    ImageViewHandle textureView = dev.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
+    SamplerHandle sampler = dev.CreateSampler(SamplerInfo::Sampler2D(texture));
     free(pixels);
 
-    RingBufferHandle uniformBuffer = backend.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 3);
+    RingBufferHandle uniformBuffer = dev.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 3);
     GraphicsState state;
     // state.GetRasterizationState().polygonMode = VK_POLYGON_MODE_LINE;
     /*auto& depthStencilState = state.GetDepthStencilState();
@@ -183,7 +185,7 @@ int raster(RenderBackend& backend)
     state.GetMultisampleState().rasterizationSamples = VkSampleCountFlagBits(backend.GetMSAASamplerCount());
     state.SaveChanges();*/
 
-    ShaderProgram program(backend,
+    ShaderProgram program(dev,
         {
             {"Shaders/vert.spv", ShaderProgram::VERTEX},
             {"Shaders/frag.spv", ShaderProgram::FRAGMENT}
@@ -195,7 +197,7 @@ int raster(RenderBackend& backend)
     );
     program.Compile();
 
-    updateMVP(backend, uniformBuffer);
+    updateMVP(dev, uniformBuffer);
     INIT_BENCHMARK;
 
     time_t lasttime = time(NULL);
@@ -220,7 +222,7 @@ int raster(RenderBackend& backend)
 
         backend.BeginFrame();
 
-        RenderFrame(backend, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
+        RenderFrame(dev, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
 
         /*for (int32_t i = 0; i < 12 * 3; i++) {
             float r = ((double)rand() / (RAND_MAX)) + 1;

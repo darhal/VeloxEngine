@@ -25,11 +25,11 @@ struct MVP
     glm::vec3 viewPos;
 };
 
-void updateMVP(const TRE::Renderer::RenderBackend& backend, 
+void updateMVP(const TRE::Renderer::RenderDevice& dev,
     TRE::Renderer::RingBufferHandle buffer, 
     const glm::vec3& pos = glm::vec3(-0.f, -0.f, 0.f));
 
-void RenderFrame(TRE::Renderer::RenderBackend& backend,
+void RenderFrame(TRE::Renderer::RenderDevice& dev,
     const TRE::Renderer::ShaderProgram& program,
     TRE::Renderer::GraphicsState& state,
     const TRE::Renderer::BufferHandle vertexIndexBuffer,
