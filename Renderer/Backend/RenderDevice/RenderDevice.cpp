@@ -696,6 +696,7 @@ void Renderer::RenderDevice::SubmitQueue(CommandBuffer::Type type, FenceHandle* 
         signals.EmplaceBack(sem);
     }
 
+
     if ((swapchainCommandBuffer || lastSubmit) && !swapchainResize) {
         VkPipelineStageFlagBits stage = swapchainCommandBuffer ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
             : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
@@ -730,6 +731,7 @@ void Renderer::RenderDevice::SubmitQueue(CommandBuffer::Type type, FenceHandle* 
     submissions.Clear();
     data.waitSemaphores.Clear();
     data.waitStages.Clear();
+    // printf("Submit commands: %d|%d|%d\n", (bool)swapchainCommandBuffer, lastSubmit, swapchainResize);
 }
 
 void Renderer::RenderDevice::AddWaitSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages, bool flush)
@@ -779,7 +781,6 @@ void Renderer::RenderDevice::BeginFrame()
         frame.waitFences.Clear();
     }
 
-    renderContext->BeginFrame(*this);
     stagingManager.Wait(stagingManager.GetCurrentStagingBuffer());
     stagingManager.Flush();
 

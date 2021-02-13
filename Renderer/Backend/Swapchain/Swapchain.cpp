@@ -6,8 +6,10 @@
 
 TRE_NS_START
 
+
 Renderer::Swapchain::Swapchain(RenderBackend& backend) :
-    renderBackend(backend), swapchain(VK_NULL_HANDLE), swapchainData{0}
+    renderBackend(backend), swapchain(VK_NULL_HANDLE), swapchainData{0},
+    imagesCount(2), framebufferResized(false)
 {
 }
 

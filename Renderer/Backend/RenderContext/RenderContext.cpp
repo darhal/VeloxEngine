@@ -56,7 +56,7 @@ void Renderer::RenderContext::BeginFrame(const RenderDevice& renderDevice)
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         swapchain.QueueSwapchainUpdate();
-        // printf("[BEGIN FRAME] Swapchain resized!\n");
+        // printf("[BEGIN FRAME] Swapchain will be resized!\n");
         return;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         ASSERTF(true, "Failed to acquire swap chain image!\n");
@@ -142,6 +142,7 @@ void Renderer::RenderContext::EndFrame(const RenderDevice& renderDevice)
     internal.previousFrame = internal.currentFrame;
     internal.currentFrame = (currentFrame + 1) % internal.numFramesInFlight;
 
+    // printf("End frame: %d | New frame: %d\n", currentFrame, internal.currentFrame);
     // vkDeviceWaitIdle(renderDevice.GetDevice());
 }
 

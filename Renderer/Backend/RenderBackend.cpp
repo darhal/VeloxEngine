@@ -83,6 +83,7 @@ Renderer::RenderBackend::~RenderBackend()
 
 void Renderer::RenderBackend::BeginFrame()
 {
+    renderContext.BeginFrame(renderDevice);
     renderDevice.BeginFrame();
 }
 
