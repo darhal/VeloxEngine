@@ -26,7 +26,7 @@ struct MVP
 };
 
 void updateMVP(const TRE::Renderer::RenderDevice& dev,
-    TRE::Renderer::RingBufferHandle buffer, 
+    TRE::Renderer::BufferHandle buffer,
     const glm::vec3& pos = glm::vec3(-0.f, -0.f, 0.f));
 
 void RenderFrame(TRE::Renderer::RenderDevice& dev,
@@ -34,7 +34,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     TRE::Renderer::GraphicsState& state,
     const TRE::Renderer::BufferHandle vertexIndexBuffer,
     // VkDescriptorSet descriptorSet,
-    const TRE::Renderer::RingBufferHandle uniformBuffer,
+    const TRE::Renderer::BufferHandle uniformBuffer,
     const TRE::Renderer::ImageViewHandle texture,
     const TRE::Renderer::SamplerHandle sampler,
     const TRE::Renderer::BufferHandle lightBuffer);

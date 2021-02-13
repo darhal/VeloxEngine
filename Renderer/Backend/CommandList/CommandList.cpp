@@ -7,7 +7,6 @@
 #include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/Images/Sampler.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
-#include <Renderer/Backend/Buffers/RingBuffer.hpp>
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 #include <Renderer/Backend/Pipeline/GraphicsState/GraphicsState.hpp>
 #include <Renderer/Core/Alignement/Alignement.hpp>
@@ -21,8 +20,8 @@ void Renderer::CommandBufferDeleter::operator()(CommandBuffer* cmd)
 }
 
 Renderer::CommandBuffer::CommandBuffer(RenderDevice& device, VkCommandBuffer buffer, Type type) :
-    device(device), commandBuffer(buffer), type(type), allocatedSets{}, dirty{},
-    program(NULL), state(NULL), pipeline(NULL), stateUpdate(false), renderToSwapchain(false)
+    dirty{}, device(device), state(NULL), program(NULL),  pipeline(NULL), allocatedSets{},
+    commandBuffer(buffer), type(type), renderToSwapchain(false), stateUpdate(false)
 {
 }
 
@@ -221,24 +220,6 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
     /*if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
         return;
     }*/
-
-    b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetApiObject(), offset, range };
-    b.dynamicOffset   = 0;
-
-    bindings.cache[set][binding] = (uint64)buffer.GetApiObject();
-    dirty.sets |= (1u << set);
-}
-
-void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const RingBuffer& buffer, DeviceSize offset, DeviceSize range)
-{
-    ASSERT(set >= MAX_DESCRIPTOR_SET);
-    ASSERT(binding >= MAX_DESCRIPTOR_BINDINGS);
-
-    if (range == VK_WHOLE_SIZE) {
-        range = buffer.GetUnitSize();
-    }
-
-    auto& b = bindings.bindings[set][binding];
 
     // Think about what if everything is the same just the offset changed! we shouldnt then update dirty set instead just update the set
     // that have the dynamic offset set in it

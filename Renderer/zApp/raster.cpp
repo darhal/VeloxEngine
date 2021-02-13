@@ -37,7 +37,7 @@ using namespace TRE;
 
 #define CUBE
 
-void updateMVP(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::RingBufferHandle buffer, const glm::vec3& pos)
+void updateMVP(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::BufferHandle buffer, const glm::vec3& pos)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -60,7 +60,7 @@ void updateMVP(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::RingBuffer
 
     mvp.viewPos = glm::vec3(1.0f, 1.0f, 0.7f);
 
-    buffer->WriteToBuffer(sizeof(mvp), &mvp);
+    buffer->WriteToRing(sizeof(mvp), &mvp);
 }
 
 void RenderFrame(TRE::Renderer::RenderDevice& dev,
@@ -68,7 +68,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
                  TRE::Renderer::GraphicsState& state,
                  const TRE::Renderer::BufferHandle vertexIndexBuffer,
                  // VkDescriptorSet descriptorSet,
-                 const TRE::Renderer::RingBufferHandle uniformBuffer,
+                 const TRE::Renderer::BufferHandle uniformBuffer,
                  const TRE::Renderer::ImageViewHandle texture,
                  const TRE::Renderer::SamplerHandle sampler,
                  const TRE::Renderer::BufferHandle lightBuffer)
@@ -174,7 +174,7 @@ int raster(RenderBackend& backend)
     SamplerHandle sampler = dev.CreateSampler(SamplerInfo::Sampler2D(texture));
     free(pixels);
 
-    RingBufferHandle uniformBuffer = dev.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 3);
+    BufferHandle uniformBuffer = dev.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 3);
     GraphicsState state;
     // state.GetRasterizationState().polygonMode = VK_POLYGON_MODE_LINE;
     /*auto& depthStencilState = state.GetDepthStencilState();

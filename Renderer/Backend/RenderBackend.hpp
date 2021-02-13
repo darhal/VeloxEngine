@@ -9,7 +9,6 @@
 #include <Renderer/Backend/RenderContext/RenderContext.hpp>
 #include <Renderer/Backend/MemoryAllocator/MemoryAllocator.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
-#include <Renderer/Backend/Buffers/RingBuffer.hpp>
 #include <Renderer/Backend/StagingManager/StagingManager.hpp>
 #include <Renderer/Core/Allocators/StackAllocator.hpp>
 #include <Renderer/Backend/CommandList/CommandPool.hpp>

@@ -36,9 +36,13 @@ namespace Renderer
 
         Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem);
 
+        Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem, uint32 unitSize, uint32 ringSize);
+
         virtual ~Buffer();
 
 		void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
+
+        void WriteToRing(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
 
 		FORCEINLINE VkBuffer GetApiObject() const { return apiBuffer; }
 
@@ -46,11 +50,19 @@ namespace Renderer
 
 		FORCEINLINE const MemoryView& GetBufferMemory() const { return bufferMemory; }
 
+        uint32 GetUnitSize() const { return unitSize; }
+
+        uint32 GetCurrentOffset() const { return bufferIndex * unitSize; }
+
 	protected:
         RenderDevice& device;
         BufferInfo    bufferInfo;
         MemoryView    bufferMemory;
         VkBuffer      apiBuffer;
+
+        uint32		ringSize;
+        uint32		unitSize;
+        uint32		bufferIndex;
 
         friend class RenderDevice;
 		friend class StagingManager;

@@ -23,6 +23,6 @@
 
 struct CameraUBO;
 
-void updateCameraUBO(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::RingBufferHandle buffer, CameraUBO& ubo);
+void updateCameraUBO(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::BufferHandle buffer, CameraUBO& ubo);
 
 int rt(TRE::Renderer::RenderBackend& backend);

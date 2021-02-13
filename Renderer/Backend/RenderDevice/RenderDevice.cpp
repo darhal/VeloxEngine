@@ -1131,7 +1131,7 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateBuffer(const BufferInfo& cr
     return ret;
 }
 
-Renderer::RingBufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo& createInfo, const uint32 ringSize, const void* data)
+Renderer::BufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo& createInfo, const uint32 ringSize, const void* data)
 {
     BufferInfo info = createInfo;
     const DeviceSize alignment = this->internal.gpuProperties.limits.minUniformBufferOffsetAlignment;
@@ -1145,7 +1145,7 @@ Renderer::RingBufferHandle Renderer::RenderDevice::CreateRingBuffer(const Buffer
     // Removing padding from total size, as we dont need the last bytes for alignement
     // alignedSize * NUM_FRAMES - padding, data, usage, memoryUsage, queueFamilies
     this->CreateBufferInternal(apiBuffer, bufferMemory, info);
-    RingBufferHandle ret(objectsPool.ringBuffers.Allocate(*this, apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
+    BufferHandle ret(objectsPool.buffers.Allocate(*this, apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
 
     if (data) {
         if (info.domain == MemoryUsage::CPU_ONLY || info.domain == MemoryUsage::CPU_CACHED || info.domain == MemoryUsage::CPU_COHERENT) {
@@ -1517,7 +1517,6 @@ void Renderer::RenderDevice::DestroyAllFrames()
 
     objectsPool.commandBuffers.Clear();
     objectsPool.buffers.Clear();
-    objectsPool.ringBuffers.Clear();
     objectsPool.images.Clear();
     objectsPool.imageViews.Clear();
     objectsPool.samplers.Clear();

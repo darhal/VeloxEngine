@@ -17,7 +17,6 @@
 #include <Renderer/Backend/RenderContext/RenderContext.hpp>
 #include <Renderer/Backend/MemoryAllocator/MemoryAllocator.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
-#include <Renderer/Backend/Buffers/RingBuffer.hpp>
 #include <Renderer/Backend/StagingManager/StagingManager.hpp>
 #include <Renderer/Backend/CommandList/CommandPool.hpp>
 #include <Renderer/Backend/CommandList/CommandList.hpp>
@@ -88,7 +87,6 @@ namespace Renderer
         {
             ObjectPool<CommandBuffer> commandBuffers;
             ObjectPool<Buffer>		  buffers;
-            ObjectPool<RingBuffer>	  ringBuffers;
             ObjectPool<Image>		  images;
             ObjectPool<ImageView>	  imageViews;
             ObjectPool<Sampler>		  samplers;
@@ -170,7 +168,7 @@ namespace Renderer
         // Buffer Creation:
         BufferHandle CreateBuffer(const BufferInfo& createInfo, const void* data = NULL);
 
-        RingBufferHandle CreateRingBuffer(const BufferInfo& createInfo, const uint32 ringSize = NUM_FRAMES, const void* data = NULL);
+        BufferHandle CreateRingBuffer(const BufferInfo& createInfo, const uint32 ringSize = NUM_FRAMES, const void* data = NULL);
 
         bool CreateBufferInternal(VkBuffer& outBuffer, MemoryView& outMemoryView, const BufferInfo& createInfo);
 

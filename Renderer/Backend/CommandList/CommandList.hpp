@@ -97,8 +97,6 @@ namespace Renderer
 		// Uniform buffers, textures, input attachments, etc
 		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
 
-		void SetUniformBuffer(uint32 set, uint32 binding, const RingBuffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
-
 		void SetStorageBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
 
 		void SetTexture(uint32 set, uint32 binding, const ImageView& texture);
@@ -261,28 +259,29 @@ namespace Renderer
 
 		void BindPipeline();
 	private:
-		ResouceBindings bindings;
-		DescriptorSetDirty dirty;
+        ResouceBindings bindings;
+        DescriptorSetDirty dirty;
         RenderDevice& device;
 
-		GraphicsState* state;
-		ShaderProgram* program;
-		const Pipeline* pipeline;
-		const RenderPass* renderPass;
-		const Framebuffer* framebuffer;
-		const ImageView* framebufferAttachments[MAX_ATTACHMENTS + 1] = {};
+        GraphicsState* state;
+        ShaderProgram* program;
+        const Pipeline* pipeline;
+        const RenderPass* renderPass;
+        const Framebuffer* framebuffer;
+        const ImageView* framebufferAttachments[MAX_ATTACHMENTS + 1] = {};
 
-		VkRect2D scissor;
-		VkViewport viewport;
+        VkDescriptorSet allocatedSets[MAX_DESCRIPTOR_SET];
+        VkCommandBuffer commandBuffer;
 
-		VkDescriptorSet allocatedSets[MAX_DESCRIPTOR_SET];
-		VkCommandBuffer commandBuffer;
-		Type type;
+        VkRect2D scissor;
+        VkViewport viewport;
 
-		uint32 subpassIndex;
+        Type type;
 
-		bool renderToSwapchain;
-		bool stateUpdate;
+        uint32 subpassIndex;
+
+        bool renderToSwapchain;
+        bool stateUpdate;
 	};
 
 	typedef CommandBuffer CommandList;
