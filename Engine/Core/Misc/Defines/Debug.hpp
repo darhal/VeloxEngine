@@ -8,13 +8,10 @@
 	#pragma warning(disable:4996) // DISABLE VS WARNING
 #endif
 
-#if defined(OS_LINUX)
-	#define _DEBUG // Enable debugging for now !
-#endif
-
 #if not defined(_DEBUG) || defined(NDEBUG)
 	#define ASSERTF(condition, ...) {};
 	#define ASSERT(condition) {};
+    #undef DEBUG
 #else
 	#include <Engine/Core/Misc/Utils/Logging.hpp>
 

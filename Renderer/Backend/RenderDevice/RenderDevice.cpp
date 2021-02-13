@@ -762,10 +762,13 @@ void Renderer::RenderDevice::FlushQueues()
 void Renderer::RenderDevice::ClearFrame()
 {
     PerFrame& frame = Frame();
+    const Internal::QueueFamilyIndices& queueFamilyIndices = this->GetQueueFamilyIndices();
 
     for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
-        frame.commandPools[0][i].Reset();
-        frame.submissions[i].Clear();
+        if (queueFamilyIndices.queueFamilies[i] != UINT32_MAX) {
+            frame.commandPools[0][i].Reset();
+            frame.submissions[i].Clear();
+        }
     }
 
     this->DestroyPendingObjects(frame);

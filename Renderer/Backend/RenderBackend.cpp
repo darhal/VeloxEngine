@@ -68,6 +68,10 @@ void Renderer::RenderBackend::InitInstance(uint32 usage)
     TRE_LOGI("Driver.........: %d.%d", VK_VERSION_MAJOR(renderDevice.internal.gpuProperties.driverVersion),
              VK_VERSION_MINOR(renderDevice.internal.gpuProperties.driverVersion));
     TRE_LOGI("Device ID......: 0x%x", renderDevice.internal.gpuProperties.deviceID);
+
+#if defined(DEBUG)
+    TRE_LOGI("Running a Debug build...");
+#endif
 }
 
 
