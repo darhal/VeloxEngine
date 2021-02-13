@@ -15,7 +15,9 @@
 #else
 	#include <Engine/Core/Misc/Utils/Logging.hpp>
 
+#if not defined(DEBUG)
     #define DEBUG
+#endif
 
 	#if defined(OS_WINDOWS) && (CPU_ARCH == CPU_ARCH_x86_64 || CPU_ARCH == CPU_ARCH_x86)
         #include <intrin.h>

@@ -8,21 +8,28 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+message("TrikytaEngine ${CMAKE_BUILD_TYPE} Build")
+
+if (CMAKE_BUILD_TYPE MATCHES "Debug")
     # add_compile_definitions(DEBUG)
-    add_definitions(-DDEBUG=1)
-    message("TrikytaEngine DEBUG BUILD")
-else()
-    add_definitions(-DNDEBUG=1)
-    message("TrikytaEngine RELEASE BUILD")
+    add_definitions(-D_DEBUG=1)
+    remove_definitions(-DNDEBUG)
+
+    set(CMAKE_CXX_FLAGS "-g")
+    #set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+    #set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
-# set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-#set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-#set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+if (CMAKE_BUILD_TYPE MATCHES "Release")
+    add_definitions(-DNDEBUG=1)
+    remove_definitions(-D_DEBUG)
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    # set(CMAKE_CXX_FLAGS "-Ofast")
+    set(CMAKE_CXX_FLAGS "-O3")
+endif()
+
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+message("Build flags: ${CMAKE_CXX_FLAGS}")
 
 include_directories(${PROJECT_SOURCE_DIR})
 

@@ -1,10 +1,9 @@
 #include "RenderBackend.hpp"
-#include <Renderer/Backend/RenderInstance/RenderInstance.hpp>
+
 #include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/RenderInstance/RenderInstance.hpp>
 #include <Renderer/Backend/RenderContext/RenderContext.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Backend/Swapchain/Swapchain.hpp>
-#include <Renderer/Backend/Images/Image.hpp>
 
 TRE_NS_START
 
@@ -70,7 +69,7 @@ void Renderer::RenderBackend::InitInstance(uint32 usage)
     TRE_LOGI("Device ID......: 0x%x", renderDevice.internal.gpuProperties.deviceID);
 
 #if defined(DEBUG)
-    TRE_LOGI("Running a Debug build...");
+    TRE_LOGI("Running a debug build...");
 #endif
 }
 
