@@ -29,9 +29,13 @@ namespace Renderer
 		class StaticVector
 		{
 		public:
-			StaticVector() : stackStorage(), size(0)
+            StaticVector() : size(0)
 			{
 			}
+
+            StaticVector(uint32 size) : stackStorage{}, size(size)
+            {
+            }
 
 			StaticVector(const StaticVector<T, N>& other) : stackStorage(), size(other.size)
 			{

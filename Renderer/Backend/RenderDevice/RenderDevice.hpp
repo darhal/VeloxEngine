@@ -56,6 +56,7 @@ namespace Renderer
             {
                 StaticVector<SemaphoreHandle>      waitSemaphores;
                 StaticVector<VkPipelineStageFlags> waitStages;
+                StaticVector<uint64>               timelineSemaWait;
             } queueData[(uint32)CommandBuffer::Type::MAX];
 
             StaticVector<VkFence>		  waitFences;
@@ -156,9 +157,18 @@ namespace Renderer
             bool swapchainSemaphore = false);
 
         void SubmitQueue(CommandBuffer::Type type, FenceHandle* fence = NULL, uint32 semaphoreCount = 0, SemaphoreHandle* semaphores = NULL,
-            bool lastSubmit = false);
+                         bool lastSubmit = false);
+
+        void Submit(CommandBufferHandle cmd, FenceHandle* fence, uint32 semaphoreCount, SemaphoreHandle* semaphores,
+            int32 signalValuesCount, const uint64* signalValues, bool swapchainSemaphore = false);
+
+        void SubmitQueue(CommandBuffer::Type type, FenceHandle* fence, uint32 semaphoreCount, SemaphoreHandle* semaphores,
+                         uint32 signalValuesCount, const uint64* signalValues, bool lastSubmit = false);
 
         void AddWaitSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages, bool flush = false);
+
+        void AddWaitTimelineSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages,
+                                     uint64 waitValue = 0, bool flush = false);
 
         void FlushQueue(CommandBuffer::Type type);
 
@@ -190,7 +200,12 @@ namespace Renderer
 
         SemaphoreHandle RequestSemaphore();
 
+        SemaphoreHandle RequestTimelineSemaphore(uint64 value = 1);
+
+        void ResetTimelineSemaphore(Semaphore& semaphore);
+
         PiplineEventHandle RequestPiplineEvent();
+
 
         // Pipeline:
         Pipeline& RequestPipeline(ShaderProgram& program, const RenderPass& rp, const GraphicsState& state);
@@ -229,7 +244,7 @@ namespace Renderer
 
         void FreeMemory(VkDeviceMemory memory);
 
-        void FreeMemory(Renderer::MemoryAllocator::AllocKey key);
+        void FreeMemory(MemoryAllocator::AllocKey key);
 
         void RecycleSemaphore(VkSemaphore sem);
 

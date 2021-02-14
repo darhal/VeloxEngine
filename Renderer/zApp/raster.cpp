@@ -63,6 +63,8 @@ void updateMVP(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::BufferHand
     buffer->WriteToRing(sizeof(mvp), &mvp);
 }
 
+// SemaphoreHandle timeline;
+
 void RenderFrame(TRE::Renderer::RenderDevice& dev,
                  TRE::Renderer::ShaderProgram& program,
                  TRE::Renderer::GraphicsState& state,
@@ -76,6 +78,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     using namespace TRE::Renderer;
 
     CommandBufferHandle cmd = dev.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
+
     updateMVP(dev, uniformBuffer);
 
     cmd->BindShaderProgram(program);
@@ -105,9 +108,16 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
 #endif
 
     cmd->EndRenderPass();
+
+    /*SemaphoreHandle timeline = dev.RequestTimelineSemaphore();
+    printf("Semaphore value before wait: %d\n", timeline->GetCurrentCounterValue());
+    dev.Submit(cmd, NULL, 1, &timeline);
+    timeline->Wait(2);
+    printf("Semaphore value after wait: %d | Semaphore temp value: %d\n", timeline->GetCurrentCounterValue(), timeline->GetTempValue());
+    // timeline->Reset();*/
+
     dev.Submit(cmd);
 }
-
 
 int raster(RenderBackend& backend)
 {
@@ -202,6 +212,7 @@ int raster(RenderBackend& backend)
 
     time_t lasttime = time(NULL);
     // TODO: shader specilization constants
+    // timeline = dev.RequestTimelineSemaphore();
 
     while (window.isOpen()) {
         window.getEvent(ev);

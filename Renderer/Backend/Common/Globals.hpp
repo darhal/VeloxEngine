@@ -82,8 +82,8 @@ namespace Renderer
 	CONSTEXPR static uint32 MAX_THREADS				= 1;
 
 	// Frame related constants:
-	CONSTEXPR static uint32	MAX_FRAMES				= 2;
-	CONSTEXPR static uint32	NUM_FRAMES				= 2;
+    CONSTEXPR static uint32	MAX_FRAMES				= 2;
+    CONSTEXPR static uint32	NUM_FRAMES				= 2;
     CONSTEXPR static uint32	MAX_IMAGES_COUNT		= 8;
 
 	// Descriptor related constants:

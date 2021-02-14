@@ -14,7 +14,54 @@ Renderer::Semaphore::~Semaphore()
 	// Either recycle or destroy ?
 	if (semaphore != VK_NULL_HANDLE) {
         device.RecycleSemaphore(semaphore);
-	}	
+    }
+}
+
+void Renderer::Semaphore::Signal(uint64 signalValue)
+{
+    ASSERTF(GetType() != TIMELINE, "Can't perform this operation on a regular semaphore a timeline semaphore is needed");
+
+    VkSemaphoreSignalInfo signalInfo;
+    signalInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
+    signalInfo.pNext = NULL;
+    signalInfo.semaphore = semaphore;
+    signalInfo.value = signalValue;
+
+    vkSignalSemaphore(device.GetDevice(), &signalInfo);
+    tempValue = signalValue;
+}
+
+void Renderer::Semaphore::Wait(uint64 waitValue)
+{
+    ASSERTF(GetType() != TIMELINE, "Can't perform this operation on a regular semaphore a timeline semaphore is needed");
+
+    waitValue = waitValue ? waitValue : tempValue;
+
+    VkSemaphoreWaitInfo waitInfo;
+    waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+    waitInfo.pNext = NULL;
+    waitInfo.flags = 0;
+    waitInfo.semaphoreCount = 1;
+    waitInfo.pSemaphores = &semaphore;
+    waitInfo.pValues = &waitValue;
+
+    vkWaitSemaphores(device.GetDevice(), &waitInfo, UINT64_MAX);
+}
+
+uint64 Renderer::Semaphore::GetCurrentCounterValue() const
+{
+    ASSERTF(GetType() != TIMELINE, "Can't perform this operation on a regular semaphore a timeline semaphore is needed");
+
+    uint64_t value;
+    vkGetSemaphoreCounterValue(device.GetDevice(), semaphore, &value);
+    return value;
+}
+
+void Renderer::Semaphore::Reset()
+{
+    ASSERTF(GetType() != TIMELINE, "Can't perform this operation on a regular semaphore a timeline semaphore is needed");
+
+    device.ResetTimelineSemaphore(*this);
 }
 
 
