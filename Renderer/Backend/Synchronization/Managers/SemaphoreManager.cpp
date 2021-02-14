@@ -51,6 +51,7 @@ VkSemaphore Renderer::SemaphoreManager::RequestTimelineSemaphore(uint64 value)
         vkCreateSemaphore(device->GetDevice(), &info, NULL, &sem);
         return sem;
     } else {
+        // TODO: this path wont be hit as we destroy timeline semaphores instead of recycling them
         auto sem = timelineSemaphore.back();
         timelineSemaphore.pop_back();
 

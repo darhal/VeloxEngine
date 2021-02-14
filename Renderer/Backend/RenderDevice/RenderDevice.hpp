@@ -75,6 +75,7 @@ namespace Renderer
 
             TRE::Vector<VkFence>		  recycleFences;
             TRE::Vector<VkSemaphore>	  recycleSemaphores;
+            // TRE::Vector<VkSemaphore>      recycledTimelineSema;
 
             TRE::Vector<VkDeviceMemory>	  freedMemory;
             TRE::Vector<MemoryAllocator::AllocKey> freeAllocatedMemory;
@@ -246,8 +247,6 @@ namespace Renderer
 
         void FreeMemory(MemoryAllocator::AllocKey key);
 
-        void RecycleSemaphore(VkSemaphore sem);
-
         void DestroySemaphore(VkSemaphore sem);
 
         void DestroryEvent(VkEvent event);
@@ -257,6 +256,8 @@ namespace Renderer
         void DestroyBufferView(VkBufferView view);
 
         void DestroySampler(VkSampler sampler);
+
+        void RecycleSemaphore(VkSemaphore sem);
 
         void DestroyAllFrames();
 

@@ -788,6 +788,10 @@ void Renderer::RenderDevice::AddWaitSemapore(CommandBuffer::Type type, Semaphore
     auto& data = GetQueueData(type);
     data.waitSemaphores.EmplaceBack(semaphore);
     data.waitStages.PushBack(stages);
+
+    if (semaphore->GetType() == Semaphore::TIMELINE) {
+        data.timelineSemaWait.PushBack(semaphore->GetTempValue());
+    }
 }
 
 void Renderer::RenderDevice::AddWaitTimelineSemapore(Renderer::CommandBuffer::Type type, Renderer::SemaphoreHandle semaphore,
@@ -1019,7 +1023,7 @@ Renderer::SemaphoreHandle Renderer::RenderDevice::RequestTimelineSemaphore(uint6
 
 void Renderer::RenderDevice::ResetTimelineSemaphore(Renderer::Semaphore& semaphore)
 {
-    this->RecycleSemaphore(semaphore.GetApiObject());
+    this->DestroySemaphore(semaphore.GetApiObject());
     VkSemaphore sem = semaphoreManager.RequestTimelineSemaphore(semaphore.initialValue);
     semaphore.semaphore = sem;
     semaphore.tempValue = semaphore.initialValue;

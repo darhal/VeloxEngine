@@ -13,7 +13,12 @@ Renderer::Semaphore::~Semaphore()
 {
 	// Either recycle or destroy ?
 	if (semaphore != VK_NULL_HANDLE) {
-        device.RecycleSemaphore(semaphore);
+        if (this->GetType() == BINARY) {
+            device.RecycleSemaphore(semaphore);
+        }else{
+            // We dont reycyle timeline sempahores as there is no way to reset them
+            device.DestroySemaphore(semaphore);
+        }
     }
 }
 

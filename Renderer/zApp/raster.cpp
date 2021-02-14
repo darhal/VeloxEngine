@@ -116,7 +116,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     printf("Semaphore value after wait: %d | Semaphore temp value: %d\n", timeline->GetCurrentCounterValue(), timeline->GetTempValue());
     // timeline->Reset();*/
 
-    dev.Submit(cmd);
+    // dev.Submit(cmd);
 }
 
 int raster(RenderBackend& backend)
