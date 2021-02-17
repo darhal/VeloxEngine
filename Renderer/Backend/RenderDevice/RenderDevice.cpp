@@ -178,17 +178,6 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const RenderInstance& renderIn
 void Renderer::RenderDevice::Init(uint32 enabledFeatures)
 {
     this->enabledFeatures = enabledFeatures;
-
-    stagingManager.Init();
-    gpuMemoryAllocator.Init(internal);
-    fenceManager.Init(this);
-    semaphoreManager.Init(this);
-    eventManager.Init(this);
-
-    // RT:
-    if (enabledFeatures & RAY_TRACING)
-        acclBuilder.Init();
-
     const Internal::QueueFamilyIndices& queueFamilyIndices = this->GetQueueFamilyIndices();
 
     for (uint32 f = 0; f < renderContext->GetNumFrames(); f++) {
@@ -204,6 +193,16 @@ void Renderer::RenderDevice::Init(uint32 enabledFeatures)
             }
         }
     }
+
+    gpuMemoryAllocator.Init(internal);
+    fenceManager.Init(this);
+    semaphoreManager.Init(this);
+    eventManager.Init(this);
+    stagingManager.Init();
+
+    // RT:
+    if (enabledFeatures & RAY_TRACING)
+        acclBuilder.Init();
 }
 
 VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkImage image, MemoryUsage memoryDomain) const
@@ -1202,13 +1201,16 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateBuffer(const BufferInfo& cr
     this->CreateBufferInternal(apiBuffer, bufferMemory, createInfo);
     BufferHandle ret(objectsPool.buffers.Allocate(*this, apiBuffer, createInfo, bufferMemory));
 
-    if (data) {
+    /*if (data) {
         if (createInfo.domain == MemoryUsage::CPU_ONLY || createInfo.domain == MemoryUsage::CPU_CACHED || createInfo.domain == MemoryUsage::CPU_COHERENT) {
             ret->WriteToBuffer(createInfo.size, data);
         } else {
             stagingManager.Stage(ret->apiBuffer, data, createInfo.size, bufferMemory.alignment);
         }
-    }
+    }*/
+
+    if (data)
+        ret->WriteToBuffer(createInfo.size, data);
 
     return ret;
 }
@@ -1229,13 +1231,16 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo
     this->CreateBufferInternal(apiBuffer, bufferMemory, info);
     BufferHandle ret(objectsPool.buffers.Allocate(*this, apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
 
-    if (data) {
+    /*if (data) {
         if (info.domain == MemoryUsage::CPU_ONLY || info.domain == MemoryUsage::CPU_CACHED || info.domain == MemoryUsage::CPU_COHERENT) {
             ret->WriteToBuffer(createInfo.size, data);
         } else {
             stagingManager.Stage(ret->apiBuffer, data, createInfo.size, bufferMemory.alignment);
         }
-    }
+    }*/
+
+    if (data)
+        ret->WriteToBuffer(createInfo.size, data);
 
     return ret;
 }

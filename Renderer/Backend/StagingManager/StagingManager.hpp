@@ -2,6 +2,7 @@
 
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/Synchronization/Semaphore/Semaphore.hpp>
 
 TRE_NS_START
 
@@ -70,6 +71,7 @@ namespace Renderer
 		VkDeviceMemory	memory;
 		VkCommandPool	commandPool;
 		uint32			currentBuffer;
+        SemaphoreHandle semaphore;
 		
         RenderDevice& renderDevice;
 		

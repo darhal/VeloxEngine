@@ -40,9 +40,9 @@ namespace Renderer
 
         virtual ~Buffer();
 
-		void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
+        void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0, VkDeviceSize alignement = 0);
 
-        void WriteToRing(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
+        void WriteToRing(VkDeviceSize size, const void* data, VkDeviceSize offset = 0, VkDeviceSize alignement = 0);
 
 		FORCEINLINE VkBuffer GetApiObject() const { return apiBuffer; }
 

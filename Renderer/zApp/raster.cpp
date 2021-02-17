@@ -116,7 +116,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     printf("Semaphore value after wait: %d | Semaphore temp value: %d\n", timeline->GetCurrentCounterValue(), timeline->GetTempValue());
     // timeline->Reset();*/
 
-    // dev.Submit(cmd);
+    dev.Submit(cmd);
 }
 
 int raster(RenderBackend& backend)
@@ -231,16 +231,15 @@ int raster(RenderBackend& backend)
             }
         }
 
-        backend.BeginFrame();
-
-        RenderFrame(dev, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
-
+        // Using fences the performance is 1500-1800 fps
         /*for (int32_t i = 0; i < 12 * 3; i++) {
             float r = ((double)rand() / (RAND_MAX)) + 1;
-            vertecies[i].pos = TRE::vec3{ g_vertex_buffer_data[i * 3] * r, g_vertex_buffer_data[i * 3 + 1] * r, g_vertex_buffer_data[i * 3 + 2] * r };
+            vertecies[i].pos = glm::vec3{ g_vertex_buffer_data[i * 3] * r, g_vertex_buffer_data[i * 3 + 1] * r, g_vertex_buffer_data[i * 3 + 2] * r };
         }
-        cpuVertexBuffer->WriteToBuffer(sizeof(vertecies), &vertecies);*/
+        vertexIndexBuffer->WriteToBuffer(sizeof(vertecies), &vertecies);*/
 
+        backend.BeginFrame();
+        RenderFrame(dev, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
         backend.EndFrame();
         printFPS();
     }

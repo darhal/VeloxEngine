@@ -71,6 +71,8 @@ namespace Renderer
 				stagingBuffers[i].data = (uint8*)mappedData + (i * alignedSize);
 			}
 		}
+
+        semaphore = renderDevice.RequestTimelineSemaphore();
 	}
 
 	void StagingManager::Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment, const DeviceSize offset)
@@ -308,9 +310,14 @@ namespace Renderer
 
 		VkCommandBuffer cmdBuff = stage->transferCmdBuff;
 
+
+        //TODO: implement this here with timeline semaphores
 		if (renderDevice.IsTransferQueueSeprate()) {
 			renderDevice.SubmitCmdBuffer(TRANSFER, &cmdBuff, 1,
 				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence);
+
+            // renderDevice.Submit()
+            // renderDevice.RequestCommandBuffer();
 		} else {
 			renderDevice.SubmitCmdBuffer(TRANSFER, &cmdBuff, 1,
 				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence);
