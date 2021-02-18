@@ -29,6 +29,8 @@ namespace Renderer
 		class StaticVector
 		{
 		public:
+            CONSTEXPR static uint32 CAPCITY = 32;
+
             StaticVector() : size(0)
 			{
 			}

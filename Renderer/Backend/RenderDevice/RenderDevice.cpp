@@ -16,7 +16,8 @@ Renderer::RenderDevice::RenderDevice(RenderContext* ctx) :
     acclBuilder(*this),
     framebufferAllocator(this),
     transientAttachmentAllocator(*this, true),
-    pipelineAllocator(*this)
+    pipelineAllocator(*this),
+    submitSwapchain(false)
 {
 
 }
@@ -622,12 +623,7 @@ Renderer::CommandBuffer::Type Renderer::RenderDevice::GetPhysicalQueueType(Comma
     return type;
 }
 
-Renderer::RenderDevice::PerFrame::QueueData& Renderer::RenderDevice::GetQueueData(CommandBuffer::Type type)
-{
-    return Frame().queueData[(uint32)type];
-}
-
-Renderer::StaticVector<Renderer::CommandBufferHandle>& Renderer::RenderDevice::GetQueueSubmissions(CommandBuffer::Type type)
+Renderer::RenderDevice::PerFrame::Submissions& Renderer::RenderDevice::GetQueueSubmissions(CommandBuffer::Type type)
 {
     return Frame().submissions[(uint32)type];
 }
@@ -638,143 +634,177 @@ VkQueue Renderer::RenderDevice::GetQueue(CommandBuffer::Type type)
     return GetQueue(typeIndex);
 }
 
+
 void Renderer::RenderDevice::Submit(CommandBufferHandle cmd, FenceHandle* fence, uint32 semaphoreCount,
-    SemaphoreHandle* semaphores, bool swapchainSemaphore)
+    SemaphoreHandle** semaphores, uint32 signalValuesCount, const uint64* signalValues)
 {
-    this->Submit(cmd, fence, semaphoreCount, semaphores, 0, NULL, swapchainSemaphore);
+    this->Submit(cmd->GetType(), cmd, fence, semaphoreCount, semaphores, signalValuesCount, signalValues);
 }
 
-void Renderer::RenderDevice::Submit(CommandBufferHandle cmd, FenceHandle* fence, uint32 semaphoreCount,
-    SemaphoreHandle* semaphores, int32 signalValuesCount, const uint64* signalValues, bool swapchainSemaphore )
+void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer::CommandBufferHandle cmd, Renderer::FenceHandle* fence,
+                                    uint32 semaphoreCount, Renderer::SemaphoreHandle **semaphores, uint32 signalValuesCount,
+                                    const uint64* signalValues)
 {
     cmd->End();
+    auto& submissions = this->GetQueueSubmissions(type);
 
-    PerFrame& frame = Frame();
-    uint32 type = (uint32)cmd->GetType();
-    CommandBufferHandle& handle = frame.submissions[type].EmplaceBack(std::move(cmd));
+    if (fence || semaphoreCount) {
+        PerFrame::Submission& submission = submissions.EmplaceBack();
+        submission.commands.EmplaceBack(std::move(cmd));
 
-    if (fence || semaphoreCount || swapchainSemaphore) {
-        this->SubmitQueue((CommandBuffer::Type)type, fence, semaphoreCount, semaphores, signalValuesCount, signalValues, swapchainSemaphore);
+        uint32 timelineSemaCount = 0;
+        for (uint32 i = 0; i < semaphoreCount; i++) {
+            SemaphoreHandle* sem_ptr = semaphores[i];
+            SemaphoreHandle sem = *semaphores[i];
+
+            // TODO: Potential optimisation here we can just push directly the vk semaphores here
+            // think if this causes bugs (I dont think it can)
+            if (signalValuesCount) { // semaphores are mixed
+                if (!sem)
+                    *sem_ptr = this->RequestSemaphore();
+
+                if (sem->GetType() == Semaphore::TIMELINE) { // if its timeline semaphore
+                    if (signalValues && signalValues[timelineSemaCount]) { // if semaphore counte is defined by user
+                        sem->tempValue = signalValues[timelineSemaCount];
+                        submission.timelineSemaSignal.EmplaceBack(signalValues[timelineSemaCount]);
+                    }else{ // automaticaly determine the counter of the semaphore
+                        submission.timelineSemaSignal.EmplaceBack(sem->IncrementTempValue());
+                    }
+
+                    timelineSemaCount++;
+                }
+            }else{ // all of them are timeline semaphores
+                submission.timelineSemaSignal.EmplaceBack(signalValues[timelineSemaCount]);
+                timelineSemaCount++;
+            }
+
+            submission.signalSemaphores.EmplaceBack(sem);
+        }
+
+        submission.fence = fence;
+    }else{
+        PerFrame::Submission& submission = submissions.Back();
+        submission.commands.EmplaceBack(std::move(cmd));
     }
 }
 
-void Renderer::RenderDevice::SubmitQueue(CommandBuffer::Type type, FenceHandle* fence, uint32 semaphoreCount,
-    SemaphoreHandle* semaphores, bool lastSubmit)
+void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSwapchainSwap)
 {
-    this->SubmitQueue(type, fence, semaphoreCount, semaphores, 0, NULL, lastSubmit);
-}
-
-void Renderer::RenderDevice::SubmitQueue(CommandBuffer::Type type, FenceHandle* fence, uint32 semaphoreCount,
-                                         SemaphoreHandle* semaphores, uint32 signalValuesCount, const uint64* signalValues,
-                                         bool lastSubmit)
-{
-    if (type != CommandBuffer::Type::ASYNC_TRANSFER)
-        this->FlushQueue(CommandBuffer::Type::ASYNC_TRANSFER);
-
-    auto& data = this->GetQueueData(type);
+    const bool swapchainResize = renderContext->GetSwapchain().ResizeRequested();
     auto& submissions = this->GetQueueSubmissions(type);
 
-    if (submissions.Size() == 0) {
-        if (fence || semaphoreCount) {
-            // this->SubmitEmpty(type, fence, semaphoreCount, semaphores);
-        }
-
+    if (!submissions.Size()){
         return;
     }
 
-    CommandBufferHandle swapchainCommandBuffer;
-    StaticVector<VkSubmitInfo> submits;
-    StaticVector<VkCommandBuffer> cmds;
-    StaticVector<VkSemaphore> waits;
-    StaticVector<VkSemaphore> signals;
-    StaticVector<uint64> signalValuesArr(semaphoreCount);
-    VkFence vkFence = VK_NULL_HANDLE;
-    bool swapchainResize = renderContext->GetSwapchain().ResizeRequested();
-    uint32 timelineSemaCount = 0;
+    struct SubmitDataOffsets
+    {
+        uint64 commandBufferOffset   = 0;
+        uint64 waitSemaphoreOffset   = 0;
+        uint64 signalSemaphoreOffset = 0;
+    } offsets, oldOffsets;
 
-    for (auto& sem : data.waitSemaphores) {
-        waits.PushBack(sem->GetApiObject());
-    }
+    StaticVector<VkSubmitInfo>      submits;
+    StaticVector<VkCommandBuffer>   cmds;
+    StaticVector<VkSemaphore>       waits;
+    StaticVector<VkSemaphore>       signals;
 
     for (auto& sub : submissions) {
-        if (sub->UsesSwapchain()) {
-            swapchainCommandBuffer = sub;
-        }
+        VkSubmitInfo& submit = submits.EmplaceBack();
+        submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-        cmds.PushBack(sub->GetApiObject());
-    }
+        CommandBufferHandle swapchainCommandBuffer;
+        uint32 timelineSemaCount = 0;
 
-    for (uint32 i = 0; i < semaphoreCount; i++) {
-        if (semaphores[i]){
-            if (signalValuesCount){
-                signalValuesArr[timelineSemaCount] = signalValues[timelineSemaCount];
-                semaphores[i]->tempValue = signalValues[timelineSemaCount];
-            }else{
-                signalValuesArr[timelineSemaCount] = semaphores[i]->IncrementTempValue();
+        for (auto& cmd : sub.commands) {
+            if (!submitSwapchain && cmd->UsesSwapchain()) {
+                swapchainCommandBuffer = cmd;
+                submitSwapchain = true;
             }
 
-            timelineSemaCount++;
-        }else{
-            semaphores[i] = this->RequestSemaphore();
+            cmds.PushBack(cmd->GetApiObject());
+            offsets.commandBufferOffset++;
         }
 
-        signals.EmplaceBack(semaphores[i]->GetApiObject());
+        for (auto& sem : sub.waitSemaphores) {
+            waits.PushBack(sem->GetApiObject());
+            offsets.waitSemaphoreOffset++;
+        }
+
+        for (auto& sem : sub.signalSemaphores) {
+            signals.EmplaceBack(sem->GetApiObject());
+            offsets.signalSemaphoreOffset++;
+        }
+
+        // The line below is commented because we can deduce the timeline values automatically so the timelineSemaCount can be effectively 0
+        // ASSERTF(timelineSemaCount != signalValuesCount, "The count of timeline semaphores to signal is not equal to signalVlauesCount passed as argument");
+
+        if ((swapchainCommandBuffer || triggerSwapchainSwap) && !swapchainResize) {
+            VkPipelineStageFlagBits stage = swapchainCommandBuffer ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+                : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+            sub.waitStages.PushBack(stage);
+            waits.EmplaceBack(renderContext->GetImageAcquiredSemaphore());
+            signals.EmplaceBack(renderContext->GetDrawCompletedSemaphore());
+
+            offsets.waitSemaphoreOffset++;
+            offsets.signalSemaphoreOffset++;
+        }
+
+        VkTimelineSemaphoreSubmitInfo timelineSubmitInfo;
+
+        if (timelineSemaCount) {
+            timelineSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+            timelineSubmitInfo.pNext = NULL;
+            timelineSubmitInfo.waitSemaphoreValueCount   = sub.timelineSemaWait.Size();
+            timelineSubmitInfo.pWaitSemaphoreValues      = sub.timelineSemaWait.Data();
+            timelineSubmitInfo.signalSemaphoreValueCount = sub.timelineSemaSignal.Size();
+            timelineSubmitInfo.pSignalSemaphoreValues    = sub.timelineSemaSignal.Data();
+            submit.pNext = &timelineSubmitInfo;
+        }else{
+            submit.pNext = NULL;
+        }
+
+        const uint32 waitSemaphoreCount   = offsets.waitSemaphoreOffset - oldOffsets.waitSemaphoreOffset;
+        const uint32 signalSemaphoreCount = offsets.commandBufferOffset - oldOffsets.commandBufferOffset;
+        const uint32 commandBufferCount   = offsets.signalSemaphoreOffset - oldOffsets.signalSemaphoreOffset;
+
+        submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submit.waitSemaphoreCount   = waitSemaphoreCount;
+        submit.pWaitSemaphores      = waits.Data() + oldOffsets.waitSemaphoreOffset;
+        submit.pWaitDstStageMask    = sub.waitStages.Data();
+        submit.commandBufferCount   = commandBufferCount;
+        submit.pCommandBuffers      = cmds.Data() + oldOffsets.commandBufferOffset;
+        submit.signalSemaphoreCount = signalSemaphoreCount;
+        submit.pSignalSemaphores    = signals.Data() + oldOffsets.signalSemaphoreOffset;
+
+        ASSERTF(sub.fence && swapchainCommandBuffer, "Can't submit command buffers that draw to the swapchain with a fance");
+        VkFence vkFence = VK_NULL_HANDLE;
+
+        if (sub.fence) {
+            *sub.fence = this->RequestFence();
+            vkFence = (*sub.fence)->GetApiObject();
+        }
+
+        if (swapchainCommandBuffer || triggerSwapchainSwap) {
+            vkFence = renderContext->GetFrameFence();
+        }
+
+        if (vkFence) {
+            // printf("Submit commands: %d|%d|%d\n", (bool)swapchainCommandBuffer, lastSubmit, swapchainResize);
+            vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
+            submits.Clear();
+            cmds.Clear();
+            waits.Clear();
+            signals.Clear();
+            oldOffsets = {0};
+        }
+
+        offsets = oldOffsets;
     }
 
-    // The line below is commented because we can deduce the timeline values automatically so the timelineSemaCount can be effectively 0
-    // ASSERTF(timelineSemaCount != signalValuesCount, "The count of timeline semaphores to signal is not equal to signalVlauesCount passed as argument");
-
-    if ((swapchainCommandBuffer || lastSubmit) && !swapchainResize) {
-        VkPipelineStageFlagBits stage = swapchainCommandBuffer ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-            : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        data.waitStages.PushBack(stage);
-        waits.EmplaceBack(renderContext->GetImageAcquiredSemaphore());
-        signals.EmplaceBack(renderContext->GetDrawCompletedSemaphore());
-    }
-
-    auto& submit = submits.EmplaceBack();
-    VkTimelineSemaphoreSubmitInfo timelineSubmitInfo;
-
-    if (timelineSemaCount) {
-        timelineSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
-        timelineSubmitInfo.pNext = NULL;
-        timelineSubmitInfo.waitSemaphoreValueCount = data.timelineSemaWait.Size();
-        timelineSubmitInfo.pWaitSemaphoreValues = data.timelineSemaWait.Data();
-        timelineSubmitInfo.signalSemaphoreValueCount = signals.Size();
-        timelineSubmitInfo.pSignalSemaphoreValues = signalValuesArr.Data();
-        submit.pNext = &timelineSubmitInfo;
-    }else{
-        submit.pNext = NULL;
-    }
-
-    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit.waitSemaphoreCount = waits.Size();
-    submit.pWaitSemaphores = waits.Data();
-    submit.pWaitDstStageMask = data.waitStages.Data();
-    submit.commandBufferCount = cmds.Size();
-    submit.pCommandBuffers = cmds.Data();
-    submit.signalSemaphoreCount = signals.Size();
-    submit.pSignalSemaphores = signals.Data();
-
-    ASSERTF(fence && swapchainCommandBuffer, "Can't submit command buffers that draw to the swapchain with a fance");
-
-    if (fence) {
-        *fence = this->RequestFence();
-        vkFence = (*fence)->GetApiObject();
-    }
-
-    if (swapchainCommandBuffer || lastSubmit) {
-        vkFence = renderContext->GetFrameFence();
-    }
-
-    vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
-
-    submissions.Clear();
-    data.waitSemaphores.Clear();
-    data.waitStages.Clear();
-    data.timelineSemaWait.Clear();
-    // printf("Submit commands: %d|%d|%d\n", (bool)swapchainCommandBuffer, lastSubmit, swapchainResize);
+    submissions.Clear(); // Everything flushed
 }
+
 
 void Renderer::RenderDevice::AddWaitSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages, bool flush)
 {
@@ -784,7 +814,7 @@ void Renderer::RenderDevice::AddWaitSemapore(CommandBuffer::Type type, Semaphore
         this->FlushQueue(type);
     }
 
-    auto& data = GetQueueData(type);
+    auto& data = GetQueueSubmissions(type).Back();
     data.waitSemaphores.EmplaceBack(semaphore);
     data.waitStages.PushBack(stages);
 
@@ -802,17 +832,12 @@ void Renderer::RenderDevice::AddWaitTimelineSemapore(Renderer::CommandBuffer::Ty
         this->FlushQueue(type);
     }
 
-    auto& data = GetQueueData(type);
+    auto& data = GetQueueSubmissions(type).Back();
     data.waitSemaphores.EmplaceBack(semaphore);
     data.waitStages.PushBack(stages);
     if (waitValue == 0)
         waitValue = semaphore->GetTempValue();
     data.timelineSemaWait.PushBack(waitValue);
-}
-
-void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type)
-{
-    this->SubmitQueue(type);
 }
 
 void Renderer::RenderDevice::FlushQueues()
@@ -839,14 +864,7 @@ void Renderer::RenderDevice::ClearFrame()
 
 void Renderer::RenderDevice::BeginFrame()
 {
-    PerFrame& frame = Frame();
-
-    if (!frame.waitFences.Empty()) {
-        vkWaitForFences(GetDevice(), frame.waitFences.Size(), frame.waitFences.Data(), VK_TRUE, UINT64_MAX);
-        vkResetFences(GetDevice(), frame.waitFences.Size(), frame.waitFences.Data());
-        frame.waitFences.Clear();
-    }
-
+    // PerFrame& frame = Frame();
     stagingManager.Wait(stagingManager.GetCurrentStagingBuffer());
     stagingManager.Flush();
 
@@ -857,31 +875,16 @@ void Renderer::RenderDevice::BeginFrame()
         allocator.second.BeginFrame();
 
     this->ClearFrame();
+
+    submitSwapchain = false;
 }
 
 void Renderer::RenderDevice::EndFrame()
 {
-    CONSTEXPR uint32 subOrder[] = {
-        (uint32)CommandBuffer::Type::ASYNC_TRANSFER,
-        (uint32)CommandBuffer::Type::ASYNC_COMPUTE
-    };
-
-    PerFrame& frame = this->Frame();
-    FenceHandle fence;
-
-    for (uint32 type : subOrder) {
-        if (frame.submissions[type].Size()) {
-            CommandBuffer::Type qType = (CommandBuffer::Type)type;
-            this->SubmitQueue(qType);
-            frame.waitFences.EmplaceBack(fence->GetApiObject());
-            frame.recycleFences.EmplaceBack(fence->GetApiObject());
-        }
-    }
-
-    auto& submissions = this->GetQueueSubmissions(CommandBuffer::Type::GENERIC);
-    if (submissions.Size() != 0) {
-        this->SubmitQueue(CommandBuffer::Type::GENERIC, NULL, 0, NULL, true);
-    }
+    this->FlushQueue(CommandBuffer::Type::ASYNC_TRANSFER);
+    this->FlushQueue(CommandBuffer::Type::ASYNC_COMPUTE);
+    // if we already did sumbit to swapchain then done force the swap
+    this->FlushQueue(CommandBuffer::Type::GENERIC, !submitSwapchain);
 }
 
 Renderer::BlasHandle Renderer::RenderDevice::CreateBlas(const BlasCreateInfo& blasInfo, VkBuildAccelerationStructureFlagsKHR flags)

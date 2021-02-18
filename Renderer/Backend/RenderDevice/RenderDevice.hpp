@@ -50,16 +50,21 @@ namespace Renderer
         struct PerFrame
         {
             CommandPool commandPools[MAX_THREADS][(uint32)CommandBuffer::Type::MAX];
-            StaticVector<CommandBufferHandle> submissions[(uint32)CommandBuffer::Type::MAX];
 
-            struct QueueData
-            {
+            struct Submission {
+                StaticVector<CommandBufferHandle>  commands;
                 StaticVector<SemaphoreHandle>      waitSemaphores;
                 StaticVector<VkPipelineStageFlags> waitStages;
                 StaticVector<uint64>               timelineSemaWait;
-            } queueData[(uint32)CommandBuffer::Type::MAX];
 
-            StaticVector<VkFence>		  waitFences;
+                StaticVector<SemaphoreHandle>      signalSemaphores;
+                StaticVector<uint64>               timelineSemaSignal;
+
+                FenceHandle*                       fence = NULL;
+            };
+
+            typedef StaticVector<Submission> Submissions;
+            Submissions                   submissions[(uint32)CommandBuffer::Type::MAX];
 
             TRE::Vector<VkPipeline>       destroyedPipelines;
             TRE::Vector<VkFramebuffer>    destroyedFramebuffers;
@@ -154,24 +159,18 @@ namespace Renderer
         // Command buffers and queues:
         CommandBufferHandle RequestCommandBuffer(CommandBuffer::Type type = CommandBuffer::Type::GENERIC);
 
-        void Submit(CommandBufferHandle cmd, FenceHandle* fence  = NULL, uint32 semaphoreCount = 0, SemaphoreHandle* semaphores = NULL,
-            bool swapchainSemaphore = false);
+        void Submit(CommandBuffer::Type type, CommandBufferHandle cmd, FenceHandle* fence = NULL, uint32 semaphoreCount = 0,
+                    SemaphoreHandle** semaphores = NULL, uint32 signalValuesCount = 0, const uint64* signalValues = NULL);
 
-        void SubmitQueue(CommandBuffer::Type type, FenceHandle* fence = NULL, uint32 semaphoreCount = 0, SemaphoreHandle* semaphores = NULL,
-                         bool lastSubmit = false);
-
-        void Submit(CommandBufferHandle cmd, FenceHandle* fence, uint32 semaphoreCount, SemaphoreHandle* semaphores,
-            int32 signalValuesCount, const uint64* signalValues, bool swapchainSemaphore = false);
-
-        void SubmitQueue(CommandBuffer::Type type, FenceHandle* fence, uint32 semaphoreCount, SemaphoreHandle* semaphores,
-                         uint32 signalValuesCount, const uint64* signalValues, bool lastSubmit = false);
+        void Submit(CommandBufferHandle cmd, FenceHandle* fence = NULL, uint32 semaphoreCount = 0, SemaphoreHandle** semaphores = NULL,
+            uint32 signalValuesCount = 0, const uint64* signalValues = NULL);
 
         void AddWaitSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages, bool flush = false);
 
         void AddWaitTimelineSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages,
                                      uint64 waitValue = 0, bool flush = false);
 
-        void FlushQueue(CommandBuffer::Type type);
+        void FlushQueue(CommandBuffer::Type type, bool triggerSwapchainSwap = false);
 
         void FlushQueues();
 
@@ -352,9 +351,9 @@ namespace Renderer
 
         CommandBuffer::Type GetPhysicalQueueType(CommandBuffer::Type type);
 
-        PerFrame::QueueData& GetQueueData(CommandBuffer::Type type);
+        PerFrame::Submissions& GetQueueSubmissions(CommandBuffer::Type type);
 
-        StaticVector<CommandBufferHandle>& GetQueueSubmissions(CommandBuffer::Type type);
+        // StaticVector<CommandBufferHandle>& GetQueueSubmissions(CommandBuffer::Type type);
 
         VkQueue GetQueue(CommandBuffer::Type type);
 	private:
@@ -380,6 +379,7 @@ namespace Renderer
         HandlePool		objectsPool;
 
         uint32 enabledFeatures;
+        bool submitSwapchain;
 
 		std::unordered_set<uint64> deviceExtensions;
 		std::unordered_set<uint64> availbleDevExtensions;
