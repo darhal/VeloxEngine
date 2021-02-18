@@ -657,24 +657,24 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
             SemaphoreHandle* sem_ptr = semaphores[i];
             SemaphoreHandle sem = *semaphores[i];
 
-            // TODO: Potential optimisation here we can just push directly the vk semaphores here
+            // TODO: Potential optimisation here we can just push directly the vk semaphores
             // think if this causes bugs (I dont think it can)
             if (signalValuesCount) { // semaphores are mixed
                 if (!sem)
                     *sem_ptr = this->RequestSemaphore();
 
                 if (sem->GetType() == Semaphore::TIMELINE) { // if its timeline semaphore
-                    if (signalValues && signalValues[timelineSemaCount]) { // if semaphore counte is defined by user
+                    if (signalValues && signalValues[timelineSemaCount]) { // if semaphore counter is defined by user
                         sem->tempValue = signalValues[timelineSemaCount];
-                        submission.timelineSemaSignal.EmplaceBack(signalValues[timelineSemaCount]);
+                        submission.timelineSemaSignal.PushBack(signalValues[timelineSemaCount]);
                     }else{ // automaticaly determine the counter of the semaphore
-                        submission.timelineSemaSignal.EmplaceBack(sem->IncrementTempValue());
+                        submission.timelineSemaSignal.PushBack(sem->IncrementTempValue());
                     }
 
                     timelineSemaCount++;
                 }
             }else{ // all of them are timeline semaphores
-                submission.timelineSemaSignal.EmplaceBack(signalValues[timelineSemaCount]);
+                submission.timelineSemaSignal.PushBack(sem->IncrementTempValue());
                 timelineSemaCount++;
             }
 
@@ -683,6 +683,9 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
 
         submission.fence = fence;
     }else{
+        if (!submissions.Size()){
+            submissions.EmplaceBack();
+        }
         PerFrame::Submission& submission = submissions.Back();
         submission.commands.EmplaceBack(std::move(cmd));
     }

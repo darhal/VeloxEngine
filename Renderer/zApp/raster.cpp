@@ -109,14 +109,15 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
 
     cmd->EndRenderPass();
 
-    /*SemaphoreHandle timeline = dev.RequestTimelineSemaphore();
+    SemaphoreHandle timeline = dev.RequestTimelineSemaphore();
+    SemaphoreHandle* semas[] = {&timeline};
     printf("Semaphore value before wait: %d\n", timeline->GetCurrentCounterValue());
-    dev.Submit(cmd, NULL, 1, &timeline);
-    timeline->Wait(2);
+    dev.Submit(cmd, NULL, 1, semas);
+    // timeline->Wait(2);
     printf("Semaphore value after wait: %d | Semaphore temp value: %d\n", timeline->GetCurrentCounterValue(), timeline->GetTempValue());
-    // timeline->Reset();*/
+    // timeline->Reset();
 
-    dev.Submit(cmd);
+    // dev.Submit(cmd);
 }
 
 int raster(RenderBackend& backend)
