@@ -111,10 +111,11 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
 
     SemaphoreHandle timeline = dev.RequestTimelineSemaphore();
     SemaphoreHandle* semas[] = {&timeline};
-    printf("Semaphore value before wait: %d\n", timeline->GetCurrentCounterValue());
-    dev.Submit(cmd, NULL, 1, semas);
+    // printf("Semaphore value before wait: %d\n", timeline->GetCurrentCounterValue());
+    dev.Submit(cmd, NULL, 1, semas, 1);
+    dev.FlushQueues();
     // timeline->Wait(2);
-    printf("Semaphore value after wait: %d | Semaphore temp value: %d\n", timeline->GetCurrentCounterValue(), timeline->GetTempValue());
+    // printf("Semaphore value after wait: %d | Semaphore temp value: %d\n", timeline->GetCurrentCounterValue(), timeline->GetTempValue());
     // timeline->Reset();
 
     // dev.Submit(cmd);

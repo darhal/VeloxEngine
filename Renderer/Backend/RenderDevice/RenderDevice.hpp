@@ -61,6 +61,17 @@ namespace Renderer
                 StaticVector<uint64>               timelineSemaSignal;
 
                 FenceHandle*                       fence = NULL;
+
+                void Clear()
+                {
+                    commands.Clear();
+                    waitSemaphores.Clear();
+                    waitStages.Clear();
+                    timelineSemaWait.Clear();
+                    signalSemaphores.Clear();
+                    timelineSemaSignal.Clear();
+                    fence = NULL;
+                }
             };
 
             typedef StaticVector<Submission> Submissions;

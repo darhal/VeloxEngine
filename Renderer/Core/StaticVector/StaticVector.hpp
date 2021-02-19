@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Renderer/Common.hpp>
+#include <utility>
 
 TRE_NS_START
 

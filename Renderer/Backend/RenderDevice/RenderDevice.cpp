@@ -634,7 +634,6 @@ VkQueue Renderer::RenderDevice::GetQueue(CommandBuffer::Type type)
     return GetQueue(typeIndex);
 }
 
-
 void Renderer::RenderDevice::Submit(CommandBufferHandle cmd, FenceHandle* fence, uint32 semaphoreCount,
     SemaphoreHandle** semaphores, uint32 signalValuesCount, const uint64* signalValues)
 {
@@ -642,7 +641,7 @@ void Renderer::RenderDevice::Submit(CommandBufferHandle cmd, FenceHandle* fence,
 }
 
 void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer::CommandBufferHandle cmd, Renderer::FenceHandle* fence,
-                                    uint32 semaphoreCount, Renderer::SemaphoreHandle **semaphores, uint32 signalValuesCount,
+                                    uint32 semaphoreCount, Renderer::SemaphoreHandle** semaphores, uint32 signalValuesCount,
                                     const uint64* signalValues)
 {
     cmd->End();
@@ -651,30 +650,28 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
     if (fence || semaphoreCount) {
         PerFrame::Submission& submission = submissions.EmplaceBack();
         submission.commands.EmplaceBack(std::move(cmd));
-
         uint32 timelineSemaCount = 0;
+        // TODO: Potential optimisation here we can just push directly the vk semaphores
+        // think if this causes bugs (I dont think it can)
         for (uint32 i = 0; i < semaphoreCount; i++) {
             SemaphoreHandle* sem_ptr = semaphores[i];
-            SemaphoreHandle sem = *semaphores[i];
+            SemaphoreHandle sem = *sem_ptr;
 
-            // TODO: Potential optimisation here we can just push directly the vk semaphores
-            // think if this causes bugs (I dont think it can)
-            if (signalValuesCount) { // semaphores are mixed
-                if (!sem)
+            if (!(*sem_ptr)) {
+                if (semaphoreCount != signalValuesCount) // they are probably mixed or full binary semaphores
                     *sem_ptr = this->RequestSemaphore();
+                else // all of them are timeline semaphores
+                    *sem_ptr = this->RequestTimelineSemaphore();
+            }
 
-                if (sem->GetType() == Semaphore::TIMELINE) { // if its timeline semaphore
-                    if (signalValues && signalValues[timelineSemaCount]) { // if semaphore counter is defined by user
-                        sem->tempValue = signalValues[timelineSemaCount];
-                        submission.timelineSemaSignal.PushBack(signalValues[timelineSemaCount]);
-                    }else{ // automaticaly determine the counter of the semaphore
-                        submission.timelineSemaSignal.PushBack(sem->IncrementTempValue());
-                    }
-
-                    timelineSemaCount++;
+            if (signalValuesCount && sem->GetType() == Semaphore::TIMELINE) { // semaphores are mixed
+                if (!signalValues){ // automaticaly determine the counter of the semaphore
+                    submission.timelineSemaSignal.PushBack(sem->IncrementTempValue());
+                }else{ // if semaphore counter is defined by user
+                    sem->tempValue = signalValues[timelineSemaCount];
+                    submission.timelineSemaSignal.PushBack(signalValues[timelineSemaCount]);
                 }
-            }else{ // all of them are timeline semaphores
-                submission.timelineSemaSignal.PushBack(sem->IncrementTempValue());
+
                 timelineSemaCount++;
             }
 
@@ -683,9 +680,9 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
 
         submission.fence = fence;
     }else{
-        if (!submissions.Size()){
+        if (!submissions.Size())
             submissions.EmplaceBack();
-        }
+
         PerFrame::Submission& submission = submissions.Back();
         submission.commands.EmplaceBack(std::move(cmd));
     }
@@ -712,12 +709,11 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
     StaticVector<VkSemaphore>       waits;
     StaticVector<VkSemaphore>       signals;
 
-    for (auto& sub : submissions) {
+    for (uint32 subId = 0; subId < submissions.Size(); subId++) {
+        auto& sub = submissions[subId];
         VkSubmitInfo& submit = submits.EmplaceBack();
         submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
         CommandBufferHandle swapchainCommandBuffer;
-        uint32 timelineSemaCount = 0;
 
         for (auto& cmd : sub.commands) {
             if (!submitSwapchain && cmd->UsesSwapchain()) {
@@ -753,32 +749,33 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
             offsets.signalSemaphoreOffset++;
         }
 
+        const uint32 waitSemaphoreCount   = offsets.waitSemaphoreOffset - oldOffsets.waitSemaphoreOffset;
+        const uint32 signalSemaphoreCount = offsets.signalSemaphoreOffset - oldOffsets.signalSemaphoreOffset;
+        const uint32 commandBufferCount   = offsets.commandBufferOffset - oldOffsets.commandBufferOffset;
         VkTimelineSemaphoreSubmitInfo timelineSubmitInfo;
 
-        if (timelineSemaCount) {
+        if (sub.timelineSemaWait.Size() || sub.timelineSemaSignal.Size()) {
             timelineSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
             timelineSubmitInfo.pNext = NULL;
             timelineSubmitInfo.waitSemaphoreValueCount   = sub.timelineSemaWait.Size();
             timelineSubmitInfo.pWaitSemaphoreValues      = sub.timelineSemaWait.Data();
-            timelineSubmitInfo.signalSemaphoreValueCount = sub.timelineSemaSignal.Size();
+            timelineSubmitInfo.signalSemaphoreValueCount = signalSemaphoreCount; // because we implicitly inject the swapchain semaphore
             timelineSubmitInfo.pSignalSemaphoreValues    = sub.timelineSemaSignal.Data();
             submit.pNext = &timelineSubmitInfo;
         }else{
             submit.pNext = NULL;
         }
 
-        const uint32 waitSemaphoreCount   = offsets.waitSemaphoreOffset - oldOffsets.waitSemaphoreOffset;
-        const uint32 signalSemaphoreCount = offsets.commandBufferOffset - oldOffsets.commandBufferOffset;
-        const uint32 commandBufferCount   = offsets.signalSemaphoreOffset - oldOffsets.signalSemaphoreOffset;
-
         submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submit.waitSemaphoreCount   = waitSemaphoreCount;
         submit.pWaitSemaphores      = waits.Data() + oldOffsets.waitSemaphoreOffset;
         submit.pWaitDstStageMask    = sub.waitStages.Data();
-        submit.commandBufferCount   = commandBufferCount;
-        submit.pCommandBuffers      = cmds.Data() + oldOffsets.commandBufferOffset;
+
         submit.signalSemaphoreCount = signalSemaphoreCount;
         submit.pSignalSemaphores    = signals.Data() + oldOffsets.signalSemaphoreOffset;
+
+        submit.commandBufferCount   = commandBufferCount;
+        submit.pCommandBuffers      = cmds.Data() + oldOffsets.commandBufferOffset;
 
         ASSERTF(sub.fence && swapchainCommandBuffer, "Can't submit command buffers that draw to the swapchain with a fance");
         VkFence vkFence = VK_NULL_HANDLE;
@@ -792,7 +789,7 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
             vkFence = renderContext->GetFrameFence();
         }
 
-        if (vkFence) {
+        if (vkFence || (subId == submissions.Size() - 1)) { // if there is a fence or last submit then vkSubmit
             // printf("Submit commands: %d|%d|%d\n", (bool)swapchainCommandBuffer, lastSubmit, swapchainResize);
             vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
             submits.Clear();
@@ -803,9 +800,11 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
         }
 
         offsets = oldOffsets;
+        sub.Clear();
     }
 
-    submissions.Clear(); // Everything flushed
+    // Everything flushed, no dtor is called here as we cleared all the elments before
+    submissions.Resize(0);
 }
 
 
