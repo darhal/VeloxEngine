@@ -655,14 +655,16 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
         // think if this causes bugs (I dont think it can)
         for (uint32 i = 0; i < semaphoreCount; i++) {
             SemaphoreHandle* sem_ptr = semaphores[i];
-            SemaphoreHandle sem = *sem_ptr;
 
             if (!(*sem_ptr)) {
-                if (semaphoreCount != signalValuesCount) // they are probably mixed or full binary semaphores
+                if (semaphoreCount != signalValuesCount) {// they are probably mixed or full binary semaphores
                     *sem_ptr = this->RequestSemaphore();
-                else // all of them are timeline semaphores
+                }else { // all of them are timeline semaphores
                     *sem_ptr = this->RequestTimelineSemaphore();
+                }
             }
+
+            SemaphoreHandle sem = *sem_ptr;
 
             if (signalValuesCount && sem->GetType() == Semaphore::TIMELINE) { // semaphores are mixed
                 if (!signalValues){ // automaticaly determine the counter of the semaphore
