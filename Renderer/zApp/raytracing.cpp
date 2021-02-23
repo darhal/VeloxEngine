@@ -112,7 +112,7 @@ int rt(RenderBackend& backend)
     dev.GetStagingManager().Stage(acclBuffer->GetApiObject(), &vertecies, sizeof(vertecies));
     dev.GetStagingManager().Stage(acclIndexBuffer->GetApiObject(), indicies.data(), indicies.size() * sizeof(uint32));
     dev.GetStagingManager().Flush();
-    dev.GetStagingManager().WaitCurrent();
+    dev.GetStagingManager().WaitPrevious();
 
     BlasCreateInfo info;
     info.AddGeometry(
@@ -171,7 +171,7 @@ int rt(RenderBackend& backend)
             updateCameraUBO(dev, ubo, camera);
             lastExtent = currExtent;
 
-            dev.GetStagingManager().WaitCurrent();
+            dev.GetStagingManager().WaitPrevious();
             printf("Image re-created!\n");
             continue;
         } else if (ev.Type == TRE::Event::TE_KEY_UP) {

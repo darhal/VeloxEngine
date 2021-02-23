@@ -119,7 +119,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     // timeline->Reset();
 
     dev.Submit(cmd);
-    dev.FlushQueues();
+    // dev.FlushQueues();
 }
 
 int raster(RenderBackend& backend)
@@ -181,7 +181,6 @@ int raster(RenderBackend& backend)
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load("Assets/box1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4;
-
     ImageHandle texture = dev.CreateImage(ImageCreateInfo::Texture2D(texWidth, texHeight, true), pixels);
     ImageViewHandle textureView = dev.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
     SamplerHandle sampler = dev.CreateSampler(SamplerInfo::Sampler2D(texture));
@@ -217,6 +216,10 @@ int raster(RenderBackend& backend)
     // TODO: shader specilization constants
     // timeline = dev.RequestTimelineSemaphore();
 
+    //dev.GetStagingManager().Flush();
+    //dev.GetStagingManager().WaitPrevious();
+    //getchar();
+
     while (window.isOpen()) {
         window.getEvent(ev);
 
@@ -235,13 +238,15 @@ int raster(RenderBackend& backend)
         }
 
         // Using fences the performance is 1500-1800 fps
+
+        backend.BeginFrame();
+
         /*for (int32_t i = 0; i < 12 * 3; i++) {
             float r = ((double)rand() / (RAND_MAX)) + 1;
             vertecies[i].pos = glm::vec3{ g_vertex_buffer_data[i * 3] * r, g_vertex_buffer_data[i * 3 + 1] * r, g_vertex_buffer_data[i * 3 + 2] * r };
         }
         vertexIndexBuffer->WriteToBuffer(sizeof(vertecies), &vertecies);*/
 
-        backend.BeginFrame();
         RenderFrame(dev, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
         backend.EndFrame();
         printFPS();

@@ -3,6 +3,7 @@
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
 #include <Renderer/Backend/Synchronization/Semaphore/Semaphore.hpp>
+#include <Renderer/Backend/CommandList/CommandPool.hpp>
 
 TRE_NS_START
 
@@ -15,19 +16,21 @@ namespace Renderer
 
 	struct StagingBuffer
 	{
-		VkCommandBuffer transferCmdBuff;
-		VkBuffer		apiBuffer;
-		VkFence			transferFence;
-		VkDeviceSize	offset;
-		uint8*			data;
+        CommandBufferHandle transferCmdBuff;
+        SemaphoreHandle     timelineSemaphore;
+        VkBuffer            apiBuffer;
+        VkDeviceSize        offset;
+        uint8*              data;
 
-		bool			submitted;
-		bool			shouldRun; // Used for memory barriers and layout transitioning 
+        bool                submitted;
+        bool                shouldRun; // Used for memory barriers and layout transitioning
 	};
 
 	class RENDERER_API StagingManager
 	{
 	public:
+        CONSTEXPR static uint32 NUM_STAGES = NUM_FRAMES;
+
         StagingManager(RenderDevice& renderDevice);
 
 		~StagingManager();
@@ -52,26 +55,51 @@ namespace Renderer
 		void ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, 
 			VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
 
-		void Prepare();
+        bool Flush();
 
-		VkCommandBuffer Flush();
+        void WaitPrevious();
 
 		void Wait(StagingBuffer& stage);
 
-		void WaitCurrent();
+        bool ResetPreviousStage();
 
+        bool ResetCurrentStage();
+
+        bool ResetNextStage();
+
+        bool ResetStage(StagingBuffer& stage);
+
+        bool ResetStage(uint32 i);
+
+        FORCEINLINE StagingBuffer& GetPreviousStagingBuffer() { return stagingBuffers[(currentBuffer + (NUM_STAGES - 1)) % NUM_STAGES]; }
 		FORCEINLINE StagingBuffer& GetCurrentStagingBuffer() { return stagingBuffers[currentBuffer]; }
+        FORCEINLINE StagingBuffer& GetNextStagingBuffer() { return stagingBuffers[(currentBuffer + 1) % NUM_STAGES]; }
+        FORCEINLINE StagingBuffer& GetStage(uint32 i = 0) { return stagingBuffers[i]; }
+
+        FORCEINLINE const StagingBuffer& GetPreviousStagingBuffer() const { return stagingBuffers[(currentBuffer + (NUM_STAGES - 1)) % NUM_STAGES]; }
+        FORCEINLINE const StagingBuffer& GetCurrentStagingBuffer() const { return stagingBuffers[currentBuffer]; }
+        FORCEINLINE const StagingBuffer& GetNextStagingBuffer() const { return stagingBuffers[(currentBuffer + 1) % NUM_STAGES]; }
+        FORCEINLINE const StagingBuffer& GetStage(uint32 i = 0) const { return stagingBuffers[i]; }
+
+        FORCEINLINE const SemaphoreHandle& GetTimelineSemaphore() const {
+            //printf(" id: %d - ", (currentBuffer + (NUM_STAGES - 1)) % NUM_STAGES);
+            return GetPreviousStagingBuffer().timelineSemaphore;
+        }
+
+        FORCEINLINE const SemaphoreHandle& GetTimelineSemaphore(uint32 i) const {
+            // printf(" id: %d - ", i);
+            return GetStage(i).timelineSemaphore;
+        }
 	private:
 		StagingBuffer* PrepareFlush();
 
 		void ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout);
 	private:
-		StagingBuffer   stagingBuffers[NUM_FRAMES];
+        StagingBuffer   stagingBuffers[NUM_STAGES];
 		uint8*		    mappedData;
 		VkDeviceMemory	memory;
-		VkCommandPool	commandPool;
-		uint32			currentBuffer;
-        SemaphoreHandle timelineSemaphore;
+        CommandPoolHandle commandPool;
+        uint32			currentBuffer;
 		
         RenderDevice& renderDevice;
 		

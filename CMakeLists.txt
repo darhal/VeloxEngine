@@ -25,6 +25,7 @@ if (CMAKE_BUILD_TYPE MATCHES "Release")
     remove_definitions(-D_DEBUG)
 
     # set(CMAKE_CXX_FLAGS "-Ofast")
+    # set(CMAKE_CXX_FLAGS "-g")
     set(CMAKE_CXX_FLAGS "-O3")
 endif()
 

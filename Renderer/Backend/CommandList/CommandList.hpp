@@ -43,7 +43,7 @@ namespace Renderer
 	class CommandBuffer : public Utils::RefCounterEnabled<CommandBuffer, CommandBufferDeleter, HandleCounter>
 	{
 	public:
-		enum class Type
+        enum Type
 		{
 			GENERIC = 0,
             ASYNC_TRANSFER = 1,
