@@ -190,7 +190,7 @@ void Renderer::RenderDevice::Init(uint32 enabledFeatures)
                 }
 
                 PerFrame& frame = perFrame[f];
-                new (&frame.commandPools[t][i]) CommandPool(this, queueFamilyIndices.queueFamilies[i]);
+                new (&frame.commandPools[t][i]) CommandPool(this, queueFamilyIndices.queueFamilies[i], (CommandBuffer::Type)i);
             }
         }
     }
@@ -630,7 +630,7 @@ Renderer::RenderDevice::PerFrame::Submissions& Renderer::RenderDevice::GetQueueS
 
 VkQueue Renderer::RenderDevice::GetQueue(CommandBuffer::Type type)
 {
-    uint32 typeIndex = (uint32)(type == CommandBuffer::Type::RAY_TRACING ? CommandBuffer::Type::GENERIC : type);
+    uint32 typeIndex = (uint32)(type);
     return GetQueue(typeIndex);
 }
 
@@ -649,7 +649,7 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
 
     if (fence || semaphoreCount) {
         PerFrame::Submission& submission = submissions.EmplaceBack();
-        submission.commands.EmplaceBack(std::move(cmd));
+        submission.commands.PushBack(cmd);
         uint32 timelineSemaCount = 0;
         // TODO: Potential optimisation here we can just push directly the vk semaphores
         // think if this causes bugs (I dont think it can)
@@ -686,7 +686,7 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
             submissions.EmplaceBack();
 
         PerFrame::Submission& submission = submissions.Back();
-        submission.commands.EmplaceBack(std::move(cmd));
+        submission.commands.PushBack(cmd);
     }
 }
 
@@ -995,6 +995,33 @@ VkAccelerationStructureKHR Renderer::RenderDevice::CreateAcceleration(VkAccelera
     return accl;
 }
 
+Renderer::CommandPoolHandle Renderer::RenderDevice::RequestCommandPool(uint32 queueFamily, Renderer::CommandPool::Type type)
+{
+    uint32 familyIndex;
+    CommandBuffer::Type cmdType;
+
+    switch (queueFamily){
+    case Internal::QFT_TRANSFER:
+        cmdType = CommandBuffer::Type::ASYNC_TRANSFER;
+        break;
+    case Internal::QFT_COMPUTE:
+        cmdType = CommandBuffer::Type::ASYNC_TRANSFER;
+        break;
+    default:
+        cmdType = CommandBuffer::Type::GENERIC;
+    }
+
+    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
+        if (Internal::QUEUE_FAMILY_FLAGS[i] & queueFamily) {
+            familyIndex = this->GetQueueFamilyIndices().queueFamilies[i];
+            break;
+        }
+    }
+
+    auto handle = CommandPoolHandle(objectsPool.commandPools.Allocate(this, familyIndex, cmdType, (uint32)type));
+    return handle;
+}
+
 Renderer::FenceHandle Renderer::RenderDevice::RequestFence()
 {
     VkFence fence = fenceManager.RequestClearedFence();
@@ -1264,14 +1291,8 @@ Renderer::SamplerHandle Renderer::RenderDevice::CreateSampler(const SamplerInfo&
 
 Renderer::CommandBufferHandle Renderer::RenderDevice::RequestCommandBuffer(CommandBuffer::Type type)
 {
-    uint32 typeIndex = (uint32)type;
-    if (type == CommandBuffer::Type::RAY_TRACING)
-        typeIndex = (uint32)CommandBuffer::Type::GENERIC;
-
     PerFrame& frame = Frame();
-    VkCommandBuffer buffer = frame.commandPools[0][typeIndex].RequestCommandBuffer();
-    CommandBufferHandle handle(objectsPool.commandBuffers.Allocate(*this, buffer, (CommandBuffer::Type)typeIndex));
-    handle->Begin();
+    auto handle = frame.commandPools[0][(uint32)type].RequestCommandBuffer();
     return handle;
 }
 
@@ -1457,6 +1478,12 @@ void Renderer::RenderDevice::DestroyPendingObjects(PerFrame& frame)
 
     VkDevice dev = this->GetDevice();
 
+    for (const auto& kv : frame.destroyedCmdBuffers)
+        vkFreeCommandBuffers(dev, kv.first, kv.second.size(), kv.second.data());
+
+    for (auto pool : frame.destroyedCmdPools)
+        vkDestroyCommandPool(dev, pool, NULL);
+
     for (auto rp : frame.destroyedRenderPasses)
         vkDestroyRenderPass(dev, rp, NULL);
 
@@ -1466,9 +1493,8 @@ void Renderer::RenderDevice::DestroyPendingObjects(PerFrame& frame)
     for (auto fb : frame.destroyedFramebuffers)
         vkDestroyFramebuffer(dev, fb, NULL);
 
-    for (auto view : frame.destroyedImageViews) {
+    for (auto view : frame.destroyedImageViews)
         vkDestroyImageView(dev, view, NULL);
-    }
 
     for (auto img : frame.destroyedImages)
         vkDestroyImage(dev, img, NULL);
@@ -1482,9 +1508,8 @@ void Renderer::RenderDevice::DestroyPendingObjects(PerFrame& frame)
     for (auto sem : frame.destroyedSemaphores)
         vkDestroySemaphore(dev, sem, NULL);
 
-    for (auto sampler : frame.destroyedSamplers) {
+    for (auto sampler : frame.destroyedSamplers)
         vkDestroySampler(dev, sampler, NULL);
-    }
 
     if (enabledFeatures & RAY_TRACING) {
         for (auto accl : frame.destroyedAccls)
@@ -1522,6 +1547,8 @@ void Renderer::RenderDevice::DestroyPendingObjects(PerFrame& frame)
     frame.destroyedBufferViews.Clear();
     frame.destroyedRenderPasses.Clear();
     frame.destroyedDescriptorPool.Clear();
+    frame.destroyedCmdPools.Clear();
+    frame.destroyedCmdBuffers.clear();
     frame.shouldDestroy = false;
 }
 
@@ -1596,19 +1623,22 @@ void Renderer::RenderDevice::DestroySampler(VkSampler sampler)
     Frame().shouldDestroy = true;
 }
 
+void Renderer::RenderDevice::FreeCommandBuffer(VkCommandPool pool, VkCommandBuffer cmd)
+{
+    Frame().destroyedCmdBuffers[pool].emplace_back(cmd);
+    Frame().shouldDestroy = true;
+}
+
+void Renderer::RenderDevice::DestroyCommandPool(VkCommandPool pool)
+{
+    Frame().destroyedCmdPools.EmplaceBack(pool);
+    Frame().shouldDestroy = true;
+}
+
+
 void Renderer::RenderDevice::DestroyAllFrames()
 {
-    for (PerFrame& frame : perFrame) {
-        frame.shouldDestroy = true;
-
-        for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
-            frame.commandPools[0][i].Destroy();
-            frame.submissions[i].Clear();
-        }
-
-        this->DestroyPendingObjects(frame);
-    }
-
+    objectsPool.commandPools.Clear();
     objectsPool.commandBuffers.Clear();
     objectsPool.buffers.Clear();
     objectsPool.images.Clear();
@@ -1622,6 +1652,22 @@ void Renderer::RenderDevice::DestroyAllFrames()
     if (enabledFeatures & RAY_TRACING) {
         objectsPool.blases.Clear();
         objectsPool.tlases.Clear();
+    }
+
+    for (PerFrame& frame : perFrame) {
+        frame.shouldDestroy = true;
+
+        for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
+            for (uint32 t = 0; t < MAX_THREADS; t++)
+                frame.commandPools[t][i].Destroy();
+
+            for (auto& sub : frame.submissions[i])
+                sub.Clear();
+        }
+    }
+
+    for (PerFrame& frame : perFrame) {
+        this->DestroyPendingObjects(frame);
     }
 }
 

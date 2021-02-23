@@ -71,7 +71,7 @@ namespace Renderer
 		VkDeviceMemory	memory;
 		VkCommandPool	commandPool;
 		uint32			currentBuffer;
-        SemaphoreHandle semaphore;
+        SemaphoreHandle timelineSemaphore;
 		
         RenderDevice& renderDevice;
 		

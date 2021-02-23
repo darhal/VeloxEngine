@@ -29,6 +29,8 @@ namespace Renderer
 
 		vkDestroyCommandPool(device, commandPool, NULL);
 		vkFreeMemory(device, memory, NULL);
+
+        timelineSemaphore = SemaphoreHandle(NULL);
 	}
 
 	void StagingManager::Init()
@@ -72,7 +74,7 @@ namespace Renderer
 			}
 		}
 
-        semaphore = renderDevice.RequestTimelineSemaphore();
+        timelineSemaphore = renderDevice.RequestTimelineSemaphore();
 	}
 
 	void StagingManager::Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment, const DeviceSize offset)
@@ -226,7 +228,7 @@ namespace Renderer
 	void StagingManager::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
 	{
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-        CommandBuffer cmd(renderDevice, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
+        CommandBuffer cmd(renderDevice, NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
 
 		cmd.PrepareGenerateMipmapBarrier(image, baseLevelLayout, srcStage, srcAccess, needTopLevelBarrier);
 	}
@@ -234,7 +236,7 @@ namespace Renderer
 	void StagingManager::GenerateMipmap(const Image& image)
 	{
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-        CommandBuffer cmd(renderDevice, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
+        CommandBuffer cmd(renderDevice, NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
 
 		cmd.GenerateMipmap(image);
 	}
@@ -243,7 +245,7 @@ namespace Renderer
 		VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess)
 	{
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-        CommandBuffer cmd(renderDevice, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
+        CommandBuffer cmd(renderDevice, NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
 
 		cmd.ImageBarrier(image, oldLayout, newLayout, srcStage, srcAccess, dstStage, dstAccess);
 	}
@@ -309,7 +311,6 @@ namespace Renderer
 		}
 
 		VkCommandBuffer cmdBuff = stage->transferCmdBuff;
-
 
         //TODO: implement this here with timeline semaphores
 		if (renderDevice.IsTransferQueueSeprate()) {

@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <map>
 
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
 
@@ -77,6 +78,9 @@ namespace Renderer
             typedef StaticVector<Submission> Submissions;
             Submissions                   submissions[(uint32)CommandBuffer::Type::MAX];
 
+            std::map<VkCommandPool, std::vector<VkCommandBuffer>> destroyedCmdBuffers;
+            TRE::Vector<VkCommandPool>    destroyedCmdPools;
+
             TRE::Vector<VkPipeline>       destroyedPipelines;
             TRE::Vector<VkFramebuffer>    destroyedFramebuffers;
             TRE::Vector<VkImage>	      destroyedImages;
@@ -103,6 +107,7 @@ namespace Renderer
 
         struct HandlePool
         {
+            ObjectPool<CommandPool>   commandPools;
             ObjectPool<CommandBuffer> commandBuffers;
             ObjectPool<Buffer>		  buffers;
             ObjectPool<Image>		  images;
@@ -168,6 +173,8 @@ namespace Renderer
 
 
         // Command buffers and queues:
+        CommandPoolHandle RequestCommandPool(uint32 queueFamily, CommandPool::Type type = CommandPool::Type::NONE);
+
         CommandBufferHandle RequestCommandBuffer(CommandBuffer::Type type = CommandBuffer::Type::GENERIC);
 
         void Submit(CommandBuffer::Type type, CommandBufferHandle cmd, FenceHandle* fence = NULL, uint32 semaphoreCount = 0,
@@ -266,6 +273,10 @@ namespace Renderer
         void DestroyBufferView(VkBufferView view);
 
         void DestroySampler(VkSampler sampler);
+
+        void FreeCommandBuffer(VkCommandPool pool, VkCommandBuffer cmd);
+
+        void DestroyCommandPool(VkCommandPool pool);
 
         void RecycleSemaphore(VkSemaphore sem);
 

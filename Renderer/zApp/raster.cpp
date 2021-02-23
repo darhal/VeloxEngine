@@ -119,6 +119,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     // timeline->Reset();
 
     dev.Submit(cmd);
+    dev.FlushQueues();
 }
 
 int raster(RenderBackend& backend)

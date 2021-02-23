@@ -11,6 +11,7 @@ TRE_NS_START
 namespace Renderer
 {
     class RenderDevice;
+    class CommandPool;
 
 	class Buffer;
 	class RingBuffer;
@@ -45,15 +46,21 @@ namespace Renderer
 		enum class Type
 		{
 			GENERIC = 0,
-			ASYNC_TRANSFER,
-			ASYNC_COMPUTE,
-			RAY_TRACING,
-			MAX
+            ASYNC_TRANSFER = 1,
+            ASYNC_COMPUTE = 2,
+            RAY_TRACING = 0,
+
+            MAX = 3,
 		};
 	public:
 		friend struct CommandBufferDeleter;
+        friend class CommandPool;
 
-        CommandBuffer(RenderDevice& device, VkCommandBuffer buffer, Type type);
+        CommandBuffer(RenderDevice& device, CommandPool* pool, VkCommandBuffer buffer, Type type);
+
+        ~CommandBuffer();
+
+        void Reset();
 
 		void Begin();
 
@@ -263,6 +270,7 @@ namespace Renderer
         DescriptorSetDirty dirty;
         RenderDevice& device;
 
+        CommandPool* pool;
         GraphicsState* state;
         ShaderProgram* program;
         const Pipeline* pipeline;

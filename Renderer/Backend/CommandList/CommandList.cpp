@@ -1,6 +1,7 @@
 #include "CommandList.hpp"
 #include <Renderer/Backend/RenderBackend.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
+#include <Renderer/Backend/CommandList/CommandPool.hpp>
 #include <Renderer/Backend/Pipeline/Pipeline.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Descriptors/DescriptorSetAlloc.hpp>
@@ -16,13 +17,42 @@ TRE_NS_START
 
 void Renderer::CommandBufferDeleter::operator()(CommandBuffer* cmd)
 {
-    cmd->device.GetObjectsPool().commandBuffers.Free(cmd);
+    cmd->pool->Free(cmd);
 }
 
-Renderer::CommandBuffer::CommandBuffer(RenderDevice& device, VkCommandBuffer buffer, Type type) :
-    dirty{}, device(device), state(NULL), program(NULL),  pipeline(NULL), allocatedSets{},
+Renderer::CommandBuffer::CommandBuffer(RenderDevice& device, CommandPool* pool, VkCommandBuffer buffer, Type type) :
+    dirty{}, device(device), pool(pool), state(NULL), program(NULL),  pipeline(NULL), allocatedSets{},
     commandBuffer(buffer), type(type), renderToSwapchain(false), stateUpdate(false)
 {
+}
+
+Renderer::CommandBuffer::~CommandBuffer()
+{
+    if (!pool || !commandBuffer)
+        return;
+
+    if (pool->GetType() & VK_COMMAND_POOL_CREATE_TRANSIENT_BIT){
+        // Do nothing
+        // device.FreeCommandBuffer(pool->GetApiObject(), commandBuffer);
+    } else {
+        device.FreeCommandBuffer(pool->GetApiObject(), commandBuffer);
+        // pool->Recycle(commandBuffer);
+    }
+}
+
+void Renderer::CommandBuffer::Reset()
+{
+    dirty = {0, 0};
+    state = NULL;
+    program = NULL;
+    pipeline =  NULL;
+    memset(allocatedSets, VK_NULL_HANDLE, sizeof(allocatedSets));
+    renderToSwapchain = false;
+    stateUpdate = false;
+
+    if (pool && (pool->GetType() & VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT)) {
+        vkResetCommandBuffer(commandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+    }
 }
 
 void Renderer::CommandBuffer::Begin()
