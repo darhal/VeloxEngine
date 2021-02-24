@@ -62,6 +62,8 @@ namespace Renderer
 
         void Reset();
 
+        void ApiReset();
+
 		void Begin();
 
 		void End();
@@ -290,6 +292,7 @@ namespace Renderer
 
         bool renderToSwapchain;
         bool stateUpdate;
+        bool recording;
 	};
 
 	typedef CommandBuffer CommandList;

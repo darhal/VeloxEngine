@@ -904,11 +904,16 @@ void Renderer::RenderDevice::ClearFrame()
 
 void Renderer::RenderDevice::BeginFrame()
 {
-    //printf("Begin Frame\n");
+    // printf("Begin Frame\n");
 
-    //printf("Attempt to RESET: %d ", renderContext->GetCurrentFrame());
-    stagingManager.ResetStage(renderContext->GetCurrentFrame());
-    stagingManager.Flush();
+    //printf("Attempt to RESET: %d ", renderContext->GetPreviousFrame());
+    //stagingManager.ResetStage(renderContext->GetPreviousFrame());
+
+    if (stagingManager.Flush()) {
+        // printf("Attempt to RESET: %d ", renderContext->GetCurrentFrame());
+        stagingManager.NextCmd();
+        stagingManager.ResetCurrentStage();
+    }
 
     framebufferAllocator.BeginFrame();
     transientAttachmentAllocator.BeginFrame();

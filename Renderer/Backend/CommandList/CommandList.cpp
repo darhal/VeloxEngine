@@ -22,7 +22,7 @@ void Renderer::CommandBufferDeleter::operator()(CommandBuffer* cmd)
 
 Renderer::CommandBuffer::CommandBuffer(RenderDevice& device, CommandPool* pool, VkCommandBuffer buffer, Type type) :
     bindings{0}, dirty{}, device(device), pool(pool), state(NULL), program(NULL),  pipeline(NULL), allocatedSets{},
-    commandBuffer(buffer), type(type), renderToSwapchain(false), stateUpdate(false)
+    commandBuffer(buffer), type(type), renderToSwapchain(false), stateUpdate(false), recording(false)
 {
 }
 
@@ -53,8 +53,14 @@ void Renderer::CommandBuffer::Reset()
     //memset(allocatedSets, VK_NULL_HANDLE, sizeof(allocatedSets));
     renderToSwapchain = false;
     stateUpdate = false;
+    recording = false;
     bindings = { 0 };
 
+    this->ApiReset();
+}
+
+void Renderer::CommandBuffer::ApiReset()
+{
     if (pool && (pool->GetType() & VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT)) {
         vkResetCommandBuffer(commandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
     }
@@ -62,6 +68,9 @@ void Renderer::CommandBuffer::Reset()
 
 void Renderer::CommandBuffer::Begin()
 {
+    if (recording)
+        return;
+
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -69,13 +78,20 @@ void Renderer::CommandBuffer::Begin()
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
         ASSERTF(true, "Failed to begin recording command buffer!");
     }
+
+    recording = true;
 }
 
 void Renderer::CommandBuffer::End()
 {
+    if (!recording)
+        return;
+
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
        ASSERTF(true, "failed to record command buffer!");
     }
+
+    recording = false;
 }
 
 void Renderer::CommandBuffer::Dispatch(uint32 groupX, uint32 groupY, uint32 groupZ)
@@ -874,7 +890,7 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
 
         for (uint32 j = 0; j < bindingLayout.descriptorCount; j++) {
             uint32 bindingResourceIndex = bindingLayout.binding + j;
-            h.Data(resourceBinding[bindingResourceIndex].resource);
+            h.Data<uint32>(resourceBinding[bindingResourceIndex].resource);
 
             if (setBindings[bindingResourceIndex].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC 
                 || setBindings[bindingResourceIndex].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) {

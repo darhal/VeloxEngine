@@ -238,14 +238,18 @@ int raster(RenderBackend& backend)
         }
 
         // Using fences the performance is 1500-1800 fps
-
         backend.BeginFrame();
 
-        /*for (int32_t i = 0; i < 12 * 3; i++) {
-            float r = ((double)rand() / (RAND_MAX)) + 1;
-            vertecies[i].pos = glm::vec3{ g_vertex_buffer_data[i * 3] * r, g_vertex_buffer_data[i * 3 + 1] * r, g_vertex_buffer_data[i * 3 + 2] * r };
-        }
-        vertexIndexBuffer->WriteToBuffer(sizeof(vertecies), &vertecies);*/
+        /*if (rand() % 2) {
+            //printf("UPDATING VERTEX BUFFERS!\n");
+
+            for (int32_t i = 0; i < 12 * 3; i++) {
+                float r = ((double)rand() / (RAND_MAX)) + 1;
+                vertecies[i].pos = glm::vec3{ g_vertex_buffer_data[i * 3] * r, g_vertex_buffer_data[i * 3 + 1] * r, g_vertex_buffer_data[i * 3 + 2] * r };
+            }
+
+            vertexIndexBuffer->WriteToBuffer(sizeof(vertecies), &vertecies);
+        }*/
 
         RenderFrame(dev, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
         backend.EndFrame();

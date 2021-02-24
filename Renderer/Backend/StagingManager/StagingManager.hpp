@@ -30,6 +30,7 @@ namespace Renderer
 	{
 	public:
         CONSTEXPR static uint32 NUM_STAGES = NUM_FRAMES;
+        CONSTEXPR static uint32 NUM_CMDS   = NUM_FRAMES + 1;
 
         StagingManager(RenderDevice& renderDevice);
 
@@ -81,6 +82,12 @@ namespace Renderer
         FORCEINLINE const StagingBuffer& GetNextStagingBuffer() const { return stagingBuffers[(currentBuffer + 1) % NUM_STAGES]; }
         FORCEINLINE const StagingBuffer& GetStage(uint32 i = 0) const { return stagingBuffers[i]; }
 
+        FORCEINLINE CommandBufferHandle& GetCurrentCmd() { return transferCmdBuff[frameCounter]; };
+
+        FORCEINLINE CommandBufferHandle& GetNextCmd() { return transferCmdBuff[(frameCounter + 1) % NUM_CMDS]; };
+
+        FORCEINLINE void NextCmd() { frameCounter = (frameCounter + 1) % StagingManager::NUM_CMDS; }
+
         FORCEINLINE const SemaphoreHandle& GetTimelineSemaphore() const {
             //printf(" id: %d - ", (currentBuffer + (NUM_STAGES - 1)) % NUM_STAGES);
             return GetPreviousStagingBuffer().timelineSemaphore;
@@ -96,14 +103,18 @@ namespace Renderer
 		void ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout);
 	private:
         StagingBuffer   stagingBuffers[NUM_STAGES];
+        CommandBufferHandle transferCmdBuff[NUM_CMDS];
 		uint8*		    mappedData;
 		VkDeviceMemory	memory;
         CommandPoolHandle commandPool;
         uint32			currentBuffer;
+        uint32          frameCounter;
 		
         RenderDevice& renderDevice;
 		
 		CONSTEXPR static uint32 MAX_UPLOAD_BUFFER_SIZE = 64 * 1024 * 1024;
+
+        friend class RenderDevice;
 	};
 }
 

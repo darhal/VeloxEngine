@@ -13,6 +13,7 @@ Renderer::RenderContext::RenderContext(RenderBackend& backend) : internal{ 0 }, 
 {
     internal.numFramesInFlight = NUM_FRAMES;
     internal.currentFrame = 0;
+    internal.previousFrame = (internal.currentFrame + (NUM_FRAMES - 1)) % NUM_FRAMES;
 }
 
 void Renderer::RenderContext::CreateRenderContext(TRE::Window* wnd, const Internal::RenderInstance& instance)
