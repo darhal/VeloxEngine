@@ -46,9 +46,14 @@ void Renderer::CommandBuffer::Reset()
     state = NULL;
     program = NULL;
     pipeline =  NULL;
+    renderPass = NULL;
+    framebuffer = NULL;
+    subpassIndex = 0;
+    memset(framebufferAttachments, 0, sizeof(framebufferAttachments));
     memset(allocatedSets, VK_NULL_HANDLE, sizeof(allocatedSets));
     renderToSwapchain = false;
     stateUpdate = false;
+    bindings = { 0 };
 
     if (pool && (pool->GetType() & VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT)) {
         vkResetCommandBuffer(commandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
@@ -874,6 +879,7 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
     std::pair<VkDescriptorSet, bool> alloc = layout.GetAllocator(set)->Find(hash);
 
     if (!alloc.second) {
+        printf("Finding hash: %lu | Layout: %p\n", hash, &layout);
         this->UpdateDescriptorSet(set, alloc.first, setLayout, resourceBinding);
     }
     
