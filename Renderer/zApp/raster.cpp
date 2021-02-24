@@ -220,11 +220,11 @@ int raster(RenderBackend& backend)
 
         backend.BeginFrame();
 
-        /*for (int32_t i = 0; i < 12 * 3; i++) {
+        for (int32_t i = 0; i < 12 * 3; i++) {
             float r = ((double)rand() / (RAND_MAX)) + 1;
             vertecies[i].pos = glm::vec3{ g_vertex_buffer_data[i * 3] * r, g_vertex_buffer_data[i * 3 + 1] * r, g_vertex_buffer_data[i * 3 + 2] * r };
         }
-        cpuVertexBuffer->WriteToBuffer(sizeof(vertecies), &vertecies);*/
+        backend.GetStagingManager().Stage(vertexIndexBuffer->GetApiObject(), vertecies, sizeof(vertecies), 0);
 
         RenderFrame(backend, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
         backend.EndFrame();
