@@ -39,7 +39,7 @@ namespace Renderer
 			template<typename T>
 			FORCEINLINE void Data(const T& data)
             {
-			    size_t size = sizeof(data) / sizeof(uint8);
+                CONSTEXPR size_t size = sizeof(T) / sizeof(uint8);
                 const uint8* byteData = (const uint8*)&data;
 
                 for (size_t i = 0; i < size; i++)

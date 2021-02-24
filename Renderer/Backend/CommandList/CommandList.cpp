@@ -21,7 +21,7 @@ void Renderer::CommandBufferDeleter::operator()(CommandBuffer* cmd)
 }
 
 Renderer::CommandBuffer::CommandBuffer(RenderDevice& device, CommandPool* pool, VkCommandBuffer buffer, Type type) :
-    dirty{}, device(device), pool(pool), state(NULL), program(NULL),  pipeline(NULL), allocatedSets{},
+    bindings{0}, dirty{}, device(device), pool(pool), state(NULL), program(NULL),  pipeline(NULL), allocatedSets{},
     commandBuffer(buffer), type(type), renderToSwapchain(false), stateUpdate(false)
 {
 }
@@ -42,15 +42,15 @@ Renderer::CommandBuffer::~CommandBuffer()
 
 void Renderer::CommandBuffer::Reset()
 {
-    dirty = {0, 0};
+    dirty = {};
     state = NULL;
     program = NULL;
     pipeline =  NULL;
     renderPass = NULL;
     framebuffer = NULL;
     subpassIndex = 0;
-    memset(framebufferAttachments, 0, sizeof(framebufferAttachments));
-    memset(allocatedSets, VK_NULL_HANDLE, sizeof(allocatedSets));
+    //memset(framebufferAttachments, 0, sizeof(framebufferAttachments));
+    //memset(allocatedSets, VK_NULL_HANDLE, sizeof(allocatedSets));
     renderToSwapchain = false;
     stateUpdate = false;
     bindings = { 0 };
@@ -771,7 +771,8 @@ void Renderer::CommandBuffer::ChangeImageLayout(const Image& image, VkImageLayou
     ChangeImageLayout(image, oldLayout, newLayout, subresourceRange, srcStageMask, dstStageMask);
 }
 
-void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings)
+void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout,
+                                                  const ResourceBinding* bindings)
 {
     ASSERT(set >= MAX_DESCRIPTOR_SET);
 
@@ -785,6 +786,8 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
     VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
     VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT = 1000138000,
     */
+
+    // TODO: I think writesCOunt should be in the inner most loop / they was one level outers
 
     for (uint32 binding = 0; binding < layout.GetBindingsCount(); binding++) {
         auto& layoutBinding = layout.GetDescriptorSetLayoutBinding(binding);
@@ -804,9 +807,12 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
                 writes[writeCount].pBufferInfo = &bindings[binding + i].resource.buffer;
                 writes[writeCount].pImageInfo = NULL;
                 writes[writeCount].pTexelBufferView = NULL;
-            }
 
-            writeCount++;
+                /*printf("Writting BUFFER: (set:%d|binding:%d|dst arr:%d|type:%d|buffer:%p|offset:%d|range:%d\n", set, binding, i,
+                       layoutBinding.descriptorType, writes[writeCount].pBufferInfo->buffer, writes[writeCount].pBufferInfo->offset,
+                       writes[writeCount].pBufferInfo->range);*/
+                 writeCount++;
+            }
         } else if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER 
             || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
             || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER
@@ -823,9 +829,12 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
                 writes[writeCount].pBufferInfo = NULL;
                 writes[writeCount].pImageInfo = &bindings[binding + i].resource.image;
                 writes[writeCount].pTexelBufferView = NULL;
-            }
 
-            writeCount++;
+                /*printf("Writting IMAGE: (set:%d|binding:%d|dst arr:%d|type:%d|imageview:%p|sampler:%p|layout:%d\n", set, binding, i,
+                       layoutBinding.descriptorType, writes[writeCount].pImageInfo->imageView, writes[writeCount].pImageInfo->sampler,
+                       writes[writeCount].pImageInfo->imageLayout);*/
+                 writeCount++;
+            }
         } else if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR) {
             for (uint32 i = 0; i < layoutBinding.descriptorCount; i++) {
                 writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -838,9 +847,8 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
                 writes[writeCount].pBufferInfo = NULL;
                 writes[writeCount].pImageInfo = NULL;
                 writes[writeCount].pTexelBufferView = NULL;
+                writeCount++;
             }
-
-            writeCount++;
         }
     }
 
@@ -866,7 +874,7 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
 
         for (uint32 j = 0; j < bindingLayout.descriptorCount; j++) {
             uint32 bindingResourceIndex = bindingLayout.binding + j;
-            h.Data(reinterpret_cast<const uint32*>(&resourceBinding[bindingResourceIndex].resource), sizeof(ResourceBinding::Resource));
+            h.Data(resourceBinding[bindingResourceIndex].resource);
 
             if (setBindings[bindingResourceIndex].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC 
                 || setBindings[bindingResourceIndex].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) {
@@ -879,13 +887,13 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
     std::pair<VkDescriptorSet, bool> alloc = layout.GetAllocator(set)->Find(hash);
 
     if (!alloc.second) {
-        printf("Finding hash: %lu | Layout: %p\n", hash, &layout);
         this->UpdateDescriptorSet(set, alloc.first, setLayout, resourceBinding);
     }
     
-    vkCmdBindDescriptorSets(
-        commandBuffer, (VkPipelineBindPoint)pipeline->GetPipelineType(), pipeline->GetPipelineLayout().GetApiObject(),
-        set, 1, &alloc.first, numDyncOffset, dyncOffset);
+    vkCmdBindDescriptorSets(commandBuffer,
+                            (VkPipelineBindPoint)pipeline->GetPipelineType(),
+                            pipeline->GetPipelineLayout().GetApiObject(),
+                            set, 1, &alloc.first, numDyncOffset, dyncOffset);
 
     allocatedSets[set] = alloc.first;
     dirty.sets = dirty.sets & ~(1u << set);
