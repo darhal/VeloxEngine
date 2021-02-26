@@ -196,9 +196,10 @@ void Renderer::AsBuilder::BuildTlasBatch()
 		vkCmdBuildAccelerationStructuresKHR(cmdBuff, 1, &buildInfo, &pBuildOffsetInfo);
 	}
 
-	// vkEndCommandBuffer(cmdBuff);
+    vkEndCommandBuffer(cmdBuff);
 
-	CALL_VK(renderDevice.SubmitCmdBuffer(COMPUTE, &cmdBuff, 1, 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
+    auto queue = renderDevice.GetQueue(COMPUTE);
+    CALL_VK(renderDevice.SubmitCmdBuffer(queue, &cmdBuff, 1, 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
 
 	stage->submitted = true;
 }
@@ -283,7 +284,8 @@ void Renderer::AsBuilder::BuildBlasBatch(bool compact)
 		commands[i] = info.cmd;
 	}
 
-	CALL_VK(renderDevice.SubmitCmdBuffer(COMPUTE, commands.data(), (uint32)commands.size(), 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
+    auto queue = renderDevice.GetQueue(COMPUTE);
+    CALL_VK(renderDevice.SubmitCmdBuffer(queue, commands.data(), (uint32)commands.size(), 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
 
 	stage->submitted = true;
 }
@@ -351,7 +353,9 @@ void Renderer::AsBuilder::CompressBatch()
 		// vkEndCommandBuffer(stage->compressionCommand);
 	}
 
-	CALL_VK(renderDevice.SubmitCmdBuffer(COMPUTE, &stage->compressionCommand, 1, 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
+
+    auto queue = renderDevice.GetQueue(COMPUTE);
+    CALL_VK(renderDevice.SubmitCmdBuffer(queue, &stage->compressionCommand, 1, 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
 
 	stage->submitted = true;
 }

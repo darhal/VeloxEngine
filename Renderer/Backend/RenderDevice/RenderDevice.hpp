@@ -73,6 +73,11 @@ namespace Renderer
                     timelineSemaSignal.Clear();
                     fence = NULL;
                 }
+
+                ~Submission()
+                {
+                    this->Clear();
+                }
             };
 
             typedef StaticVector<Submission> Submissions;
@@ -318,7 +323,7 @@ namespace Renderer
 			VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 			VkCommandBufferUsageFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT) const;
 
-		VkResult SubmitCmdBuffer(uint32 queueType, VkCommandBuffer* cmdBuff, uint32 cmdCount, VkPipelineStageFlags waitStage,
+        VkResult SubmitCmdBuffer(VkQueue queue, VkCommandBuffer* cmdBuff, uint32 cmdCount, VkPipelineStageFlags waitStage,
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence = VK_NULL_HANDLE) const;
 
 
@@ -330,8 +335,6 @@ namespace Renderer
 		FORCEINLINE const Internal::QueueFamilyIndices& GetQueueFamilyIndices() const { return internal.queueFamilyIndices; }
 
 		FORCEINLINE const VkQueue* const GetQueues() const { return internal.queues; }
-
-		FORCEINLINE VkQueue GetQueue(uint32 i) const { return internal.queues[i]; }
 
 		FORCEINLINE bool IsPresentQueueSeprate() const { return internal.isPresentQueueSeprate; }
 
@@ -353,6 +356,10 @@ namespace Renderer
         FORCEINLINE ObjectPool<CommandBuffer>& GetCommandBufferPool() { return objectsPool.commandBuffers; }
 
         FORCEINLINE HandlePool& GetObjectsPool() { return objectsPool; }
+
+        VkQueue GetQueue(CommandBuffer::Type type);
+
+        FORCEINLINE VkQueue GetQueue(uint32 i) const { return internal.queues[i]; }
 	private:
 		void FetchDeviceAvailableExtensions();
 
@@ -376,10 +383,6 @@ namespace Renderer
         CommandBuffer::Type GetPhysicalQueueType(CommandBuffer::Type type);
 
         PerFrame::Submissions& GetQueueSubmissions(CommandBuffer::Type type);
-
-        // StaticVector<CommandBufferHandle>& GetQueueSubmissions(CommandBuffer::Type type);
-
-        VkQueue GetQueue(CommandBuffer::Type type);
 	private:
 		Internal::RenderDevice internal;
         RenderContext* renderContext;
@@ -404,6 +407,7 @@ namespace Renderer
 
         uint32 enabledFeatures;
         bool submitSwapchain;
+        bool stagingFlush;
 
 		std::unordered_set<uint64> deviceExtensions;
 		std::unordered_set<uint64> availbleDevExtensions;

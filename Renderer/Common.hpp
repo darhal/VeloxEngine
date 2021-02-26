@@ -29,8 +29,8 @@
 // #undef DEBUG
 // #define DEBUG
 
-#define VALIDATION_LAYERS
-// #undef VALIDATION_LAYERS
+// #define VALIDATION_LAYERS
+#undef VALIDATION_LAYERS
 
 #include <chrono>
 

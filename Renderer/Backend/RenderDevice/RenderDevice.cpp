@@ -17,7 +17,8 @@ Renderer::RenderDevice::RenderDevice(RenderContext* ctx) :
     framebufferAllocator(this),
     transientAttachmentAllocator(*this, true),
     pipelineAllocator(*this),
-    submitSwapchain(false)
+    submitSwapchain(false),
+    stagingFlush(false)
 {
 
 }
@@ -422,12 +423,12 @@ VkCommandBuffer Renderer::RenderDevice::CreateCmdBuffer(VkCommandPool pool, VkCo
     return cmd;
 }
 
-VkResult Renderer::RenderDevice::SubmitCmdBuffer(uint32 queueType, VkCommandBuffer* cmdBuff, uint32 cmdCount,
+VkResult Renderer::RenderDevice::SubmitCmdBuffer(VkQueue queue, VkCommandBuffer* cmdBuff, uint32 cmdCount,
     VkPipelineStageFlags waitStage, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence) const
 {
-    for (uint32 i = 0; i < cmdCount; i++) {
+    /*for (uint32 i = 0; i < cmdCount; i++) {
         vkEndCommandBuffer(cmdBuff[i]);
-    }
+    }*/
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -447,7 +448,7 @@ VkResult Renderer::RenderDevice::SubmitCmdBuffer(uint32 queueType, VkCommandBuff
         submitInfo.pSignalSemaphores = &signalSemaphore;
     }
 
-    return vkQueueSubmit(GetQueue(queueType), 1, &submitInfo, fence);
+    return vkQueueSubmit(queue, 1, &submitInfo, fence);
 }
 
 VkDeviceAddress Renderer::RenderDevice::GetBufferAddress(BufferHandle buff) const
@@ -631,7 +632,7 @@ Renderer::RenderDevice::PerFrame::Submissions& Renderer::RenderDevice::GetQueueS
 VkQueue Renderer::RenderDevice::GetQueue(CommandBuffer::Type type)
 {
     uint32 typeIndex = (uint32)(type);
-    return GetQueue(typeIndex);
+    return this->GetQueue(typeIndex);
 }
 
 void Renderer::RenderDevice::Submit(CommandBufferHandle cmd, FenceHandle* fence, uint32 semaphoreCount,
@@ -653,7 +654,7 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
         uint32 timelineSemaCount = 0;
 
         // Inject a semaphore to wait for transfer stage. We gurantee that all of the transfers done before begin frame are finished.
-        if (type != CommandBuffer::Type::ASYNC_TRANSFER && stagingManager.GetPreviousStagingBuffer().submitted) {
+        if (type != CommandBuffer::Type::ASYNC_TRANSFER && stagingFlush) {
             // printf("Injecting wait sempahore - ");
             this->AddWaitTimelineSemapore(type, stagingManager.GetTimelineSemaphore(), VK_PIPELINE_STAGE_TRANSFER_BIT);
         }
@@ -693,7 +694,7 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
             submissions.EmplaceBack();
 
             // Inject a semaphore to wait for transfer stage. We gurantee that all of the transfers done before begin frame are finished.
-            if (type != CommandBuffer::Type::ASYNC_TRANSFER && stagingManager.GetPreviousStagingBuffer().submitted) { // Only added when there is a new submission
+            if (type != CommandBuffer::Type::ASYNC_TRANSFER && stagingFlush) { // Only added when there is a new submission
                 // printf("Injecting wait sempahore - ");
                 this->AddWaitTimelineSemapore(type, stagingManager.GetTimelineSemaphore(), VK_PIPELINE_STAGE_TRANSFER_BIT);
             }
@@ -825,9 +826,11 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
             vkFence = renderContext->GetFrameFence();
         }
 
+        printf("[TYPE:%d] Submit: (Cmd count: %d|Wait: %d|Signal: %d|Timeline: %p|Fence: %p)\n", type,
+               commandBufferCount, waitSemaphoreCount, signalSemaphoreCount, submit.pNext, vkFence);
+
         if (vkFence || (subId == submissions.Size() - 1)) { // if there is a fence or last submit then vkSubmit
-            // printf("Submit commands: %d|%d|%d\n", (bool)swapchainCommandBuffer, lastSubmit, swapchainResize);
-            vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence);
+            CALL_VK(vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence));
             submits.Clear();
             cmds.Clear();
             waits.Clear();
@@ -906,7 +909,8 @@ void Renderer::RenderDevice::BeginFrame()
 {
     //printf("Begin Frame %d\n", renderContext->GetCurrentFrame());
 
-    if (stagingManager.Flush()) {
+    if ((stagingFlush  = stagingManager.Flush())) {
+        // stagingManager.Wait(stagingManager.GetCurrentStagingBuffer());
         stagingManager.NextCmd();
         stagingManager.ResetCurrentStage();
     }
@@ -928,13 +932,14 @@ void Renderer::RenderDevice::EndFrame()
     // if we already did sumbit to swapchain then done force the swap
     this->FlushQueue(CommandBuffer::Type::GENERIC, !submitSwapchain);
 
-    // printf("End Frame %d\n", renderContext->GetCurrentFrame());
+    stagingFlush = false;
+    //printf("End Frame %d\n", renderContext->GetCurrentFrame());
     // getchar();
 }
 
 void Renderer::RenderDevice::FlushStaging()
 {
-    stagingManager.Flush();
+    stagingFlush = stagingManager.Flush();
 }
 
 Renderer::BlasHandle Renderer::RenderDevice::CreateBlas(const BlasCreateInfo& blasInfo, VkBuildAccelerationStructureFlagsKHR flags)

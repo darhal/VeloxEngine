@@ -118,7 +118,15 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     // printf("Semaphore value after wait: %d | Semaphore temp value: %d\n", timeline->GetCurrentCounterValue(), timeline->GetTempValue());
     // timeline->Reset();
 
-    dev.Submit(cmd);
+    // dev.Submit(cmd);
+
+    cmd->End();
+    VkCommandBuffer vkcmd = cmd->GetApiObject();
+    auto q = dev.GetQueue(CommandBuffer::Type::GENERIC);
+    dev.SubmitCmdBuffer(q, &vkcmd, 1, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                        dev.GetRenderContext()->GetImageAcquiredSemaphore(),
+                        dev.GetRenderContext()->GetDrawCompletedSemaphore(),
+                        dev.GetRenderContext()->GetFrameFence());
     // dev.FlushQueues();
 }
 
@@ -159,7 +167,7 @@ int raster(RenderBackend& backend)
         vertecies[i].normal = glm::vec3{ g_normal_buffer_data[i * 3], g_normal_buffer_data[i * 3 + 1], g_normal_buffer_data[i * 3 + 2] };
     }
 
-    BufferHandle vertexIndexBuffer = dev.CreateRingBuffer({ sizeof(vertecies), BufferUsage::VERTEX_BUFFER }, vertecies);
+    BufferHandle vertexIndexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::VERTEX_BUFFER }, vertecies);
     // BufferHandle cpuVertexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::TRANSFER_SRC, MemoryUsage::CPU_ONLY }, vertecies);
 
     glm::vec4 lightInfo[] = { glm::vec4(1.f, 0.5f, 0.5f, 0.f), glm::vec4(1.f, 1.f, 1.f, 0.f) };
@@ -217,6 +225,9 @@ int raster(RenderBackend& backend)
     // timeline = dev.RequestTimelineSemaphore();
 
     //getchar();
+
+    dev.GetStagingManager().Flush();
+    dev.GetStagingManager().WaitPrevious();
 
     while (window.isOpen()) {
         window.getEvent(ev);
