@@ -40,9 +40,9 @@ namespace Renderer
 
 		void Shutdown();
 
-		void Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment = 256, DeviceSize offset = 0);
+        void Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment = 0, DeviceSize offset = 0);
 
-		void Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment = 256);
+        void Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment = 0);
 
 		void* Stage(const DeviceSize size, const DeviceSize alignment, VkCommandBuffer& commandBuffer, VkBuffer& buffer, DeviceSize& bufferOffset);
 
@@ -83,6 +83,8 @@ namespace Renderer
         FORCEINLINE const StagingBuffer& GetStage(uint32 i = 0) const { return stagingBuffers[i]; }
 
         FORCEINLINE CommandBufferHandle& GetCurrentCmd() { return transferCmdBuff[frameCounter]; };
+
+        // FORCEINLINE CommandBufferHandle& GetCurrentCmd() { return command; };
 
         FORCEINLINE CommandBufferHandle& GetNextCmd() { return transferCmdBuff[(frameCounter + 1) % NUM_CMDS]; };
 

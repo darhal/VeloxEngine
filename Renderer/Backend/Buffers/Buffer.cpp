@@ -65,6 +65,7 @@ void Renderer::Buffer::WriteToRing(VkDeviceSize size, const void* data, VkDevice
         range.size = size;
         // vkFlushMappedMemoryRanges(device.GetDevice(), 1, &range);
     }else{
+        bufferIndex = (bufferIndex + 1) % ringSize;
         device.GetStagingManager().Stage(apiBuffer, data, size, alignement, bufferIndex * unitSize + offset);
     }
 }

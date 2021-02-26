@@ -655,7 +655,7 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
         // Inject a semaphore to wait for transfer stage. We gurantee that all of the transfers done before begin frame are finished.
         if (type != CommandBuffer::Type::ASYNC_TRANSFER && stagingManager.GetPreviousStagingBuffer().submitted) {
             // printf("Injecting wait sempahore - ");
-            this->AddWaitTimelineSemapore(type, stagingManager.GetTimelineSemaphore(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+            this->AddWaitTimelineSemapore(type, stagingManager.GetTimelineSemaphore(), VK_PIPELINE_STAGE_TRANSFER_BIT);
         }
 
         // TODO: Potential optimisation here we can just push directly the vk semaphores
@@ -695,7 +695,7 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
             // Inject a semaphore to wait for transfer stage. We gurantee that all of the transfers done before begin frame are finished.
             if (type != CommandBuffer::Type::ASYNC_TRANSFER && stagingManager.GetPreviousStagingBuffer().submitted) { // Only added when there is a new submission
                 // printf("Injecting wait sempahore - ");
-                this->AddWaitTimelineSemapore(type, stagingManager.GetTimelineSemaphore(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+                this->AddWaitTimelineSemapore(type, stagingManager.GetTimelineSemaphore(), VK_PIPELINE_STAGE_TRANSFER_BIT);
             }
         }
 
@@ -756,14 +756,13 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
 
         if ((swapchainCommandBuffer || triggerSwapchainSwap) && !swapchainResize) {
             //const uint32 frame = renderContext->GetCurrentFrame();
-
             //if (!stagingManager.GetStage(frame).submitted) {
-                VkPipelineStageFlagBits stage = swapchainCommandBuffer ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-                    : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-                sub.waitStages.PushBack(stage);
-                waits.EmplaceBack(renderContext->GetImageAcquiredSemaphore());
-                offsets.waitSemaphoreOffset++;
-                // printf("Inject swapchain semaphore\n");
+            VkPipelineStageFlagBits stage = swapchainCommandBuffer ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+                                                                   : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+            sub.waitStages.PushBack(stage);
+            waits.EmplaceBack(renderContext->GetImageAcquiredSemaphore());
+            offsets.waitSemaphoreOffset++;
+            // printf("Inject swapchain semaphore\n");
             //}
 
             signals.EmplaceBack(renderContext->GetDrawCompletedSemaphore());
@@ -842,6 +841,7 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
 
     // Everything flushed, no dtor is called here as we cleared all the elments before
     submissions.Resize(0);
+    // submissions.Clear();
 }
 
 
@@ -904,13 +904,9 @@ void Renderer::RenderDevice::ClearFrame()
 
 void Renderer::RenderDevice::BeginFrame()
 {
-    // printf("Begin Frame\n");
-
-    //printf("Attempt to RESET: %d ", renderContext->GetPreviousFrame());
-    //stagingManager.ResetStage(renderContext->GetPreviousFrame());
+    //printf("Begin Frame %d\n", renderContext->GetCurrentFrame());
 
     if (stagingManager.Flush()) {
-        // printf("Attempt to RESET: %d ", renderContext->GetCurrentFrame());
         stagingManager.NextCmd();
         stagingManager.ResetCurrentStage();
     }
@@ -932,8 +928,13 @@ void Renderer::RenderDevice::EndFrame()
     // if we already did sumbit to swapchain then done force the swap
     this->FlushQueue(CommandBuffer::Type::GENERIC, !submitSwapchain);
 
-    //printf("End Frame\n");
-    //getchar();
+    // printf("End Frame %d\n", renderContext->GetCurrentFrame());
+    // getchar();
+}
+
+void Renderer::RenderDevice::FlushStaging()
+{
+    stagingManager.Flush();
 }
 
 Renderer::BlasHandle Renderer::RenderDevice::CreateBlas(const BlasCreateInfo& blasInfo, VkBuildAccelerationStructureFlagsKHR flags)
@@ -1294,7 +1295,7 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateBuffer(const BufferInfo& cr
     return ret;
 }
 
-Renderer::BufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo& createInfo, const uint32 ringSize, const void* data)
+Renderer::BufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo& createInfo, const void* data, const uint32 ringSize)
 {
     BufferInfo info = createInfo;
     const DeviceSize alignment = this->internal.gpuProperties.limits.minUniformBufferOffsetAlignment;

@@ -92,7 +92,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     RenderPassInfo::Subpass subpass;
     cmd->BeginRenderPass(GetRenderPass(dev, subpass));
 
-    cmd->BindVertexBuffer(*vertexIndexBuffer);
+    cmd->BindVertexBuffer(*vertexIndexBuffer, vertexIndexBuffer->GetCurrentOffset());
 #if !defined(CUBE)
     cmd->BindIndexBuffer(*vertexIndexBuffer, sizeof(vertices[0]) * vertices.size());
 #endif
@@ -159,8 +159,8 @@ int raster(RenderBackend& backend)
         vertecies[i].normal = glm::vec3{ g_normal_buffer_data[i * 3], g_normal_buffer_data[i * 3 + 1], g_normal_buffer_data[i * 3 + 2] };
     }
 
-    BufferHandle vertexIndexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::VERTEX_BUFFER }, vertecies);
-    BufferHandle cpuVertexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::TRANSFER_SRC, MemoryUsage::CPU_ONLY }, vertecies);
+    BufferHandle vertexIndexBuffer = dev.CreateRingBuffer({ sizeof(vertecies), BufferUsage::VERTEX_BUFFER }, vertecies);
+    // BufferHandle cpuVertexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::TRANSFER_SRC, MemoryUsage::CPU_ONLY }, vertecies);
 
     glm::vec4 lightInfo[] = { glm::vec4(1.f, 0.5f, 0.5f, 0.f), glm::vec4(1.f, 1.f, 1.f, 0.f) };
     BufferHandle lightBuffer = dev.CreateBuffer({ sizeof(lightInfo), BufferUsage::STORAGE_BUFFER }, lightInfo);
@@ -186,7 +186,7 @@ int raster(RenderBackend& backend)
     SamplerHandle sampler = dev.CreateSampler(SamplerInfo::Sampler2D(texture));
     free(pixels);
 
-    BufferHandle uniformBuffer = dev.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), 3);
+    BufferHandle uniformBuffer = dev.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), NULL, 3);
     GraphicsState state;
     // state.GetRasterizationState().polygonMode = VK_POLYGON_MODE_LINE;
     /*auto& depthStencilState = state.GetDepthStencilState();
@@ -216,8 +216,6 @@ int raster(RenderBackend& backend)
     // TODO: shader specilization constants
     // timeline = dev.RequestTimelineSemaphore();
 
-    //dev.GetStagingManager().Flush();
-    //dev.GetStagingManager().WaitPrevious();
     //getchar();
 
     while (window.isOpen()) {
@@ -238,19 +236,18 @@ int raster(RenderBackend& backend)
         }
 
         // Using fences the performance is 1500-1800 fps
-        backend.BeginFrame();
-
-        /*if (rand() % 2) {
+        //if (rand() % 2) {
             //printf("UPDATING VERTEX BUFFERS!\n");
 
-            for (int32_t i = 0; i < 12 * 3; i++) {
+            /*for (int32_t i = 0; i < 12 * 3; i++) {
                 float r = ((double)rand() / (RAND_MAX)) + 1;
                 vertecies[i].pos = glm::vec3{ g_vertex_buffer_data[i * 3] * r, g_vertex_buffer_data[i * 3 + 1] * r, g_vertex_buffer_data[i * 3 + 2] * r };
             }
 
-            vertexIndexBuffer->WriteToBuffer(sizeof(vertecies), &vertecies);
-        }*/
+            vertexIndexBuffer->WriteToRing(sizeof(vertecies), &vertecies);*/
+        //}
 
+        backend.BeginFrame();
         RenderFrame(dev, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
         backend.EndFrame();
         printFPS();

@@ -19,7 +19,7 @@ namespace Renderer
 			T* Allocate(P&&... p)
 			{
 				if (empty.empty()) {
-					uint32 num_objects = 64;
+                    uint32 num_objects = 32;
 
                     T* ptr = static_cast<T*>(AlignedAlloc(num_objects * sizeof(T), MAX(4, alignof(T))));
 

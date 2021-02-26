@@ -66,14 +66,14 @@ void Renderer::CommandBuffer::ApiReset()
     }
 }
 
-void Renderer::CommandBuffer::Begin()
+void Renderer::CommandBuffer::Begin(uint32 flags)
 {
     if (recording)
         return;
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    beginInfo.flags = flags;
 
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
         ASSERTF(true, "Failed to begin recording command buffer!");

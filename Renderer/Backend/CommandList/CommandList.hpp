@@ -64,7 +64,7 @@ namespace Renderer
 
         void ApiReset();
 
-		void Begin();
+        void Begin(uint32 flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 		void End();
 

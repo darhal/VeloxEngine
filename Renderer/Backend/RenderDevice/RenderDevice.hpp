@@ -140,6 +140,8 @@ namespace Renderer
 
         void Init(uint32 enabledFeatures);
 
+        void FlushStaging();
+
 
         // Frame managment:
         void BeginFrame();
@@ -196,7 +198,7 @@ namespace Renderer
         // Buffer Creation:
         BufferHandle CreateBuffer(const BufferInfo& createInfo, const void* data = NULL);
 
-        BufferHandle CreateRingBuffer(const BufferInfo& createInfo, const uint32 ringSize = NUM_FRAMES, const void* data = NULL);
+        BufferHandle CreateRingBuffer(const BufferInfo& createInfo, const void* data = NULL, const uint32 ringSize = NUM_FRAMES);
 
         bool CreateBufferInternal(VkBuffer& outBuffer, MemoryView& outMemoryView, const BufferInfo& createInfo);
 

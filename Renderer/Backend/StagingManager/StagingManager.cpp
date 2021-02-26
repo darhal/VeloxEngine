@@ -56,13 +56,121 @@ namespace Renderer
             // stagingBuffers[i].transferCmdBuff = commandPool->RequestCommandBuffer();
             stagingBuffers[i].timelineSemaphore = renderDevice.RequestTimelineSemaphore();
             stagingBuffers[i].data = (uint8*)mappedData + (i * alignedSize);
-            // ////printf("cmd type: %d\n", stagingBuffers[i].transferCmdBuff->GetType());
+            // printf("cmd type: %d\n", stagingBuffers[i].transferCmdBuff->GetType());
         }
 
         for (uint i = 0; i < NUM_CMDS; i++){
             transferCmdBuff[i] = commandPool->RequestCommandBuffer();
         }
 	}
+
+    StagingBuffer* StagingManager::PrepareFlush()
+    {
+        StagingBuffer& stage = stagingBuffers[currentBuffer];
+
+        if (stage.shouldRun) {
+            return &stage;
+        }
+
+        if (stage.offset == 0 || stage.submitted) {
+            return NULL;
+        }
+
+        VkCommandBuffer cmdBuff = GetCurrentCmd()->GetApiObject();
+
+        if (!renderDevice.IsTransferQueueSeprate()) {
+            VkMemoryBarrier barrier;
+            barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+            barrier.pNext = NULL;
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_INDEX_READ_BIT;
+            vkCmdPipelineBarrier(
+                cmdBuff,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                0, 1, &barrier, 0, NULL, 0, NULL);
+        }
+
+        /*VkMappedMemoryRange memoryRange;
+        memoryRange.sType	= VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+        memoryRange.pNext	= NULL;
+        memoryRange.memory	= memory;
+        memoryRange.offset	= currentBuffer * MAX_UPLOAD_BUFFER_SIZE;
+        memoryRange.size	= MAX_UPLOAD_BUFFER_SIZE;
+
+        vkFlushMappedMemoryRanges(renderDevice.GetDevice(), 1, &memoryRange);*/
+        return &stage;
+    }
+
+    bool StagingManager::Flush()
+    {
+        StagingBuffer* stage = this->PrepareFlush();
+
+        if (!stage) {
+            return false;
+        }
+
+        // printf("FLUSH %d | CMD: %d\n", currentBuffer, frameCounter);
+        //SemaphoreHandle wait = renderDevice.GetImageAcquiredSemaphore();
+        SemaphoreHandle* signal[] = { &stage->timelineSemaphore };
+        renderDevice.Submit(CommandBuffer::Type::ASYNC_TRANSFER, GetCurrentCmd(), NULL, 1, signal, 1);
+        //renderDevice.AddWaitSemapore(CommandBuffer::ASYNC_TRANSFER, wait, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        renderDevice.FlushQueue(CommandBuffer::Type::ASYNC_TRANSFER);
+        stage->submitted = true;
+        currentBuffer = (currentBuffer + 1) % NUM_STAGES;
+        return true;
+    }
+
+    void StagingManager::Wait(StagingBuffer& stage)
+    {
+        stage.timelineSemaphore->Wait();
+        this->ResetStage(stage);
+    }
+
+    void StagingManager::WaitPrevious()
+    {
+        this->Wait(this->GetPreviousStagingBuffer());
+    }
+
+    bool StagingManager::ResetPreviousStage()
+    {
+        //printf("Attempt to RESET %d ... ", (currentBuffer + (NUM_STAGES - 1)) % NUM_STAGES);
+        return this->ResetStage(this->GetPreviousStagingBuffer());
+    }
+
+    bool StagingManager::ResetCurrentStage()
+    {
+        //printf("Attempt to RESET %d ... ", currentBuffer);
+        return this->ResetStage(this->GetCurrentStagingBuffer());
+    }
+
+    bool StagingManager::ResetNextStage()
+    {
+        //printf("Attempt to RESET %d ... ", (currentBuffer + 1) % NUM_STAGES);
+        return this->ResetStage(this->GetNextStagingBuffer());
+    }
+
+    bool StagingManager::ResetStage(StagingBuffer& stage)
+    {
+        if (!stage.submitted) {
+            //printf("ABORTED\n");
+            return false;
+        }
+
+        //printf("(reset cmd buff:%d) COMPLETED\n", frameCounter);
+        stage.offset	= 0;
+        stage.submitted = false;
+        stage.shouldRun = false;
+        // transferCmdBuff[frameCounter]->ApiReset();
+        transferCmdBuff[frameCounter]->Begin();
+        return true;
+    }
+
+    bool StagingManager::ResetStage(uint32 i)
+    {
+        return this->ResetStage(this->GetStage(i));
+    }
+
 
 	void StagingManager::Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment, const DeviceSize offset)
 	{
@@ -234,112 +342,6 @@ namespace Renderer
         GetCurrentCmd()->ImageBarrier(image, oldLayout, newLayout, srcStage, srcAccess, dstStage, dstAccess);
 	}
 
-	StagingBuffer* StagingManager::PrepareFlush()
-	{
-        StagingBuffer& stage = stagingBuffers[currentBuffer];
-
-		if (stage.shouldRun) {
-			return &stage;
-		}
-
-        if (stage.offset == 0 || stage.submitted) {
-            return NULL;
-        }
-
-        VkCommandBuffer cmdBuff = GetCurrentCmd()->GetApiObject();
-
-		if (!renderDevice.IsTransferQueueSeprate()) {
-            VkMemoryBarrier barrier;
-			barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-            barrier.pNext = NULL;
-			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_INDEX_READ_BIT;
-			vkCmdPipelineBarrier(
-				cmdBuff,
-				VK_PIPELINE_STAGE_TRANSFER_BIT,
-				VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-				0, 1, &barrier, 0, NULL, 0, NULL);
-		}
-
-		VkMappedMemoryRange memoryRange;
-		memoryRange.sType	= VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		memoryRange.pNext	= NULL;
-		memoryRange.memory	= memory;
-		memoryRange.offset	= currentBuffer * MAX_UPLOAD_BUFFER_SIZE;
-		memoryRange.size	= MAX_UPLOAD_BUFFER_SIZE;
-
-		vkFlushMappedMemoryRanges(renderDevice.GetDevice(), 1, &memoryRange);
-		return &stage;
-	}
-
-    bool StagingManager::Flush()
-	{
-		StagingBuffer* stage = this->PrepareFlush();
-
-		if (!stage) {
-            return false;
-		}
-
-        //printf("FLUSH %d | CMD: %d\n", currentBuffer, frameCounter);
-        //SemaphoreHandle wait = renderDevice.GetImageAcquiredSemaphore();
-        SemaphoreHandle* signal[] = { &stage->timelineSemaphore };
-        renderDevice.Submit(CommandBuffer::Type::ASYNC_TRANSFER, GetCurrentCmd(), NULL, 1, signal, 1);
-        //renderDevice.AddWaitSemapore(CommandBuffer::ASYNC_TRANSFER, wait, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-        renderDevice.FlushQueue(CommandBuffer::Type::ASYNC_TRANSFER);
-		stage->submitted = true;
-        currentBuffer = (currentBuffer + 1) % NUM_STAGES;
-        return true;
-	}
-
-    void StagingManager::Wait(StagingBuffer& stage)
-    {
-        stage.timelineSemaphore->Wait();
-        this->ResetStage(stage);
-    }
-
-    void StagingManager::WaitPrevious()
-	{
-        this->Wait(this->GetPreviousStagingBuffer());
-    }
-
-    bool StagingManager::ResetPreviousStage()
-    {
-        //printf("Attempt to RESET %d ... ", (currentBuffer + (NUM_STAGES - 1)) % NUM_STAGES);
-        return this->ResetStage(this->GetPreviousStagingBuffer());
-    }
-
-    bool StagingManager::ResetCurrentStage()
-    {
-        //printf("Attempt to RESET %d ... ", currentBuffer);
-        return this->ResetStage(this->GetCurrentStagingBuffer());
-    }
-
-    bool StagingManager::ResetNextStage()
-    {
-        //printf("Attempt to RESET %d ... ", (currentBuffer + 1) % NUM_STAGES);
-        return this->ResetStage(this->GetNextStagingBuffer());
-    }
-
-    bool StagingManager::ResetStage(StagingBuffer& stage)
-    {
-        if (!stage.submitted) {
-            //printf("ABORTED\n");
-            return false;
-        }
-
-        //printf("(reset cmd buff:%d) COMPLETED\n", frameCounter);
-        stage.offset	= 0;
-        stage.submitted = false;
-        stage.shouldRun = false;
-        //transferCmdBuff[frameCounter]->ApiReset();
-        transferCmdBuff[frameCounter]->Begin();
-        return true;
-    }
-
-    bool StagingManager::ResetStage(uint32 i)
-    {
-        return this->ResetStage(this->GetStage(i));
-    }
 
 	void StagingManager::ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
