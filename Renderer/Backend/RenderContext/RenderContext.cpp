@@ -48,9 +48,9 @@ void Renderer::RenderContext::BeginFrame(const RenderDevice& renderDevice)
     VkResult result = vkAcquireNextImageKHR(device, swapchain.GetApiObject(), UINT64_MAX, 
         swapchainData.imageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &internal.currentImage);
 
-    if (swapchainData.imageFences[internal.currentImage] != VK_NULL_HANDLE) {
+    /*if (swapchainData.imageFences[internal.currentImage] != VK_NULL_HANDLE) {
         vkWaitForFences(device, 1, &swapchainData.imageFences[internal.currentImage], VK_TRUE, UINT64_MAX);
-    }
+    }*/
 
     swapchainData.imageFences[internal.currentImage] = swapchainData.imageFences[currentFrame];
     vkResetFences(device, 1, &swapchainData.fences[currentFrame]);
@@ -123,12 +123,11 @@ void Renderer::RenderContext::EndFrame(const RenderDevice& renderDevice)
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = renderDevice.IsPresentQueueSeprate() ?
-            &swapchainData.imageOwnershipSemaphores[currentFrame] :
-            &swapchainData.drawCompleteSemaphores[currentFrame];
-        presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains    = &swapchain.swapchain;
-        presentInfo.pImageIndices  = &currentBuffer;
+        presentInfo.pWaitSemaphores = renderDevice.IsPresentQueueSeprate() ? &swapchainData.imageOwnershipSemaphores[currentFrame] :
+                                                                             &swapchainData.drawCompleteSemaphores[currentFrame];
+        presentInfo.swapchainCount  = 1;
+        presentInfo.pSwapchains     = &swapchain.swapchain;
+        presentInfo.pImageIndices   = &currentBuffer;
 
         result = vkQueuePresentKHR(queues[Internal::QFT_PRESENT], &presentInfo);
     }

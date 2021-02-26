@@ -49,7 +49,9 @@ namespace Renderer
 	};
 
 	const std::initializer_list<const char*> VK_REQ_LAYERS = {
+#if defined(OS_WINDOWS)
 		"VK_LAYER_LUNARG_monitor",
+#endif
 #if defined(DEBUG) && defined(VALIDATION_LAYERS)
 		"VK_LAYER_KHRONOS_validation",
 #endif

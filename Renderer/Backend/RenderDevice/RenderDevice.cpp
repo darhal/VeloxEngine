@@ -826,8 +826,8 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
             vkFence = renderContext->GetFrameFence();
         }
 
-        printf("[TYPE:%d] Submit: (Cmd count: %d|Wait: %d|Signal: %d|Timeline: %p|Fence: %p)\n", type,
-               commandBufferCount, waitSemaphoreCount, signalSemaphoreCount, submit.pNext, vkFence);
+        //printf("[TYPE:%d] Submit: (Cmd count: %d|Wait: %d|Signal: %d|Timeline: %p|Fence: %p)\n", type,
+        //       commandBufferCount, waitSemaphoreCount, signalSemaphoreCount, submit.pNext, vkFence);
 
         if (vkFence || (subId == submissions.Size() - 1)) { // if there is a fence or last submit then vkSubmit
             CALL_VK(vkQueueSubmit(this->GetQueue(type), submits.Size(), submits.Data(), vkFence));
@@ -1286,16 +1286,13 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateBuffer(const BufferInfo& cr
     this->CreateBufferInternal(apiBuffer, bufferMemory, createInfo);
     BufferHandle ret(objectsPool.buffers.Allocate(*this, apiBuffer, createInfo, bufferMemory));
 
-    /*if (data) {
+    if (data) {
         if (createInfo.domain == MemoryUsage::CPU_ONLY || createInfo.domain == MemoryUsage::CPU_CACHED || createInfo.domain == MemoryUsage::CPU_COHERENT) {
             ret->WriteToBuffer(createInfo.size, data);
         } else {
             stagingManager.Stage(ret->apiBuffer, data, createInfo.size, bufferMemory.alignment);
         }
-    }*/
-
-    if (data)
-        ret->WriteToBuffer(createInfo.size, data);
+    }
 
     return ret;
 }
@@ -1316,16 +1313,13 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo
     this->CreateBufferInternal(apiBuffer, bufferMemory, info);
     BufferHandle ret(objectsPool.buffers.Allocate(*this, apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
 
-    /*if (data) {
+    if (data) {
         if (info.domain == MemoryUsage::CPU_ONLY || info.domain == MemoryUsage::CPU_CACHED || info.domain == MemoryUsage::CPU_COHERENT) {
             ret->WriteToBuffer(createInfo.size, data);
         } else {
             stagingManager.Stage(ret->apiBuffer, data, createInfo.size, bufferMemory.alignment);
         }
-    }*/
-
-    if (data)
-        ret->WriteToBuffer(createInfo.size, data);
+    }
 
     return ret;
 }

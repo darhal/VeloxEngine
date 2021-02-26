@@ -108,6 +108,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
 #endif
 
     cmd->EndRenderPass();
+    dev.Submit(cmd);
 
     /*SemaphoreHandle timeline; // = dev.RequestTimelineSemaphore();
     SemaphoreHandle* semas[] = { &timeline };
@@ -118,23 +119,23 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     // printf("Semaphore value after wait: %d | Semaphore temp value: %d\n", timeline->GetCurrentCounterValue(), timeline->GetTempValue());
     // timeline->Reset();
 
-    // dev.Submit(cmd);
+    /*RenderPassInfo::Subpass subpass;
+    cmd->BeginRenderPass(GetRenderPass(dev, subpass));
+    cmd->EndRenderPass();
+    dev.Submit(cmd);*/
 
-    cmd->End();
+    /*cmd->End();
     VkCommandBuffer vkcmd = cmd->GetApiObject();
     auto q = dev.GetQueue(CommandBuffer::Type::GENERIC);
     dev.SubmitCmdBuffer(q, &vkcmd, 1, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                         dev.GetRenderContext()->GetImageAcquiredSemaphore(),
                         dev.GetRenderContext()->GetDrawCompletedSemaphore(),
-                        dev.GetRenderContext()->GetFrameFence());
+                        dev.GetRenderContext()->GetFrameFence());*/
     // dev.FlushQueues();
 }
 
 int raster(RenderBackend& backend)
 {
-    void* ptr = TRE::Renderer::Utils::AlignedAlloc(16, 4);
-    Utils::AlignedFree(ptr);
-
     auto& window = *backend.GetRenderContext().GetWindow();
     Event ev;
 
