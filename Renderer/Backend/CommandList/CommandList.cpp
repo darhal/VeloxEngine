@@ -213,9 +213,21 @@ void Renderer::CommandBuffer::BindVertexBuffer(const Buffer& buffer, DeviceSize 
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 }
 
+void Renderer::CommandBuffer::BindVertexBuffer(const Buffer& buffer)
+{
+    VkBuffer vertexBuffers[] = { buffer.GetApiObject() };
+    VkDeviceSize offsets[]   = { buffer.GetCurrentOffset() };
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+}
+
 void Renderer::CommandBuffer::BindIndexBuffer(const Buffer& buffer, DeviceSize offset)
 {
     vkCmdBindIndexBuffer(commandBuffer, buffer.GetApiObject(), offset, VK_INDEX_TYPE_UINT16);
+}
+
+void Renderer::CommandBuffer::BindIndexBuffer(const Buffer& buffer)
+{
+    vkCmdBindIndexBuffer(commandBuffer, buffer.GetApiObject(), buffer.GetCurrentOffset(), VK_INDEX_TYPE_UINT16);
 }
 
 void Renderer::CommandBuffer::DrawIndexed(uint32 indexCount, uint32 instanceCount, uint32 firstIndex, int32 vertexOffset, uint32 firstInstance)

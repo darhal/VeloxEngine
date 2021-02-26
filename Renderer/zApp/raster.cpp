@@ -92,7 +92,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     RenderPassInfo::Subpass subpass;
     cmd->BeginRenderPass(GetRenderPass(dev, subpass));
 
-    cmd->BindVertexBuffer(*vertexIndexBuffer, vertexIndexBuffer->GetCurrentOffset());
+    cmd->BindVertexBuffer(*vertexIndexBuffer);
 #if !defined(CUBE)
     cmd->BindIndexBuffer(*vertexIndexBuffer, sizeof(vertices[0]) * vertices.size());
 #endif

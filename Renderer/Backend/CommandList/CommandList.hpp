@@ -86,9 +86,13 @@ namespace Renderer
 
 		void BindPipeline(const Pipeline& pipeline);
 
-		void BindVertexBuffer(const Buffer& buffer, DeviceSize offset = 0);
+        void BindVertexBuffer(const Buffer& buffer, DeviceSize offset);
 
-		void BindIndexBuffer(const Buffer& buffer, DeviceSize offset = 0);
+        void BindVertexBuffer(const Buffer& buffer);
+
+        void BindIndexBuffer(const Buffer& buffer, DeviceSize offset);
+
+        void BindIndexBuffer(const Buffer& buffer);
 
 		void DrawIndexed(uint32 indexCount, uint32 instanceCount = 1, uint32 firstIndex = 0, int32 vertexOffset = 0, uint32 firstInstance = 0);
 
