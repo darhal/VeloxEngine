@@ -340,6 +340,8 @@ namespace Renderer
 
 		FORCEINLINE bool IsTransferQueueSeprate() const { return internal.isTransferQueueSeprate; }
 
+        FORCEINLINE const VkPhysicalDeviceProperties& GetProperties() const { return internal.gpuProperties2.properties; }
+
 		FORCEINLINE const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const { return internal.memoryProperties; }
 
 		FORCEINLINE const VkPhysicalDeviceRayTracingPipelinePropertiesKHR& GetRtProperties() const { return internal.rtProperties; }

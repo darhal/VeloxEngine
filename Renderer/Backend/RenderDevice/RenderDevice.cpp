@@ -56,6 +56,7 @@ int32 Renderer::RenderDevice::CreateRenderDevice(const RenderInstance& renderIns
     internal.gpuProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
     internal.gpuProperties2.pNext = &internal.rtProperties;
     vkGetPhysicalDeviceProperties2(internal.gpu, &internal.gpuProperties2);
+
     return CreateLogicalDevice(renderInstance, extensions, extCount, layers, layerCount);
 }
 
@@ -319,89 +320,6 @@ uint32 Renderer::RenderDevice::FindMemoryTypeIndex(uint32 typeFilter, MemoryUsag
     return FindMemoryType(typeFilter, required);
 }
 
-VkBuffer Renderer::RenderDevice::CreateBufferHelper(const BufferInfo& info) const
-{
-    StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
-
-    VkBufferCreateInfo bufferInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    bufferInfo.size = info.size;
-    bufferInfo.usage = info.usage;
-    bufferInfo.sharingMode = (VkSharingMode)SharingMode::EXCLUSIVE;
-
-    if (info.domain == MemoryUsage::GPU_ONLY) {
-        bufferInfo.usage |= BufferUsage::TRANSFER_DST;
-    }
-
-    if (info.queueFamilies) {
-        for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
-            if (Internal::QUEUE_FAMILY_FLAGS[i] & info.queueFamilies) {
-                queueFamilyIndices.AllocateInit(1, this->GetQueueFamilyIndices().queueFamilies[i]);
-            }
-        }
-
-        bufferInfo.sharingMode = (VkSharingMode)SharingMode::CONCURRENT;
-        bufferInfo.queueFamilyIndexCount = (uint32)queueFamilyIndices.GetElementCount();
-        bufferInfo.pQueueFamilyIndices = queueFamilyIndices.GetData();
-    }
-
-    VkBuffer outBuffer;
-    CALL_VK(vkCreateBuffer(this->GetDevice(), &bufferInfo, NULL, &outBuffer));
-    return outBuffer;
-}
-
-VkDeviceMemory Renderer::RenderDevice::CreateBufferMemory(const BufferInfo& info, VkBuffer buffer, VkDeviceSize* alignedSize, uint32 multiplier) const
-{
-    VkMemoryRequirements2 memoryReqs;
-    VkMemoryDedicatedRequirements   dedicatedRegs{ VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS };
-    VkBufferMemoryRequirementsInfo2 bufferReqs{ VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2 };
-    memoryReqs.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
-    memoryReqs.pNext = &dedicatedRegs;
-    bufferReqs.buffer = buffer;
-    vkGetBufferMemoryRequirements2(this->GetDevice(), &bufferReqs, &memoryReqs);
-
-    const VkDeviceSize alignMod = memoryReqs.memoryRequirements.size % memoryReqs.memoryRequirements.alignment;
-    const VkDeviceSize alignedSizeConst =
-        (alignMod == 0) ?
-        memoryReqs.memoryRequirements.size :
-        (memoryReqs.memoryRequirements.size + memoryReqs.memoryRequirements.alignment - alignMod);
-
-    if (alignedSize)
-        *alignedSize = alignedSizeConst;
-
-    VkMemoryAllocateFlagsInfo memFlagInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
-    if (info.usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
-        memFlagInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
-
-    VkMemoryAllocateInfo memoryAllocateInfo;
-    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    memoryAllocateInfo.pNext = &memFlagInfo;
-    memoryAllocateInfo.allocationSize = (multiplier == 1) ? memoryReqs.memoryRequirements.size : alignedSizeConst * multiplier;
-    memoryAllocateInfo.memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, info.domain);
-
-    VkDeviceMemory mem;
-    CALL_VK(vkAllocateMemory(this->GetDevice(), &memoryAllocateInfo, NULL, &mem));
-
-    if (multiplier == 1) {
-        vkBindBufferMemory(this->GetDevice(), buffer, mem, 0);
-    }
-
-    return mem;
-}
-
-VkAccelerationStructureKHR Renderer::RenderDevice::CreateAcceleration(VkAccelerationStructureCreateInfoKHR& info, VkBuffer* buffer) const
-{
-    BufferCreateInfo bufferInfo;
-    bufferInfo.size = info.size;
-    bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_STORAGE;
-    bufferInfo.domain = MemoryUsage::GPU_ONLY;
-    *buffer = this->CreateBufferHelper(bufferInfo);
-    this->CreateBufferMemory(bufferInfo, *buffer);
-    info.buffer = *buffer;
-
-    VkAccelerationStructureKHR accl;
-    CALL_VK(vkCreateAccelerationStructureKHR(this->GetDevice(), &info, NULL, &accl));
-    return accl;
-}
 
 VkCommandBuffer Renderer::RenderDevice::CreateCmdBuffer(VkCommandPool pool, VkCommandBufferLevel level, VkCommandBufferUsageFlags flag) const
 {
@@ -1046,6 +964,21 @@ VkAccelerationStructureKHR Renderer::RenderDevice::CreateAcceleration(VkAccelera
     return accl;
 }
 
+VkAccelerationStructureKHR Renderer::RenderDevice::CreateAcceleration(VkAccelerationStructureCreateInfoKHR& info, VkBuffer* buffer) const
+{
+    BufferCreateInfo bufferInfo;
+    bufferInfo.size = info.size;
+    bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_STORAGE;
+    bufferInfo.domain = MemoryUsage::GPU_ONLY;
+    *buffer = this->CreateBufferHelper(bufferInfo);
+    this->CreateBufferMemory(bufferInfo, *buffer);
+    info.buffer = *buffer;
+
+    VkAccelerationStructureKHR accl;
+    CALL_VK(vkCreateAccelerationStructureKHR(this->GetDevice(), &info, NULL, &accl));
+    return accl;
+}
+
 Renderer::CommandPoolHandle Renderer::RenderDevice::RequestCommandPool(uint32 queueFamily, Renderer::CommandPool::Type type)
 {
     uint32 familyIndex;
@@ -1120,135 +1053,75 @@ Renderer::PiplineEventHandle Renderer::RenderDevice::RequestPiplineEvent()
     return ptr;
 }
 
-Renderer::ImageHandle Renderer::RenderDevice::CreateImage(const ImageCreateInfo& createInfo, const void* data)
+VkBuffer Renderer::RenderDevice::CreateBufferHelper(const BufferInfo& info) const
 {
-    MemoryUsage memUsage = MemoryUsage::USAGE_UNKNOWN;
-
-    VkImageCreateInfo info;
-    info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    info.pNext       = NULL;
-    info.flags       = createInfo.flags;
-    info.imageType   = createInfo.type;
-    info.format      = createInfo.format;
-    info.extent      = { createInfo.width, createInfo.height, createInfo.depth };
-    info.mipLevels   = createInfo.levels;
-    info.arrayLayers = createInfo.layers;
-    info.samples     = createInfo.samples;
-    info.usage       = createInfo.usage;
-    info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    info.queueFamilyIndexCount = 0;
-
-    switch(createInfo.domain) {
-    case ImageDomain::PHYSICAL:
-        memUsage = MemoryUsage::GPU_ONLY;
-        info.tiling = VK_IMAGE_TILING_OPTIMAL;
-        info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        break;
-    case ImageDomain::TRANSIENT:
-        memUsage = MemoryUsage::GPU_ONLY;
-        info.tiling = VK_IMAGE_TILING_OPTIMAL;
-        info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        info.usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
-        break;
-    case ImageDomain::LINEAR_HOST:
-        memUsage = MemoryUsage::CPU_ONLY;
-        info.tiling = VK_IMAGE_TILING_LINEAR;
-        info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-        break;
-    case ImageDomain::LINEAR_HOST_CACHED:
-        memUsage = MemoryUsage::CPU_CACHED;
-        info.tiling = VK_IMAGE_TILING_LINEAR;
-        info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-        break;
-    }
-
     StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
-    info.sharingMode = (VkSharingMode)(createInfo.queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
 
-    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
-        if (Internal::QUEUE_FAMILY_FLAGS[i] & createInfo.queueFamilies) {
-            queueFamilyIndices.AllocateInit(1, this->GetQueueFamilyIndices().queueFamilies[i]);
+    VkBufferCreateInfo bufferInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    bufferInfo.size = info.size;
+    bufferInfo.usage = info.usage;
+    bufferInfo.sharingMode = (VkSharingMode)SharingMode::EXCLUSIVE;
+
+    if (info.domain == MemoryUsage::GPU_ONLY) {
+        bufferInfo.usage |= BufferUsage::TRANSFER_DST;
+    }
+
+    if (info.queueFamilies) {
+        for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
+            if (Internal::QUEUE_FAMILY_FLAGS[i] & info.queueFamilies) {
+                queueFamilyIndices.AllocateInit(1, this->GetQueueFamilyIndices().queueFamilies[i]);
+            }
         }
+
+        bufferInfo.sharingMode = (VkSharingMode)SharingMode::CONCURRENT;
+        bufferInfo.queueFamilyIndexCount = (uint32)queueFamilyIndices.GetElementCount();
+        bufferInfo.pQueueFamilyIndices = queueFamilyIndices.GetData();
     }
 
-    if (info.sharingMode == VK_SHARING_MODE_CONCURRENT) {
-        info.queueFamilyIndexCount = (uint32)queueFamilyIndices.GetElementCount();
-        info.pQueueFamilyIndices = queueFamilyIndices.GetData();
-    }
-
-    VkImage apiImage;
-    if (vkCreateImage(this->GetDevice(), &info, NULL, &apiImage) != VK_SUCCESS) {
-        ASSERTF(true, "failed to create a image!");
-    }
-
-    MemoryView imageMemory;
-    VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(this->GetDevice(), apiImage, &memRequirements);
-    uint32 memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, memUsage);
-    imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, memRequirements.alignment);
-    vkBindImageMemory(this->GetDevice(), apiImage, imageMemory.memory, imageMemory.offset);
-
-    ImageHandle ret = ImageHandle(objectsPool.images.Allocate(*this, apiImage, createInfo, imageMemory));
-
-    if (data) {
-        if (memUsage == MemoryUsage::GPU_ONLY) {
-            stagingManager.Stage(*ret, data, createInfo.width * createInfo.height * FormatToChannelCount(createInfo.format));
-        } else {
-            // TODO: add uploading directly from CPU
-            ASSERTF(true, "Not supported!");
-        }
-    } else {
-        if (createInfo.layout != VK_IMAGE_LAYOUT_UNDEFINED) {
-            // TODO: add layout trasnisioning here: using staging manager:
-            stagingManager.ChangeImageLayout(*ret, info.initialLayout, createInfo.layout);
-        }
-    }
-
-    return ret;
+    VkBuffer outBuffer;
+    CALL_VK(vkCreateBuffer(this->GetDevice(), &bufferInfo, NULL, &outBuffer));
+    return outBuffer;
 }
 
-Renderer::ImageViewHandle Renderer::RenderDevice::CreateImageView(const ImageViewCreateInfo& createInfo)
+VkDeviceMemory Renderer::RenderDevice::CreateBufferMemory(const BufferInfo& info, VkBuffer buffer, VkDeviceSize* alignedSize, uint32 multiplier) const
 {
-    ImageViewCreateInfo info = createInfo;
-    const auto& imageCreateInfo = createInfo.image->GetInfo();
+    VkMemoryRequirements2 memoryReqs;
+    VkMemoryDedicatedRequirements   dedicatedRegs{ VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS };
+    VkBufferMemoryRequirementsInfo2 bufferReqs{ VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2 };
+    memoryReqs.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+    memoryReqs.pNext = &dedicatedRegs;
+    bufferReqs.buffer = buffer;
+    vkGetBufferMemoryRequirements2(this->GetDevice(), &bufferReqs, &memoryReqs);
 
-    if (createInfo.format == VK_FORMAT_UNDEFINED) {
-        info.format = imageCreateInfo.format;
+    const VkDeviceSize alignMod = memoryReqs.memoryRequirements.size % memoryReqs.memoryRequirements.alignment;
+    const VkDeviceSize alignedSizeConst =
+        (alignMod == 0) ?
+        memoryReqs.memoryRequirements.size :
+        (memoryReqs.memoryRequirements.size + memoryReqs.memoryRequirements.alignment - alignMod);
+
+    if (alignedSize)
+        *alignedSize = alignedSizeConst;
+
+    VkMemoryAllocateFlagsInfo memFlagInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
+    if (info.usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+        memFlagInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+
+    VkMemoryAllocateInfo memoryAllocateInfo;
+    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocateInfo.pNext = &memFlagInfo;
+    memoryAllocateInfo.allocationSize = (multiplier == 1) ? memoryReqs.memoryRequirements.size : alignedSizeConst * multiplier;
+    memoryAllocateInfo.memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, info.domain);
+
+    VkDeviceMemory mem;
+    CALL_VK(vkAllocateMemory(this->GetDevice(), &memoryAllocateInfo, NULL, &mem));
+
+    if (multiplier == 1) {
+        vkBindBufferMemory(this->GetDevice(), buffer, mem, 0);
     }
 
-    if (createInfo.viewType == VK_IMAGE_VIEW_TYPE_MAX_ENUM) {
-        info.viewType = GetImageViewType(imageCreateInfo, &createInfo);
-    }
-
-    if (createInfo.levels == VK_REMAINING_MIP_LEVELS) {
-        info.levels = imageCreateInfo.levels - createInfo.baseLevel;
-    }
-
-    if (createInfo.layers == VK_REMAINING_ARRAY_LAYERS) {
-        info.layers = imageCreateInfo.layers - createInfo.baseLayer;
-    }
-
-    VkImageViewCreateInfo viewInfo;
-    viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.pNext      = NULL;
-    viewInfo.flags      = 0;
-    viewInfo.image      = info.image->GetApiObject();
-    viewInfo.viewType   = info.viewType;
-    viewInfo.format     = info.format;
-    viewInfo.components = info.swizzle;
-
-    viewInfo.subresourceRange = {
-        FormatToAspectMask(viewInfo.format),
-        info.baseLevel, info.levels,
-        info.baseLayer, info.layers
-    };
-
-    VkImageView apiImageView;
-    vkCreateImageView(this->GetDevice(), &viewInfo, NULL, &apiImageView);
-
-    ImageViewHandle ret(objectsPool.imageViews.Allocate(*this, apiImageView, info));
-    return ret;
+    return mem;
 }
+
 
 bool Renderer::RenderDevice::CreateBufferInternal(VkBuffer& outBuffer, MemoryView& outMemoryView, const BufferInfo& createInfo)
 {
@@ -1321,6 +1194,139 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo
         }
     }
 
+    return ret;
+}
+
+Renderer::ImageHandle Renderer::RenderDevice::CreateImage(const ImageCreateInfo& createInfo, const void* data)
+{
+    MemoryUsage memUsage = MemoryUsage::USAGE_UNKNOWN;
+
+    VkImageCreateInfo info;
+    info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    info.pNext       = NULL;
+    info.flags       = createInfo.flags;
+    info.imageType   = createInfo.type;
+    info.format      = createInfo.format;
+    info.extent      = { createInfo.width, createInfo.height, createInfo.depth };
+    info.mipLevels   = createInfo.levels;
+    info.arrayLayers = createInfo.layers;
+    info.samples     = createInfo.samples;
+    info.usage       = createInfo.usage;
+    info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    info.queueFamilyIndexCount = 0;
+
+    switch(createInfo.domain) {
+    case ImageDomain::PHYSICAL:
+        memUsage = MemoryUsage::GPU_ONLY;
+        info.tiling = VK_IMAGE_TILING_OPTIMAL;
+        info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        break;
+    case ImageDomain::TRANSIENT:
+        memUsage = MemoryUsage::GPU_ONLY;
+        info.tiling = VK_IMAGE_TILING_OPTIMAL;
+        info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        info.usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+        break;
+    case ImageDomain::LINEAR_HOST:
+        memUsage = MemoryUsage::CPU_ONLY;
+        info.tiling = VK_IMAGE_TILING_LINEAR;
+        info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+        break;
+    case ImageDomain::LINEAR_HOST_CACHED:
+        memUsage = MemoryUsage::CPU_CACHED;
+        info.tiling = VK_IMAGE_TILING_LINEAR;
+        info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+        break;
+    }
+
+    StackAlloc<uint32, Internal::QFT_MAX> queueFamilyIndices;
+    info.sharingMode = (VkSharingMode)(createInfo.queueFamilies ? SharingMode::CONCURRENT : SharingMode::EXCLUSIVE);
+
+    for (uint32 i = 0; i < Internal::QFT_MAX; i++) {
+        if (Internal::QUEUE_FAMILY_FLAGS[i] & createInfo.queueFamilies) {
+            queueFamilyIndices.AllocateInit(1, this->GetQueueFamilyIndices().queueFamilies[i]);
+        }
+    }
+
+    if (info.sharingMode == VK_SHARING_MODE_CONCURRENT) {
+        info.queueFamilyIndexCount = (uint32)queueFamilyIndices.GetElementCount();
+        info.pQueueFamilyIndices = queueFamilyIndices.GetData();
+    }
+
+    VkImage apiImage;
+    if (vkCreateImage(this->GetDevice(), &info, NULL, &apiImage) != VK_SUCCESS) {
+        ASSERTF(true, "failed to create a image!");
+    }
+
+
+    const auto& limits = this->GetProperties().limits;
+
+    MemoryView imageMemory;
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(this->GetDevice(), apiImage, &memRequirements);
+    uint32 memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, memUsage);
+    imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, MAX(memRequirements.alignment, limits.bufferImageGranularity));
+    vkBindImageMemory(this->GetDevice(), apiImage, imageMemory.memory, imageMemory.offset);
+
+    ImageHandle ret = ImageHandle(objectsPool.images.Allocate(*this, apiImage, createInfo, imageMemory));
+
+    if (data) {
+        if (memUsage == MemoryUsage::GPU_ONLY) {
+            stagingManager.Stage(*ret, data, createInfo.width * createInfo.height * FormatToChannelCount(createInfo.format));
+        } else {
+            // TODO: add uploading directly from CPU
+            ASSERTF(true, "Not supported!");
+        }
+    } else {
+        if (createInfo.layout != VK_IMAGE_LAYOUT_UNDEFINED) {
+            // TODO: add layout trasnisioning here: using staging manager:
+            stagingManager.ChangeImageLayout(*ret, info.initialLayout, createInfo.layout);
+        }
+    }
+
+    return ret;
+}
+
+Renderer::ImageViewHandle Renderer::RenderDevice::CreateImageView(const ImageViewCreateInfo& createInfo)
+{
+    ImageViewCreateInfo info = createInfo;
+    const auto& imageCreateInfo = createInfo.image->GetInfo();
+
+    if (createInfo.format == VK_FORMAT_UNDEFINED) {
+        info.format = imageCreateInfo.format;
+    }
+
+    if (createInfo.viewType == VK_IMAGE_VIEW_TYPE_MAX_ENUM) {
+        info.viewType = GetImageViewType(imageCreateInfo, &createInfo);
+    }
+
+    if (createInfo.levels == VK_REMAINING_MIP_LEVELS) {
+        info.levels = imageCreateInfo.levels - createInfo.baseLevel;
+    }
+
+    if (createInfo.layers == VK_REMAINING_ARRAY_LAYERS) {
+        info.layers = imageCreateInfo.layers - createInfo.baseLayer;
+    }
+
+    VkImageViewCreateInfo viewInfo;
+    viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.pNext      = NULL;
+    viewInfo.flags      = 0;
+    viewInfo.image      = info.image->GetApiObject();
+    viewInfo.viewType   = info.viewType;
+    viewInfo.format     = info.format;
+    viewInfo.components = info.swizzle;
+
+    viewInfo.subresourceRange = {
+        FormatToAspectMask(viewInfo.format),
+        info.baseLevel, info.levels,
+        info.baseLayer, info.layers
+    };
+
+    VkImageView apiImageView;
+    vkCreateImageView(this->GetDevice(), &viewInfo, NULL, &apiImageView);
+
+    ImageViewHandle ret(objectsPool.imageViews.Allocate(*this, apiImageView, info));
     return ret;
 }
 
