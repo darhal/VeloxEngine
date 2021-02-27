@@ -2,6 +2,49 @@
 
 TRE_NS_START
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Renderer::MemoryAllocator::AllocKey Renderer::MemoryAllocator::AllocPool::Allocate(DeviceSize size, DeviceSize alignment)
 {
 	Chunk* chunk = GetLatestChunk(TOTAL_MEM_SIZE);

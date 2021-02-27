@@ -226,7 +226,7 @@ namespace Renderer
 		void*			mappedData;
 		uint32			alignment;
 
-        uint32 allocKey;
+        uint32          allocKey;
 	};
 
 	template<typename T>

@@ -6,7 +6,25 @@
 TRE_NS_START
 
 namespace Renderer
-{
+{   
+    class RENDERER_API MemoryAllocator2
+    {
+
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	class RENDERER_API MemoryAllocator
 	{
 	public:

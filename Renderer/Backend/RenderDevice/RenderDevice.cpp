@@ -1094,10 +1094,8 @@ VkDeviceMemory Renderer::RenderDevice::CreateBufferMemory(const BufferInfo& info
     vkGetBufferMemoryRequirements2(this->GetDevice(), &bufferReqs, &memoryReqs);
 
     const VkDeviceSize alignMod = memoryReqs.memoryRequirements.size % memoryReqs.memoryRequirements.alignment;
-    const VkDeviceSize alignedSizeConst =
-        (alignMod == 0) ?
-        memoryReqs.memoryRequirements.size :
-        (memoryReqs.memoryRequirements.size + memoryReqs.memoryRequirements.alignment - alignMod);
+    const VkDeviceSize alignedSizeConst = (alignMod == 0) ? memoryReqs.memoryRequirements.size :
+                                                            (memoryReqs.memoryRequirements.size + memoryReqs.memoryRequirements.alignment - alignMod);
 
     if (alignedSize)
         *alignedSize = alignedSizeConst;
