@@ -134,7 +134,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     // dev.FlushQueues();
 }
 
-FORCEINLINE uint32 NextPow2(uint32 v)
+uint32 NextPow2(uint32 v)
 {
     v--;
     v |= v >> 1;
@@ -146,9 +146,34 @@ FORCEINLINE uint32 NextPow2(uint32 v)
     return v;
 }
 
-template<uint32 N>
+uint32 ulog2(uint32 value) {
+#if defined(COMPILER_CLANG) || defined (COMPILER_GCC)
+    return sizeof(uint32_t) * CHAR_BIT - __builtin_clz(value) - 1;
+#elif defined(COMPILER_MSVC)
+    return sizeof(uint32_t) * CHAR_BIT - clz(value) - 1;
+#else
+    return log2(value);
+#endif
+}
+
+
 struct BitmapTree
 {
+    void Init(uint32 numNodes)
+    {
+        if (tree)
+            delete[] tree;
+
+        this->numNodes = numNodes;
+        this->tree = new uint8[numNodes];
+    }
+
+    ~BitmapTree()
+    {
+        delete[] tree;
+        tree = NULL;
+    }
+
     uint32 GetLevelElementsCount(uint32 lvl)
     {
         return 1 << lvl;
@@ -167,6 +192,11 @@ struct BitmapTree
     uint32 GetRightIdx(uint32 nodeIdx)
     {
         return (nodeIdx << 1) + 2;
+    }
+
+    bool HaveChild(uint32 nodeIdx)
+    {
+        return this->GetRightIdx(nodeIdx) < numNodes || this->GetLeftIdx(nodeIdx) < numNodes;
     }
 
     uint32 GetParentIdx(uint32 nodeIdx)
@@ -201,16 +231,10 @@ struct BitmapTree
         tree[nodeIdx] = value;
     }
 
-    void SetNodeRec(uint32 nodeIdx, uint8 value)
+    void SetNodeChildren(uint32 nodeIdx, uint8 value)
     {
-        this->SetNode(nodeIdx, value);
-        auto leftIdx = this->GetLeftIdx(nodeIdx);
-        auto rightIdx = this->GetRightIdx(nodeIdx);
-
-        if (leftIdx < N && rightIdx < N) {
-            this->SetNodeRec(rightIdx, value);
-            this->SetNodeRec(leftIdx, value);
-        }
+        this->SetNode(GetLeftIdx(nodeIdx), value);
+        this->SetNode(GetRightIdx(nodeIdx), value);
     }
 
     uint8* GetData()
@@ -219,65 +243,86 @@ struct BitmapTree
     }
 
     uint32 GetLevels() {
-        return log2(N) + 1;
+        return ulog2(numNodes) + 1;
+    }
+
+    uint32 GetNumNodes()
+    {
+        return numNodes;
     }
 
     void Print()
     {
-        for (uint32 i = 0; i < N; i++) {
+        /*for (uint32 i = 0; i < N; i++) {
             if (((i+1) & (i)) == 0) {
                 printf( "\n");
             }
 
             printf("%d ", tree[i]);
         }
-        printf("\n");
+        printf("\n");*/
+
+        structure(0, 0);
     }
 
-    uint8 tree[N];
+    void padding(char ch, int n) {
+      for (int i = 0; i < n; i++)
+        putchar(ch);
+    }
+
+    void structure(uint32 root, int level) {
+      if (root >= numNodes) {
+        padding('\t', level);
+        puts ( "~" );
+      } else {
+        structure(GetRightIdx(root), level + 1);
+        padding('\t', level);
+        printf("%d\n", GetNode(root));
+        structure(GetLeftIdx(root), level + 1);
+      }
+    }
+
+    uint32 numNodes = 0;
+    uint8* tree = NULL;
+};
+
+struct MemoryAllocation
+{
+    uint32 offset;
+    uint32 size;
 };
 
 struct BuddyAllocator
 {
-    CONSTEXPR static uint32 LOG2_MAX_SIZE = 24;
-    CONSTEXPR static uint32 MIN_SIZE      = 256;
-    CONSTEXPR static uint32 MAX_SIZE      = 4 * MIN_SIZE;
-    CONSTEXPR static uint32 NUM_BLOCKS    = MAX_SIZE / MIN_SIZE;
-    CONSTEXPR static uint32 NUM_NODES     = 2 * NUM_BLOCKS - 1;
-
-    void Init()
+    void Init(uint32 minSize = 256, uint32 maxSize = 4096)
     {
-        // TODO: allocate memory
+        // TODO: allocate VK memory
+        this->minSize = minSize;
+        this->maxSize = maxSize;
+        uint32 numBlocks = maxSize / minSize;
+        tree.Init(2 * numBlocks - 1);
         uint32 currentLvl = tree.GetLevels();
 
-        for (uint32 l = 0; l < NUM_NODES; l++) {
+        for (uint32 l = 0; l < tree.GetNumNodes(); l++) {
             if (((l+1) & l) == 0) {
                 currentLvl--;
             }
 
             tree.SetNode(l, currentLvl + 1);
         }
-
-        tree.Print();
-        printf("------------------------\n");
     }
 
-    void Allocate(uint32 size)
+    MemoryAllocation Allocate(uint32 size)
     {
         uint32 currentNode = 0;
         uint32 offset = 0;
         uint32 realSize = NextPow2(size);
-        uint32 level = (realSize / MIN_SIZE);
-        uint32 availSize = MAX_SIZE;
+        uint32 level = (realSize / minSize);
+        uint32 availSize = maxSize;
 
-        printf("Size: %d | real size: %d | lvl: %d\n", size, realSize, level);
-
-        while (1) {
+        while (tree.HaveChild(currentNode)) {
             uint32 leftIdx = tree.GetLeftIdx(currentNode);
             uint32 rightIdx = tree.GetRightIdx(currentNode);
-
-            if (leftIdx >= NUM_NODES || rightIdx >= NUM_NODES)
-                break;
 
             uint8 currentLevel = tree.GetNode(currentNode);
             uint8 leftNode = tree.GetLeftNode(currentNode);
@@ -300,6 +345,39 @@ struct BuddyAllocator
 
         // Mark current Node as used and then descend while updating parents
         tree.SetNode(currentNode, 0);
+        this->UpdateParentsAlloc(currentNode);
+        return { offset, size };
+    }
+
+    void Free(const MemoryAllocation& alloc)
+    {
+        uint32 currentNode = 0;
+        uint32 realSize = NextPow2(alloc.size);
+        uint32 level = (realSize / minSize);
+        uint8 currentLevel = tree.GetLevels();
+        uint32 currentSize = maxSize >> 1;
+        uint32 currentOffset = currentSize;
+
+        while (currentLevel != level) { // condition on level or offset (I think both are equivalent)
+            currentSize >>= 1;
+            currentLevel--;
+
+            if (alloc.offset >= currentOffset) { // going right
+                currentNode = tree.GetRightIdx(currentNode);
+                currentOffset += currentSize;
+            }else{
+                currentNode = tree.GetLeftIdx(currentNode);
+                currentOffset -= currentSize;
+            }
+        }
+
+        tree.SetNode(currentNode, level);
+        this->UpdateParentsFree(currentNode);
+    }
+
+    void UpdateParentsAlloc(uint32 currentNode)
+    {
+        // Moving upward updating parents:
         uint32 dummyNode = tree.GetParentIdx(currentNode);
 
         while (dummyNode != UINT32_MAX) {
@@ -310,13 +388,32 @@ struct BuddyAllocator
             tree.SetNode(dummyNode, dummyLevel);
             dummyNode = tree.GetParentIdx(dummyNode);
         }
+    }
 
+    void UpdateParentsFree(uint32 currentNode)
+    {
+        // Moving upward updating parents:
+        uint32 dummyNode = tree.GetParentIdx(currentNode);
+
+        while (dummyNode != UINT32_MAX) {
+            uint8 leftValue = tree.GetLeftNode(dummyNode);
+            uint8 rightValue = tree.GetRightNode(dummyNode);
+            uint8 dummyLevel = (rightValue == leftValue) ? rightValue + 1 : MAX(leftValue, rightValue);
+
+            tree.SetNode(dummyNode, dummyLevel);
+            dummyNode = tree.GetParentIdx(dummyNode);
+        }
+    }
+
+    void Print()
+    {
         tree.Print();
-        printf("Offset: %d\n", offset);
     }
 
     VkDeviceMemory        memory;
-    BitmapTree<NUM_NODES> tree;
+    uint32                minSize;
+    uint32                maxSize;
+    BitmapTree            tree;
 };
 
 int raster(RenderBackend& backend)
@@ -333,20 +430,68 @@ int raster(RenderBackend& backend)
     }*/
 
     BuddyAllocator alloc;
-    alloc.Init();
+    alloc.Init(256, 1024);
 
-    /*alloc.Allocate(510);
-    alloc.Allocate(256);
-    alloc.Allocate(256);*/
+    // FIrst test batch:
+    auto a1 = alloc.Allocate(510);
+    auto a2 = alloc.Allocate(256);
+    auto a3 = alloc.Allocate(256);
+    ASSERT(a1.offset != 0);
+    ASSERT(a2.offset != 512);
+    ASSERT(a3.offset != 512 + 256);
+    alloc.Free(a1);
+    alloc.Free(a2);
+    alloc.Free(a3);
 
-    /*alloc.Allocate(256);
-    alloc.Allocate(256);
-    alloc.Allocate(257);*/
+    // Second test batch:
+    a1 = alloc.Allocate(256);
+    a2 = alloc.Allocate(256);
+    a3 = alloc.Allocate(257);
+    ASSERT(a1.offset != 0);
+    ASSERT(a2.offset != 256);
+    ASSERT(a3.offset != 512);
+    alloc.Free(a1);
+    alloc.Free(a2);
+    alloc.Free(a3);
 
-    alloc.Allocate(256);
-    alloc.Allocate(257);
-    alloc.Allocate(256);
+     // Third test batch:
+    a1 = alloc.Allocate(256);
+    a2 =  alloc.Allocate(257);
+    a3 =  alloc.Allocate(256);
+    ASSERT(a1.offset != 0);
+    ASSERT(a2.offset != 512);
+    ASSERT(a3.offset != 256);
+    alloc.Free(a2);
+    auto a4 = alloc.Allocate(256);
+    auto a5 =  alloc.Allocate(256);
+    ASSERT(a4.offset != 512);
+    ASSERT(a5.offset != 512 + 256);
+    alloc.Free(a1);
+    alloc.Free(a3);
+    alloc.Free(a4);
+    alloc.Free(a5);
 
+    /*INIT_BENCHMARK;
+    alloc.Init(64, 1024);
+
+    BENCHMARK("alloc 34", auto a = alloc.Allocate(34););
+    BENCHMARK("alloc 66", auto b = alloc.Allocate(66));
+    BENCHMARK("alloc 35", auto c = alloc.Allocate(35));
+    BENCHMARK("alloc 67", auto d = alloc.Allocate(67));
+
+    ASSERT(a.offset != 0);
+    ASSERT(b.offset != 64+64);
+    ASSERT(c.offset != 64);
+    ASSERT(d.offset != 64 * 4);
+
+    //alloc.Print();
+
+    BENCHMARK("free 66", alloc.Free(b));
+    BENCHMARK("free 67", alloc.Free(d));
+    BENCHMARK("free 34", alloc.Free(a));
+    BENCHMARK("free 35", alloc.Free(c));*/
+
+    //alloc.Print();
 
 
     return 0;
@@ -425,7 +570,6 @@ int raster(RenderBackend& backend)
     program.Compile();
 
     updateMVP(dev, uniformBuffer);
-    INIT_BENCHMARK;
 
     time_t lasttime = time(NULL);
     // TODO: shader specilization constants
