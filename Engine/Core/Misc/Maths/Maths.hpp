@@ -181,6 +181,43 @@ struct Math
 		// element was not present 
 		return -1;
 	}
+
+
+    FORCEINLINE static uint32 NextPow2(uint32 v)
+    {
+        v--;
+        v |= v >> 1;
+        v |= v >> 2;
+        v |= v >> 4;
+        v |= v >> 8;
+        v |= v >> 16;
+        v++;
+        return v;
+    }
+
+    FORCEINLINE static uint64 NextPow2(uint64 v)
+    {
+        v--;
+        v |= v >> 1;
+        v |= v >> 2;
+        v |= v >> 4;
+        v |= v >> 8;
+        v |= v >> 16;
+        v |= v >> 32;
+        v++;
+        return v;
+    }
+
+    FORCEINLINE static uint32 Log2OfPow2(uint32 value) {
+    #if defined(COMPILER_CLANG) || defined (COMPILER_GCC)
+        return sizeof(uint32_t) * CHAR_BIT - __builtin_clz(value) - 1;
+    #elif defined(COMPILER_MSVC)
+        return sizeof(uint32_t) * CHAR_BIT - clz(value) - 1;
+    #else
+        return log2(value);
+    #endif
+    }
+
 };
 
 TRE_NS_END

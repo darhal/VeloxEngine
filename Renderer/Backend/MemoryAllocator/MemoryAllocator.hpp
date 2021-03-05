@@ -2,11 +2,63 @@
 
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Core/BitmapTree/BitmapTree.hpp>
+#include <Renderer/Core/BuddyAllocator/BuddyAllocator.hpp>
 
 TRE_NS_START
 
 namespace Renderer
 {   
+    struct MemoryAllocation
+    {
+        VkDeviceMemory memory;
+        VkDeviceSize   size;
+        VkDeviceSize   offset;
+        uint32         padding;
+        uint32         alignement;
+        void*		   mappedData;
+    };
+
+    class TypedMemoryAllocator
+    {
+    public:
+        void Init(VkDevice device, uint32 memoryTypeIndex)
+        {
+            this->device = device;
+            this->memoryTypeIndex = memoryTypeIndex;
+        }
+
+        MemoryAllocation Allocate(uint32 size, uint32 alignement);
+
+        void Free(const MemoryAllocation& allocation);
+    private:
+        struct DeviceBuddyAllocator
+        {
+            void Create(VkDevice dev, uint32 memTypeIndex, uint32 minSize, uint32 maxSize)
+            {
+                VkMemoryAllocateInfo info;
+                info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+                info.pNext = NULL;
+                info.allocationSize = maxSize;
+                info.memoryTypeIndex = memTypeIndex;
+                vkAllocateMemory(dev, &info, NULL, &gpuMemory);
+                allocator.Init(minSize, maxSize);
+            }
+
+            void Destroy(VkDevice dev)
+            {
+                vkFreeMemory(dev, gpuMemory, NULL);
+            }
+
+            VkDeviceMemory gpuMemory;
+            BuddyAllocator allocator;
+        };
+
+        VkDevice device;
+        uint32 memoryTypeIndex;
+        std::vector<DeviceBuddyAllocator> allocators;
+    };
+
     class RENDERER_API MemoryAllocator2
     {
 
