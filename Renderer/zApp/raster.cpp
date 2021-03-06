@@ -137,6 +137,8 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
 
 int raster(RenderBackend& backend)
 {
+    INIT_BENCHMARK
+
     auto& window = *backend.GetRenderContext().GetWindow();
     Event ev;
 
@@ -147,75 +149,6 @@ int raster(RenderBackend& backend)
     } else {
         TRE_LOGI("Anti-Aliasing: MSAA x%d", backend.GetMSAASamplerCount());
     }*/
-
-    BuddyAllocator alloc;
-    alloc.Init(256, 1024);
-
-    // FIrst test batch:
-    auto a1 = alloc.Allocate(510);
-    auto a2 = alloc.Allocate(256);
-    auto a3 = alloc.Allocate(256);
-    ASSERT(a1.offset != 0);
-    ASSERT(a2.offset != 512);
-    ASSERT(a3.offset != 512 + 256);
-    alloc.Free(a1);
-    alloc.Free(a2);
-    alloc.Free(a3);
-
-    // Second test batch:
-    a1 = alloc.Allocate(256);
-    a2 = alloc.Allocate(256);
-    a3 = alloc.Allocate(257);
-    ASSERT(a1.offset != 0);
-    ASSERT(a2.offset != 256);
-    ASSERT(a3.offset != 512);
-    alloc.Free(a1);
-    alloc.Free(a2);
-    alloc.Free(a3);
-
-     // Third test batch:
-    a1 = alloc.Allocate(256);
-    a2 =  alloc.Allocate(257);
-    a3 =  alloc.Allocate(256);
-    ASSERT(a1.offset != 0);
-    ASSERT(a2.offset != 512);
-    ASSERT(a3.offset != 256);
-    alloc.Free(a2);
-    auto a4 = alloc.Allocate(256);
-    auto a5 =  alloc.Allocate(256);
-    ASSERT(a4.offset != 512);
-    ASSERT(a5.offset != 512 + 256);
-    alloc.Free(a1);
-    alloc.Free(a3);
-    alloc.Free(a4);
-    alloc.Free(a5);
-
-    /*INIT_BENCHMARK;
-    alloc.Init(64, 1024);
-
-    BENCHMARK("alloc 34", auto a = alloc.Allocate(34););
-    BENCHMARK("alloc 66", auto b = alloc.Allocate(66));
-    BENCHMARK("alloc 35", auto c = alloc.Allocate(35));
-    BENCHMARK("alloc 67", auto d = alloc.Allocate(67));
-
-    ASSERT(a.offset != 0);
-    ASSERT(b.offset != 64+64);
-    ASSERT(c.offset != 64);
-    ASSERT(d.offset != 64 * 4);
-
-    //alloc.Print();
-
-    BENCHMARK("free 66", alloc.Free(b));
-    BENCHMARK("free 67", alloc.Free(d));
-    BENCHMARK("free 34", alloc.Free(a));
-    BENCHMARK("free 35", alloc.Free(c));*/
-
-    //alloc.Print();
-
-
-    return 0;
-
-
 
     TRE_LOGI("Engine is up and running ...");
     Vertex vertecies[12 * 3];
@@ -258,8 +191,8 @@ int raster(RenderBackend& backend)
 
     // TODO: NEED WORK ON MEMORY FREEING!! (THIS IS DONE) (However we need to detect dedicated allocations from non dedicated allocs!)
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load("Assets/box1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    VkDeviceSize imageSize = texWidth * texHeight * 4;
+    stbi_uc* pixels =  stbi_load("Assets/box1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    VkDeviceSize imageSize = texWidth * texHeight * texChannels;
     ImageHandle texture = dev.CreateImage(ImageCreateInfo::Texture2D(texWidth, texHeight, true), pixels);
     ImageViewHandle textureView = dev.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
     SamplerHandle sampler = dev.CreateSampler(SamplerInfo::Sampler2D(texture));

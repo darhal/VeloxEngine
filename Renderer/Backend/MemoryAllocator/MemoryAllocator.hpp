@@ -9,32 +9,29 @@ TRE_NS_START
 
 namespace Renderer
 {   
+    class RenderDevice;
+
     struct MemoryAllocation
     {
         VkDeviceMemory memory;
         VkDeviceSize   size;
         VkDeviceSize   offset;
-        uint32         padding;
-        uint32         alignement;
+        VkDeviceSize   padding;
+        VkDeviceSize   alignment;
         void*		   mappedData;
+
+        // TODO: idea right now the memory type and the buddy allocator index are stored in alloc key
+        // We can add both size and offset in terms of power of two that will be 2*log2(64) bits reserved so 8 bits each
+        uint32         allocKey;
     };
+
 
     class TypedMemoryAllocator
     {
-    public:
-        void Init(VkDevice device, uint32 memoryTypeIndex)
-        {
-            this->device = device;
-            this->memoryTypeIndex = memoryTypeIndex;
-        }
-
-        MemoryAllocation Allocate(uint32 size, uint32 alignement);
-
-        void Free(const MemoryAllocation& allocation);
     private:
-        struct DeviceBuddyAllocator
+        struct DeviceBuddyAllocator : public BuddyAllocator
         {
-            void Create(VkDevice dev, uint32 memTypeIndex, uint32 minSize, uint32 maxSize)
+            void Create(VkDevice dev, uint32 memTypeIndex, uint32 minSize, uint32 maxSize, bool map)
             {
                 VkMemoryAllocateInfo info;
                 info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -42,7 +39,14 @@ namespace Renderer
                 info.allocationSize = maxSize;
                 info.memoryTypeIndex = memTypeIndex;
                 vkAllocateMemory(dev, &info, NULL, &gpuMemory);
-                allocator.Init(minSize, maxSize);
+
+                if (map) {
+                    vkMapMemory(dev, gpuMemory, 0, maxSize, 0, &mappedData);
+                }else{
+                    mappedData = NULL;
+                }
+
+                this->Init(minSize, maxSize);
             }
 
             void Destroy(VkDevice dev)
@@ -51,17 +55,43 @@ namespace Renderer
             }
 
             VkDeviceMemory gpuMemory;
-            BuddyAllocator allocator;
+            void* mappedData;
         };
+    public:
+        CONSTEXPR static uint32 MIN_SIZE = 256;
+        CONSTEXPR static uint32 NUM_BLOCKS = 65536; // The intial pool have 16 MB
+        CONSTEXPR static uint32 RESIZE_FACTOR = 4;  // The pool will grow by a factor of 4 giving: 64, 128, 256, 512 MB respectively
 
+        void Init(const RenderDevice& device, uint32 memoryTypeIndex);
+
+        void Destroy();
+
+        MemoryAllocation Allocate(uint32 size, uint32 alignement);
+
+        void Free(const MemoryAllocation& allocation);
+
+    private:
+        std::vector<DeviceBuddyAllocator> allocators;
         VkDevice device;
         uint32 memoryTypeIndex;
-        std::vector<DeviceBuddyAllocator> allocators;
+        bool map;
     };
 
     class RENDERER_API MemoryAllocator2
     {
+    public:
+        MemoryAllocator2(RenderDevice& device);
 
+        void Init();
+
+        void Destroy();
+
+        MemoryAllocation Allocate(uint32 indexType, uint32 size, uint32 alignement = 1);
+
+        void Free(const MemoryAllocation& alloc);
+    private:
+        RenderDevice& renderDevice;
+        TypedMemoryAllocator allocators[VK_MAX_MEMORY_TYPES];
     };
 
 
@@ -101,11 +131,11 @@ namespace Renderer
 
 		void Init(const Internal::RenderDevice& renderDevice);
 
-		MemoryView Allocate(uint32 memoryTypeIndex, DeviceSize size, DeviceSize alignement = 0);
+        MemoryAllocation Allocate(uint32 memoryTypeIndex, DeviceSize size, DeviceSize alignement = 0);
 
 		void Free(AllocKey key);
 
-		MemoryView GetMemoryViewFromAllocKey(AllocKey key);
+        MemoryAllocation GetMemoryViewFromAllocKey(AllocKey key);
 
 		void Destroy();
 	private:
@@ -146,7 +176,7 @@ namespace Renderer
 
 			void DeallocateChunk();
 
-			MemoryView GetMemoryView(AllocKey key);
+            MemoryAllocation GetMemoryView(AllocKey key);
 		};
 
 		static bool FindFreeBinding(const Chunk& chunk, DeviceSize alignment, BindingInfo& bindingOut);

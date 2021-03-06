@@ -103,7 +103,7 @@ namespace Renderer
             // TRE::Vector<VkSemaphore>      recycledTimelineSema;
 
             TRE::Vector<VkDeviceMemory>	  freedMemory;
-            TRE::Vector<MemoryAllocator::AllocKey> freeAllocatedMemory;
+            TRE::Vector<MemoryAllocation> freeAllocatedMemory;
 
             TRE::Vector<VkAccelerationStructureKHR> destroyedAccls;
 
@@ -205,7 +205,7 @@ namespace Renderer
 
         BufferHandle CreateRingBuffer(const BufferInfo& createInfo, const void* data = NULL, const uint32 ringSize = NUM_FRAMES);
 
-        bool CreateBufferInternal(VkBuffer& outBuffer, MemoryView& outMemoryView, const BufferInfo& createInfo);
+        bool CreateBufferInternal(VkBuffer& outBuffer, MemoryAllocation& outMemoryView, const BufferInfo& createInfo);
 
 
         // Image Creation:
@@ -269,7 +269,7 @@ namespace Renderer
 
         void FreeMemory(VkDeviceMemory memory);
 
-        void FreeMemory(MemoryAllocator::AllocKey key);
+        void FreeMemory(const MemoryAllocation& alloc);
 
         void DestroySemaphore(VkSemaphore sem);
 
@@ -351,7 +351,7 @@ namespace Renderer
         FORCEINLINE const RenderContext* GetRenderContext() const { return renderContext; }
 
         // Useful Getters:
-        FORCEINLINE MemoryAllocator& GetContextAllocator() { return gpuMemoryAllocator; }
+        FORCEINLINE MemoryAllocator2& GetContextAllocator() { return gpuMemoryAllocator; }
 
         FORCEINLINE StagingManager& GetStagingManager() { return stagingManager; }
 
@@ -389,7 +389,7 @@ namespace Renderer
 		Internal::RenderDevice internal;
         RenderContext* renderContext;
 
-        MemoryAllocator	 gpuMemoryAllocator;
+        MemoryAllocator2 gpuMemoryAllocator;
         StagingManager	 stagingManager;
         FenceManager	 fenceManager;
         SemaphoreManager semaphoreManager;

@@ -217,7 +217,7 @@ namespace Renderer
 		INPUT_ATTACHMENT = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
 	};
 
-	struct MemoryView
+    /*struct MemoryAllocation
 	{
 		VkDeviceMemory  memory;
 		DeviceSize	    offset;
@@ -227,7 +227,7 @@ namespace Renderer
 		uint32			alignment;
 
         uint32          allocKey;
-	};
+    };*/
 
 	template<typename T>
 	struct VectorView

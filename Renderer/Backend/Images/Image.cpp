@@ -16,7 +16,7 @@ Renderer::ImageView::~ImageView()
     }
 }
 
-Renderer::Image::Image(RenderDevice& dev, VkImage image, const ImageCreateInfo& info, const MemoryView& memory) :
+Renderer::Image::Image(RenderDevice& dev, VkImage image, const ImageCreateInfo& info, const MemoryAllocation& memory) :
     device(dev), info(info), imageMemory(memory), apiImage(image), swapchainLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 {
 }
@@ -46,7 +46,7 @@ Renderer::Image::~Image()
 {
 	if (apiImage != VK_NULL_HANDLE && !IsSwapchainImage()) {
         device.DestroyImage(apiImage);
-        device.FreeMemory(imageMemory.allocKey);
+        device.FreeMemory(imageMemory);
         apiImage = VK_NULL_HANDLE;
 	}
 }

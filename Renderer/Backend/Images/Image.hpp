@@ -2,6 +2,7 @@
 
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/MemoryAllocator/MemoryAllocator.hpp>
 #include "ImageHelper.hpp"
 
 TRE_NS_START
@@ -51,7 +52,7 @@ namespace Renderer
 	public:
 		friend struct ImageDeleter;
 
-        Image(RenderDevice& device, VkImage image, const ImageCreateInfo& info, const MemoryView& memory);
+        Image(RenderDevice& device, VkImage image, const ImageCreateInfo& info, const MemoryAllocation& memory);
 
         Image(RenderDevice& device, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType);
 
@@ -81,7 +82,7 @@ namespace Renderer
 	private:
         RenderDevice&       device;
 		ImageCreateInfo info;
-		MemoryView imageMemory;
+        MemoryAllocation imageMemory;
 		VkImage apiImage;
 		ImageViewHandle defaultView;
 		VkImageLayout swapchainLayout;

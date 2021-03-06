@@ -12,7 +12,8 @@ TRE_NS_START
 Renderer::RenderDevice::RenderDevice(RenderContext* ctx) :
     internal{ 0 },
     renderContext(ctx),
-    stagingManager{ *this },
+    gpuMemoryAllocator{*this},
+    stagingManager{*this},
     acclBuilder(*this),
     framebufferAllocator(this),
     transientAttachmentAllocator(*this, true),
@@ -197,7 +198,7 @@ void Renderer::RenderDevice::Init(uint32 enabledFeatures)
         }
     }
 
-    gpuMemoryAllocator.Init(internal);
+    gpuMemoryAllocator.Init();
     fenceManager.Init(this);
     semaphoreManager.Init(this);
     eventManager.Init(this);
@@ -1121,7 +1122,7 @@ VkDeviceMemory Renderer::RenderDevice::CreateBufferMemory(const BufferInfo& info
 }
 
 
-bool Renderer::RenderDevice::CreateBufferInternal(VkBuffer& outBuffer, MemoryView& outMemoryView, const BufferInfo& createInfo)
+bool Renderer::RenderDevice::CreateBufferInternal(VkBuffer& outBuffer, MemoryAllocation& outMemoryView, const BufferInfo& createInfo)
 {
     outBuffer = this->CreateBufferHelper(createInfo);
 
@@ -1131,6 +1132,8 @@ bool Renderer::RenderDevice::CreateBufferInternal(VkBuffer& outBuffer, MemoryVie
         vkGetBufferMemoryRequirements(this->GetDevice(), outBuffer, &memRequirements);
         uint32 memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, createInfo.domain);
         outMemoryView = gpuMemoryAllocator.Allocate(memoryTypeIndex, createInfo.size, memRequirements.alignment);
+
+        printf("[Buffer] Size: %d | offset: %d | padding: %d\n", outMemoryView.size, outMemoryView.offset - outMemoryView.padding, outMemoryView.padding);
         vkBindBufferMemory(this->GetDevice(), outBuffer, outMemoryView.memory, outMemoryView.offset);
     } else {
         outMemoryView.offset = 0;
@@ -1151,7 +1154,7 @@ bool Renderer::RenderDevice::CreateBufferInternal(VkBuffer& outBuffer, MemoryVie
 
 Renderer::BufferHandle Renderer::RenderDevice::CreateBuffer(const BufferInfo& createInfo, const void* data)
 {
-    MemoryView bufferMemory;
+    MemoryAllocation bufferMemory;
     VkBuffer apiBuffer;
 
     this->CreateBufferInternal(apiBuffer, bufferMemory, createInfo);
@@ -1176,7 +1179,7 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo
     const DeviceSize alignedSize = info.size + padding;
     info.size = alignedSize * ringSize; //- padding; // here we must remove padding as we dont need it at the end but (otherwise waste of memory)
                                                      // this is going to complicate our calulations later so better keep it
-    MemoryView bufferMemory;
+    MemoryAllocation bufferMemory;
     VkBuffer apiBuffer;
 
     // Removing padding from total size, as we dont need the last bytes for alignement
@@ -1256,14 +1259,14 @@ Renderer::ImageHandle Renderer::RenderDevice::CreateImage(const ImageCreateInfo&
         ASSERTF(true, "failed to create a image!");
     }
 
-
     const auto& limits = this->GetProperties().limits;
 
-    MemoryView imageMemory;
+    MemoryAllocation imageMemory;
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(this->GetDevice(), apiImage, &memRequirements);
     uint32 memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, memUsage);
     imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, MAX(memRequirements.alignment, limits.bufferImageGranularity));
+    printf("[Image] Size: %d | offset: %d | padding: %d\n", imageMemory.size, imageMemory.offset - imageMemory.padding, imageMemory.padding);
     vkBindImageMemory(this->GetDevice(), apiImage, imageMemory.memory, imageMemory.offset);
 
     ImageHandle ret = ImageHandle(objectsPool.images.Allocate(*this, apiImage, createInfo, imageMemory));
@@ -1629,10 +1632,10 @@ void Renderer::RenderDevice::FreeMemory(VkDeviceMemory memory)
     frame.shouldDestroy = true;
 }
 
-void Renderer::RenderDevice::FreeMemory(Renderer::MemoryAllocator::AllocKey key)
+void Renderer::RenderDevice::FreeMemory(const MemoryAllocation& alloc)
 {
     PerFrame& frame = this->Frame();
-    frame.freeAllocatedMemory.EmplaceBack(key);
+    frame.freeAllocatedMemory.EmplaceBack(alloc);
     frame.shouldDestroy = true;
 }
 

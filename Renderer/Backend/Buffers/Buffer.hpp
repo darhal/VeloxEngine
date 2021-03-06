@@ -2,6 +2,7 @@
 
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/MemoryAllocator/MemoryAllocator.hpp>
 
 TRE_NS_START
 
@@ -34,9 +35,9 @@ namespace Renderer
 	public:
         friend class BufferDeleter;
 
-        Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem);
+        Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryAllocation& mem);
 
-        Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem, uint32 unitSize, uint32 ringSize);
+        Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryAllocation& mem, uint32 unitSize, uint32 ringSize);
 
         virtual ~Buffer();
 
@@ -48,7 +49,7 @@ namespace Renderer
 
 		FORCEINLINE const BufferInfo& GetBufferInfo() const { return bufferInfo; }
 
-		FORCEINLINE const MemoryView& GetBufferMemory() const { return bufferMemory; }
+        FORCEINLINE const MemoryAllocation& GetBufferMemory() const { return bufferMemory; }
 
         uint32 GetUnitSize() const { return unitSize; }
 
@@ -57,7 +58,7 @@ namespace Renderer
 	protected:
         RenderDevice& device;
         BufferInfo    bufferInfo;
-        MemoryView    bufferMemory;
+        MemoryAllocation    bufferMemory;
         VkBuffer      apiBuffer;
 
         uint32		ringSize;

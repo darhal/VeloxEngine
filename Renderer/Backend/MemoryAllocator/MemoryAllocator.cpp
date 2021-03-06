@@ -1,15 +1,102 @@
 #include "MemoryAllocator.hpp"
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 
 TRE_NS_START
 
+// TypedMemoryAllocator
+
+void Renderer::TypedMemoryAllocator::Init(const RenderDevice& device, uint32 memoryTypeIndex)
+{
+    if (device.GetMemoryProperties().memoryTypes[memoryTypeIndex].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+        map = true;
+    }else{
+        map = false;
+    }
+
+    this->device = device.GetDevice();
+    this->memoryTypeIndex = memoryTypeIndex;
+    auto& alloc = allocators.emplace_back();
+    alloc.Create(this->device, memoryTypeIndex, MIN_SIZE, NUM_BLOCKS * MIN_SIZE, map);
+}
+
+void Renderer::TypedMemoryAllocator::Destroy()
+{
+    for (auto& alloc : allocators) {
+        if (map)
+            vkUnmapMemory(device, alloc.gpuMemory);
+        alloc.Destroy(device);
+    }
+}
+
+Renderer::MemoryAllocation Renderer::TypedMemoryAllocator::Allocate(uint32 size, uint32 alignement)
+{
+    uint32 worstCasePadding = (~MIN_SIZE + 1) & (alignement - 1);
+    uint32 i = 0;
+    BuddyAllocator::Allocation allocation = { UINT32_MAX, UINT32_MAX };
+
+    while (allocation.offset == UINT32_MAX) {
+        if (i >= allocators.size()) {
+            uint32 lastMaxSize = allocators.back().maxSize;
+            auto& alloc = allocators.emplace_back();
+            alloc.Create(device, memoryTypeIndex, MIN_SIZE, lastMaxSize * RESIZE_FACTOR, map);
+        }
+
+        printf("[mem type ind: %d] Requesting %d from %d\n", memoryTypeIndex, size + worstCasePadding, i);
+        allocation = allocators[i].Allocate(size + worstCasePadding);
+        i++;
+    }
+
+    MemoryAllocation alloc;
+    alloc.memory     = allocators[i - 1].gpuMemory;
+    alloc.offset     = (VkDeviceSize)allocation.offset;
+    alloc.padding    = (~alloc.offset + 1) & (alignement - 1);
+    alloc.offset     += alloc.padding;
+    alloc.size       = (VkDeviceSize)allocation.size;
+    alloc.alignment = alignement;
+    alloc.mappedData = allocators[i - 1].mappedData;
+    alloc.allocKey   = i << 16 | memoryTypeIndex;
+    return alloc;
+}
+
+void Renderer::TypedMemoryAllocator::Free(const MemoryAllocation& allocation)
+{
+    BuddyAllocator::Allocation alloc = { (uint32)(allocation.offset - allocation.padding), (uint32)allocation.size };
+    allocators[allocation.allocKey >> 16].Free(alloc);
+}
 
 
 
 
+// MemoryAllocator2
 
+Renderer::MemoryAllocator2::MemoryAllocator2(Renderer::RenderDevice& device) : renderDevice(device)
+{
 
+}
 
+void Renderer::MemoryAllocator2::Init()
+{
+    for (uint32 i = 0; i < renderDevice.GetMemoryProperties().memoryTypeCount; i++) {
+        allocators[i].Init(renderDevice, i);
+    }
+}
 
+void Renderer::MemoryAllocator2::Destroy()
+{
+    for (uint32 i = 0; i < renderDevice.GetMemoryProperties().memoryTypeCount; i++) {
+        allocators[i].Destroy();
+    }
+}
+
+Renderer::MemoryAllocation Renderer::MemoryAllocator2::Allocate(uint32 indexType, uint32 size, uint32 alignement)
+{
+    return allocators[indexType].Allocate(size, alignement);
+}
+
+void Renderer::MemoryAllocator2::Free(const MemoryAllocation& alloc)
+{
+    allocators[alloc.allocKey & ((1 << 16) - 1)].Free(alloc);
+}
 
 
 
@@ -109,12 +196,12 @@ void Renderer::MemoryAllocator::AllocPool::DeallocateChunk()
 	}
 }
 
-Renderer::MemoryView Renderer::MemoryAllocator::AllocPool::GetMemoryView(AllocKey key)
+Renderer::MemoryAllocation Renderer::MemoryAllocator::AllocPool::GetMemoryView(AllocKey key)
 {
 	uint32 chunkIndex = key.GetChunkIndex();
 	uint32 bindingIndex = key.GetBindingIndex();
 
-	MemoryView memView;
+    MemoryAllocation memView;
 	memView.memory = chunks[chunkIndex].memory;
 	memView.mappedData = chunks[chunkIndex].mappedData;
 
@@ -229,7 +316,7 @@ void Renderer::MemoryAllocator::Init(const Internal::RenderDevice& renderDevice)
 	}
 }
 
-Renderer::MemoryView Renderer::MemoryAllocator::Allocate(uint32 memoryTypeIndex, DeviceSize size, DeviceSize alignement)
+Renderer::MemoryAllocation Renderer::MemoryAllocator::Allocate(uint32 memoryTypeIndex, DeviceSize size, DeviceSize alignement)
 {
 	// printf("Allocate : %d from %d\n", size, memoryTypeIndex);
 	AllocKey allocKey = allocatedList[memoryTypeIndex].Allocate(size, alignement);
@@ -241,7 +328,7 @@ void Renderer::MemoryAllocator::Free(AllocKey key)
     // TODO:
 }
 
-Renderer::MemoryView Renderer::MemoryAllocator::GetMemoryViewFromAllocKey(AllocKey key)
+Renderer::MemoryAllocation Renderer::MemoryAllocator::GetMemoryViewFromAllocKey(AllocKey key)
 {
 	return allocatedList[key.GetMemoryTypeIndex()].GetMemoryView(key);
 }

@@ -10,14 +10,14 @@ void Renderer::BufferDeleter::operator()(Buffer* buff)
     buff->device.GetObjectsPool().buffers.Free(buff);
 }
 
-Renderer::Buffer::Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryView& mem) :
+Renderer::Buffer::Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryAllocation& mem) :
     device(dev), bufferInfo(info), bufferMemory(mem), apiBuffer(buffer),
     ringSize(1), unitSize(info.size), bufferIndex(0)
 {
 }
 
 Renderer::Buffer::Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info,
-                         const MemoryView& mem, uint32 unitSize, uint32 ringSize) :
+                         const MemoryAllocation& mem, uint32 unitSize, uint32 ringSize) :
     device(dev), bufferInfo(info), bufferMemory(mem), apiBuffer(buffer),
     ringSize(ringSize), unitSize(unitSize), bufferIndex(0)
 {
@@ -27,7 +27,7 @@ Renderer::Buffer::~Buffer()
 {
     if (apiBuffer != VK_NULL_HANDLE) {
         device.DestroyBuffer(apiBuffer);
-        device.FreeMemory(bufferMemory.allocKey);
+        device.FreeMemory(bufferMemory);
         apiBuffer = VK_NULL_HANDLE;
     }
 }
