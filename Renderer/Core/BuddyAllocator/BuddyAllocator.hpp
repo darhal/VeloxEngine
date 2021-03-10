@@ -11,6 +11,18 @@ struct BuddyAllocator
         uint32 size;
     };
 
+    BuddyAllocator() = default;
+
+    BuddyAllocator(const BuddyAllocator& other) : minSize(other.minSize), maxSize(other.maxSize), tree(other.tree)
+    {
+
+    }
+
+    BuddyAllocator(BuddyAllocator&& other) : minSize(other.minSize), maxSize(other.maxSize), tree(std::move(other.tree))
+    {
+
+    }
+
     void Init(uint32 minSize = 256, uint32 maxSize = 4096)
     {
         this->minSize = minSize;
@@ -18,7 +30,6 @@ struct BuddyAllocator
         uint32 numBlocks = maxSize / minSize;
         tree.Init(2 * numBlocks - 1);
         uint32 currentLvl = tree.GetLevels();
-        printf("Current lvl: %d\n", currentLvl);
 
         for (uint32 l = 0; l < tree.GetNumNodes(); l++) {
             if (((l+1) & l) == 0) {

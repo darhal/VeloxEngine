@@ -31,6 +31,22 @@ namespace Renderer
     private:
         struct DeviceBuddyAllocator : public BuddyAllocator
         {
+            DeviceBuddyAllocator() = default;
+
+            DeviceBuddyAllocator(DeviceBuddyAllocator&& other) :
+                BuddyAllocator(std::move(*(BuddyAllocator*)(&other))),
+                gpuMemory(other.gpuMemory), mappedData(other.mappedData)
+            {
+
+            }
+
+            DeviceBuddyAllocator(const DeviceBuddyAllocator& other) :
+                BuddyAllocator(*(BuddyAllocator*)(&other)),
+                gpuMemory(other.gpuMemory), mappedData(other.mappedData)
+            {
+
+            }
+
             void Create(VkDevice dev, uint32 memTypeIndex, uint32 minSize, uint32 maxSize, bool map)
             {
                 VkMemoryAllocateInfo info;

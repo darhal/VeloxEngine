@@ -41,7 +41,7 @@ Renderer::MemoryAllocation Renderer::TypedMemoryAllocator::Allocate(uint32 size,
             alloc.Create(device, memoryTypeIndex, MIN_SIZE, lastMaxSize * RESIZE_FACTOR, map);
         }
 
-        printf("[mem type ind: %d] Requesting %d from %d\n", memoryTypeIndex, size + worstCasePadding, i);
+        // printf("[mem type ind: %d] Requesting %d from %d\n", memoryTypeIndex, size + worstCasePadding, i);
         allocation = allocators[i].Allocate(size + worstCasePadding);
         i++;
     }

@@ -33,7 +33,7 @@ namespace Renderer
     class Buffer : public Utils::RefCounterEnabled<Buffer, BufferDeleter, HandleCounter>
 	{
 	public:
-        friend class BufferDeleter;
+        friend struct BufferDeleter;
 
         Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryAllocation& mem);
 

@@ -10,19 +10,36 @@ struct BitmapTree
     BitmapTree() : tree(NULL), numNodes(0)
     {}
 
-    BitmapTree(BitmapTree&& tree) : tree(tree.tree), numNodes(tree.numNodes)
+    BitmapTree(const BitmapTree& other) : numNodes(other.numNodes)
     {
-        tree.tree = NULL;
+        tree = new uint8[numNodes];
+        memcpy(this->tree, other.tree, sizeof(uint8) * numNodes);
     }
 
-    BitmapTree& operator=(BitmapTree&& tree)
+    BitmapTree(BitmapTree&& other) : tree(other.tree), numNodes(other.numNodes)
     {
-        if (this->tree)
-            delete[] this->tree;
+        other.tree = NULL;
+    }
 
-        this->tree = tree.tree;
-        numNodes = tree.numNodes;
-        tree.tree = NULL;
+    BitmapTree& operator=(const BitmapTree& other)
+    {
+        if (tree)
+            delete[] tree;
+
+        numNodes = other.numNodes;
+        tree = new uint8[numNodes];
+        memcpy(tree, other.tree, sizeof(uint8) * numNodes);
+        return *this;
+    }
+
+    BitmapTree& operator=(BitmapTree&& other)
+    {
+        if (tree)
+            delete[] tree;
+
+        tree = other.tree;
+        numNodes = other.numNodes;
+        other.tree = NULL;
         return *this;
     }
 

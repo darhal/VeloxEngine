@@ -1133,7 +1133,7 @@ bool Renderer::RenderDevice::CreateBufferInternal(VkBuffer& outBuffer, MemoryAll
         uint32 memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, createInfo.domain);
         outMemoryView = gpuMemoryAllocator.Allocate(memoryTypeIndex, createInfo.size, memRequirements.alignment);
 
-        printf("[Buffer] Size: %d | offset: %d | padding: %d\n", outMemoryView.size, outMemoryView.offset - outMemoryView.padding, outMemoryView.padding);
+        // printf("[Buffer] Size: %d | offset: %d | padding: %d\n", outMemoryView.size, outMemoryView.offset - outMemoryView.padding, outMemoryView.padding);
         vkBindBufferMemory(this->GetDevice(), outBuffer, outMemoryView.memory, outMemoryView.offset);
     } else {
         outMemoryView.offset = 0;
@@ -1266,7 +1266,7 @@ Renderer::ImageHandle Renderer::RenderDevice::CreateImage(const ImageCreateInfo&
     vkGetImageMemoryRequirements(this->GetDevice(), apiImage, &memRequirements);
     uint32 memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, memUsage);
     imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, MAX(memRequirements.alignment, limits.bufferImageGranularity));
-    printf("[Image] Size: %d | offset: %d | padding: %d\n", imageMemory.size, imageMemory.offset - imageMemory.padding, imageMemory.padding);
+    // printf("[Image] Size: %d | offset: %d | padding: %d\n", imageMemory.size, imageMemory.offset - imageMemory.padding, imageMemory.padding);
     vkBindImageMemory(this->GetDevice(), apiImage, imageMemory.memory, imageMemory.offset);
 
     ImageHandle ret = ImageHandle(objectsPool.images.Allocate(*this, apiImage, createInfo, imageMemory));

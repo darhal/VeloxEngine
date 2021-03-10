@@ -1,21 +1,141 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(TrikytaEngine3D)
+cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 set(CMAKE_CXX_STANDARD 17)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+set(NAME TrikytaEngine3D)
+project(TrikytaEngine3D)
+
+
+include_directories(${PROJECT_SOURCE_DIR})
+include_directories($ENV{VULKAN_SDK}/Include)
+link_directories($ENV{VULKAN_SDK}/Lib)
+
+OPTION(USE_D2D_WSI "Build the project using Direct to Display swapchain" OFF)
+OPTION(USE_DIRECTFB_WSI "Build the project using DirectFB swapchain" OFF)
+OPTION(USE_WAYLAND_WSI "Build the project using Wayland swapchain" OFF)
+
+# Use FindVulkan module added with CMAKE 3.7
+if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
+	message(STATUS "Using module to find Vulkan")
+	find_package(Vulkan)
 endif()
 
-message("TrikytaEngine ${CMAKE_BUILD_TYPE} Build")
+IF(UNIX AND NOT APPLE)
+	set(LINUX TRUE)
+ENDIF()
+
+IF(WIN32)
+	IF (NOT Vulkan_FOUND)
+		find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan PATHS ${CMAKE_SOURCE_DIR}/libs/vulkan)
+		IF (Vulkan_LIBRARY)
+			set(Vulkan_FOUND ON)
+			MESSAGE("Using bundled Vulkan library version")
+		ENDIF()
+	ENDIF()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVK_USE_PLATFORM_WIN32_KHR")
+ELSEIF(LINUX)
+	IF (NOT Vulkan_FOUND)
+		find_library(Vulkan_LIBRARY NAMES vulkan HINTS "$ENV{VULKAN_SDK}/lib" "${CMAKE_SOURCE_DIR}/libs/vulkan" REQUIRED)
+		IF (Vulkan_LIBRARY)
+			set(Vulkan_FOUND ON)
+			MESSAGE("Using bundled Vulkan library version")
+		ENDIF()
+	ENDIF()
+	find_package(Threads REQUIRED)
+	IF(USE_D2D_WSI)
+		MESSAGE("Using direct to display extension...")
+		add_definitions(-D_DIRECT2DISPLAY)
+	ELSEIF(USE_DIRECTFB_WSI)
+		find_package(DirectFB REQUIRED)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVK_USE_PLATFORM_DIRECTFB_EXT")
+		include_directories(${DIRECTFB_INCLUDE_DIR})
+	ELSEIF(USE_WAYLAND_WSI)
+		find_program(PKG_CONFIG pkg-config)
+		if (NOT PKG_CONFIG)
+			message(FATAL_ERROR "pkg-config binary not found")
+		endif ()
+		find_package(Wayland REQUIRED)
+		if (NOT WAYLAND_FOUND)
+			message(FATAL_ERROR "Wayland development package not found")
+		endif ()
+		pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
+		if (NOT WAYLAND_PROTOCOLS_FOUND)
+			message(FATAL_ERROR "Wayland protocols package not found")
+		endif ()
+		find_program(WAYLAND_SCANNER wayland-scanner)
+		if (NOT WAYLAND_SCANNER)
+			message(FATAL_ERROR "wayland-scanner binary not found")
+		endif ()
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVK_USE_PLATFORM_WAYLAND_KHR")
+		include_directories(${WAYLAND_INCLUDE_DIR})
+		execute_process(COMMAND ${PKG_CONFIG} --variable=pkgdatadir wayland-protocols OUTPUT_VARIABLE protocol_dir OUTPUT_STRIP_TRAILING_WHITESPACE)
+		execute_process(COMMAND ${WAYLAND_SCANNER} client-header ${protocol_dir}/stable/xdg-shell/xdg-shell.xml ${CMAKE_BINARY_DIR}/xdg-shell-client-protocol.h
+				COMMAND ${WAYLAND_SCANNER} private-code ${protocol_dir}/stable/xdg-shell/xdg-shell.xml ${CMAKE_BINARY_DIR}/xdg-shell-protocol.c)
+		include_directories(${CMAKE_BINARY_DIR})
+	ELSE(USE_D2D_WSI)
+		find_package(XCB REQUIRED)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVK_USE_PLATFORM_XCB_KHR")
+	ENDIF(USE_D2D_WSI)
+ELSEIF(APPLE)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVK_USE_PLATFORM_MACOS_MVK -DVK_EXAMPLE_XCODE_GENERATED")
+	# Todo : android?
+ENDIF(WIN32)
+
+IF (NOT Vulkan_FOUND)
+	message(FATAL_ERROR "Could not find Vulkan library!")
+ELSE()
+	message(STATUS ${Vulkan_LIBRARY})
+ENDIF()
+
+# Set preprocessor defines
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX -D_USE_MATH_DEFINES")
+
+# Clang specific stuff
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch-enum")
+endif()
+
+
+# Compiler specific stuff
+IF(MSVC)
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
+ELSEIF(APPLE)
+	if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fobjc-arc -ObjC++")
+	ELSE()
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fobjc-arc -xobjective-c++")
+	ENDIF()
+ENDIF(MSVC)
+
+IF(WIN32)
+	# Nothing here (yet)
+ELSEIF(APPLE)
+	link_libraries(${Vulkan_LIBRARY} "-framework AppKit" "-framework QuartzCore")
+ELSE(WIN32)
+	link_libraries(${XCB_LIBRARIES} ${Vulkan_LIBRARY} ${Vulkan_LIBRARY} ${DIRECTFB_LIBRARIES} ${WAYLAND_CLIENT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+ENDIF(WIN32)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/build/")
+
+
+if (NOT DEFINED ${CMAKE_BUILD_TYPE})
+	set(CMAKE_BUILD_TYPE "Debug")
+	
+endif()
 
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
     # add_compile_definitions(DEBUG)
     add_definitions(-D_DEBUG=1)
+	add_definitions(-DDEBUG=1)
     remove_definitions(-DNDEBUG)
 
-    set(CMAKE_CXX_FLAGS "-g")
+    if (NOT MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+    endif()
+
     #set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
     #set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()
@@ -23,32 +143,15 @@ endif()
 if (CMAKE_BUILD_TYPE MATCHES "Release")
     add_definitions(-DNDEBUG=1)
     remove_definitions(-D_DEBUG)
+	remove_definitions(-DDEBUG)
 
     # set(CMAKE_CXX_FLAGS "-Ofast")
     # set(CMAKE_CXX_FLAGS "-g")
-    set(CMAKE_CXX_FLAGS "-O3")
+    if (NOT MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+    endif()
 endif()
 
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-message("Build flags: ${CMAKE_CXX_FLAGS}")
 
-include_directories(${PROJECT_SOURCE_DIR})
-
-file(GLOB_RECURSE RENDERER_SRC CONFIGURE_DEPENDS
-    "Renderer/*.h"
-    "Renderer/*.hpp"
-    "Renderer/*.cpp"
-    "Renderer/*.c"
-)
-
-file(GLOB_RECURSE ENGINE_SRC CONFIGURE_DEPENDS
-    "Engine/*.h"
-    "Engine/*.hpp"
-    "Engine/*.cpp"
-    "Engine/*.c"
-)
-
-add_executable(Renderer ${RENDERER_SRC})
-target_link_libraries(Renderer -lpthread -lm -lXrandr -lX11 -lvulkan)
-
-# add_executable(Engine ${ENGINE_SRC})
+add_subdirectory(Engine)
+add_subdirectory(Renderer)

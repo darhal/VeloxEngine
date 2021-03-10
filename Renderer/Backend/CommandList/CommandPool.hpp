@@ -26,7 +26,7 @@ namespace Renderer
             CMD_BUFF_RESET = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
         };
 
-        friend class CommandPoolDeleter;
+        friend struct CommandPoolDeleter;
 
         CommandPool() : device(NULL), pool(VK_NULL_HANDLE) {};
 

@@ -49,7 +49,8 @@ namespace Renderer
 		VkDeviceSize alignedSize = 0;
         memory = renderDevice.CreateBufferMemory(info, stagingBuffers[0].apiBuffer, &alignedSize, NUM_STAGES);
         vkMapMemory(device, memory, 0, alignedSize * NUM_STAGES, 0, reinterpret_cast<void**>(&mappedData));
-        commandPool = renderDevice.RequestCommandPool(QueueFamilyFlag::TRANSFER, CommandPool::CMD_BUFF_RESET);
+		// TODO: figure out how to fix this thing blit requires graphic while we should use async transfer
+        commandPool = renderDevice.RequestCommandPool(QueueFamilyFlag::GENERIC, CommandPool::CMD_BUFF_RESET);
 
         for (uint i = 0; i < NUM_STAGES; i++) {
             vkBindBufferMemory(device, stagingBuffers[i].apiBuffer, memory, i * alignedSize);
@@ -113,9 +114,9 @@ namespace Renderer
         // printf("FLUSH %d | CMD: %d\n", currentBuffer, frameCounter);
         //SemaphoreHandle wait = renderDevice.GetImageAcquiredSemaphore();
         SemaphoreHandle* signal[] = { &stage->timelineSemaphore };
-        renderDevice.Submit(CommandBuffer::Type::ASYNC_TRANSFER, GetCurrentCmd(), NULL, 1, signal, 1);
+        renderDevice.Submit(CommandBuffer::Type::GENERIC, GetCurrentCmd(), NULL, 1, signal, 1);
         //renderDevice.AddWaitSemapore(CommandBuffer::ASYNC_TRANSFER, wait, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-        renderDevice.FlushQueue(CommandBuffer::Type::ASYNC_TRANSFER);
+        renderDevice.FlushQueue(CommandBuffer::Type::GENERIC);
         stage->submitted = true;
         currentBuffer = (currentBuffer + 1) % NUM_STAGES;
         return true;

@@ -34,7 +34,7 @@ Renderer::Buffer::~Buffer()
 
 void Renderer::Buffer::WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset, VkDeviceSize alignement)
 {
-	ASSERTF(!data || !bufferMemory.mappedData, "Can't write to a buffer that have its memory unmapped (or data is NULL)");
+	ASSERTF(!data, "Can't write to a buffer that have its memory unmapped (or data is NULL)");
 
     if (bufferInfo.domain == MemoryUsage::CPU_ONLY || bufferInfo.domain == MemoryUsage::CPU_CACHED || bufferInfo.domain == MemoryUsage::CPU_COHERENT) {
         void* bufferData = (uint8*)bufferMemory.mappedData + bufferMemory.offset + offset;
@@ -52,7 +52,7 @@ void Renderer::Buffer::WriteToBuffer(VkDeviceSize size, const void* data, VkDevi
 
 void Renderer::Buffer::WriteToRing(VkDeviceSize size, const void* data, VkDeviceSize offset, VkDeviceSize alignement)
 {
-    ASSERTF(!data || !bufferMemory.mappedData, "Can't write to a buffer that have its memory unmapped (or data is NULL)");
+    ASSERTF(!data, "Can't write to a buffer that have its memory unmapped (or data is NULL)");
 
     if (bufferInfo.domain == MemoryUsage::CPU_ONLY || bufferInfo.domain == MemoryUsage::CPU_CACHED || bufferInfo.domain == MemoryUsage::CPU_COHERENT) {
         bufferIndex = (bufferIndex + 1) % ringSize;
