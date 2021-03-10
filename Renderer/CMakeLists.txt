@@ -4,6 +4,8 @@ SET(MODULE_NAME Renderer)
 SET(MODULE_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
 message(STATUS "Generating project file for example in ${MODULE_FOLDER}")
 
+include_directories(${MODULE_FOLDER})
+
 # Sources
 file(GLOB_RECURSE SOURCE CONFIGURE_DEPENDS
     "*.h"
