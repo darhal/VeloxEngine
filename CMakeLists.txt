@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(NAME TrikytaEngine3D)
 project(TrikytaEngine3D)
 
-
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories($ENV{VULKAN_SDK}/Include)
 link_directories($ENV{VULKAN_SDK}/Lib)
@@ -120,11 +119,9 @@ ENDIF(WIN32)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/build/")
 
-
-if (NOT DEFINED ${CMAKE_BUILD_TYPE})
-	set(CMAKE_BUILD_TYPE "Debug")
-	
-endif()
+# if (NOT DEFINED ${CMAKE_BUILD_TYPE})
+# 	set(CMAKE_BUILD_TYPE "Debug")
+# endif()
 
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
     # add_compile_definitions(DEBUG)
@@ -132,10 +129,13 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug")
 	add_definitions(-DDEBUG=1)
     remove_definitions(-DNDEBUG)
 
-    if (NOT MSVC)
+    if (MSVC)
+		# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Od /Zi /DEBUG:FULL")
+	else(MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
     endif()
 
+	# message("Debug buildddd")
     #set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
     #set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()
@@ -147,9 +147,13 @@ if (CMAKE_BUILD_TYPE MATCHES "Release")
 
     # set(CMAKE_CXX_FLAGS "-Ofast")
     # set(CMAKE_CXX_FLAGS "-g")
-    if (NOT MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+    if (MSVC)
+        # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Oxyib")
+	else(MSVC)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     endif()
+
+	# message("Release buildddd a")
 endif()
 
 

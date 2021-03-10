@@ -139,9 +139,8 @@ int raster(RenderBackend& backend)
 {
     INIT_BENCHMARK
 
-    auto& window = *backend.GetRenderContext().GetWindow();
     Event ev;
-
+    auto& window = *backend.GetRenderContext().GetWindow();
     RenderDevice& dev = backend.GetRenderDevice();
 
     /*if (backend.GetMSAASamplerCount() == 1) {
@@ -171,7 +170,7 @@ int raster(RenderBackend& backend)
         vertecies[i].normal = glm::vec3{ g_normal_buffer_data[i * 3], g_normal_buffer_data[i * 3 + 1], g_normal_buffer_data[i * 3 + 2] };
     }
 
-    BufferHandle vertexIndexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::VERTEX_BUFFER }, vertecies);
+    BufferHandle vertexIndexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::VERTEX_BUFFER, MemoryUsage::GPU_ONLY }, vertecies);
     // BufferHandle cpuVertexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::TRANSFER_SRC, MemoryUsage::CPU_ONLY }, vertecies);
 
     glm::vec4 lightInfo[] = { glm::vec4(1.f, 0.5f, 0.5f, 0.f), glm::vec4(1.f, 1.f, 1.f, 0.f) };

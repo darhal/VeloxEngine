@@ -208,7 +208,7 @@ int rt(RenderBackend& backend)
         auto tEnd = std::chrono::high_resolution_clock::now();
         auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
         deltaTime = (float)tDiff / 1000.0f; // seconds
-        printFPS(tDiff);
+        printFPS((float)tDiff);
     }
 
 #if !defined(CUBE)

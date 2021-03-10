@@ -1,3 +1,4 @@
+#pragma once
 
 #define BUILD_EXEC
 #define COMPILE_DLL

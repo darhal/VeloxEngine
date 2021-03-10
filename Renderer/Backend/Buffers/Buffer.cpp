@@ -12,7 +12,7 @@ void Renderer::BufferDeleter::operator()(Buffer* buff)
 
 Renderer::Buffer::Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryAllocation& mem) :
     device(dev), bufferInfo(info), bufferMemory(mem), apiBuffer(buffer),
-    ringSize(1), unitSize(info.size), bufferIndex(0)
+    ringSize(1), unitSize((uint32)info.size), bufferIndex(0)
 {
 }
 

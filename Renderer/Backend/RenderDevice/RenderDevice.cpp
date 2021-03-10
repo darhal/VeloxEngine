@@ -651,9 +651,9 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
 
     struct SubmitDataOffsets
     {
-        uint64 commandBufferOffset   = 0;
-        uint64 waitSemaphoreOffset   = 0;
-        uint64 signalSemaphoreOffset = 0;
+        uint32 commandBufferOffset   = 0;
+        uint32 waitSemaphoreOffset   = 0;
+        uint32 signalSemaphoreOffset = 0;
     } offsets, oldOffsets;
 
     StaticVector<VkSubmitInfo>      submits;
@@ -1548,7 +1548,7 @@ void Renderer::RenderDevice::DestroyPendingObjects(PerFrame& frame)
     VkDevice dev = this->GetDevice();
 
     for (const auto& kv : frame.destroyedCmdBuffers)
-        vkFreeCommandBuffers(dev, kv.first, kv.second.size(), kv.second.data());
+        vkFreeCommandBuffers(dev, kv.first, (uint32)kv.second.size(), kv.second.data());
 
     for (auto pool : frame.destroyedCmdPools)
         vkDestroyCommandPool(dev, pool, NULL);

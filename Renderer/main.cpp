@@ -1,6 +1,6 @@
 #include "pch.hpp"
 
-#if not defined(BUILD_EXEC)
+#if !defined(BUILD_EXEC)
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,

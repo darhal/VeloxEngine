@@ -28,9 +28,9 @@ void Renderer::TypedMemoryAllocator::Destroy()
     }
 }
 
-Renderer::MemoryAllocation Renderer::TypedMemoryAllocator::Allocate(uint32 size, uint32 alignement)
+Renderer::MemoryAllocation Renderer::TypedMemoryAllocator::Allocate(uint64 size, uint64 alignement)
 {
-    uint32 worstCasePadding = (~MIN_SIZE + 1) & (alignement - 1);
+	uint64 worstCasePadding = (~MIN_SIZE + 1) & (alignement - 1);
     uint32 i = 0;
     BuddyAllocator::Allocation allocation = { UINT32_MAX, UINT32_MAX };
 
@@ -60,7 +60,7 @@ Renderer::MemoryAllocation Renderer::TypedMemoryAllocator::Allocate(uint32 size,
 
 void Renderer::TypedMemoryAllocator::Free(const MemoryAllocation& allocation)
 {
-    BuddyAllocator::Allocation alloc = { (uint32)(allocation.offset - allocation.padding), (uint32)allocation.size };
+    BuddyAllocator::Allocation alloc = { allocation.offset - allocation.padding, allocation.size };
     allocators[allocation.allocKey >> 16].Free(alloc);
 }
 
@@ -88,7 +88,7 @@ void Renderer::MemoryAllocator2::Destroy()
     }
 }
 
-Renderer::MemoryAllocation Renderer::MemoryAllocator2::Allocate(uint32 indexType, uint32 size, uint32 alignement)
+Renderer::MemoryAllocation Renderer::MemoryAllocator2::Allocate(uint32 indexType, uint64 size, uint64 alignement)
 {
     return allocators[indexType].Allocate(size, alignement);
 }

@@ -36,5 +36,3 @@ else(WIN32)
 endif(WIN32)
 
 set_target_properties(${MODULE_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${MODULE_FOLDER})
-
-message("debugger wd a: ${MODULE_FOLDER}")

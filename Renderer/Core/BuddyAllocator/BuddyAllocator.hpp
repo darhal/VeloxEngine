@@ -7,8 +7,8 @@ struct BuddyAllocator
 {
     struct Allocation
     {
-        uint32 offset;
-        uint32 size;
+        uint64 offset;
+        uint64 size;
     };
 
     BuddyAllocator() = default;
@@ -40,12 +40,12 @@ struct BuddyAllocator
         }
     }
 
-    Allocation Allocate(uint32 size)
+    Allocation Allocate(uint64 size)
     {
         uint32 currentNode = 0;
         uint32 offset = 0;
-        uint32 realSize = Math::NextPow2(size);
-        uint32 level = Math::Log2OfPow2(realSize / minSize) + 1;
+        uint64 realSize = Math::NextPow2(size);
+        uint64 level = Math::Log2OfPow2((uint32)realSize / minSize) + 1;
         uint32 availSize = maxSize;
         // printf("[max: %d|min:%d] Real size: %d | Searching for level: %d\n", maxSize, minSize, realSize, level);
 
@@ -82,11 +82,11 @@ struct BuddyAllocator
     void Free(const Allocation& alloc)
     {
         uint32 currentNode = 0;
-        uint32 realSize = Math::NextPow2(alloc.size);
-        uint32 level = Math::Log2OfPow2(realSize / minSize) + 1;
+        uint64 realSize = Math::NextPow2(alloc.size);
+        uint32 level = Math::Log2OfPow2((uint32)realSize / minSize) + 1;
         uint8 currentLevel = tree.GetLevels();
         uint32 currentSize = maxSize >> 1;
-        uint32 currentOffset = currentSize;
+        uint64 currentOffset = currentSize;
 
         while (currentLevel != level) { // condition on level or offset (I think both are equivalent)
             currentSize >>= 1;

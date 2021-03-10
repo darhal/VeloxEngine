@@ -22,7 +22,7 @@ namespace Renderer
             TIMELINE,
         };
 
-        Semaphore(RenderDevice& device, VkSemaphore semaphore, uint32 initialValue = 0) :
+        Semaphore(RenderDevice& device, VkSemaphore semaphore, uint64 initialValue = 0) :
             device(device), semaphore(semaphore), initialValue(initialValue),
             tempValue(initialValue), clean(true)
         {};

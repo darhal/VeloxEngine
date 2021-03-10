@@ -82,7 +82,7 @@ namespace Renderer
 
         void Destroy();
 
-        MemoryAllocation Allocate(uint32 size, uint32 alignement);
+        MemoryAllocation Allocate(uint64 size, uint64 alignement);
 
         void Free(const MemoryAllocation& allocation);
 
@@ -102,7 +102,7 @@ namespace Renderer
 
         void Destroy();
 
-        MemoryAllocation Allocate(uint32 indexType, uint32 size, uint32 alignement = 1);
+        MemoryAllocation Allocate(uint32 indexType, uint64 size, uint64 alignement = 1);
 
         void Free(const MemoryAllocation& alloc);
     private:
