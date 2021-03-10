@@ -184,6 +184,12 @@ namespace Renderer
 
         CommandBufferHandle RequestCommandBuffer(CommandBuffer::Type type = CommandBuffer::Type::GENERIC);
 
+        PerFrame::Submission& CreateNewSubmission(CommandBuffer::Type type);
+
+        void Submit(PerFrame::Submission& sub, CommandBuffer::Type type, CommandBufferHandle cmd, FenceHandle* fence = NULL,
+                    uint32 semaphoreCount = 0, SemaphoreHandle** semaphores = NULL, uint32 signalValuesCount = 0,
+                    const uint64* signalValues = NULL);
+
         void Submit(CommandBuffer::Type type, CommandBufferHandle cmd, FenceHandle* fence = NULL, uint32 semaphoreCount = 0,
                     SemaphoreHandle** semaphores = NULL, uint32 signalValuesCount = 0, const uint64* signalValues = NULL);
 

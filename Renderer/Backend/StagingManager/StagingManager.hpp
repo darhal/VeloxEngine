@@ -106,9 +106,11 @@ namespace Renderer
 	private:
         StagingBuffer   stagingBuffers[NUM_STAGES];
         CommandBufferHandle transferCmdBuff[NUM_CMDS];
+        CommandBufferHandle blitterCmdBuff[NUM_CMDS];
 		uint8*		    mappedData;
 		VkDeviceMemory	memory;
         CommandPoolHandle commandPool;
+        CommandPoolHandle blitterCommandPool;
         uint32			currentBuffer;
         uint32          frameCounter;
 		

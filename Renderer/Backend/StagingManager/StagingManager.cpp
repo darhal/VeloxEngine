@@ -51,6 +51,7 @@ namespace Renderer
         vkMapMemory(device, memory, 0, alignedSize * NUM_STAGES, 0, reinterpret_cast<void**>(&mappedData));
 		// TODO: figure out how to fix this thing blit requires graphic while we should use async transfer
         commandPool = renderDevice.RequestCommandPool(QueueFamilyFlag::GENERIC, CommandPool::CMD_BUFF_RESET);
+        blitterCommandPool = renderDevice.RequestCommandPool(QueueFamilyFlag::GENERIC, CommandPool::CMD_BUFF_RESET);
 
         for (uint i = 0; i < NUM_STAGES; i++) {
             vkBindBufferMemory(device, stagingBuffers[i].apiBuffer, memory, i * alignedSize);
@@ -62,6 +63,7 @@ namespace Renderer
 
         for (uint i = 0; i < NUM_CMDS; i++){
             transferCmdBuff[i] = commandPool->RequestCommandBuffer();
+            blitterCmdBuff[i] = blitterCommandPool->RequestCommandBuffer();
         }
 	}
 

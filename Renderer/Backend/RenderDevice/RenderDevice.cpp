@@ -560,16 +560,28 @@ void Renderer::RenderDevice::Submit(CommandBufferHandle cmd, FenceHandle* fence,
     this->Submit(cmd->GetType(), cmd, fence, semaphoreCount, semaphores, signalValuesCount, signalValues);
 }
 
-void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer::CommandBufferHandle cmd, Renderer::FenceHandle* fence,
-                                    uint32 semaphoreCount, Renderer::SemaphoreHandle** semaphores, uint32 signalValuesCount,
-                                    const uint64* signalValues)
+Renderer::RenderDevice::PerFrame::Submission& Renderer::RenderDevice::CreateNewSubmission(Renderer::CommandBuffer::Type type)
+{
+    auto& submissions = this->GetQueueSubmissions(type);
+    auto& sub = submissions.EmplaceBack();
+
+    // Inject a semaphore to wait for transfer stage. We gurantee that all of the transfers done before begin frame are finished.
+    if (type != CommandBuffer::Type::ASYNC_TRANSFER && stagingFlush) { // Only added when there is a new submission
+        // printf("Injecting wait sempahore - ");
+        this->AddWaitTimelineSemapore(type, stagingManager.GetTimelineSemaphore(), VK_PIPELINE_STAGE_TRANSFER_BIT);
+    }
+
+    return sub;
+}
+
+void Renderer::RenderDevice::Submit(PerFrame::Submission& sub, CommandBuffer::Type type, CommandBufferHandle cmd,
+                                    FenceHandle* fence, uint32 semaphoreCount, SemaphoreHandle** semaphores,
+                                    uint32 signalValuesCount, const uint64* signalValues)
 {
     cmd->End();
-    auto& submissions = this->GetQueueSubmissions(type);
 
     if (fence || semaphoreCount) {
-        PerFrame::Submission& submission = submissions.EmplaceBack();
-        submission.commands.PushBack(cmd);
+        sub.commands.PushBack(cmd);
         uint32 timelineSemaCount = 0;
 
         // Inject a semaphore to wait for transfer stage. We gurantee that all of the transfers done before begin frame are finished.
@@ -595,34 +607,39 @@ void Renderer::RenderDevice::Submit(Renderer::CommandBuffer::Type type, Renderer
 
             if (signalValuesCount && sem->GetType() == Semaphore::TIMELINE) { // semaphores are mixed
                 if (!signalValues){ // automaticaly determine the counter of the semaphore
-                    submission.timelineSemaSignal.PushBack(sem->IncrementTempValue());
+                    sub.timelineSemaSignal.PushBack(sem->IncrementTempValue());
                 }else{ // if semaphore counter is defined by user
                     sem->tempValue = signalValues[timelineSemaCount];
-                    submission.timelineSemaSignal.PushBack(signalValues[timelineSemaCount]);
+                    sub.timelineSemaSignal.PushBack(signalValues[timelineSemaCount]);
                 }
 
                 timelineSemaCount++;
             }
 
-            submission.signalSemaphores.EmplaceBack(sem);
+            sub.signalSemaphores.EmplaceBack(sem);
         }
 
-        submission.fence = fence;
+        sub.fence = fence;
     }else{
-        if (!submissions.Size()) {
-            submissions.EmplaceBack();
-
-            // Inject a semaphore to wait for transfer stage. We gurantee that all of the transfers done before begin frame are finished.
-            if (type != CommandBuffer::Type::ASYNC_TRANSFER && stagingFlush) { // Only added when there is a new submission
-                // printf("Injecting wait sempahore - ");
-                this->AddWaitTimelineSemapore(type, stagingManager.GetTimelineSemaphore(), VK_PIPELINE_STAGE_TRANSFER_BIT);
-            }
-        }
-
-        PerFrame::Submission& submission = submissions.Back();
-        submission.commands.PushBack(cmd);
+        sub.commands.PushBack(cmd);
     }
 }
+
+void Renderer::RenderDevice::Submit(CommandBuffer::Type type, CommandBufferHandle cmd, FenceHandle* fence,
+                                    uint32 semaphoreCount, SemaphoreHandle** semaphores, uint32 signalValuesCount,
+                                    const uint64* signalValues)
+{
+    auto& submissions = this->GetQueueSubmissions(type);
+
+    if (!submissions.Size()) {
+        auto& sub = this->CreateNewSubmission(type);
+        this->Submit(sub, type, cmd, fence, semaphoreCount, semaphores, signalValuesCount, signalValues);
+    }else{
+        auto& sub = submissions.Back();
+        this->Submit(sub, type, cmd, fence, semaphoreCount, semaphores, signalValuesCount, signalValues);
+    }
+}
+
 
 void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSwapchainSwap)
 {

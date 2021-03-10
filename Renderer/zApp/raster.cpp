@@ -227,8 +227,6 @@ int raster(RenderBackend& backend)
     // TODO: shader specilization constants
     // timeline = dev.RequestTimelineSemaphore();
 
-    //getchar();
-
     dev.GetStagingManager().Flush();
     dev.GetStagingManager().WaitPrevious();
 
