@@ -5,6 +5,7 @@
 *
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
+#pragma once
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -29,7 +30,6 @@ const float PITCH = 0.0f;
 const float SPEED = 1.f;
 const float SENSITIVITY = 0.5f;
 const float ZOOM = 45.0f;
-
 
 // An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
 class Camera

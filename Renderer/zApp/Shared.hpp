@@ -19,6 +19,7 @@
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 #include <Renderer/Backend/CommandList/CommandList.hpp>
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
+#include "Camera.hpp"
 
 const unsigned int SCR_WIDTH = 640; //1920 / 2;
 const unsigned int SCR_HEIGHT = 480; //1080 / 2;
@@ -90,3 +91,77 @@ static void printFPS(float dt = 0.f)
     }
 }
 
+
+static float lastX = (float)SCR_WIDTH / 2.0;
+static float lastY = (float)SCR_HEIGHT / 2.0;
+static bool firstMouse = true;
+static bool start = false;
+static int32 speed = 4;
+static bool disableCamera = false;
+static float deltaTime = 0.01f;
+
+static bool HandleCameraEvent(Camera& camera, TRE::Event& e)
+{
+    bool updated = false;
+
+    if (disableCamera)
+        return updated;
+
+    if (e.Type == Event::TE_KEY_DOWN) {
+        switch (e.Key.Code) {
+        case Key::Up:
+            speed += 1;
+            printf("Changing camera speed to %d\n", speed);
+            break;
+        case Key::Down:
+            speed -= 1;
+            printf("Changing camera speed to %d\n", speed);
+            break;
+        case Key::Space:
+            start = !start;
+            deltaTime = 0;
+            break;
+        case Key::Z:
+            camera.ProcessKeyboard(FORWARD, speed * deltaTime);
+            updated = true;
+            break;
+        case Key::S:
+            camera.ProcessKeyboard(BACKWARD, speed * deltaTime);
+            updated = true;
+            break;
+        case Key::Q:
+            camera.ProcessKeyboard(LEFT, speed * deltaTime);
+            updated = true;
+            break;
+        case Key::D:
+            camera.ProcessKeyboard(RIGHT, speed * deltaTime);
+            updated = true;
+            break;
+        case Key::Escape:
+            disableCamera = !disableCamera;
+        default:
+            break;
+        }
+    } else if (e.Type == Event::TE_MOUSE_MOVE) {
+        float xpos = (float)e.Mouse.X;
+        float ypos = (float)e.Mouse.Y;
+
+        if (firstMouse) {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
+        }
+
+        float xoffset = xpos - lastX;
+        float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+        lastX = xpos;
+        lastY = ypos;
+
+        camera.ProcessMouseMovement(xoffset, yoffset);
+
+        updated = true;
+    }
+
+    return updated;
+}

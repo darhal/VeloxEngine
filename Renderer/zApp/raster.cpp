@@ -10,6 +10,7 @@
 #include <Renderer/Backend/Pipeline/Pipeline.hpp>
 #include <Renderer/Backend/Common/Utils.hpp>
 #include <Renderer/Misc/Color/Color.hpp>
+#include "Camera.hpp"
 #include "cube.hpp"
 
 #include "Shared.hpp"
@@ -37,13 +38,12 @@ using namespace TRE;
 
 #define CUBE
 
-void updateMVP(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::BufferHandle buffer, const glm::vec3& pos)
+void updateMVP(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::BufferHandle buffer, const glm::vec3& pos, Camera& cam)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-    const TRE::Renderer::Swapchain::SwapchainData& swapchainData = dev.GetRenderContext()->GetSwapchain().GetSwapchainData();
+    // const TRE::Renderer::Swapchain::SwapchainData& swapchainData = dev.GetRenderContext()->GetSwapchain().GetSwapchainData();
 
     MVP mvp{};
 
@@ -53,10 +53,13 @@ void updateMVP(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::BufferHand
     mvp.model = glm::translate(mvp.model, pos);
     mvp.model = glm::rotate(mvp.model, time * TRE::Math::ToRad(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-    mvp.view = glm::lookAt(glm::vec3(1.0f, 1.0f, 0.7f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    /*mvp.view = glm::lookAt(glm::vec3(1.0f, 1.0f, 0.7f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     mvp.proj = glm::perspective<float>(TRE::Math::ToRad(45.0f), swapchainData.swapChainExtent.width / (float)swapchainData.swapChainExtent.height, 0.1f, 10.f);
     // mvp.proj    = glm::ortho(0, 1, 0, 1, 0, 1);
-    mvp.proj[1][1] *= -1;
+    mvp.proj[1][1] *= -1;*/
+
+    mvp.view = cam.GetViewMatrix();
+    mvp.proj = cam.GetPrespective();
 
     mvp.viewPos = glm::vec3(1.0f, 1.0f, 0.7f);
 
@@ -73,13 +76,13 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
                  const TRE::Renderer::BufferHandle uniformBuffer,
                  const TRE::Renderer::ImageViewHandle texture,
                  const TRE::Renderer::SamplerHandle sampler,
-                 const TRE::Renderer::BufferHandle lightBuffer)
+                 const TRE::Renderer::BufferHandle lightBuffer, Camera& cam)
 {
     using namespace TRE::Renderer;
 
     CommandBufferHandle cmd = dev.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
 
-    updateMVP(dev, uniformBuffer);
+    updateMVP(dev, uniformBuffer, glm::vec3(), cam);
 
     cmd->BindShaderProgram(program);
     cmd->SetGraphicsState(state);
@@ -197,6 +200,8 @@ int raster(RenderBackend& backend)
     SamplerHandle sampler = dev.CreateSampler(SamplerInfo::Sampler2D(texture));
     free(pixels);
 
+    Camera camera;
+    camera.SetPrespective(60.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 512.0f, true);
     BufferHandle uniformBuffer = dev.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), NULL, 3);
     GraphicsState state;
     // state.GetRasterizationState().polygonMode = VK_POLYGON_MODE_LINE;
@@ -220,7 +225,7 @@ int raster(RenderBackend& backend)
     );
     program.Compile();
 
-    updateMVP(dev, uniformBuffer);
+    updateMVP(dev, uniformBuffer, glm::vec3(), camera);
 
     time_t lasttime = time(NULL);
     // TODO: shader specilization constants
@@ -230,7 +235,12 @@ int raster(RenderBackend& backend)
     dev.GetStagingManager().WaitPrevious();
 
     while (window.isOpen()) {
+        auto tStart = std::chrono::high_resolution_clock::now();
         window.getEvent(ev);
+
+        if (HandleCameraEvent(camera, ev)) {
+            updateMVP(dev, uniformBuffer, glm::vec3(), camera);
+        }
 
         if (ev.Type == TRE::Event::TE_RESIZE) {
             // printf("Event resize\n");
@@ -259,9 +269,13 @@ int raster(RenderBackend& backend)
         //}
 
         backend.BeginFrame();
-        RenderFrame(dev, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer);
+        RenderFrame(dev, program, state, vertexIndexBuffer, uniformBuffer, textureView, sampler, lightBuffer, camera);
         backend.EndFrame();
-        printFPS();
+
+        auto tEnd = std::chrono::high_resolution_clock::now();
+        auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
+        deltaTime = (float)tDiff / 1000.0f; // seconds
+        printFPS((float)tDiff);
     }
 
 #if !defined(CUBE)

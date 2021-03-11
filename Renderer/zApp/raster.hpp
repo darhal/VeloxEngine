@@ -17,6 +17,8 @@
 
 #include "Shared.hpp"
 
+class Camera;
+
 struct MVP
 {
     glm::mat4 model;
@@ -25,9 +27,7 @@ struct MVP
     glm::vec3 viewPos;
 };
 
-void updateMVP(const TRE::Renderer::RenderDevice& dev,
-    TRE::Renderer::BufferHandle buffer,
-    const glm::vec3& pos = glm::vec3(-0.f, -0.f, 0.f));
+void updateMVP(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::BufferHandle buffer, const glm::vec3& pos, Camera& cam);
 
 void RenderFrame(TRE::Renderer::RenderDevice& dev,
     const TRE::Renderer::ShaderProgram& program,
@@ -37,7 +37,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     const TRE::Renderer::BufferHandle uniformBuffer,
     const TRE::Renderer::ImageViewHandle texture,
     const TRE::Renderer::SamplerHandle sampler,
-    const TRE::Renderer::BufferHandle lightBuffer);
+    const TRE::Renderer::BufferHandle lightBuffer, Camera& cam);
 
 
 int raster(TRE::Renderer::RenderBackend& backend);

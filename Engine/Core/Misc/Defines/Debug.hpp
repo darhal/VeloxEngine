@@ -20,7 +20,7 @@
 #endif
 
 	#if defined(OS_WINDOWS) && (CPU_ARCH == CPU_ARCH_x86_64 || CPU_ARCH == CPU_ARCH_x86)
-        #include <intrin.h>
+        //#include <intrin.h>
 		#define DEBUG_BREAK() __debugbreak() 
 	#elif defined(OS_UNIX) || defined(OS_LINUX) && not defined(COMPILER_GCC)
 		#include <signal.h>
