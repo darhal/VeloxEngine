@@ -40,9 +40,9 @@ namespace Renderer
 
 		void Shutdown();
 
-        void Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment = 0, DeviceSize offset = 0);
+        void Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment = 1, DeviceSize offset = 0);
 
-        void Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment = 0);
+        void Stage(Image& dstImage, const void* data, const DeviceSize size, const DeviceSize alignment = 1);
 
 		void* Stage(const DeviceSize size, const DeviceSize alignment, VkCommandBuffer& commandBuffer, VkBuffer& buffer, DeviceSize& bufferOffset);
 

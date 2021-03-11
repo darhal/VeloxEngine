@@ -13,12 +13,12 @@ struct BuddyAllocator
 
     BuddyAllocator() = default;
 
-    BuddyAllocator(const BuddyAllocator& other) : minSize(other.minSize), maxSize(other.maxSize), tree(other.tree)
+    BuddyAllocator(const BuddyAllocator& other) noexcept : minSize(other.minSize), maxSize(other.maxSize), tree(other.tree)
     {
 
     }
 
-    BuddyAllocator(BuddyAllocator&& other) : minSize(other.minSize), maxSize(other.maxSize), tree(std::move(other.tree))
+    BuddyAllocator(BuddyAllocator&& other) noexcept : minSize(other.minSize), maxSize(other.maxSize), tree(std::move(other.tree))
     {
 
     }

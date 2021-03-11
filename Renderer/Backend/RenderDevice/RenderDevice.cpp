@@ -1181,7 +1181,7 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateBuffer(const BufferInfo& cr
         if (createInfo.domain == MemoryUsage::CPU_ONLY || createInfo.domain == MemoryUsage::CPU_CACHED || createInfo.domain == MemoryUsage::CPU_COHERENT) {
             ret->WriteToBuffer(createInfo.size, data);
         } else {
-            stagingManager.Stage(ret->apiBuffer, data, createInfo.size, bufferMemory.alignment);
+            stagingManager.Stage(ret->apiBuffer, data, createInfo.size, 1);
         }
     }
 

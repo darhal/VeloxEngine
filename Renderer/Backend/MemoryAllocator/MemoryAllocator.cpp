@@ -54,7 +54,7 @@ Renderer::MemoryAllocation Renderer::TypedMemoryAllocator::Allocate(uint64 size,
     alloc.size       = (VkDeviceSize)allocation.size;
     alloc.alignment = alignement;
     alloc.mappedData = allocators[i - 1].mappedData;
-    alloc.allocKey   = i << 16 | memoryTypeIndex;
+    alloc.allocKey   = (i - 1) << 16 | memoryTypeIndex;
     return alloc;
 }
 
@@ -95,7 +95,7 @@ Renderer::MemoryAllocation Renderer::MemoryAllocator2::Allocate(uint32 indexType
 
 void Renderer::MemoryAllocator2::Free(const MemoryAllocation& alloc)
 {
-    allocators[alloc.allocKey & ((1 << 16) - 1)].Free(alloc);
+    allocators[alloc.allocKey >> 16].Free(alloc);
 }
 
 

@@ -174,7 +174,6 @@ namespace Renderer
         return this->ResetStage(this->GetStage(i));
     }
 
-
 	void StagingManager::Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment, const DeviceSize offset)
 	{
 		if (size > MAX_UPLOAD_BUFFER_SIZE) {
@@ -183,7 +182,7 @@ namespace Renderer
 
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
 		DeviceSize newOffset = stage->offset + size;
-		DeviceSize padding = alignment ? (alignment - (newOffset % alignment)) % alignment : 0;
+		DeviceSize padding = (alignment - (newOffset % alignment)) % alignment;
 		stage->offset += padding;
 
         if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {
@@ -213,7 +212,7 @@ namespace Renderer
 
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
 		DeviceSize offset = stage->offset + size;
-		DeviceSize padding = alignment ? (alignment - (offset % alignment)) % alignment : 0;
+		DeviceSize padding = (alignment - (offset % alignment)) % alignment;
 		stage->offset += padding;
 
 		if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {

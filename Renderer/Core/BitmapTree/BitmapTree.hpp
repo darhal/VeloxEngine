@@ -16,7 +16,7 @@ struct BitmapTree
         memcpy(this->tree, other.tree, sizeof(uint8) * numNodes);
     }
 
-    BitmapTree(BitmapTree&& other) : tree(other.tree), numNodes(other.numNodes)
+    BitmapTree(BitmapTree&& other) noexcept : tree(other.tree), numNodes(other.numNodes)
     {
         other.tree = NULL;
     }
@@ -32,7 +32,7 @@ struct BitmapTree
         return *this;
     }
 
-    BitmapTree& operator=(BitmapTree&& other)
+    BitmapTree& operator=(BitmapTree&& other) noexcept
     {
         if (tree)
             delete[] tree;
