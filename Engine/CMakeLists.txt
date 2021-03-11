@@ -14,11 +14,16 @@ file(GLOB_RECURSE SOURCE CONFIGURE_DEPENDS
     "*.c"
 )
 
+foreach(_source IN ITEMS ${SOURCE})
+    get_filename_component(_source_path "${_source}" PATH)
+    string(REPLACE "${MODULE_FOLDER}" "" _group_path "${_source_path}")
+    source_group("${_group_path}" FILES "${_source}")
+endforeach()
+
 # wayland requires additional source files
 IF(USE_WAYLAND_WSI)
 	SET(SOURCE ${SOURCE} ${CMAKE_BINARY_DIR}/xdg-shell-client-protocol.h ${CMAKE_BINARY_DIR}/xdg-shell-protocol.c)
 ENDIF()
-
 
 if(WIN32)
     add_executable(${MODULE_NAME} ${SOURCE})
