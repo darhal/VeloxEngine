@@ -280,7 +280,7 @@ void Renderer::AsBuilder::BuildBlasBatch(bool compact)
 				VK_QUERY_TYPE_ACCELERATION_STRUCTURE_COMPACTED_SIZE_KHR, batch.queryPool, (uint32)i);
 		}
 
-		// vkEndCommandBuffer(info.cmd);
+		vkEndCommandBuffer(info.cmd);
 		commands[i] = info.cmd;
 	}
 

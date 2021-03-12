@@ -40,12 +40,13 @@ int main()
 
     TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
     RenderBackend backend{ &window };
-    backend.InitInstance();
     // backend.SetSamplerCount(2);
 
 #ifdef RASTER
+    backend.InitInstance();
     raster(backend);
 #else
+    backend.InitInstance(Features::RAY_TRACING);
     rt(backend);
 #endif
 }

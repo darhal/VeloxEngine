@@ -246,6 +246,9 @@ int raster(RenderBackend& backend)
             // printf("Event resize\n");
             // backend.GetRenderContext().GetSwapchain().QueueSwapchainUpdate();
             // continue;
+
+            const auto& currExtent = dev.GetRenderContext()->GetSwapchain().GetSwapchainData().swapChainExtent;
+            camera.SetPrespective(60.0f, (float)currExtent.width / (float)currExtent.height, 0.1f, 512.0f, true);
         } else if (ev.Type == TRE::Event::TE_KEY_UP) {
             if (ev.Key.Code == TRE::Key::L) {
                 state.GetRasterizationState().polygonMode = VK_POLYGON_MODE_LINE;

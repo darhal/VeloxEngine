@@ -95,7 +95,7 @@ Renderer::MemoryAllocation Renderer::MemoryAllocator2::Allocate(uint32 indexType
 
 void Renderer::MemoryAllocator2::Free(const MemoryAllocation& alloc)
 {
-    allocators[alloc.allocKey >> 16].Free(alloc);
+    allocators[alloc.allocKey & ((1 << 16) - 1)].Free(alloc);
 }
 
 
