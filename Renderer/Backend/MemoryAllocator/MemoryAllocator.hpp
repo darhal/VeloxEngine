@@ -74,9 +74,10 @@ namespace Renderer
             void* mappedData;
         };
     public:
-        CONSTEXPR static uint32 MIN_SIZE = 256;
-        CONSTEXPR static uint32 NUM_BLOCKS = 65536; // The intial pool have 16 MB
-        CONSTEXPR static uint32 RESIZE_FACTOR = 4;  // The pool will grow by a factor of 4 giving: 64, 128, 256, 512 MB respectively
+        // These must be a power of 2
+        CONSTEXPR static uint32 MIN_SIZE        = 64;
+        CONSTEXPR static uint32 NUM_BLOCKS      = 65536; // The intial pool have 16 MB
+        CONSTEXPR static uint32 RESIZE_FACTOR   = 4;  // The pool will grow by a factor of 4 giving: 64, 128, 256, 512 MB respectively
 
         void Init(const RenderDevice& device, uint32 memoryTypeIndex);
 

@@ -30,15 +30,18 @@ void Renderer::TypedMemoryAllocator::Destroy()
 
 Renderer::MemoryAllocation Renderer::TypedMemoryAllocator::Allocate(uint64 size, uint64 alignement)
 {
-	uint64 worstCasePadding = (~MIN_SIZE + 1) & (alignement - 1);
+	// I think the final padding is going to be always 0 hence this if this wasn't always the case we will revert back this
+	// uint64 worstCasePadding = (~MIN_SIZE + 1)& (alignement - 1);
+	uint64 worstCasePadding = 0;
     uint32 i = 0;
-    BuddyAllocator::Allocation allocation = { UINT32_MAX, UINT32_MAX };
+    BuddyAllocator::Allocation allocation = { UINT64_MAX, UINT64_MAX };
 
-    while (allocation.offset == UINT32_MAX) {
+    while (allocation.offset == UINT64_MAX) {
         if (i >= allocators.size()) {
             uint32 lastMaxSize = allocators.back().maxSize;
             auto& alloc = allocators.emplace_back();
             alloc.Create(device, memoryTypeIndex, MIN_SIZE, lastMaxSize * RESIZE_FACTOR, map);
+			printf("[%d] Creating new allocator\n", memoryTypeIndex);
         }
 
         // printf("[mem type ind: %d] Requesting %d from %d\n", memoryTypeIndex, size + worstCasePadding, i);
@@ -46,15 +49,23 @@ Renderer::MemoryAllocation Renderer::TypedMemoryAllocator::Allocate(uint64 size,
         i++;
     }
 
+	/*auto padding22 = (~allocation.offset + 1) & (alignement - 1);
+	auto offset22 = allocation.offset + (~allocation.offset + 1) & (alignement - 1);
+	printf("[%d] Allocating size: %llu | alignement: %llu | offset: %llu | worst case padding: %llu | Final padding: %llu | Final offset: %llu\n",
+		memoryTypeIndex, size, alignement, allocation.offset,
+		worstCasePadding, padding22, offset22);*/
+
     MemoryAllocation alloc;
     alloc.memory     = allocators[i - 1].gpuMemory;
     alloc.offset     = (VkDeviceSize)allocation.offset;
     alloc.padding    = (~alloc.offset + 1) & (alignement - 1);
     alloc.offset     += alloc.padding;
     alloc.size       = (VkDeviceSize)allocation.size;
-    alloc.alignment = alignement;
+    alloc.alignment  = alignement;
     alloc.mappedData = allocators[i - 1].mappedData;
     alloc.allocKey   = (i - 1) << 16 | memoryTypeIndex;
+
+	ASSERTF(alloc.padding != 0, "Padding is just assumed to be always 0 that was unfortuently not the case so revert back");
     return alloc;
 }
 
@@ -63,7 +74,6 @@ void Renderer::TypedMemoryAllocator::Free(const MemoryAllocation& allocation)
     BuddyAllocator::Allocation alloc = { allocation.offset - allocation.padding, allocation.size };
     allocators[allocation.allocKey >> 16].Free(alloc);
 }
-
 
 
 

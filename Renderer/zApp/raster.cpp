@@ -60,8 +60,7 @@ void updateMVP(const TRE::Renderer::RenderDevice& dev, TRE::Renderer::BufferHand
 
     mvp.view = cam.GetViewMatrix();
     mvp.proj = cam.GetPrespective();
-
-    mvp.viewPos = glm::vec3(1.0f, 1.0f, 0.7f);
+    mvp.viewPos = cam.GetViewPos();
 
     buffer->WriteToRing(sizeof(mvp), &mvp);
 }
@@ -83,7 +82,6 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
     CommandBufferHandle cmd = dev.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
 
     updateMVP(dev, uniformBuffer, glm::vec3(), cam);
-
     cmd->BindShaderProgram(program);
     cmd->SetGraphicsState(state);
 
@@ -201,6 +199,7 @@ int raster(RenderBackend& backend)
     free(pixels);
 
     Camera camera;
+
     camera.SetPrespective(60.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 512.0f, true);
     BufferHandle uniformBuffer = dev.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), NULL, 3);
     GraphicsState state;
@@ -239,7 +238,7 @@ int raster(RenderBackend& backend)
         window.getEvent(ev);
 
         if (HandleCameraEvent(camera, ev)) {
-            updateMVP(dev, uniformBuffer, glm::vec3(), camera);
+            // updateMVP(dev, uniformBuffer, glm::vec3(), camera);
         }
 
         if (ev.Type == TRE::Event::TE_RESIZE) {
@@ -283,9 +282,6 @@ int raster(RenderBackend& backend)
 
 #if !defined(CUBE)
     delete[] data;
-#endif
-#if defined(OS_WINDOWS)
-    getchar();
 #endif
     return 0;
 }

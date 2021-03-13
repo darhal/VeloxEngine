@@ -45,9 +45,9 @@ struct BuddyAllocator
         uint32 currentNode = 0;
         uint32 offset = 0;
         uint64 realSize = Math::NextPow2(size);
-        uint64 level = Math::Log2OfPow2((uint32)realSize / minSize) + 1;
+        uint8 level = (uint8)Math::Log2OfPow2(realSize / minSize) + 1;
         uint32 availSize = maxSize;
-        // printf("[max: %d|min:%d] Real size: %d | Searching for level: %d\n", maxSize, minSize, realSize, level);
+        // printf("[max: %llu|min:%llu] Real size: %llu | Searching for level: %llu | div: %u\n", maxSize, minSize, realSize, level, (uint32)realSize / minSize);
 
         while (tree.HaveChild(currentNode)) {
             uint32 leftIdx = tree.GetLeftIdx(currentNode);
@@ -67,7 +67,7 @@ struct BuddyAllocator
             }else{
                 if (currentLevel < level) {
                     // ASSERTF(true, "Allocator is out of memory");
-                    return { UINT32_MAX, UINT32_MAX };
+                    return { UINT64_MAX, UINT64_MAX };
                 }
                 break;
             }
@@ -76,6 +76,7 @@ struct BuddyAllocator
         // Mark current Node as used and then descend while updating parents
         tree.SetNode(currentNode, 0);
         this->UpdateParentsAlloc(currentNode);
+        // tree.Print();
         return { offset, size };
     }
 
@@ -83,7 +84,7 @@ struct BuddyAllocator
     {
         uint32 currentNode = 0;
         uint64 realSize = Math::NextPow2(alloc.size);
-        uint32 level = Math::Log2OfPow2((uint32)realSize / minSize) + 1;
+        uint8 level = (uint8)Math::Log2OfPow2(realSize / minSize) + 1;
         uint8 currentLevel = tree.GetLevels();
         uint32 currentSize = maxSize >> 1;
         uint64 currentOffset = currentSize;

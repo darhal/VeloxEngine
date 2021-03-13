@@ -256,12 +256,26 @@ static inline int __builtin_clzl(unsigned long long x) {
 #endif
 
     FORCEINLINE static uint32 Log2OfPow2(uint32 value) {
+		if (!value)
+			return 0;
     #if defined(COMPILER_CLANG) || defined (COMPILER_GCC) || defined(COMPILER_MSVC)
         return sizeof(uint32_t) * CHAR_BIT - __builtin_clz(value) - 1;
     #else
         return log2(value);
     #endif
     }
+
+
+	FORCEINLINE static uint64 Log2OfPow2(uint64 value)
+	{
+		if (!value)
+			return 0;
+#if defined(COMPILER_CLANG) || defined (COMPILER_GCC) || defined(COMPILER_MSVC)
+		return sizeof(uint64) * CHAR_BIT - __builtin_clzll(value) - 1;
+#else
+		return log2(value);
+#endif
+	}
 
 };
 
