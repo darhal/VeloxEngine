@@ -186,7 +186,7 @@ void Renderer::RenderDevice::Init(uint32 enabledFeatures)
 
     for (uint32 f = 0; f < renderContext->GetNumFrames(); f++) {
         for (uint32 t = 0; t < MAX_THREADS; t++) {
-            for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
+            for (uint32 i = 0; i < (uint32)CommandBuffer::MAX; i++) {
                 if (queueFamilyIndices.queueFamilies[i] == UINT32_MAX) {
                     TRE_LOGW("Skipping queue familly index %d", i);
                     continue;
@@ -434,7 +434,7 @@ bool Renderer::RenderDevice::IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR
     vkGetPhysicalDeviceProperties(gpu, &devProp);
     bool isDiscrete = 1; // devProp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 
-	return indices.IsComplete() && swapChainAdequate && supportedFeatures.samplerAnisotropy && isDiscrete;
+    return indices.IsComplete() && swapChainAdequate && supportedFeatures.samplerAnisotropy && isDiscrete;
 }
 
 Renderer::Internal::QueueFamilyIndices Renderer::RenderDevice::FindQueueFamilies(VkPhysicalDevice p_gpu, VkSurfaceKHR p_surface)
@@ -567,10 +567,16 @@ Renderer::RenderDevice::PerFrame::Submission& Renderer::RenderDevice::CreateNewS
 
     // Inject a semaphore to wait for transfer stage. We gurantee that all of the transfers done before begin frame are finished.
     if (type != CommandBuffer::Type::ASYNC_TRANSFER && stagingFlush) { // Only added when there is a new submission
-        // printf("Injecting wait sempahore - ");
         this->AddWaitTimelineSemapore(type, stagingManager.GetTimelineSemaphore(), VK_PIPELINE_STAGE_TRANSFER_BIT);
     }
 
+    return sub;
+}
+
+Renderer::RenderDevice::PerFrame::Submission& Renderer::RenderDevice::GetLatestSubmission(CommandBuffer::Type type)
+{
+    auto& submissions = this->GetQueueSubmissions(type);
+    auto& sub = submissions.Size() ? submissions.Back() : this->CreateNewSubmission(type);
     return sub;
 }
 
@@ -579,49 +585,17 @@ void Renderer::RenderDevice::Submit(PerFrame::Submission& sub, CommandBuffer::Ty
                                     uint32 signalValuesCount, const uint64* signalValues)
 {
     cmd->End();
+    sub.commands.PushBack(cmd);
 
     if (fence || semaphoreCount) {
-        sub.commands.PushBack(cmd);
-        uint32 timelineSemaCount = 0;
-
         // Inject a semaphore to wait for transfer stage. We gurantee that all of the transfers done before begin frame are finished.
         if (type != CommandBuffer::Type::ASYNC_TRANSFER && stagingFlush) {
             // printf("Injecting wait sempahore - ");
             this->AddWaitTimelineSemapore(type, stagingManager.GetTimelineSemaphore(), VK_PIPELINE_STAGE_TRANSFER_BIT);
         }
 
-        // TODO: Potential optimisation here we can just push directly the vk semaphores
-        // think if this causes bugs (I dont think it can)
-        for (uint32 i = 0; i < semaphoreCount; i++) {
-            SemaphoreHandle* sem_ptr = semaphores[i];
-
-            if (!(*sem_ptr)) {
-                if (semaphoreCount != signalValuesCount) {// they are probably mixed or full binary semaphores
-                    *sem_ptr = this->RequestSemaphore();
-                }else { // all of them are timeline semaphores
-                    *sem_ptr = this->RequestTimelineSemaphore();
-                }
-            }
-
-            SemaphoreHandle sem = *sem_ptr;
-
-            if (signalValuesCount && sem->GetType() == Semaphore::TIMELINE) { // semaphores are mixed
-                if (!signalValues){ // automaticaly determine the counter of the semaphore
-                    sub.timelineSemaSignal.PushBack(sem->IncrementTempValue());
-                }else{ // if semaphore counter is defined by user
-                    sem->tempValue = signalValues[timelineSemaCount];
-                    sub.timelineSemaSignal.PushBack(signalValues[timelineSemaCount]);
-                }
-
-                timelineSemaCount++;
-            }
-
-            sub.signalSemaphores.EmplaceBack(sem);
-        }
-
-        sub.fence = fence;
-    }else{
-        sub.commands.PushBack(cmd);
+        this->AddSignalSemaphore(sub, semaphoreCount, semaphores, signalValuesCount, signalValues);
+        this->SetFence(sub, fence);
     }
 }
 
@@ -629,17 +603,9 @@ void Renderer::RenderDevice::Submit(CommandBuffer::Type type, CommandBufferHandl
                                     uint32 semaphoreCount, SemaphoreHandle** semaphores, uint32 signalValuesCount,
                                     const uint64* signalValues)
 {
-    auto& submissions = this->GetQueueSubmissions(type);
-
-    if (!submissions.Size()) {
-        auto& sub = this->CreateNewSubmission(type);
-        this->Submit(sub, type, cmd, fence, semaphoreCount, semaphores, signalValuesCount, signalValues);
-    }else{
-        auto& sub = submissions.Back();
-        this->Submit(sub, type, cmd, fence, semaphoreCount, semaphores, signalValuesCount, signalValues);
-    }
+    auto& sub = this->GetLatestSubmission(type);
+    this->Submit(sub, type, cmd, fence, semaphoreCount, semaphores, signalValuesCount, signalValues);
 }
-
 
 void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSwapchainSwap)
 {
@@ -674,6 +640,8 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
                 submitSwapchain = true;
             }
 
+            // printf("Cmd buff: %p\n", cmd->GetApiObject());
+            cmd->submitted = true;
             cmds.PushBack(cmd->GetApiObject());
             offsets.commandBufferOffset++;
         }
@@ -783,7 +751,6 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
     // submissions.Clear();
 }
 
-
 void Renderer::RenderDevice::AddWaitSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages, bool flush)
 {
     ASSERT(stages == 0);
@@ -792,12 +759,19 @@ void Renderer::RenderDevice::AddWaitSemapore(CommandBuffer::Type type, Semaphore
         this->FlushQueue(type);
     }
 
-    auto& data = GetQueueSubmissions(type).Back();
-    data.waitSemaphores.PushBack(semaphore);
-    data.waitStages.PushBack(stages);
+    auto& sub = this->GetLatestSubmission(type);
+    this->AddWaitSemapore(sub, semaphore, stages);
+}
+
+void Renderer::RenderDevice::AddWaitSemapore(PerFrame::Submission& sub, SemaphoreHandle semaphore, VkPipelineStageFlags stages)
+{
+    ASSERT(stages == 0);
+
+    sub.waitSemaphores.PushBack(semaphore);
+    sub.waitStages.PushBack(stages);
 
     if (semaphore->GetType() == Semaphore::TIMELINE) {
-        data.timelineSemaWait.PushBack(semaphore->GetTempValue());
+        sub.timelineSemaWait.PushBack(semaphore->GetTempValue());
     }
 }
 
@@ -810,13 +784,74 @@ void Renderer::RenderDevice::AddWaitTimelineSemapore(Renderer::CommandBuffer::Ty
         this->FlushQueue(type);
     }
 
-    auto& data = GetQueueSubmissions(type).Back();
-    data.waitSemaphores.PushBack(semaphore);
-    data.waitStages.PushBack(stages);
+    auto& sub = this->GetLatestSubmission(type);
+    this->AddWaitTimelineSemapore(sub, semaphore, stages, waitValue);
+}
+
+void Renderer::RenderDevice::AddWaitTimelineSemapore(PerFrame::Submission& sub, SemaphoreHandle semaphore, VkPipelineStageFlags stages, 
+                                                     uint64 waitValue)
+{
+    ASSERT(stages == 0);
+
+    sub.waitSemaphores.PushBack(semaphore);
+    sub.waitStages.PushBack(stages);
     if (waitValue == 0)
         waitValue = semaphore->GetTempValue();
     //printf(" wait value %llu - Sema: %p\n", waitValue, semaphore->GetApiObject());
-    data.timelineSemaWait.PushBack(waitValue);
+    sub.timelineSemaWait.PushBack(waitValue);
+}
+
+void Renderer::RenderDevice::AddSignalSemaphore(CommandBuffer::Type type, uint32 semaphoreCount, SemaphoreHandle** semaphores, 
+                                                uint32 signalValuesCount, const uint64* signalValues)
+{
+    auto& sub = this->GetLatestSubmission(type);
+    this->AddSignalSemaphore(sub, semaphoreCount, semaphores, signalValuesCount, signalValues);
+}
+
+void Renderer::RenderDevice::AddSignalSemaphore(PerFrame::Submission& sub, uint32 semaphoreCount, SemaphoreHandle** semaphores,
+                                                uint32 signalValuesCount, const uint64* signalValues)
+{
+    uint32 timelineSemaCount = 0;
+
+    // TODO: Potential optimisation here we can just push directly the vk semaphores
+    // think if this causes bugs (I dont think it can)
+    for (uint32 i = 0; i < semaphoreCount; i++) {
+        SemaphoreHandle* sem_ptr = semaphores[i];
+
+        if (!(*sem_ptr)) {
+            if (semaphoreCount != signalValuesCount) {// they are probably mixed or full binary semaphores
+                *sem_ptr = this->RequestSemaphore();
+            } else { // all of them are timeline semaphores
+                *sem_ptr = this->RequestTimelineSemaphore();
+            }
+        }
+
+        SemaphoreHandle sem = *sem_ptr;
+
+        if (signalValuesCount && sem->GetType() == Semaphore::TIMELINE) { // semaphores are mixed
+            if (!signalValues) { // automaticaly determine the counter of the semaphore
+                sub.timelineSemaSignal.PushBack(sem->IncrementTempValue());
+            } else { // if semaphore counter is defined by user
+                sem->tempValue = signalValues[timelineSemaCount];
+                sub.timelineSemaSignal.PushBack(signalValues[timelineSemaCount]);
+            }
+
+            timelineSemaCount++;
+        }
+
+        sub.signalSemaphores.EmplaceBack(sem);
+    }
+}
+
+void Renderer::RenderDevice::SetFence(CommandBuffer::Type type, FenceHandle* fence)
+{
+    auto& sub = this->GetLatestSubmission(type);
+    sub.fence = fence;
+}
+
+void Renderer::RenderDevice::SetFence(PerFrame::Submission& sub, FenceHandle* fence)
+{
+    sub.fence = fence;
 }
 
 void Renderer::RenderDevice::FlushQueues()
@@ -834,7 +869,7 @@ void Renderer::RenderDevice::ClearFrame()
     for (uint32 i = 0; i < (uint32)CommandBuffer::Type::MAX; i++) {
         if (queueFamilyIndices.queueFamilies[i] != UINT32_MAX) {
             frame.commandPools[0][i].Reset();
-            frame.submissions[i].Clear();
+            // frame.submissions[i].Clear(); // This is unecessary as when we flush we clear everything
         }
     }
 
@@ -844,8 +879,7 @@ void Renderer::RenderDevice::ClearFrame()
 void Renderer::RenderDevice::BeginFrame()
 {
     //printf("Begin Frame %d\n", renderContext->GetCurrentFrame());
-
-    if ((stagingFlush  = stagingManager.Flush())) {
+    if ((stagingFlush = stagingManager.Flush())) {
         // stagingManager.Wait(stagingManager.GetCurrentStagingBuffer());
         stagingManager.NextCmd();
         stagingManager.ResetCurrentStage();
@@ -867,7 +901,6 @@ void Renderer::RenderDevice::EndFrame()
     this->FlushQueue(CommandBuffer::Type::ASYNC_COMPUTE);
     // if we already did sumbit to swapchain then done force the swap
     this->FlushQueue(CommandBuffer::Type::GENERIC, !submitSwapchain);
-
     stagingFlush = false;
     //printf("End Frame %d\n", renderContext->GetCurrentFrame());
     // getchar();
@@ -1003,14 +1036,14 @@ Renderer::CommandPoolHandle Renderer::RenderDevice::RequestCommandPool(uint32 qu
     CommandBuffer::Type cmdType;
 
     switch (queueFamily){
-    case Internal::QFT_TRANSFER:
-        cmdType = CommandBuffer::Type::ASYNC_TRANSFER;
+    case QueueFamilyFlag::TRANSFER:
+        cmdType = CommandBuffer::ASYNC_TRANSFER;
         break;
-    case Internal::QFT_COMPUTE:
-        cmdType = CommandBuffer::Type::ASYNC_TRANSFER;
+    case QueueFamilyFlag::COMPUTE:
+        cmdType = CommandBuffer::ASYNC_TRANSFER;
         break;
     default:
-        cmdType = CommandBuffer::Type::GENERIC;
+        cmdType = CommandBuffer::GENERIC;
     }
 
     for (uint32 i = 0; i < Internal::QFT_MAX; i++) {

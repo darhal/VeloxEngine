@@ -259,6 +259,10 @@ namespace Renderer
 		void SetAttachmentBlendOp(uint32 attach, VkBlendOp colorBlendOp, VkBlendOp alphaBlendOp);
 
 		void SetAttachmentColorWriteMask(uint32 attach, VkColorComponentFlags colorWriteMask);
+
+		FORCEINLINE bool IsRecording() const { return recording; }
+
+		FORCEINLINE bool IsSubmitted() const { return submitted; }
 	private:
 		void UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings);
 
@@ -297,6 +301,9 @@ namespace Renderer
         bool renderToSwapchain;
         bool stateUpdate;
         bool recording;
+		bool submitted;
+
+		friend class RenderDevice;
 	};
 
 	typedef CommandBuffer CommandList;

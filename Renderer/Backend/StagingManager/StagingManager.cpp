@@ -21,6 +21,7 @@ namespace Renderer
 	{
 		VkDevice device = renderDevice.GetDevice();
         commandPool = CommandPoolHandle(NULL);
+		blitCommandPool = CommandPoolHandle(NULL);
 		vkUnmapMemory(device, memory);
 
         for (uint32 i = 0; i < NUM_STAGES; i++) {
@@ -41,57 +42,43 @@ namespace Renderer
 		info.usage = BufferUsage::TRANSFER_SRC;
 
         for (uint i = 0; i < NUM_STAGES; ++i) {
+			stagingBuffers[i].apiBuffer = renderDevice.CreateBufferHelper(info);
 			stagingBuffers[i].offset = 0;
 			stagingBuffers[i].shouldRun = false;
-            stagingBuffers[i].apiBuffer = renderDevice.CreateBufferHelper(info);
+			stagingBuffers[i].isBlitting = false;
 		}
 
 		VkDeviceSize alignedSize = 0;
         memory = renderDevice.CreateBufferMemory(info, stagingBuffers[0].apiBuffer, &alignedSize, NUM_STAGES);
         vkMapMemory(device, memory, 0, alignedSize * NUM_STAGES, 0, reinterpret_cast<void**>(&mappedData));
 		// TODO: figure out how to fix this thing blit requires graphic while we should use async transfer
-        commandPool = renderDevice.RequestCommandPool(QueueFamilyFlag::GENERIC, CommandPool::CMD_BUFF_RESET);
-        blitterCommandPool = renderDevice.RequestCommandPool(QueueFamilyFlag::GENERIC, CommandPool::CMD_BUFF_RESET);
+		if (renderDevice.IsTransferQueueSeprate())
+			blitCommandPool = renderDevice.RequestCommandPool(QueueFamilyFlag::GRAPHICS, CommandPool::CMD_BUFF_RESET);
+        commandPool = renderDevice.RequestCommandPool(QueueFamilyFlag::TRANSFER, CommandPool::CMD_BUFF_RESET);
+		
+
+		for (uint i = 0; i < NUM_CMDS; i++) {
+			if (blitCommandPool)
+				blitCmdBuff[i] = blitCommandPool->RequestCommandBuffer();
+
+			transferCmdBuff[i] = commandPool->RequestCommandBuffer();
+		}
 
         for (uint i = 0; i < NUM_STAGES; i++) {
             vkBindBufferMemory(device, stagingBuffers[i].apiBuffer, memory, i * alignedSize);
             // stagingBuffers[i].transferCmdBuff = commandPool->RequestCommandBuffer();
             stagingBuffers[i].timelineSemaphore = renderDevice.RequestTimelineSemaphore();
             stagingBuffers[i].data = (uint8*)mappedData + (i * alignedSize);
+			stagingBuffers[i].blitCmdBuff = blitCommandPool ? this->GetBlitCmdBuffer() : CommandBufferHandle();
             // printf("cmd type: %d\n", stagingBuffers[i].transferCmdBuff->GetType());
-        }
-
-        for (uint i = 0; i < NUM_CMDS; i++){
-            transferCmdBuff[i] = commandPool->RequestCommandBuffer();
-            blitterCmdBuff[i] = blitterCommandPool->RequestCommandBuffer();
         }
 	}
 
-    StagingBuffer* StagingManager::PrepareFlush()
+    void StagingManager::PrepareFlush()
     {
-        StagingBuffer& stage = stagingBuffers[currentBuffer];
-
-        if (stage.shouldRun) {
-            return &stage;
-        }
-
-        if (stage.offset == 0 || stage.submitted) {
-            return NULL;
-        }
-
-        VkCommandBuffer cmdBuff = GetCurrentCmd()->GetApiObject();
-
-        if (!renderDevice.IsTransferQueueSeprate()) {
-            VkMemoryBarrier barrier;
-            barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-            barrier.pNext = NULL;
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_INDEX_READ_BIT;
-            vkCmdPipelineBarrier(
-                cmdBuff,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-                0, 1, &barrier, 0, NULL, 0, NULL);
+        if (!blitCommandPool) {
+			auto& cmdBuff = GetCurrentCmd();
+			cmdBuff->FullBarrier();
         }
 
         /*VkMappedMemoryRange memoryRange;
@@ -102,30 +89,43 @@ namespace Renderer
         memoryRange.size	= MAX_UPLOAD_BUFFER_SIZE;
 
         vkFlushMappedMemoryRanges(renderDevice.GetDevice(), 1, &memoryRange);*/
-        return &stage;
     }
 
     bool StagingManager::Flush()
     {
-        StagingBuffer* stage = this->PrepareFlush();
+		StagingBuffer& stage = stagingBuffers[currentBuffer];
 
-        if (!stage) {
-            return false;
-        }
+		if (!(stage.submitted || stage.shouldRun || stage.isBlitting)) {
+			return false;
+		}
 
-        // printf("FLUSH %d | CMD: %d\n", currentBuffer, frameCounter);
-        //SemaphoreHandle wait = renderDevice.GetImageAcquiredSemaphore();
-        SemaphoreHandle* signal[] = { &stage->timelineSemaphore };
-        renderDevice.Submit(CommandBuffer::Type::GENERIC, GetCurrentCmd(), NULL, 1, signal, 1);
-        //renderDevice.AddWaitSemapore(CommandBuffer::ASYNC_TRANSFER, wait, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-        renderDevice.FlushQueue(CommandBuffer::Type::GENERIC);
-        stage->submitted = true;
+		// this->PrepareFlush();
+
+		if (stage.shouldRun || stage.offset) {
+			SemaphoreHandle* signal[] = { &stage.timelineSemaphore };
+			renderDevice.Submit(CommandBuffer::ASYNC_TRANSFER, GetCurrentCmd(), NULL, 1, signal, 1);
+			renderDevice.FlushQueue(CommandBuffer::ASYNC_TRANSFER);
+		}
+
+		if (blitCommandPool && stage.isBlitting) {
+			renderDevice.AddWaitTimelineSemapore(CommandBuffer::GENERIC, stage.timelineSemaphore, VK_PIPELINE_STAGE_TRANSFER_BIT);
+			renderDevice.Submit(CommandBuffer::GENERIC, this->GetBlitCmdBuffer());
+		}
+		
+        stage.submitted = true;
         currentBuffer = (currentBuffer + 1) % NUM_STAGES;
         return true;
     }
 
     void StagingManager::Wait(StagingBuffer& stage)
     {
+		// We have no choice but to flush blit commands
+		if (blitCommandPool && stage.isBlitting && !stage.blitCmdBuff->IsSubmitted()) {
+			SemaphoreHandle* signal[] = { &stage.timelineSemaphore };
+			renderDevice.AddSignalSemaphore(CommandBuffer::GENERIC, 1, signal, 1);
+			renderDevice.FlushQueue(CommandBuffer::GENERIC);
+		}
+
         stage.timelineSemaphore->Wait();
         this->ResetStage(stage);
     }
@@ -155,7 +155,7 @@ namespace Renderer
 
     bool StagingManager::ResetStage(StagingBuffer& stage)
     {
-        if (!stage.submitted) {
+        if (!(stage.submitted ||  stage.shouldRun || stage.isBlitting)) {
             //printf("ABORTED\n");
             return false;
         }
@@ -164,8 +164,14 @@ namespace Renderer
         stage.offset	= 0;
         stage.submitted = false;
         stage.shouldRun = false;
-        // transferCmdBuff[frameCounter]->ApiReset();
-        transferCmdBuff[frameCounter]->Begin();
+		stage.isBlitting = false;
+		transferCmdBuff[frameCounter]->Begin();
+
+		if (blitCommandPool) {
+			stage.blitCmdBuff = this->GetBlitCmdBuffer();
+			stage.blitCmdBuff->Begin();
+		}
+        
         return true;
     }
 
@@ -327,23 +333,24 @@ namespace Renderer
 
 	void StagingManager::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
 	{
-		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-        GetCurrentCmd()->PrepareGenerateMipmapBarrier(image, baseLevelLayout, srcStage, srcAccess, needTopLevelBarrier);
+		//StagingBuffer* stage = &stagingBuffers[currentBuffer];
+        this->GetBlitCmdBuffer()->PrepareGenerateMipmapBarrier(image, baseLevelLayout, srcStage, srcAccess, needTopLevelBarrier);
 	}
 
 	void StagingManager::GenerateMipmap(const Image& image)
 	{
-		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-        GetCurrentCmd()->GenerateMipmap(image);
+		StagingBuffer& stage = stagingBuffers[currentBuffer];
+		stage.isBlitting = true;
+
+		this->GetBlitCmdBuffer()->GenerateMipmap(image);
 	}
 
 	void StagingManager::ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags srcStage, 
 		VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess)
 	{
-		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-        GetCurrentCmd()->ImageBarrier(image, oldLayout, newLayout, srcStage, srcAccess, dstStage, dstAccess);
+		// StagingBuffer* stage = &stagingBuffers[currentBuffer];
+		this->GetBlitCmdBuffer()->ImageBarrier(image, oldLayout, newLayout, srcStage, srcAccess, dstStage, dstAccess);
 	}
-
 
 	void StagingManager::ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{

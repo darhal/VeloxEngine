@@ -22,7 +22,7 @@ void Renderer::CommandBufferDeleter::operator()(CommandBuffer* cmd)
 
 Renderer::CommandBuffer::CommandBuffer(RenderDevice& device, CommandPool* pool, VkCommandBuffer buffer, Type type) :
     bindings{0}, dirty{}, device(device), pool(pool), state(NULL), program(NULL),  pipeline(NULL), allocatedSets{},
-    commandBuffer(buffer), type(type), renderToSwapchain(false), stateUpdate(false), recording(false)
+    commandBuffer(buffer), type(type), renderToSwapchain(false), stateUpdate(false), recording(false), submitted(false)
 {
 }
 
@@ -54,6 +54,7 @@ void Renderer::CommandBuffer::Reset()
     renderToSwapchain = false;
     stateUpdate = false;
     recording = false;
+    submitted = false;
     bindings = { 0 };
 
     this->ApiReset();
@@ -80,6 +81,7 @@ void Renderer::CommandBuffer::Begin(uint32 flags)
     }
 
     recording = true;
+    submitted = false;
 }
 
 void Renderer::CommandBuffer::End()

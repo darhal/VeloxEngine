@@ -18,7 +18,6 @@ Renderer::CommandPool::CommandPool(RenderDevice* device, uint32 queueFamilyIndex
     vkCreateCommandPool(device->GetDevice(), &info, NULL, &pool);
 }
 
-
 Renderer::CommandPool::~CommandPool()
 {
     this->Destroy();

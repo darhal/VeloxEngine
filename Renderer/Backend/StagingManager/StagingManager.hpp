@@ -16,7 +16,7 @@ namespace Renderer
 
 	struct StagingBuffer
 	{
-        CommandBufferHandle transferCmdBuff;
+        CommandBufferHandle blitCmdBuff;
         SemaphoreHandle     timelineSemaphore;
         VkBuffer            apiBuffer;
         VkDeviceSize        offset;
@@ -24,6 +24,7 @@ namespace Renderer
 
         bool                submitted;
         bool                shouldRun; // Used for memory barriers and layout transitioning
+        bool                isBlitting;
 	};
 
 	class RENDERER_API StagingManager
@@ -99,23 +100,28 @@ namespace Renderer
             // printf(" id: %d - ", i);
             return GetStage(i).timelineSemaphore;
         }
+
+        FORCEINLINE CommandBufferHandle& GetBlitCmdBuffer() {
+            return commandPool ? blitCmdBuff[frameCounter] : this->GetCurrentCmd();
+        }
 	private:
-		StagingBuffer* PrepareFlush();
+		void PrepareFlush();
 
 		void ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout);
 	private:
-        StagingBuffer   stagingBuffers[NUM_STAGES];
-        CommandBufferHandle transferCmdBuff[NUM_CMDS];
-        CommandBufferHandle blitterCmdBuff[NUM_CMDS];
-		uint8*		    mappedData;
-		VkDeviceMemory	memory;
-        CommandPoolHandle commandPool;
-        CommandPoolHandle blitterCommandPool;
-        uint32			currentBuffer;
-        uint32          frameCounter;
-		
         RenderDevice& renderDevice;
+        StagingBuffer       stagingBuffers[NUM_STAGES];
+        CommandBufferHandle transferCmdBuff[NUM_CMDS];
+        CommandBufferHandle blitCmdBuff[NUM_CMDS];
+        CommandPoolHandle   commandPool;
+        CommandPoolHandle   blitCommandPool;
+		uint8*		        mappedData;
+		VkDeviceMemory	    memory;
+        uint32			    currentBuffer;
+        uint32              frameCounter;
+        bool                isBlitting;
 		
+        
 		CONSTEXPR static uint32 MAX_UPLOAD_BUFFER_SIZE = 64 * 1024 * 1024;
 
         friend class RenderDevice;

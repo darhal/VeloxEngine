@@ -76,7 +76,7 @@ namespace Renderer
 
                 ~Submission()
                 {
-                    this->Clear();
+                    // this->Clear();
                 }
             };
 
@@ -186,6 +186,8 @@ namespace Renderer
 
         PerFrame::Submission& CreateNewSubmission(CommandBuffer::Type type);
 
+        PerFrame::Submission& GetLatestSubmission(CommandBuffer::Type type);
+
         void Submit(PerFrame::Submission& sub, CommandBuffer::Type type, CommandBufferHandle cmd, FenceHandle* fence = NULL,
                     uint32 semaphoreCount = 0, SemaphoreHandle** semaphores = NULL, uint32 signalValuesCount = 0,
                     const uint64* signalValues = NULL);
@@ -194,12 +196,26 @@ namespace Renderer
                     SemaphoreHandle** semaphores = NULL, uint32 signalValuesCount = 0, const uint64* signalValues = NULL);
 
         void Submit(CommandBufferHandle cmd, FenceHandle* fence = NULL, uint32 semaphoreCount = 0, SemaphoreHandle** semaphores = NULL,
-            uint32 signalValuesCount = 0, const uint64* signalValues = NULL);
+                    uint32 signalValuesCount = 0, const uint64* signalValues = NULL);
 
         void AddWaitSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages, bool flush = false);
 
+        void AddWaitSemapore(PerFrame::Submission& sub, SemaphoreHandle semaphore, VkPipelineStageFlags stages);
+
         void AddWaitTimelineSemapore(CommandBuffer::Type type, SemaphoreHandle semaphore, VkPipelineStageFlags stages,
                                      uint64 waitValue = 0, bool flush = false);
+
+        void AddWaitTimelineSemapore(PerFrame::Submission& sub, SemaphoreHandle semaphore, VkPipelineStageFlags stages, uint64 waitValue = 0);
+
+        void AddSignalSemaphore(CommandBuffer::Type type, uint32 semaphoreCount = 0, SemaphoreHandle** semaphores = NULL,
+            uint32 signalValuesCount = 0, const uint64* signalValues = NULL);
+
+        void AddSignalSemaphore(PerFrame::Submission& sub, uint32 semaphoreCount = 0, SemaphoreHandle** semaphores = NULL, 
+                                uint32 signalValuesCount = 0, const uint64* signalValues = NULL);
+
+        void SetFence(CommandBuffer::Type type, FenceHandle* fence);
+
+        void SetFence(PerFrame::Submission& sub, FenceHandle* fence);
 
         void FlushQueue(CommandBuffer::Type type, bool triggerSwapchainSwap = false);
 
