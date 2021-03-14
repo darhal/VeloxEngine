@@ -14,11 +14,13 @@ file(GLOB_RECURSE SOURCE CONFIGURE_DEPENDS
     "*.c"
 )
 
-foreach(_source IN ITEMS ${SOURCE})
-    get_filename_component(_source_path "${_source}" PATH)
-    string(REPLACE "${MODULE_FOLDER}" "" _group_path "${_source_path}")
-    source_group("${_group_path}" FILES "${_source}")
-endforeach()
+if (MSVC)
+    foreach(_source IN ITEMS ${SOURCE})
+        get_filename_component(_source_path "${_source}" PATH)
+        string(REPLACE "${MODULE_FOLDER}" "" _group_path "${_source_path}")
+        source_group("${_group_path}" FILES "${_source}")
+    endforeach()
+endif(MSVC)
 
 # wayland requires additional source files
 IF(USE_WAYLAND_WSI)
