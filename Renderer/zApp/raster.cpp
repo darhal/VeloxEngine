@@ -230,8 +230,8 @@ int raster(RenderBackend& backend)
     // TODO: shader specilization constants
     // timeline = dev.RequestTimelineSemaphore();
 
-    dev.GetStagingManager().Flush();
-    dev.GetStagingManager().WaitPrevious();
+    //dev.GetStagingManager().Flush();
+    //dev.GetStagingManager().WaitPrevious();
 
     while (window.isOpen()) {
         auto tStart = std::chrono::high_resolution_clock::now();

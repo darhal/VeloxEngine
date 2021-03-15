@@ -102,7 +102,7 @@ namespace Renderer
         }
 
         FORCEINLINE CommandBufferHandle& GetBlitCmdBuffer() {
-            return commandPool ? blitCmdBuff[frameCounter] : this->GetCurrentCmd();
+            return blitCommandPool ? blitCmdBuff[frameCounter] : this->GetCurrentCmd();
         }
 	private:
 		void PrepareFlush();
