@@ -23,6 +23,7 @@ jobs:
         sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-focal.list http://packages.lunarg.com/vulkan/lunarg-vulkan-focal.list
         sudo apt update
         sudo apt install vulkan-sdk
+        sudo apt-get install -y libxrandr-dev
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
