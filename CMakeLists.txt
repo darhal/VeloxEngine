@@ -159,3 +159,4 @@ endif()
 
 add_subdirectory(Engine)
 add_subdirectory(Renderer)
+add_subdirectory(Tests)
