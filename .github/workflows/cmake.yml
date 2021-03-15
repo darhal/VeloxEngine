@@ -21,8 +21,9 @@ jobs:
       run: |
         wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
         sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-focal.list http://packages.lunarg.com/vulkan/lunarg-vulkan-focal.list
-        sudo apt update
-        sudo apt install vulkan-sdk
+        sudo apt update -y
+        sudo apt install -y vulkan-sdk
+        sudo apt-get install -y mesa-common-dev vulkan-utils mesa-vulkan-drivers
         sudo apt-get install -y libxrandr-dev
 
     - name: Create Build Environment
