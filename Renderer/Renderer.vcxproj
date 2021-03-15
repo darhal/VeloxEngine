@@ -74,28 +74,28 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)Build\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(VULKAN_SDK)\Include\;$(SolutionDir);$(ProjectDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir);$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(VULKAN_SDK)\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)Build\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(VULKAN_SDK)\Include\;$(SolutionDir);$(ProjectDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir);$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(VULKAN_SDK)\Lib32\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)Build\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(VULKAN_SDK)\Include\;$(SolutionDir);$(ProjectDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir);$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(VULKAN_SDK)\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)Build\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(VULKAN_SDK)\Include\;$(SolutionDir);$(ProjectDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir);$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(VULKAN_SDK)\Lib32\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -218,7 +218,8 @@
     <ClInclude Include="Core\Logs\Logs.hpp" />
     <ClInclude Include="Core\StaticString\StaticString.hpp" />
     <ClInclude Include="Core\StaticVector\StaticVector.hpp" />
-    <ClInclude Include="cube.hpp" />
+    <ClInclude Include="zApp\Camera.hpp" />
+    <ClInclude Include="zApp\cube.hpp" />
     <ClInclude Include="Backend\Images\Image.hpp" />
     <ClInclude Include="Backend\Images\ImageHelper.hpp" />
     <ClInclude Include="Backend\Images\Sampler.hpp" />
@@ -495,6 +496,9 @@
     <ClInclude Include="Backend\ShaderProgram\ShaderProgram.hpp" />
     <ClInclude Include="Window\Event.hpp" />
     <ClInclude Include="Window\Window.hpp" />
+    <ClInclude Include="zApp\raster.hpp" />
+    <ClInclude Include="zApp\raytracing.hpp" />
+    <ClInclude Include="zApp\Shared.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Backend\Buffers\Buffer.cpp" />
@@ -529,6 +533,7 @@
     <ClCompile Include="Backend\WindowSurface\WindowSurface.cpp" />
     <ClCompile Include="glm\detail\glm.cpp" />
     <ClCompile Include="Backend\Pipeline\GraphicsState\GraphicsState.cpp" />
+    <ClCompile Include="Misc\stb_image.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
@@ -540,6 +545,9 @@
     <ClCompile Include="Backend\ShaderProgram\ShaderProgram.cpp" />
     <ClCompile Include="Window\Window.cpp" />
     <ClCompile Include="Window\Window_Win32.cpp" />
+    <ClCompile Include="zApp\raster.cpp" />
+    <ClCompile Include="zApp\raytracing.cpp" />
+    <ClCompile Include="zApp\rt2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="glm\detail\func_common.inl" />

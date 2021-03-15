@@ -13,6 +13,7 @@ Renderer::RenderContext::RenderContext(RenderBackend& backend) : internal{ 0 }, 
 {
     internal.numFramesInFlight = NUM_FRAMES;
     internal.currentFrame = 0;
+    internal.previousFrame = (internal.currentFrame + (NUM_FRAMES - 1)) % NUM_FRAMES;
 }
 
 void Renderer::RenderContext::CreateRenderContext(TRE::Window* wnd, const Internal::RenderInstance& instance)
@@ -28,28 +29,35 @@ void Renderer::RenderContext::InitRenderContext(const Internal::RenderInstance& 
     swapchain.CreateSwapchain();
 }
 
-void Renderer::RenderContext::DestroyRenderContext(const Internal::RenderInstance& renderInstance, const Internal::RenderDevice& renderDevice, Internal::RenderContext& renderContext)
+void Renderer::RenderContext::DestroyRenderContext(const Internal::RenderInstance& renderInstance,
+                                                   const Internal::RenderDevice& renderDevice,
+                                                   Internal::RenderContext& renderContext)
 {
     swapchain.DestroySwapchain();
     Internal::DestroryWindowSurface(renderInstance.instance, renderContext.surface);
 }
 
-void Renderer::RenderContext::BeginFrame(const RenderDevice& renderDevice, StagingManager& stagingManager)
+void Renderer::RenderContext::BeginFrame(const RenderDevice& renderDevice)
 {
-    const Swapchain::SwapchainData& swapchainData = swapchain.swapchainData;
+    Swapchain::SwapchainData& swapchainData = swapchain.swapchainData;
     VkDevice device = renderDevice.GetDevice();
     uint32 currentFrame = internal.currentFrame;
 
     vkWaitForFences(device, 1, &swapchainData.fences[currentFrame], VK_TRUE, UINT64_MAX);
+
+    VkResult result = vkAcquireNextImageKHR(device, swapchain.GetApiObject(), UINT64_MAX, 
+        swapchainData.imageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &internal.currentImage);
+
+    /*if (swapchainData.imageFences[internal.currentImage] != VK_NULL_HANDLE) {
+        vkWaitForFences(device, 1, &swapchainData.imageFences[internal.currentImage], VK_TRUE, UINT64_MAX);
+    }*/
+
+    swapchainData.imageFences[internal.currentImage] = swapchainData.imageFences[currentFrame];
     vkResetFences(device, 1, &swapchainData.fences[currentFrame]);
 
-    VkResult result = vkAcquireNextImageKHR(device, swapchain.GetApiObject(), UINT64_MAX, swapchainData.imageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &internal.currentImage);
-    
-    stagingManager.Wait(stagingManager.GetCurrentStagingBuffer());
-    stagingManager.Flush();
-
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        swapchain.RecreateSwapchain();
+        swapchain.QueueSwapchainUpdate();
+        // printf("[BEGIN FRAME] Swapchain will be resized!\n");
         return;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         ASSERTF(true, "Failed to acquire swap chain image!\n");
@@ -109,27 +117,33 @@ void Renderer::RenderContext::EndFrame(const RenderDevice& renderDevice)
     }*/
 
     // Presenting:
-    VkPresentInfoKHR presentInfo{};
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = renderDevice.IsPresentQueueSeprate() ?
-        &swapchainData.imageOwnershipSemaphores[currentFrame] :
-        &swapchainData.drawCompleteSemaphores[currentFrame];
-    presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains    = &swapchain.swapchain;
-    presentInfo.pImageIndices  = &currentBuffer;
+    VkResult result = VK_SUCCESS;
 
-    VkResult result = vkQueuePresentKHR(queues[Internal::QFT_PRESENT], &presentInfo);
+    if (!swapchain.framebufferResized){
+        VkPresentInfoKHR presentInfo{};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = renderDevice.IsPresentQueueSeprate() ? &swapchainData.imageOwnershipSemaphores[currentFrame] :
+                                                                             &swapchainData.drawCompleteSemaphores[currentFrame];
+        presentInfo.swapchainCount  = 1;
+        presentInfo.pSwapchains     = &swapchain.swapchain;
+        presentInfo.pImageIndices   = &currentBuffer;
+
+        result = vkQueuePresentKHR(queues[Internal::QFT_PRESENT], &presentInfo);
+    }
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || swapchain.framebufferResized) {
-        swapchain.framebufferResized = false;
         swapchain.RecreateSwapchain();
+        // printf("[END FRAME] Swapchain resized! %d\n", result);
     } else if (result != VK_SUCCESS) {
         ASSERTF(true, "Failed to present swap chain image!");
     }
 
     internal.previousFrame = internal.currentFrame;
     internal.currentFrame = (currentFrame + 1) % internal.numFramesInFlight;
+
+    // printf("End frame: %d | New frame: %d\n", currentFrame, internal.currentFrame);
+    // vkDeviceWaitIdle(renderDevice.GetDevice());
 }
 
 TRE_NS_END

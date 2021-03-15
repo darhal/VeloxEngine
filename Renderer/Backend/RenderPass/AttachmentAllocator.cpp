@@ -4,8 +4,8 @@
 
 TRE_NS_START
 
-Renderer::AttachmentAllocator::AttachmentAllocator(RenderBackend& backend, bool transient) :
-	renderBackend(backend),
+Renderer::AttachmentAllocator::AttachmentAllocator(RenderDevice& device, bool transient) :
+    device(device),
 	transient(transient)
 {
 }
@@ -39,9 +39,9 @@ Renderer::ImageView& Renderer::AttachmentAllocator::RequestAttachment(uint32 wid
 	imageInfo.samples = static_cast<VkSampleCountFlagBits>(samples);
 	imageInfo.layers = layers;
 
-	auto iv2 = attachments.Emplace(hash, renderBackend.CreateImage(imageInfo));
+    auto iv2 = attachments.Emplace(hash, device.CreateImage(imageInfo));
 	iv2->handle->CreateDefaultView(GetImageViewType(imageInfo, NULL));
-	// printf("Creating image! %llu\n", iv2->handle);
+	// printf("Creating image! %llu\n", iv2->GetHash());
 	return *iv2->handle->GetView();
 }
 
@@ -53,6 +53,11 @@ void Renderer::AttachmentAllocator::Clear()
 void Renderer::AttachmentAllocator::BeginFrame()
 {
 	attachments.BeginFrame();
+}
+
+void Renderer::AttachmentAllocator::Destroy()
+{
+    attachments.Clear();
 }
 
 TRE_NS_END

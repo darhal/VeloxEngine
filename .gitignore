@@ -1,4 +1,10 @@
+# IDE generated files
 .vs/
+.idea/
+cmake-build/
+cmake-build-*/
+CMakeLists.txt.*
+
 # Prerequisites
 *.d
 

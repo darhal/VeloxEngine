@@ -17,10 +17,10 @@ namespace Renderer
 			memcpy(string, str, strlen(str));
 		}
 
-		template<uint32 N>
-		StaticString(const char(&str)[N])
+		template<uint32 SIZE>
+		StaticString(const char(&str)[SIZE])
 		{
-			memcpy(string, str, N);
+			memcpy(string, str, SIZE);
 		}
 
 		operator char*() const

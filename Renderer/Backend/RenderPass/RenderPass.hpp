@@ -110,7 +110,7 @@ namespace Renderer
 		VkFormat colorAttachmentsFormat[MAX_ATTACHMENTS] = {};
 		VkFormat depthStencilFormat;
 
-		friend class RenderBackend;
+        friend class RenderDevice;
 	};
 }
 

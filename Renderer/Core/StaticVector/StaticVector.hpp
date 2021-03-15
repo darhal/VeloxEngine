@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Renderer/Common.hpp>
+#include <utility>
 
 TRE_NS_START
 
@@ -29,9 +30,15 @@ namespace Renderer
 		class StaticVector
 		{
 		public:
-			StaticVector() : stackStorage(), size(0)
+            CONSTEXPR static uint32 CAPCITY = 32;
+
+            StaticVector() : size(0)
 			{
 			}
+
+            StaticVector(uint32 size) : stackStorage{}, size(size)
+            {
+            }
 
 			StaticVector(const StaticVector<T, N>& other) : stackStorage(), size(other.size)
 			{

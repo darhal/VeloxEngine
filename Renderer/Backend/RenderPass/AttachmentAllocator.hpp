@@ -12,27 +12,29 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RenderBackend;
+    class RenderDevice;
 
 	class RENDERER_API AttachmentAllocator
 	{
 	public:
-		AttachmentAllocator(RenderBackend& backend, bool transient);
+        AttachmentAllocator(RenderDevice& device, bool transient);
 
 		ImageView& RequestAttachment(uint32 width, uint32 height, VkFormat format, uint32 index = 0, uint32 samples = 1, uint32 layers = 1);
 
 		void Clear();
 
 		void BeginFrame();
+
+		void Destroy();
 	private:
-		struct AttachmentNode : Utils::HashmapNode<AttachmentNode>, Utils::ListNode<AttachmentNode>
+        struct AttachmentNode : public Utils::HashmapNode<AttachmentNode>, Utils::ListNode<AttachmentNode>
 		{
 			explicit AttachmentNode(ImageHandle handle) : handle(std::move(handle)) {};
-			
+
 			ImageHandle handle;
 		};
 
-		RenderBackend& renderBackend;
+        RenderDevice& device;
 		Utils::TemporaryHashmap<AttachmentNode, FRAMEBUFFER_RING_SIZE, false> attachments;
 		bool transient;
 	};

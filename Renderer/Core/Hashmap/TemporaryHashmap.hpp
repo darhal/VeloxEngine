@@ -31,6 +31,9 @@ namespace Renderer
 		class TemporaryHashmap
 		{
 		public:
+			TemporaryHashmap() : index(0)
+			{}
+
 			~TemporaryHashmap()
 			{
 				this->Clear();
@@ -94,7 +97,6 @@ namespace Renderer
 
 					if (node->GetIndex() != index) {
 						rings[index].MoveToFront(rings[node->GetIndex()], node);
-
 						node->SetIndex(index);
 					}
 

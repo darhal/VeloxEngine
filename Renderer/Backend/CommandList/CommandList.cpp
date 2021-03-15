@@ -1,48 +1,99 @@
 #include "CommandList.hpp"
 #include <Renderer/Backend/RenderBackend.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Backend/Pipeline/pipeline.hpp>
+#include <Renderer/Backend/CommandList/CommandPool.hpp>
+#include <Renderer/Backend/Pipeline/Pipeline.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Descriptors/DescriptorSetAlloc.hpp>
 #include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/Images/Sampler.hpp>
 #include <Renderer/Backend/Buffers/Buffer.hpp>
-#include <Renderer/Backend/Buffers/RingBuffer.hpp>
 #include <Renderer/Backend/ShaderProgram/ShaderProgram.hpp>
 #include <Renderer/Backend/Pipeline/GraphicsState/GraphicsState.hpp>
 #include <Renderer/Core/Alignement/Alignement.hpp>
-
 #include <Renderer/Backend/RayTracing/TLAS/TLAS.hpp>
 
 TRE_NS_START
 
 void Renderer::CommandBufferDeleter::operator()(CommandBuffer* cmd)
 {
-    cmd->renderBackend->GetObjectsPool().commandBuffers.Free(cmd);
+    cmd->pool->Free(cmd);
 }
 
-Renderer::CommandBuffer::CommandBuffer(RenderBackend* backend, VkCommandBuffer buffer, Type type) :
-    renderBackend(backend), commandBuffer(buffer), type(type), allocatedSets{}, dirty{},
-    program(NULL), state(NULL), pipeline(NULL), stateUpdate(false), renderToSwapchain(false)
+Renderer::CommandBuffer::CommandBuffer(RenderDevice& device, CommandPool* pool, VkCommandBuffer buffer, Type type) :
+    bindings{0}, dirty{}, device(device), pool(pool), state(NULL), program(NULL),  pipeline(NULL), allocatedSets{},
+    commandBuffer(buffer), type(type), renderToSwapchain(false), stateUpdate(false), recording(false), submitted(false)
 {
 }
 
-void Renderer::CommandBuffer::Begin()
+Renderer::CommandBuffer::~CommandBuffer()
 {
+    if (!pool || !commandBuffer)
+        return;
+
+    if (pool->GetType() & VK_COMMAND_POOL_CREATE_TRANSIENT_BIT){
+        // Do nothing
+        // device.FreeCommandBuffer(pool->GetApiObject(), commandBuffer);
+    } else {
+        device.FreeCommandBuffer(pool->GetApiObject(), commandBuffer);
+        // pool->Recycle(commandBuffer);
+    }
+}
+
+void Renderer::CommandBuffer::Reset()
+{
+    dirty = {};
+    state = NULL;
+    program = NULL;
+    pipeline =  NULL;
+    renderPass = NULL;
+    framebuffer = NULL;
+    subpassIndex = 0;
+    //memset(framebufferAttachments, 0, sizeof(framebufferAttachments));
+    //memset(allocatedSets, VK_NULL_HANDLE, sizeof(allocatedSets));
+    renderToSwapchain = false;
+    stateUpdate = false;
+    recording = false;
+    submitted = false;
+    bindings = { 0 };
+
+    this->ApiReset();
+}
+
+void Renderer::CommandBuffer::ApiReset()
+{
+    if (pool && (pool->GetType() & VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT)) {
+        vkResetCommandBuffer(commandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+    }
+}
+
+void Renderer::CommandBuffer::Begin(uint32 flags)
+{
+    if (recording)
+        return;
+
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    beginInfo.flags = flags;
 
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
         ASSERTF(true, "Failed to begin recording command buffer!");
     }
+
+    recording = true;
+    submitted = false;
 }
 
 void Renderer::CommandBuffer::End()
 {
+    if (!recording)
+        return;
+
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
        ASSERTF(true, "failed to record command buffer!");
     }
+
+    recording = false;
 }
 
 void Renderer::CommandBuffer::Dispatch(uint32 groupX, uint32 groupY, uint32 groupZ)
@@ -63,16 +114,18 @@ void Renderer::CommandBuffer::SetScissor(const VkRect2D& scissor)
 
 void Renderer::CommandBuffer::BeginRenderPass(VkClearColorValue clearColor)
 {
+    const auto& swapchain = device.GetRenderContext()->GetSwapchain();
+
     VkClearValue clearValue[2];
     clearValue[0].color = clearColor;
     clearValue[1].depthStencil = { 1.f, 0 };
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass        = renderBackend->GetRenderContext().GetSwapchain().GetRenderPass();
-    renderPassInfo.framebuffer       = renderBackend->GetRenderContext().GetSwapchain().GetCurrentFramebuffer();
+    renderPassInfo.renderPass        = swapchain.GetRenderPass();
+    renderPassInfo.framebuffer       = swapchain.GetCurrentFramebuffer();
     renderPassInfo.renderArea.offset = { 0, 0 };
-    renderPassInfo.renderArea.extent = renderBackend->GetRenderContext().GetSwapchain().GetExtent();
+    renderPassInfo.renderArea.extent = swapchain.GetExtent();
     renderPassInfo.clearValueCount   = 2;
     renderPassInfo.pClearValues      = clearValue;
 
@@ -83,10 +136,10 @@ void Renderer::CommandBuffer::BeginRenderPass(VkClearColorValue clearColor)
 
 void Renderer::CommandBuffer::BeginRenderPass(const RenderPassInfo& info, VkSubpassContents contents)
 {
-    ASSERT(type != Type::GENERIC);
+    ASSERT(type == Type::ASYNC_COMPUTE || type == Type::ASYNC_TRANSFER);
 
-    renderPass = &renderBackend->RequestRenderPass(info);
-    framebuffer = &renderBackend->RequestFramebuffer(info, renderPass);
+    renderPass = &device.RequestRenderPass(info);
+    framebuffer = &device.RequestFramebuffer(info, renderPass);
     this->InitViewportScissor(info, framebuffer);
 
     VkClearValue clearValues[MAX_ATTACHMENTS + 1];
@@ -150,12 +203,9 @@ void Renderer::CommandBuffer::NextRenderPass(VkSubpassContents contents)
 
 void Renderer::CommandBuffer::BindPipeline(const Pipeline& pipeline)
 {
-    ASSERT(type != Type::GENERIC);
-
+    // ASSERT(type != Type::GENERIC);
     this->pipeline = &pipeline;
-    vkCmdBindPipeline(commandBuffer, 
-        pipeline.GetPipelineType() == PipelineType::GRAPHICS ? VK_PIPELINE_BIND_POINT_GRAPHICS  : VK_PIPELINE_BIND_POINT_COMPUTE,
-        pipeline.GetApiObject());
+    vkCmdBindPipeline(commandBuffer, (VkPipelineBindPoint)pipeline.GetPipelineType(), pipeline.GetApiObject());
 }
 
 void Renderer::CommandBuffer::BindVertexBuffer(const Buffer& buffer, DeviceSize offset)
@@ -165,9 +215,21 @@ void Renderer::CommandBuffer::BindVertexBuffer(const Buffer& buffer, DeviceSize 
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 }
 
+void Renderer::CommandBuffer::BindVertexBuffer(const Buffer& buffer)
+{
+    VkBuffer vertexBuffers[] = { buffer.GetApiObject() };
+    VkDeviceSize offsets[]   = { buffer.GetCurrentOffset() };
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+}
+
 void Renderer::CommandBuffer::BindIndexBuffer(const Buffer& buffer, DeviceSize offset)
 {
     vkCmdBindIndexBuffer(commandBuffer, buffer.GetApiObject(), offset, VK_INDEX_TYPE_UINT16);
+}
+
+void Renderer::CommandBuffer::BindIndexBuffer(const Buffer& buffer)
+{
+    vkCmdBindIndexBuffer(commandBuffer, buffer.GetApiObject(), buffer.GetCurrentOffset(), VK_INDEX_TYPE_UINT16);
 }
 
 void Renderer::CommandBuffer::DrawIndexed(uint32 indexCount, uint32 instanceCount, uint32 firstIndex, int32 vertexOffset, uint32 firstInstance)
@@ -203,7 +265,7 @@ void Renderer::CommandBuffer::SetGraphicsState(GraphicsState& state)
     this->state = &state;
 }
 
-void Renderer::CommandBuffer::BindShaderProgram(const ShaderProgram& program)
+void Renderer::CommandBuffer::BindShaderProgram(ShaderProgram& program)
 {
     if (this->program && this->program->GetHash() == program.GetHash())
         return;
@@ -220,41 +282,23 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
     auto& b = bindings.bindings[set][binding];
 
     // TODO: for the cache I dont think we need to place the VK object but instead a hash of the vk object and its state (wether its written or not)
-    if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
+    /*if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
         return;
-    }
-
-    b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetApiObject(), offset, range };
-    b.dynamicOffset   = 0;
-
-    bindings.cache[set][binding] = (uint64)buffer.GetApiObject();
-    dirty.sets |= (1u << set);
-}
-
-void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const RingBuffer& buffer, DeviceSize offset, DeviceSize range)
-{
-    ASSERT(set >= MAX_DESCRIPTOR_SET);
-    ASSERT(binding >= MAX_DESCRIPTOR_BINDINGS);
-
-    if (range == VK_WHOLE_SIZE) {
-        range = buffer.GetUnitSize();
-    }
-
-    auto& b = bindings.bindings[set][binding];
+    }*/
 
     // Think about what if everything is the same just the offset changed! we shouldnt then update dirty set instead just update the set
     // that have the dynamic offset set in it
-    if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
+    /*if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
         b.dynamicOffset = buffer.GetCurrentOffset();
         dirty.dynamicSets |= 1u << set;
-    }else{
+    }else{*/
         // update everything
         b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetApiObject(), offset, range };
         b.dynamicOffset = buffer.GetCurrentOffset();
 
         bindings.cache[set][binding] = (uint64)buffer.GetApiObject();
         dirty.sets |= (1u << set);
-    }
+    //}
 }
 
 void Renderer::CommandBuffer::SetStorageBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset, DeviceSize range)
@@ -369,31 +413,56 @@ void Renderer::CommandBuffer::SetAccelerationStrucure(uint32 set, uint32 binding
     dirty.sets |= (1u << set);
 }
 
+void Renderer::CommandBuffer::SetAccelerationStrucure(uint32 set, uint32 binding, VkAccelerationStructureKHR* tlas)
+{
+    ASSERT(set >= MAX_DESCRIPTOR_SET);
+    ASSERT(binding >= MAX_DESCRIPTOR_BINDINGS);
+    auto& b = bindings.bindings[set][binding];
+
+    // TODO: maybe some checks here in the future!
+    //if (bindings.cache[set][binding] == (uint64)buffer.GetApiObject() && b.resource.buffer.offset == offset && b.resource.buffer.range == range) {
+    //    return;
+    //}
+
+    b.resource.accl.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+    b.resource.accl.pNext = NULL;
+    b.resource.accl.accelerationStructureCount = 1;
+    b.resource.accl.pAccelerationStructures = tlas;
+
+    bindings.cache[set][binding] = (uint64)(*tlas);
+    dirty.sets |= (1u << set);
+}
+
 void Renderer::CommandBuffer::TraceRays(uint32 width, uint32 height, uint32 depth)
 {
+    // TODO: out image!
+    ///if (true) {
+    //    this->SetTexture();
+    //}
+
+    this->FlushDescriptorSets();
+    const auto& sbt = pipeline->GetSBT();
+
+    vkCmdTraceRaysKHR(commandBuffer, 
+        &sbt.GetSbtEntry(0), 
+        &sbt.GetSbtEntry(1),
+        &sbt.GetSbtEntry(2),
+        &sbt.GetSbtEntry(3),
+        width, height, depth);
+}
+
+void Renderer::CommandBuffer::TraceRays(VkPipeline pipeline, const SBT& sbt, uint32 width, uint32 height, uint32 depth)
+{
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
     this->FlushDescriptorSets();
 
-    const RenderDevice& device = renderBackend->GetRenderDevice();
-    const uint32_t groupHandleSize = device.GetRtProperties().shaderGroupHandleSize;  // Size of a program identifier
-    const uint32_t baseAlignment = device.GetRtProperties().shaderGroupBaseAlignment;  // Size of shader alignment
-    auto sbtAddress = pipeline->GetSBT().GetSbtAddress();
-
-    // Size of a program identifier
-    const uint32_t groupSize = Utils::AlignUp(device.GetRtProperties().shaderGroupHandleSize,
-        device.GetRtProperties().shaderGroupBaseAlignment);
-    const uint32_t groupStride = groupSize;
-
-    using Stride = VkStridedDeviceAddressRegionKHR;
-
-    std::array<Stride, 4> strideAddresses{
-        Stride{sbtAddress + 0u * groupSize, groupStride, groupSize * 1},  // raygen
-        Stride{sbtAddress + 1u * groupSize, groupStride, groupSize * 2},  // miss
-        Stride{sbtAddress + 3u * groupSize, groupStride, groupSize * 1},  // hit
-        Stride{0u, 0u, 0u} 
-    };
-
-    vkCmdTraceRaysKHR(commandBuffer, &strideAddresses[0], &strideAddresses[1], &strideAddresses[2], &strideAddresses[3], width, height, depth);
+    auto& raygen = sbt.GetSbtEntry(0);
+    auto& raymiss = sbt.GetSbtEntry(1);
+    auto& rayhist = sbt.GetSbtEntry(2);
+    auto& raycall = sbt.GetSbtEntry(3);
+    vkCmdTraceRaysKHR(commandBuffer, &raygen, &raymiss, &rayhist, &raycall, width, height, depth);
 }
+
 
 void Renderer::CommandBuffer::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
 {
@@ -542,7 +611,8 @@ void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buf
     this->CopyImageToBuffer(srcImage, dstBuffer, { &copy, 1 });
 }
 
-void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, VkDeviceSize bufferOffset, uint32 mipLevel, uint32_t bufferRowLength, uint32_t bufferImageHeight)
+void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, VkDeviceSize bufferOffset, 
+    uint32 mipLevel, uint32_t bufferRowLength, uint32_t bufferImageHeight)
 {
     const auto& info = srcImage.GetInfo();
     VkBufferImageCopy copy;
@@ -561,6 +631,29 @@ void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buf
     vkCmdCopyImageToBuffer(commandBuffer, srcImage.GetApiObject(),
         srcImage.GetLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL),
         dstBuffer.GetApiObject(), copies.size, copies.data);
+}
+
+void Renderer::CommandBuffer::CopyImage(const Image& srcImage, const Image& dstImage, const VkExtent3D& extent, 
+    uint32 srcMipLevel, uint32 dstMipLevel, const VkOffset3D& srcOffset, const VkOffset3D& dstOffset)
+{
+    VkImageCopy copy;
+    const auto& srcInfo = srcImage.GetInfo();
+    const auto& dstInfo = dstImage.GetInfo();
+    copy.srcSubresource = { FormatToAspectMask(srcInfo.format), srcMipLevel, 0, srcInfo.layers};
+    copy.srcOffset = srcOffset;
+    copy.dstSubresource = { FormatToAspectMask(dstInfo.format), dstMipLevel, 0, dstInfo.layers };
+    copy.dstOffset = dstOffset;
+    copy.extent = extent;
+    this->CopyImage(srcImage, dstImage, VectorView<VkImageCopy>{&copy, 1});
+}
+
+void Renderer::CommandBuffer::CopyImage(const Image& srcImage, const Image& dstImage, const VectorView<VkImageCopy>& regions)
+{
+    vkCmdCopyImage(commandBuffer,
+        srcImage.GetApiObject(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        dstImage.GetApiObject(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        regions.size, regions.data
+    );
 }
 
 void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, const VkOffset3D& dstOffset, const VkOffset3D& dstExtent,
@@ -588,7 +681,7 @@ void Renderer::CommandBuffer::BlitImage(const Image& dst, const Image& src, cons
 
 Renderer::EventHandle Renderer::CommandBuffer::SignalEvent(VkPipelineStageFlags stages)
 {
-    auto event = renderBackend->RequestPiplineEvent();
+    auto event = device.RequestPiplineEvent();
     vkCmdSetEvent(commandBuffer, event->GetApiObject(), stages);
     event->SetStages(stages);
     return event;
@@ -675,7 +768,41 @@ void Renderer::CommandBuffer::ImageBarrier(const Image& image, VkImageLayout old
     vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, NULL, 0, NULL, 1, &barrier);
 }
 
-void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings)
+void Renderer::CommandBuffer::ChangeImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, 
+    VkImageSubresourceRange subresourceRange, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask)
+{
+    VkImageMemoryBarrier imageMemoryBarrier;
+    imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    imageMemoryBarrier.pNext = NULL;
+    imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageMemoryBarrier.oldLayout = oldLayout;
+    imageMemoryBarrier.newLayout = newLayout;
+    imageMemoryBarrier.image = image.GetApiObject();
+    imageMemoryBarrier.subresourceRange = subresourceRange;
+    imageMemoryBarrier.srcAccessMask = ImageOldLayoutToPossibleSrcAccess(oldLayout);
+    imageMemoryBarrier.dstAccessMask = ImageNewLayoutToPossibleDstAccess(newLayout, &imageMemoryBarrier);
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        srcStageMask,
+        dstStageMask,
+        0,
+        0, NULL,
+        0, NULL,
+        1, &imageMemoryBarrier);
+}
+
+void Renderer::CommandBuffer::ChangeImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, 
+    VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask)
+{
+    const auto& info = image.GetInfo();
+    VkImageSubresourceRange subresourceRange = { FormatToAspectMask(info.format), 0, info.levels, 0, info.layers };
+    ChangeImageLayout(image, oldLayout, newLayout, subresourceRange, srcStageMask, dstStageMask);
+}
+
+void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout,
+                                                  const ResourceBinding* bindings)
 {
     ASSERT(set >= MAX_DESCRIPTOR_SET);
 
@@ -689,6 +816,8 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
     VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
     VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT = 1000138000,
     */
+
+    // TODO: I think writesCOunt should be in the inner most loop / they was one level outers
 
     for (uint32 binding = 0; binding < layout.GetBindingsCount(); binding++) {
         auto& layoutBinding = layout.GetDescriptorSetLayoutBinding(binding);
@@ -708,13 +837,17 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
                 writes[writeCount].pBufferInfo = &bindings[binding + i].resource.buffer;
                 writes[writeCount].pImageInfo = NULL;
                 writes[writeCount].pTexelBufferView = NULL;
-            }
 
-            writeCount++;
+                /*printf("Writting BUFFER: (set:%d|binding:%d|dst arr:%d|type:%d|buffer:%p|offset:%d|range:%d\n", set, binding, i,
+                       layoutBinding.descriptorType, writes[writeCount].pBufferInfo->buffer, writes[writeCount].pBufferInfo->offset,
+                       writes[writeCount].pBufferInfo->range);*/
+                 writeCount++;
+            }
         } else if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER 
             || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
             || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER
-            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT) {
+            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
+            || layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE) {
             for (uint32 i = 0; i < layoutBinding.descriptorCount; i++) {
                 writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 writes[writeCount].pNext = NULL;
@@ -726,9 +859,12 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
                 writes[writeCount].pBufferInfo = NULL;
                 writes[writeCount].pImageInfo = &bindings[binding + i].resource.image;
                 writes[writeCount].pTexelBufferView = NULL;
-            }
 
-            writeCount++;
+                /*printf("Writting IMAGE: (set:%d|binding:%d|dst arr:%d|type:%d|imageview:%p|sampler:%p|layout:%d\n", set, binding, i,
+                       layoutBinding.descriptorType, writes[writeCount].pImageInfo->imageView, writes[writeCount].pImageInfo->sampler,
+                       writes[writeCount].pImageInfo->imageLayout);*/
+                 writeCount++;
+            }
         } else if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR) {
             for (uint32 i = 0; i < layoutBinding.descriptorCount; i++) {
                 writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -741,12 +877,13 @@ void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet de
                 writes[writeCount].pBufferInfo = NULL;
                 writes[writeCount].pImageInfo = NULL;
                 writes[writeCount].pTexelBufferView = NULL;
+                writeCount++;
             }
         }
     }
 
     printf("Updating descriptor sets: writting count:%u\n", writeCount);
-    vkUpdateDescriptorSets(renderBackend->GetRenderDevice().GetDevice(), writeCount, writes, 0, NULL);
+    vkUpdateDescriptorSets(device.GetDevice(), writeCount, writes, 0, NULL);
 }
 
 void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
@@ -767,7 +904,7 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
 
         for (uint32 j = 0; j < bindingLayout.descriptorCount; j++) {
             uint32 bindingResourceIndex = bindingLayout.binding + j;
-            h.Data(reinterpret_cast<const uint32*>(&resourceBinding[bindingResourceIndex].resource), sizeof(ResourceBinding::Resource));
+            h.Data<uint32>(resourceBinding[bindingResourceIndex].resource);
 
             if (setBindings[bindingResourceIndex].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC 
                 || setBindings[bindingResourceIndex].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) {
@@ -783,9 +920,10 @@ void Renderer::CommandBuffer::FlushDescriptorSet(uint32 set)
         this->UpdateDescriptorSet(set, alloc.first, setLayout, resourceBinding);
     }
     
-    vkCmdBindDescriptorSets(
-        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetApiObject(), 
-        set, 1, &alloc.first, numDyncOffset, dyncOffset);
+    vkCmdBindDescriptorSets(commandBuffer,
+                            (VkPipelineBindPoint)pipeline->GetPipelineType(),
+                            pipeline->GetPipelineLayout().GetApiObject(),
+                            set, 1, &alloc.first, numDyncOffset, dyncOffset);
 
     allocatedSets[set] = alloc.first;
     dirty.sets = dirty.sets & ~(1u << set);
@@ -842,9 +980,10 @@ void Renderer::CommandBuffer::RebindDescriptorSet(uint32 set)
         }
     }
 
+    auto sets = &allocatedSets[set];
     vkCmdBindDescriptorSets(
-        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout().GetApiObject(),
-        set, 1, &allocatedSets[set], numDyncOffset, dyncOffset);
+        commandBuffer, (VkPipelineBindPoint)pipeline->GetPipelineType(), pipeline->GetPipelineLayout().GetApiObject(),
+        set, 1, sets, numDyncOffset, dyncOffset);
 }
 
 void Renderer::CommandBuffer::InitViewportScissor(const RenderPassInfo& info, const Framebuffer* fb)
@@ -873,7 +1012,7 @@ void Renderer::CommandBuffer::BindPipeline()
             state->SaveChanges();
         }
 
-        this->BindPipeline(renderBackend->RequestPipeline(*program, *renderPass, *state));
+        this->BindPipeline(device.RequestPipeline(*program, *renderPass, *state));
 
         if (pipeline->IsStateDynamic(VK_DYNAMIC_STATE_VIEWPORT)) {
             this->SetViewport(viewport);
@@ -900,7 +1039,7 @@ void Renderer::CommandBuffer::BindPipeline()
             vkCmdSetDepthBounds(commandBuffer, state->depthStencilState.minDepthBounds, state->depthStencilState.maxDepthBounds);
         }
     } else {
-        this->BindPipeline(renderBackend->RequestPipeline(*program));
+        this->BindPipeline(device.RequestPipeline(*program));
     }
 }
 

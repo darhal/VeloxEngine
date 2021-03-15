@@ -9,25 +9,26 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RenderBackend;
-	class GraphicsPipleine;
+    class RenderDevice;
 	class ShaderProgram;
 	class RenderPass;
 
 	class RENDERER_API PipelineAllocator
 	{
 	public:
-		PipelineAllocator(RenderBackend* backend);
+        PipelineAllocator(RenderDevice& device);
 
-		Pipeline& RequestPipline(const ShaderProgram& program, const RenderPass& rp, const GraphicsState& state);
+		Pipeline& RequestPipline(ShaderProgram& program, const RenderPass& rp, const GraphicsState& state);
 
-		Pipeline& RequestPipline(const ShaderProgram& program);
+		Pipeline& RequestPipline(ShaderProgram& program);
 
 		void BeginFrame();
 
 		void Clear();
+
+		void Destroy();
 	private:
-		RenderBackend* renderBackend;
+        RenderDevice& device;
 		std::unordered_map<Hash, Pipeline> pipelineCache;
 	};
 }

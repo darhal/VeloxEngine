@@ -3,15 +3,13 @@
 #include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/CommandList/CommandList.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Backend/RayTracing/TLAS/TLAS.hpp>
-#include <Renderer/Backend/RenderBackend.hpp>
 
 TRE_NS_START
 
 namespace Renderer
 {
-	StagingManager::StagingManager(const RenderDevice& renderDevice) : 
-		renderDevice(renderDevice), currentBuffer(0)
+    StagingManager::StagingManager(RenderDevice& renderDevice) :
+        renderDevice(renderDevice), currentBuffer(0), frameCounter(0)
 	{
 	}
 
@@ -22,15 +20,15 @@ namespace Renderer
 	void StagingManager::Shutdown()
 	{
 		VkDevice device = renderDevice.GetDevice();
-
+        commandPool = CommandPoolHandle(NULL);
+		blitCommandPool = CommandPoolHandle(NULL);
 		vkUnmapMemory(device, memory);
 
-		for (uint32 i = 0; i < NUM_FRAMES; i++) {
+        for (uint32 i = 0; i < NUM_STAGES; i++) {
 			vkDestroyBuffer(device, stagingBuffers[i].apiBuffer, NULL);
-			vkDestroyFence(device, stagingBuffers[i].transferFence, NULL);
+            stagingBuffers[i].timelineSemaphore = SemaphoreHandle(NULL);
 		}
 
-		vkDestroyCommandPool(device, commandPool, NULL);
 		vkFreeMemory(device, memory, NULL);
 	}
 
@@ -43,44 +41,144 @@ namespace Renderer
 		info.size = MAX_UPLOAD_BUFFER_SIZE;
 		info.usage = BufferUsage::TRANSFER_SRC;
 
-		for (int i = 0; i < NUM_FRAMES; ++i) {
+        for (uint i = 0; i < NUM_STAGES; ++i) {
+			stagingBuffers[i].apiBuffer = renderDevice.CreateBufferHelper(info);
 			stagingBuffers[i].offset = 0;
 			stagingBuffers[i].shouldRun = false;
-			stagingBuffers[i].apiBuffer = renderDevice.CreateBuffer(info);
+			stagingBuffers[i].isBlitting = false;
 		}
 
 		VkDeviceSize alignedSize = 0;
-		memory = renderDevice.CreateBufferMemory(info, stagingBuffers[0].apiBuffer, &alignedSize, NUM_FRAMES);
-		vkMapMemory(device, memory, 0, alignedSize * NUM_FRAMES, 0, reinterpret_cast<void**>(&mappedData));
+        memory = renderDevice.CreateBufferMemory(info, stagingBuffers[0].apiBuffer, &alignedSize, NUM_STAGES);
+        vkMapMemory(device, memory, 0, alignedSize * NUM_STAGES, 0, reinterpret_cast<void**>(&mappedData));
+		// TODO: figure out how to fix this thing blit requires graphic while we should use async transfer
+		if (renderDevice.IsTransferQueueSeprate())
+			blitCommandPool = renderDevice.RequestCommandPool(QueueFamilyFlag::GRAPHICS, CommandPool::CMD_BUFF_RESET);
+        commandPool = renderDevice.RequestCommandPool(QueueFamilyFlag::TRANSFER, CommandPool::CMD_BUFF_RESET);
+		
 
-		VkCommandPoolCreateInfo commandPoolCreateInfo = {};
-		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		commandPoolCreateInfo.queueFamilyIndex = renderDevice.GetQueueFamilyIndices().queueFamilies[TRANSFER];
-		vkCreateCommandPool(device, &commandPoolCreateInfo, NULL, &commandPool);
+		for (uint i = 0; i < NUM_CMDS; i++) {
+			if (blitCommandPool)
+				blitCmdBuff[i] = blitCommandPool->RequestCommandBuffer();
 
-		{
-			VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
-			commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			commandBufferAllocateInfo.commandPool = commandPool;
-			commandBufferAllocateInfo.commandBufferCount = 1;
-
-			VkFenceCreateInfo fenceCreateInfo = {};
-			fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-
-			VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-			commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			
-			for (int i = 0; i < NUM_FRAMES; i++) {
-				vkBindBufferMemory(device, stagingBuffers[i].apiBuffer, memory, i * alignedSize);
-				vkAllocateCommandBuffers(device, &commandBufferAllocateInfo, &stagingBuffers[i].transferCmdBuff);
-				vkCreateFence(device, &fenceCreateInfo, NULL, &stagingBuffers[i].transferFence);
-				vkBeginCommandBuffer(stagingBuffers[i].transferCmdBuff, &commandBufferBeginInfo);
-
-				stagingBuffers[i].data = (uint8*)mappedData + (i * alignedSize);
-			}
+			transferCmdBuff[i] = commandPool->RequestCommandBuffer();
 		}
+
+        for (uint i = 0; i < NUM_STAGES; i++) {
+            vkBindBufferMemory(device, stagingBuffers[i].apiBuffer, memory, i * alignedSize);
+            // stagingBuffers[i].transferCmdBuff = commandPool->RequestCommandBuffer();
+            stagingBuffers[i].timelineSemaphore = renderDevice.RequestTimelineSemaphore();
+            stagingBuffers[i].data = (uint8*)mappedData + (i * alignedSize);
+			stagingBuffers[i].blitCmdBuff = blitCommandPool ? this->GetBlitCmdBuffer() : CommandBufferHandle();
+            // printf("cmd type: %d\n", stagingBuffers[i].transferCmdBuff->GetType());
+        }
 	}
+
+    void StagingManager::PrepareFlush()
+    {
+        if (!blitCommandPool) {
+			auto& cmdBuff = GetCurrentCmd();
+			cmdBuff->FullBarrier();
+        }
+
+        /*VkMappedMemoryRange memoryRange;
+        memoryRange.sType	= VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+        memoryRange.pNext	= NULL;
+        memoryRange.memory	= memory;
+        memoryRange.offset	= currentBuffer * MAX_UPLOAD_BUFFER_SIZE;
+        memoryRange.size	= MAX_UPLOAD_BUFFER_SIZE;
+
+        vkFlushMappedMemoryRanges(renderDevice.GetDevice(), 1, &memoryRange);*/
+    }
+
+    bool StagingManager::Flush()
+    {
+		StagingBuffer& stage = stagingBuffers[currentBuffer];
+
+        if (!((stage.offset && !stage.submitted) || stage.shouldRun || stage.isBlitting)) {
+			return false;
+		}
+
+		// this->PrepareFlush();
+
+		if (stage.shouldRun || stage.offset) {
+			SemaphoreHandle* signal[] = { &stage.timelineSemaphore };
+			renderDevice.Submit(CommandBuffer::ASYNC_TRANSFER, GetCurrentCmd(), NULL, 1, signal, 1);
+			renderDevice.FlushQueue(CommandBuffer::ASYNC_TRANSFER);
+		}
+
+		if (blitCommandPool && stage.isBlitting) {
+			renderDevice.AddWaitTimelineSemapore(CommandBuffer::GENERIC, stage.timelineSemaphore, VK_PIPELINE_STAGE_TRANSFER_BIT);
+			renderDevice.Submit(CommandBuffer::GENERIC, this->GetBlitCmdBuffer());
+		}
+		
+        stage.submitted = true;
+        currentBuffer = (currentBuffer + 1) % NUM_STAGES;
+        return true;
+    }
+
+    void StagingManager::Wait(StagingBuffer& stage)
+    {
+		// We have no choice but to flush blit commands
+		if (blitCommandPool && stage.isBlitting && !stage.blitCmdBuff->IsSubmitted()) {
+			SemaphoreHandle* signal[] = { &stage.timelineSemaphore };
+			renderDevice.AddSignalSemaphore(CommandBuffer::GENERIC, 1, signal, 1);
+			renderDevice.FlushQueue(CommandBuffer::GENERIC);
+		}
+
+        stage.timelineSemaphore->Wait();
+        this->ResetStage(stage);
+    }
+
+    void StagingManager::WaitPrevious()
+    {
+        this->Wait(this->GetPreviousStagingBuffer());
+    }
+
+    bool StagingManager::ResetPreviousStage()
+    {
+        //printf("Attempt to RESET %d ... ", (currentBuffer + (NUM_STAGES - 1)) % NUM_STAGES);
+        return this->ResetStage(this->GetPreviousStagingBuffer());
+    }
+
+    bool StagingManager::ResetCurrentStage()
+    {
+        //printf("Attempt to RESET %d ... ", currentBuffer);
+        return this->ResetStage(this->GetCurrentStagingBuffer());
+    }
+
+    bool StagingManager::ResetNextStage()
+    {
+        //printf("Attempt to RESET %d ... ", (currentBuffer + 1) % NUM_STAGES);
+        return this->ResetStage(this->GetNextStagingBuffer());
+    }
+
+    bool StagingManager::ResetStage(StagingBuffer& stage)
+    {
+        if (!(stage.submitted ||  stage.shouldRun || stage.isBlitting)) {
+            // printf("ABORTED\n");
+            return false;
+        }
+
+        //printf("(reset cmd buff:%d) COMPLETED\n", frameCounter);
+        stage.offset	= 0;
+        stage.submitted = false;
+        stage.shouldRun = false;
+		stage.isBlitting = false;
+		transferCmdBuff[frameCounter]->Begin();
+
+		if (blitCommandPool) {
+			stage.blitCmdBuff = this->GetBlitCmdBuffer();
+			stage.blitCmdBuff->Begin();
+		}
+        
+        return true;
+    }
+
+    bool StagingManager::ResetStage(uint32 i)
+    {
+        return this->ResetStage(this->GetStage(i));
+    }
 
 	void StagingManager::Stage(VkBuffer dstBuffer, const void* data, const DeviceSize size, const DeviceSize alignment, const DeviceSize offset)
 	{
@@ -93,19 +191,22 @@ namespace Renderer
 		DeviceSize padding = (alignment - (newOffset % alignment)) % alignment;
 		stage->offset += padding;
 
-		if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {
-			Flush();
+        if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {
+            printf("FORCED TO FLUSH: %d\n", currentBuffer);
+            this->Flush();
 		}
 
 		stage = &stagingBuffers[currentBuffer];
-		if (stage->submitted) {
-			Wait(*stage);
+        if (stage->submitted) {
+            printf("FORCED TO WAIT %d ... ", currentBuffer);
+            this->Wait(*stage);
 		}
 
+        //printf("Writing to: %d | using cmd buff: %d\n", currentBuffer, frameCounter);
 		uint8* stageBufferData = stage->data + stage->offset;
 		memcpy(stageBufferData, data, size);
 		VkBufferCopy bufferCopy{stage->offset, offset, size};
-		vkCmdCopyBuffer(stage->transferCmdBuff, stage->apiBuffer, dstBuffer, 1, &bufferCopy);
+        vkCmdCopyBuffer(GetCurrentCmd()->GetApiObject(), stage->apiBuffer, dstBuffer, 1, &bufferCopy);
 		stage->offset += size;
 	}
 
@@ -121,15 +222,15 @@ namespace Renderer
 		stage->offset += padding;
 
 		if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {
-			Flush();
+            this->Flush();
 		}
 
 		stage = &stagingBuffers[currentBuffer];
-		if (stage->submitted) {
-			Wait(*stage);
+        if (stage->submitted) {
+            this->Wait(*stage);
 		}
 
-		commandBuffer	= stage->transferCmdBuff;
+        commandBuffer	= GetCurrentCmd()->GetApiObject();
 		buffer			= stage->apiBuffer;
 		bufferOffset	= stage->offset;
 
@@ -147,23 +248,23 @@ namespace Renderer
 
 		StagingBuffer* stage = &stagingBuffers[currentBuffer];
 		DeviceSize newOffset = stage->offset + size;
-		DeviceSize padding = (alignment - (newOffset % alignment)) % alignment;
+		DeviceSize padding = alignment? (alignment - (newOffset % alignment)) % alignment : 0;
 		stage->offset += padding;
 
 		if ((stage->offset + size) >= (MAX_UPLOAD_BUFFER_SIZE) && !stage->submitted) {
-			Flush();
+            this->Flush();
 		}
 
 		stage = &stagingBuffers[currentBuffer];
-		if (stage->submitted) {
-			Wait(*stage);
+        if (stage->submitted) {
+            this->Wait(*stage);
 		}
 
 		uint8* stageBufferData = stage->data + stage->offset;
 		memcpy(stageBufferData, data, size);
 
 		const ImageCreateInfo& info = dstImage.GetInfo();
-		ChangeImageLayout(stage->transferCmdBuff, dstImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        ChangeImageLayout(GetCurrentCmd()->GetApiObject(), dstImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		VkBufferImageCopy imageCopy;
 		imageCopy.bufferOffset = stage->offset;
@@ -174,7 +275,7 @@ namespace Renderer
 		imageCopy.imageExtent = { info.width, info.height, info.depth };
 
 		vkCmdCopyBufferToImage(
-			stage->transferCmdBuff,
+            GetCurrentCmd()->GetApiObject(),
 			stage->apiBuffer,
 			dstImage.apiImage,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -193,7 +294,7 @@ namespace Renderer
 				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT);
 		} else {
 			// Manage layer trasnitioning :
-			ChangeImageLayout(stage->transferCmdBuff, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, info.layout);
+            ChangeImageLayout(GetCurrentCmd()->GetApiObject(), dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, info.layout);
 		}
 
 		stage->offset += size;
@@ -205,8 +306,7 @@ namespace Renderer
 		stage.shouldRun = true;
 
 		// Put image pipline barrier for changing layout
-		VkImageMemoryBarrier barrier{};
-		barrier.sType				= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		VkImageMemoryBarrier barrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 		barrier.oldLayout			= oldLayout;
 		barrier.newLayout			= newLayout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -222,7 +322,7 @@ namespace Renderer
 		VkPipelineStageFlags destinationStage = ImageUsageToPossibleStages(image.GetInfo().usage);
 
 		vkCmdPipelineBarrier(
-			stage.transferCmdBuff,
+            GetCurrentCmd()->GetApiObject(),
 			sourceStage, destinationStage,
 			0,
 			0, NULL,
@@ -233,133 +333,23 @@ namespace Renderer
 
 	void StagingManager::PrepareGenerateMipmapBarrier(const Image& image, VkImageLayout baseLevelLayout, VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, bool needTopLevelBarrier)
 	{
-		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-		CommandBuffer cmd(NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
-
-		cmd.PrepareGenerateMipmapBarrier(image, baseLevelLayout, srcStage, srcAccess, needTopLevelBarrier);
+		//StagingBuffer* stage = &stagingBuffers[currentBuffer];
+        this->GetBlitCmdBuffer()->PrepareGenerateMipmapBarrier(image, baseLevelLayout, srcStage, srcAccess, needTopLevelBarrier);
 	}
 
 	void StagingManager::GenerateMipmap(const Image& image)
 	{
-		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-		CommandBuffer cmd(NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
+		StagingBuffer& stage = stagingBuffers[currentBuffer];
+		stage.isBlitting = true;
 
-		cmd.GenerateMipmap(image);
+		this->GetBlitCmdBuffer()->GenerateMipmap(image);
 	}
 
 	void StagingManager::ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags srcStage, 
 		VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess)
 	{
-		StagingBuffer* stage = &stagingBuffers[currentBuffer];
-		CommandBuffer cmd(NULL, stage->transferCmdBuff, CommandBuffer::Type::ASYNC_TRANSFER);
-
-		cmd.ImageBarrier(image, oldLayout, newLayout, srcStage, srcAccess, dstStage, dstAccess);
-	}
-
-	StagingBuffer* StagingManager::PrepareFlush()
-	{
-		StagingBuffer& stage = stagingBuffers[currentBuffer];
-
-		if (stage.shouldRun) {
-			return &stage;
-		}
-
-		if (stage.offset == 0 || stage.submitted) {
-			return NULL;
-		}
-
-		VkCommandBuffer cmdBuff = stage.transferCmdBuff;
-
-		if (!renderDevice.IsTransferQueueSeprate()) {
-			VkMemoryBarrier barrier = {};
-			barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_INDEX_READ_BIT;
-			vkCmdPipelineBarrier(
-				cmdBuff,
-				VK_PIPELINE_STAGE_TRANSFER_BIT,
-				VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-				0, 1, &barrier, 0, NULL, 0, NULL);
-		}
-
-		// vkEndCommandBuffer(cmdBuff);
-		VkMappedMemoryRange memoryRange;
-		memoryRange.sType	= VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		memoryRange.pNext	= NULL;
-		memoryRange.memory	= memory;
-		memoryRange.offset	= currentBuffer * MAX_UPLOAD_BUFFER_SIZE;
-		memoryRange.size	= MAX_UPLOAD_BUFFER_SIZE;
-
-		vkFlushMappedMemoryRanges(renderDevice.GetDevice(), 1, &memoryRange);
-		return &stage;
-	}
-
-	void StagingManager::Prepare()
-	{
-		StagingBuffer& stage = stagingBuffers[currentBuffer];
-
-		if (stage.submitted) {
-			stage.offset = 0;
-			stage.submitted = false;
-
-			VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-			commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-			vkBeginCommandBuffer(stage.transferCmdBuff, &commandBufferBeginInfo);
-		}
-	}
-
-	VkCommandBuffer StagingManager::Flush()
-	{
-		StagingBuffer* stage = this->PrepareFlush();
-
-		if (!stage) {
-			return VK_NULL_HANDLE;
-		}
-
-		VkCommandBuffer cmdBuff = stage->transferCmdBuff;
-
-		if (renderDevice.IsTransferQueueSeprate()) {
-			renderDevice.SubmitCmdBuffer(TRANSFER, &cmdBuff, 1,
-				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence);
-		} else {
-			renderDevice.SubmitCmdBuffer(TRANSFER, &cmdBuff, 1,
-				0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->transferFence);
-		}
-
-		stage->submitted = true;
-		currentBuffer = (currentBuffer + 1) % NUM_FRAMES;
-		return cmdBuff;
-	}
-
-	void StagingManager::Wait(StagingBuffer& stage)
-	{
-		if (stage.submitted == false) {
-			return;
-		}
-
-		vkWaitForFences(renderDevice.GetDevice(), 1, &stage.transferFence, VK_TRUE, UINT64_MAX);
-		vkResetFences(renderDevice.GetDevice(), 1, &stage.transferFence);
-
-		stage.offset	= 0;
-		stage.submitted = false;
-		stage.shouldRun = false;
-
-		VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-		vkBeginCommandBuffer(stage.transferCmdBuff, &commandBufferBeginInfo);
-	}
-
-	void StagingManager::WaitCurrent()
-	{
-		uint32 prevBufferIndex = ((currentBuffer - 1) % NUM_FRAMES);
-
-		if (prevBufferIndex < 0) {
-			prevBufferIndex += NUM_FRAMES;
-		}
-
-		this->Wait(stagingBuffers[prevBufferIndex]);
+		// StagingBuffer* stage = &stagingBuffers[currentBuffer];
+		this->GetBlitCmdBuffer()->ImageBarrier(image, oldLayout, newLayout, srcStage, srcAccess, dstStage, dstAccess);
 	}
 
 	void StagingManager::ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout)
@@ -397,7 +387,7 @@ namespace Renderer
 		//barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		//barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 		//sourceStage			= ImageUsageToPossibleStages(image.GetInfo().usage);
-		//destinationStage	= ImageUsageToPossibleStages(image.GetInfo().usage);
+        //destinationStage      = ImageUsageToPossibleStages(image.GetInfo().usage);
 
 		vkCmdPipelineBarrier(
 			cmd,

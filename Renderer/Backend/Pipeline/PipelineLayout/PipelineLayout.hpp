@@ -10,27 +10,31 @@ TRE_NS_START
 namespace Renderer
 {
 	class DescriptorSetAllocator;
-	class RenderBackend;
+	class RenderDevice;
 
 	class PipelineLayout
 	{
 	public:
 		PipelineLayout() : descriptorSetLayoutCount(0), pushConstantsCount(0), pipelineLayout(VK_NULL_HANDLE) {}
 
-		void Create(RenderBackend& backend);
+        void Create(RenderDevice& device);
+
+        void Destroy(const RenderDevice& renderDevice);
 
 		VkPipelineLayout GetApiObject() const
 		{
 			return pipelineLayout;
 		}
 
-		void AddBindingToSet(uint32 set, uint32 binding, uint32 descriptorCount, DescriptorType descriptorType, ShaderStagesFlags shaderStages, const VkSampler* sampler = NULL)
+        void AddBindingToSet(uint32 set, uint32 binding, uint32 descriptorCount, DescriptorType descriptorType,
+                             ShaderStagesFlags shaderStages, const VkSampler* sampler = NULL)
 		{
 			ASSERT(set >= MAX_DESCRIPTOR_SET);
 			descriptorSetLayouts[set].AddBinding(binding, descriptorCount, descriptorType, shaderStages, sampler);
 		}
 
-		void AddBindingToSet(uint32 binding, uint32 descriptorCount, DescriptorType descriptorType, ShaderStagesFlags shaderStages, const VkSampler* sampler = NULL)
+        void AddBindingToSet(uint32 binding, uint32 descriptorCount, DescriptorType descriptorType,
+                             ShaderStagesFlags shaderStages, const VkSampler* sampler = NULL)
 		{
 			ASSERT(descriptorSetLayoutCount <= 0 || descriptorSetLayoutCount >= MAX_DESCRIPTOR_SET);
 			this->AddBindingToSet(descriptorSetLayoutCount - 1, binding, descriptorCount, descriptorType, shaderStages, sampler);

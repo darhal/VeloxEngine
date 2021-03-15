@@ -2,6 +2,7 @@
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 #include <Renderer/Backend/RenderPass/Framebuffer.hpp>
 #include <Renderer/Backend/RenderPass/RenderPass.hpp>
+#include <Renderer/Backend/Images/Image.hpp>
 
 TRE_NS_START
 
@@ -17,11 +18,14 @@ Renderer::Framebuffer& Renderer::FramebufferAllocator::RequestFramebuffer(const 
 
 	for (unsigned i = 0; i < info.colorAttachmentCount; i++) {
 		ASSERT(!info.colorAttachments[i]);
-		h.u64(uint64(info.colorAttachments[i])); // this caused a bug!
+		// h.u64(uint64(info.colorAttachments[i])); // this caused a bug!
+		h.Data(info.colorAttachments[i]->GetInfo());
 	}
 
-	if (info.depthStencil)
-		h.u64(uint64(info.depthStencil)); // this caused a bug !
+	if (info.depthStencil) {
+        // h.u64(uint64(info.depthStencil)); // this caused a bug !
+        h.Data(info.depthStencil->GetInfo());
+	}
 
 	h.u32(info.baseLayer);
 	auto hash = h.Get();
@@ -37,6 +41,7 @@ Renderer::Framebuffer& Renderer::FramebufferAllocator::RequestFramebuffer(const 
 	printf("Creating framebuffer ID: %llu.\n", hash);
 	return fb2.first->second;*/
 
+    // printf("Fetching framebuffer ID: %llu.\n", hash);
 	FramebufferNode* node = framebufferCache.RequestEmplace(hash, *renderDevice, renderPass, info);
 	return *node;
 }
@@ -49,6 +54,11 @@ void Renderer::FramebufferAllocator::BeginFrame()
 void Renderer::FramebufferAllocator::Clear()
 {
 	framebufferCache.Clear();
+}
+
+void Renderer::FramebufferAllocator::Destroy()
+{
+    framebufferCache.Clear();
 }
 
 

@@ -19,6 +19,8 @@ namespace Renderer
 		VkEvent RequestEvent();
 
 		void Recycle(VkEvent event);
+
+		void Destroy();
 	private:
 		RenderDevice* device;
 		std::vector<VkEvent> events;

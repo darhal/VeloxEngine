@@ -15,7 +15,7 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RenderBackend;
+	class RenderDevice;
 
 	/*struct PushConstantKey
 	{
@@ -66,9 +66,9 @@ namespace Renderer
 			VkShaderStageFlagBits(~0),
 		};
 
-		CONSTEXPR static const char* DYNAMIC_KEYWORD_PREFIX = "DYNC_";
-		CONSTEXPR static const char* DEFAULT_ENTRY_POINT	= "main";
-		CONSTEXPR static uint32 DYNAMIC_KEYWORD_SIZE		= ARRAY_SIZE(DYNAMIC_KEYWORD_PREFIX) - 1;
+		CONSTEXPR static const char DYNAMIC_KEYWORD_PREFIX[]  = "DYNC_";
+		CONSTEXPR static const char DEFAULT_ENTRY_POINT[]	  = "main";
+		CONSTEXPR static uint32 DYNAMIC_KEYWORD_SIZE		  = ARRAY_SIZE(DYNAMIC_KEYWORD_PREFIX) - 1;
 
 		struct ShaderStage
 		{
@@ -89,7 +89,7 @@ namespace Renderer
 			ShaderStages shaderStage;
 		};
 	public:
-		ShaderProgram(RenderBackend& renderBackend, const std::initializer_list<ShaderStage>& shaderStages);
+        ShaderProgram(RenderDevice& device, const std::initializer_list<ShaderStage>& shaderStages);
 
 		ShaderProgram(const ShaderProgram&) = delete;
 
@@ -98,6 +98,10 @@ namespace Renderer
 		void Compile();
 
 		uint32 GetShadersCount() const { return (uint32)shaderStagesCreateInfo.size(); }
+
+		void DestroyShaderModules();
+
+		void Destroy();
 
 		FORCEINLINE const VkPipelineShaderStageCreateInfo* GetShaderStages() const { return shaderStagesCreateInfo.data(); }
 
@@ -110,16 +114,17 @@ namespace Renderer
 		FORCEINLINE const VkRayTracingShaderGroupCreateInfoKHR* GetShaderGroups() const { return rtShaderGroups.data(); }
 
 		FORCEINLINE const uint32 GetShaderGroupsCount() const { return (uint32)rtShaderGroups.size(); }
-	private:
-		VkPipelineShaderStageCreateInfo* GetShaderStages() { return shaderStagesCreateInfo.data(); }
 
 		static VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& code);
+	private:
+		VkPipelineShaderStageCreateInfo* GetShaderStages() { return shaderStagesCreateInfo.data(); }
 
 		void ReflectShaderCode(const void* sprivCode, size_t size, ShaderStages shaderStage, std::unordered_set<uint32>& seenDescriptorSets,
 			std::unordered_map<std::string, VkPushConstantRange>& pushConstants, uint32& oldOffset);
 
 		VkRayTracingShaderGroupTypeKHR SetShaderGroupType(VkRayTracingShaderGroupCreateInfoKHR& group, uint32 stage, uint32 index);
 	private:
+        RenderDevice& device;
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStagesCreateInfo;
 		std::vector<VkShaderModule> shaderModules;
 		std::vector<VkRayTracingShaderGroupCreateInfoKHR> rtShaderGroups;

@@ -30,7 +30,7 @@ VERSION HISTORY
 #ifndef SPIRV_REFLECT_H
 #define SPIRV_REFLECT_H
 
-#include "spirv.h"
+#include "spirv.hpp"
 
 #include <stdint.h>
 #include <string.h>

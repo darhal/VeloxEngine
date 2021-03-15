@@ -2,11 +2,14 @@
 
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/MemoryAllocator/MemoryAllocator.hpp>
 
 TRE_NS_START
 
 namespace Renderer
 {
+    class RenderDevice;
+
 	struct BufferInfo
 	{
 		DeviceSize size      = 0;
@@ -16,32 +19,53 @@ namespace Renderer
 
 		static FORCEINLINE BufferInfo UniformBuffer(DeviceSize size)
 		{
-			return BufferInfo{ size, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_ONLY , QueueFamilyFlag::NONE };
+			return BufferInfo{ size, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_COHERENT , QueueFamilyFlag::NONE };
 		}
 	};
 
 	typedef BufferInfo BufferCreateInfo;
-	class RenderDevice;
 
-	class Buffer : public NoRefCount
+    struct BufferDeleter
+    {
+        void operator()(class Buffer* buff);
+    };
+
+    class Buffer : public Utils::RefCounterEnabled<Buffer, BufferDeleter, HandleCounter>
 	{
 	public:
-		Buffer(VkBuffer buffer, const BufferInfo& info, const MemoryView& mem);
+        friend struct BufferDeleter;
 
-		void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0);
+        Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryAllocation& mem);
+
+        Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryAllocation& mem, uint32 unitSize, uint32 ringSize);
+
+        virtual ~Buffer();
+
+        void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0, VkDeviceSize alignement = 1);
+
+        void WriteToRing(VkDeviceSize size, const void* data, VkDeviceSize offset = 0, VkDeviceSize alignement = 1);
 
 		FORCEINLINE VkBuffer GetApiObject() const { return apiBuffer; }
 
 		FORCEINLINE const BufferInfo& GetBufferInfo() const { return bufferInfo; }
 
-		FORCEINLINE const MemoryView& GetBufferMemory() const { return bufferMemory; }
+        FORCEINLINE const MemoryAllocation& GetBufferMemory() const { return bufferMemory; }
+
+        uint32 GetUnitSize() const { return unitSize; }
+
+        uint32 GetCurrentOffset() const { return bufferIndex * unitSize; }
 
 	protected:
-		BufferInfo bufferInfo;
-		MemoryView bufferMemory;
-		VkBuffer   apiBuffer;
+        RenderDevice& device;
+        BufferInfo    bufferInfo;
+        MemoryAllocation    bufferMemory;
+        VkBuffer      apiBuffer;
 
-		friend class RenderBackend;
+        uint32		ringSize;
+        uint32		unitSize;
+        uint32		bufferIndex;
+
+        friend class RenderDevice;
 		friend class StagingManager;
 	};
 

@@ -10,12 +10,14 @@ TRE_NS_START
 
 namespace Renderer
 {
+    class RenderDevice;
+    class CommandPool;
+
 	class Buffer;
 	class RingBuffer;
 	class Image;
 	class ImageView;
 	class Sampler;
-	class RenderBackend;
 	class DescriptorSetLayout;
 	class RenderPass;
 	class Framebuffer;
@@ -24,6 +26,7 @@ namespace Renderer
 	class Pipeline;
 	struct RenderPassInfo;
 
+	class SBT;
 	class Tlas;
 
 	struct DescriptorSetDirty
@@ -40,20 +43,28 @@ namespace Renderer
 	class CommandBuffer : public Utils::RefCounterEnabled<CommandBuffer, CommandBufferDeleter, HandleCounter>
 	{
 	public:
-		enum class Type
+        enum Type
 		{
-			GENERIC,
-			ASYNC_TRANSFER,
-			ASYNC_COMPUTE,
-			RAY_TRACING,
-			MAX
+			GENERIC = 0,
+            ASYNC_TRANSFER = 1,
+            ASYNC_COMPUTE = 2,
+            RAY_TRACING = 0,
+
+            MAX = 3,
 		};
 	public:
 		friend struct CommandBufferDeleter;
+        friend class CommandPool;
 
-		CommandBuffer(RenderBackend* backend, VkCommandBuffer buffer, Type type);
+        CommandBuffer(RenderDevice& device, CommandPool* pool, VkCommandBuffer buffer, Type type);
 
-		void Begin();
+        ~CommandBuffer();
+
+        void Reset();
+
+        void ApiReset();
+
+        void Begin(uint32 flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 		void End();
 
@@ -75,9 +86,13 @@ namespace Renderer
 
 		void BindPipeline(const Pipeline& pipeline);
 
-		void BindVertexBuffer(const Buffer& buffer, DeviceSize offset = 0);
+        void BindVertexBuffer(const Buffer& buffer, DeviceSize offset);
 
-		void BindIndexBuffer(const Buffer& buffer, DeviceSize offset = 0);
+        void BindVertexBuffer(const Buffer& buffer);
+
+        void BindIndexBuffer(const Buffer& buffer, DeviceSize offset);
+
+        void BindIndexBuffer(const Buffer& buffer);
 
 		void DrawIndexed(uint32 indexCount, uint32 instanceCount = 1, uint32 firstIndex = 0, int32 vertexOffset = 0, uint32 firstInstance = 0);
 
@@ -86,7 +101,7 @@ namespace Renderer
 		void BindDescriptorSet(const Pipeline& pipeline, const std::initializer_list<VkDescriptorSet>& descriptors, 
 			const std::initializer_list<uint32>& dyncOffsets);
 
-		void BindShaderProgram(const ShaderProgram& program);
+		void BindShaderProgram(ShaderProgram& program);
 
 		// Graphics State functions:
 		void SetGraphicsState(GraphicsState& state);
@@ -94,8 +109,6 @@ namespace Renderer
 
 		// Uniform buffers, textures, input attachments, etc
 		void SetUniformBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
-
-		void SetUniformBuffer(uint32 set, uint32 binding, const RingBuffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
 
 		void SetStorageBuffer(uint32 set, uint32 binding, const Buffer& buffer, DeviceSize offset = 0, DeviceSize range = VK_WHOLE_SIZE);
 
@@ -112,7 +125,11 @@ namespace Renderer
 		// Ray Tracing
 		void SetAccelerationStrucure(uint32 set, uint32 binding, const Tlas& tlas);
 
-		void TraceRays(uint32 width, uint32 height, uint32 depth);
+		void SetAccelerationStrucure(uint32 set, uint32 binding, VkAccelerationStructureKHR* tlas);
+
+		void TraceRays(uint32 width, uint32 height, uint32 depth = 1);
+
+		void TraceRays(VkPipeline pipeline, const SBT& sbt, uint32 width, uint32 height, uint32 depth = 1);
 
 		void CopyBuffer(const Buffer& srcBuffer, const Buffer& dstBuffer, DeviceSize size, DeviceSize srcOffset = 0, DeviceSize dstOffset = 0);
 
@@ -140,6 +157,10 @@ namespace Renderer
 
 		void CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, const VectorView<VkBufferImageCopy>& copies);
 
+		void CopyImage(const Image& srcImage, const Image& dstImage, const VkExtent3D& extent, uint32 srcMipLevel = 0, uint32 dstMipLevel = 0,
+			const VkOffset3D& srcOffset = {0, 0, 0}, const VkOffset3D& dstOffset = {0, 0, 0});
+
+		void CopyImage(const Image& srcImage, const Image& dstImage, const VectorView<VkImageCopy>& regions);
 
 		// Prepare an image to have its mipmap generated.
 		// Puts the top level into TRANSFER_SRC_OPTIMAL, and the all the remaining levels are set to TRANSFER_DST_OPTIMAL
@@ -178,6 +199,13 @@ namespace Renderer
 		void ImageBarrier(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags srcStage, 
 			VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
 
+		void ChangeImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange,
+			VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 
+			VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+		void ChangeImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout,
+			VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+			VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
 		FORCEINLINE VkCommandBuffer GetApiObject() const { return commandBuffer; }
 
@@ -231,6 +259,10 @@ namespace Renderer
 		void SetAttachmentBlendOp(uint32 attach, VkBlendOp colorBlendOp, VkBlendOp alphaBlendOp);
 
 		void SetAttachmentColorWriteMask(uint32 attach, VkColorComponentFlags colorWriteMask);
+
+		FORCEINLINE bool IsRecording() const { return recording; }
+
+		FORCEINLINE bool IsSubmitted() const { return submitted; }
 	private:
 		void UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout, const ResourceBinding* bindings);
 
@@ -244,28 +276,34 @@ namespace Renderer
 
 		void BindPipeline();
 	private:
-		ResouceBindings bindings;
-		DescriptorSetDirty dirty;
-		RenderBackend* renderBackend;
+        ResouceBindings bindings;
+        DescriptorSetDirty dirty;
+        RenderDevice& device;
 
-		GraphicsState* state;
-		const ShaderProgram* program;
-		const Pipeline* pipeline;
-		const RenderPass* renderPass;
-		const Framebuffer* framebuffer;
-		const ImageView* framebufferAttachments[MAX_ATTACHMENTS + 1] = {};
+        CommandPool* pool;
+        GraphicsState* state;
+        ShaderProgram* program;
+        const Pipeline* pipeline;
+        const RenderPass* renderPass;
+        const Framebuffer* framebuffer;
+        const ImageView* framebufferAttachments[MAX_ATTACHMENTS + 1] = {};
 
-		VkRect2D scissor;
-		VkViewport viewport;
+        VkDescriptorSet allocatedSets[MAX_DESCRIPTOR_SET];
+        VkCommandBuffer commandBuffer;
 
-		VkDescriptorSet allocatedSets[MAX_DESCRIPTOR_SET];
-		VkCommandBuffer commandBuffer;
-		Type type;
+        VkRect2D scissor;
+        VkViewport viewport;
 
-		uint32 subpassIndex;
+        Type type;
 
-		bool renderToSwapchain;
-		bool stateUpdate;
+        uint32 subpassIndex;
+
+        bool renderToSwapchain;
+        bool stateUpdate;
+        bool recording;
+		bool submitted;
+
+		friend class RenderDevice;
 	};
 
 	typedef CommandBuffer CommandList;

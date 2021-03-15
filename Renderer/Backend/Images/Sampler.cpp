@@ -1,10 +1,25 @@
 #include "Sampler.hpp"
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 
 TRE_NS_START
 
-Renderer::Sampler::Sampler(VkSampler sampler, const SamplerInfo& info) :
-	sampler(sampler), info(info)
+void Renderer::SamplerDeleter::operator()(Sampler* sampler)
 {
+    sampler->device.GetObjectsPool().samplers.Free(sampler);
+    // sampler->sampler = VK_NULL_HANDLE;
+}
+
+Renderer::Sampler::Sampler(RenderDevice& device, VkSampler sampler, const SamplerInfo& info) :
+    device(device), sampler(sampler), info(info)
+{
+}
+
+Renderer::Sampler::~Sampler()
+{
+    if (sampler != VK_NULL_HANDLE) {
+        device.DestroySampler(sampler);
+        sampler = VK_NULL_HANDLE;
+    }
 }
 
 TRE_NS_END

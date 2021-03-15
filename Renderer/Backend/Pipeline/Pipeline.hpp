@@ -19,38 +19,40 @@ namespace Renderer
 
 	enum class PipelineType
 	{
-		GRAPHICS = 0,
-		COMPUTE,
-		RAY_TRACE,
+		GRAPHICS = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		COMPUTE = VK_PIPELINE_BIND_POINT_COMPUTE,
+		RAY_TRACE = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
 	};
 
 	class Pipeline
 	{
 	public:
 		// Generic:
-		Pipeline(PipelineType type, const ShaderProgram* program = NULL) :
-			pipelineType(type), pipeline(VK_NULL_HANDLE), shaderProgram(program), renderPass(NULL), dynamicState(0),
+		Pipeline(PipelineType type, ShaderProgram* program = NULL) :
+		    renderDevice(NULL), pipelineType(type), pipeline(VK_NULL_HANDLE), shaderProgram(program), renderPass(NULL), dynamicState(0),
 			sbt()
 		{
 		}
+
+		~Pipeline();
 
 		FORCEINLINE VkPipeline GetApiObject() const { return pipeline; }
 
 		const PipelineLayout& GetPipelineLayout() const { return shaderProgram->GetPipelineLayout(); }
 
-		void SetShaderProgram(const ShaderProgram* program) { shaderProgram = program; }
+		void SetShaderProgram(ShaderProgram* program) { shaderProgram = program; }
 
 		const ShaderProgram* GetShaderProgram() const { return shaderProgram; }
 
 		PipelineType GetPipelineType() const { return pipelineType; }
 
 		// RT:
-		void Create(RenderBackend& backend, uint32 maxDepth, uint32 maxRayPayloadSize = 256, uint32 maxRayHitAttribSize = 256);
+        void Create(RenderDevice& device, uint32 maxDepth, uint32 maxRayPayloadSize = 1, uint32 maxRayHitAttribSize = 1);
 
 		const SBT& GetSBT() const { return sbt; }
 
 		// Compute:
-		void Create(const RenderDevice& device);
+        void Create(RenderDevice& device);
 
 		// Graphics:
 		void Create(
@@ -68,11 +70,12 @@ namespace Renderer
 
 		bool IsStateDynamic(VkDynamicState state) const { return dynamicState & (1 << state); }
 	protected:
-		const ShaderProgram* shaderProgram;
+        RenderDevice*  renderDevice;
+        ShaderProgram*       shaderProgram;
 		VkPipeline			 pipeline;
 		PipelineType		 pipelineType;
 
-		SBT sbt;
+		SBT					sbt;
 		
 		const RenderPass*	renderPass;
 		uint32				dynamicState;

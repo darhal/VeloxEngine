@@ -2,13 +2,14 @@
 
 #include <Renderer/Common.hpp>
 #include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Backend/MemoryAllocator/MemoryAllocator.hpp>
 #include "ImageHelper.hpp"
 
 TRE_NS_START
 
 namespace Renderer
 {
-	class RenderBackend;
+    class RenderDevice;
 
 	struct ImageViewDeleter
 	{
@@ -25,7 +26,7 @@ namespace Renderer
 	public:
 		friend struct ImageViewDeleter;
 
-		ImageView(RenderBackend& backend, VkImageView view, const ImageViewCreateInfo& info);
+        ImageView(RenderDevice& dev, VkImageView view, const ImageViewCreateInfo& info);
 
 		~ImageView();
 
@@ -35,13 +36,13 @@ namespace Renderer
 
 		FORCEINLINE const Image* GetImage() const { return info.image; }
 	private:
-		ImageView() = default;
+        ImageView() = delete;
 	private:
-		RenderBackend&	    backend;
+        RenderDevice&       device;
 		ImageViewCreateInfo info;
 		VkImageView			apiImageView;
 
-		friend class RenderBackend;
+        friend class RenderDevice;
 	};
 
 	using ImageViewHandle = Handle<ImageView>;
@@ -51,9 +52,9 @@ namespace Renderer
 	public:
 		friend struct ImageDeleter;
 
-		Image(RenderBackend& backend, VkImage image, const ImageCreateInfo& info, const MemoryView& memory);
+        Image(RenderDevice& device, VkImage image, const ImageCreateInfo& info, const MemoryAllocation& memory);
 
-		Image(RenderBackend& backend, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType);
+        Image(RenderDevice& device, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType);
 
 		~Image();
 
@@ -77,16 +78,16 @@ namespace Renderer
 
 		FORCEINLINE bool IsSwapchainImage() const { return swapchainLayout != VK_IMAGE_LAYOUT_UNDEFINED; }
 	private:
-		Image() = default;
+        Image() = delete;
 	private:
-		RenderBackend& backend;
+        RenderDevice&       device;
 		ImageCreateInfo info;
-		MemoryView imageMemory;
+        MemoryAllocation imageMemory;
 		VkImage apiImage;
 		ImageViewHandle defaultView;
 		VkImageLayout swapchainLayout;
 
-		friend class RenderBackend;
+        friend class RenderDevice;
 		friend class StagingManager;
 	};
 

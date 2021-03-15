@@ -1,29 +1,32 @@
 #include "Image.hpp"
-#include <Renderer/Backend/RenderBackend.hpp>
+#include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 
 TRE_NS_START
 
-Renderer::ImageView::ImageView(RenderBackend& backend, VkImageView view, const ImageViewCreateInfo& info) :
-	backend(backend), info(info), apiImageView(view)
+Renderer::ImageView::ImageView(RenderDevice& dev, VkImageView view, const ImageViewCreateInfo& info) :
+    device(dev), info(info), apiImageView(view)
 {
 }
 
 Renderer::ImageView::~ImageView()
 {
-	// printf("Destroying image view!\n");
-	backend.DestroyImageView(apiImageView);
+    if (apiImageView) {
+        device.DestroyImageView(apiImageView);
+        apiImageView = VK_NULL_HANDLE;
+    }
 }
 
-Renderer::Image::Image(RenderBackend& backend, VkImage image, const ImageCreateInfo& info, const MemoryView& memory) :
-	backend(backend), info(info), imageMemory(memory), apiImage(image), swapchainLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+Renderer::Image::Image(RenderDevice& dev, VkImage image, const ImageCreateInfo& info, const MemoryAllocation& memory) :
+    device(dev), info(info), imageMemory(memory), apiImage(image), swapchainLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 {
 }
 
-Renderer::Image::Image(RenderBackend& backend, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType) :
-	backend(backend),
+Renderer::Image::Image(RenderDevice& dev, VkImage image, VkImageView defaultView, const ImageCreateInfo& createInfo, VkImageViewType viewType) :
+    device(dev),
 	apiImage(image),
 	info(createInfo),
-	imageMemory{}, swapchainLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+    imageMemory{},
+    swapchainLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 {
 	if (defaultView != VK_NULL_HANDLE) {
 		ImageViewCreateInfo info;
@@ -35,16 +38,16 @@ Renderer::Image::Image(RenderBackend& backend, VkImage image, VkImageView defaul
 		info.baseLayer = 0;
 		info.layers = createInfo.layers;
 
-		this->defaultView = ImageViewHandle(backend.objectsPool.imageViews.Allocate(backend, defaultView, info));
+        this->defaultView = ImageViewHandle(device.objectsPool.imageViews.Allocate(device, defaultView, info));
 	}
 }
 
 Renderer::Image::~Image()
 {
 	if (apiImage != VK_NULL_HANDLE && !IsSwapchainImage()) {
-		backend.DestroyImage(apiImage);
-		backend.FreeMemory(imageMemory.memory);
-		// printf("Destroying image!\n");
+        device.DestroyImage(apiImage);
+        device.FreeMemory(imageMemory);
+        apiImage = VK_NULL_HANDLE;
 	}
 }
 
@@ -74,18 +77,19 @@ void Renderer::Image::CreateDefaultView(VkImageViewType viewType)
 	imageViewInfo.layers = info.layers;
 
 	VkImageView imageView;
-	vkCreateImageView(backend.GetRenderDevice().GetDevice(), &vkViewInfo, NULL, &imageView);
-	this->defaultView = ImageViewHandle(backend.objectsPool.imageViews.Allocate(backend, imageView, imageViewInfo));
+    vkCreateImageView(device.GetDevice(), &vkViewInfo, NULL, &imageView);
+    this->defaultView = ImageViewHandle(device.objectsPool.imageViews.Allocate(device, imageView, imageViewInfo));
 }
 
 void Renderer::ImageViewDeleter::operator()(ImageView* view)
 {
-	view->backend.GetObjectsPool().imageViews.Free(view);
+    view->device.GetObjectsPool().imageViews.Free(view);
 }
 
 void Renderer::ImageDeleter::operator()(Image* img)
 {
-	img->backend.GetObjectsPool().images.Free(img);
+    img->device.GetObjectsPool().images.Free(img);
+    img->defaultView = ImageViewHandle(NULL); // deleting the view
 }
 
 

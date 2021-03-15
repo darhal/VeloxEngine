@@ -30,8 +30,19 @@ Renderer::Framebuffer::Framebuffer(const RenderDevice& device, const RenderPass&
 	fb_info.height = height;
 	fb_info.layers = num_layers;
 
+	// printf("Creating FB\n");
 	vkCreateFramebuffer(renderDevice.GetDevice(), &fb_info, NULL, &framebuffer);
 }
+
+Renderer::Framebuffer::~Framebuffer()
+{
+    if (framebuffer) {
+        vkDestroyFramebuffer(renderDevice.GetDevice(), framebuffer, NULL);
+        framebuffer = VK_NULL_HANDLE;
+        // printf("Destroy framebuffer!\n");
+    }
+}
+
 
 void Renderer::Framebuffer::ComputeDimensions(const RenderPassInfo& info, uint32_t& width, uint32_t& height)
 {
@@ -77,6 +88,7 @@ unsigned Renderer::Framebuffer::SetupRawViews(VkImageView* views, const RenderPa
 
 	return num_views;
 }
+
 
 TRE_NS_END
 

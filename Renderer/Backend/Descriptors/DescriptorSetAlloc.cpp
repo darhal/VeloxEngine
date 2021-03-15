@@ -31,15 +31,13 @@ void Renderer::DescriptorSetAllocator::Init()
 void Renderer::DescriptorSetAllocator::AllocatePool()
 {
     VkDescriptorPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount = poolSizeCount;
-    poolInfo.pPoolSizes = poolSize;
-    poolInfo.maxSets = MAX_SETS_PER_POOL;
+    poolInfo.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount  = poolSizeCount;
+    poolInfo.pPoolSizes     = poolSize;
+    poolInfo.maxSets        = MAX_SETS_PER_POOL;
     VkDescriptorPool pool;
 
-    if (vkCreateDescriptorPool(renderDevice->GetDevice(), &poolInfo, NULL, &pool) != VK_SUCCESS) {
-        ASSERTF(true, "Failed to create descriptor pool!");
-    }
+    CALL_VK(vkCreateDescriptorPool(renderDevice->GetDevice(), &poolInfo, NULL, &pool));
 
     descriptorSetPools.emplace_back(pool);
 
@@ -48,15 +46,13 @@ void Renderer::DescriptorSetAllocator::AllocatePool()
     std::fill(std::begin(layouts), std::end(layouts), descriptorSetLayout.GetApiObject());
 
     VkDescriptorSetAllocateInfo allocInfo;
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.pNext = NULL;
+    allocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.pNext              = NULL;
     allocInfo.descriptorPool     = descriptorSetPools.back();
     allocInfo.descriptorSetCount = MAX_SETS_PER_POOL;
     allocInfo.pSetLayouts        = layouts;
 
-    if (vkAllocateDescriptorSets(renderDevice->GetDevice(), &allocInfo, sets) != VK_SUCCESS) {
-        ASSERTF(true, "Failed to allocate descriptor sets!");
-    }
+    CALL_VK(vkAllocateDescriptorSets(renderDevice->GetDevice(), &allocInfo, sets));
 
     for (auto set : sets) {
         descriptorCache.MakeEmpty(set);
@@ -100,6 +96,17 @@ void Renderer::DescriptorSetAllocator::BeginFrame()
 {
     shouldBegin = true;
     descriptorCache.BeginFrame();
+}
+
+void Renderer::DescriptorSetAllocator::Destroy()
+{
+    if (renderDevice) {
+        for (const auto& pool : descriptorSetPools) {
+            vkDestroyDescriptorPool(renderDevice->GetDevice(), pool, NULL);
+        }
+
+        descriptorSetPools.clear();
+    }
 }
 
 TRE_NS_END

@@ -19,6 +19,8 @@ namespace Renderer
 		VkFence RequestClearedFence();
 
 		void Recycle(VkFence fence);
+
+		void Destroy();
 	private:
 		RenderDevice* device;
 		std::vector<VkFence> fences;

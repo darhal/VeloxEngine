@@ -1,11 +1,14 @@
 #pragma once
 
-#include <Renderer/Common.hpp>
-#include <Renderer/Backend/Common/Globals.hpp>
-#include <Engine/Core/DataStructure/Array/Array.hpp>
-#include <Renderer/Core/StaticString/StaticString.hpp>
 #include <initializer_list>
 #include <unordered_set>
+
+// #include <Engine/Core/DataStructure/Array/Array.hpp>
+
+#include <Renderer/Common.hpp>
+#include <Renderer/Backend/Common/Globals.hpp>
+#include <Renderer/Core/StaticString/StaticString.hpp>
+
 
 TRE_NS_START
 
@@ -23,6 +26,8 @@ namespace Renderer
 		int32 CreateRenderInstance(const char** extensions = NULL, uint32 extCount = 0, const char** layers = NULL, uint32 layerCount = 0);
 
 		void DestroyRenderInstance();
+
+        FORCEINLINE VkInstance GetApiObject() const { return internal.instance; }
 
 	private:
 		void FetchAvailbleInstanceExtensions();

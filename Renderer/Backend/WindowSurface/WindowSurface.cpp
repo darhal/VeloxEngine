@@ -10,8 +10,9 @@ int32 Renderer::Internal::CreateWindowSurface(const RenderInstance& renderInstan
 	ASSERT(renderInstance.instance == NULL);
 
     VkInstance instance = renderInstance.instance;
-
     VkResult err;
+
+#if defined(OS_WINDOWS)
     VkWin32SurfaceCreateInfoKHR sci{};
     PFN_vkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR;
 
@@ -31,6 +32,22 @@ int32 Renderer::Internal::CreateWindowSurface(const RenderInstance& renderInstan
     if (err) {
         ASSERTF(true, "Win32: Failed to create Vulkan surface: %s", GetVulkanResultString(err));
     }
+#elif defined(OS_LINUX)
+    VkXlibSurfaceCreateInfoKHR sci{};
+    PFN_vkCreateXlibSurfaceKHR vkCreateXlibSurfaceKHR = (PFN_vkCreateXlibSurfaceKHR)vkGetInstanceProcAddr(instance, "vkCreateXlibSurfaceKHR");
+
+    if (!vkCreateXlibSurfaceKHR) {
+        ASSERTF(true, "Xlib: Vulkan instance missing VK_KHR_Xlib_surface extension");
+        return -1;
+    }
+
+    sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+    sci.flags = 0;
+    sci.dpy = (Display*)ctx.window->GetNativeHandle();
+    sci.window = ctx.window->GetWindowHandle();
+
+    vkCreateXlibSurfaceKHR(instance, &sci, allocator, &ctx.surface);
+#endif
 
     return err;
 }

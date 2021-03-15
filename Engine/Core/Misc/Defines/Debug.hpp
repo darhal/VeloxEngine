@@ -8,20 +8,19 @@
 	#pragma warning(disable:4996) // DISABLE VS WARNING
 #endif
 
-#if defined(OS_LINUX)
-	#define _DEBUG // Enable debugging for now !
-#endif
-
-#if not defined(_DEBUG) || defined(NDEBUG)
+#if !defined(_DEBUG) || defined(NDEBUG)
 	#define ASSERTF(condition, ...) {};
 	#define ASSERT(condition) {};
+    #undef DEBUG
 #else
 	#include <Engine/Core/Misc/Utils/Logging.hpp>
 
+#if !defined(DEBUG)
     #define DEBUG
+#endif
 
 	#if defined(OS_WINDOWS) && (CPU_ARCH == CPU_ARCH_x86_64 || CPU_ARCH == CPU_ARCH_x86)
-        #include <intrin.h>
+        //#include <intrin.h>
 		#define DEBUG_BREAK() __debugbreak() 
 	#elif defined(OS_UNIX) || defined(OS_LINUX) && not defined(COMPILER_GCC)
 		#include <signal.h>

@@ -10,8 +10,7 @@ void Renderer::FenceManager::Init(RenderDevice* device)
 
 Renderer::FenceManager::~FenceManager()
 {
-    for (VkFence f : fences)
-        vkDestroyFence(device->GetDevice(), f, NULL);
+    this->Destroy();
 }
 
 VkFence Renderer::FenceManager::RequestClearedFence()
@@ -32,6 +31,14 @@ void Renderer::FenceManager::Recycle(VkFence fence)
 {
     if (fence != VK_NULL_HANDLE)
         fences.push_back(fence);
+}
+
+void Renderer::FenceManager::Destroy()
+{
+    for (VkFence f : fences)
+        vkDestroyFence(device->GetDevice(), f, NULL);
+
+    fences.clear();
 }
 
 TRE_NS_END

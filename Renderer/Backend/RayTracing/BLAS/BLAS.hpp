@@ -8,7 +8,7 @@ TRE_NS_START
 
 namespace Renderer
 {
-	class RenderBackend;
+    class RenderDevice;
 
 	typedef VkAccelerationStructureBuildRangeInfoKHR AsOffset;
 
@@ -43,11 +43,15 @@ namespace Renderer
 			triangles.indexData.deviceAddress = indexData;
 			triangles.transformData.deviceAddress = transformData;
 
-			acclGeo.PushBack(VkAccelerationStructureGeometryKHR{ 
-				VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR, NULL, 
-				VK_GEOMETRY_TYPE_TRIANGLES_KHR, triangles, flags 
-			});
-			accOffset.PushBack(VkAccelerationStructureBuildRangeInfoKHR{ offset });
+			VkAccelerationStructureGeometryKHR geometry;
+			geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+			geometry.pNext = NULL;
+			geometry.flags = flags;
+			geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+			geometry.geometry.triangles = triangles;
+
+			acclGeo.PushBack(geometry);
+			accOffset.PushBack(offset);
 		}
 	};
 
@@ -61,7 +65,7 @@ namespace Renderer
 	public:
 		friend struct BlasDeleter;
 
-		Blas(RenderBackend& backend, const BlasCreateInfo& blasInfo, VkAccelerationStructureKHR blas, BufferHandle buffer);
+        Blas(RenderDevice& device, const BlasCreateInfo& blasInfo, VkAccelerationStructureKHR blas, BufferHandle buffer);
 
 		const BlasCreateInfo& GetInfo() const { return blasInfo; }
 
@@ -71,12 +75,12 @@ namespace Renderer
 
 		VkDeviceAddress GetAcclAddress() const;
 	private:
-		RenderBackend& backend;
+        RenderDevice& device;
 		BlasCreateInfo blasInfo;
 		VkAccelerationStructureKHR apiBlas;
 		BufferHandle buffer;
 		
-		friend class RenderBackend;
+        friend class RenderDevice;
 		friend class AsBuilder;
 	};
 

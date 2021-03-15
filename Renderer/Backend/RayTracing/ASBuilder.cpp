@@ -1,14 +1,13 @@
-#include "AsBuilder.hpp"
+#include "ASBuilder.hpp"
 #include <Renderer/Backend/Buffers/Buffer.hpp>
 #include <Renderer/Backend/Images/Image.hpp>
 #include <Renderer/Backend/CommandList/CommandList.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
 #include <Renderer/Backend/RayTracing/TLAS/TLAS.hpp>
-#include <Renderer/Backend/RenderBackend.hpp>
 
 TRE_NS_START
 
-Renderer::AsBuilder::AsBuilder(const RenderDevice& device) : 
+Renderer::AsBuilder::AsBuilder(RenderDevice& device) :
 	renderDevice(device), maxScratchSize(MAX_UPLOAD_BUFFER_SIZE), currentStaging(0)
 {
 }
@@ -27,10 +26,10 @@ void Renderer::AsBuilder::Init()
 	stagingInfo.usage = BufferUsage::TRANSFER_SRC;
 
 	for (int i = 0; i < NUM_FRAMES; i++) {
-		rtStaging[i].scratchBuffer = renderDevice.CreateBuffer(info);
-		rtStaging[i].address = NULL;
+        rtStaging[i].scratchBuffer = renderDevice.CreateBufferHelper(info);
+        rtStaging[i].address = VK_NULL_HANDLE;
 		rtStaging[i].submitted = false;
-		rtStaging[i].stagingBuffer = renderDevice.CreateBuffer(stagingInfo);
+        rtStaging[i].stagingBuffer = renderDevice.CreateBufferHelper(stagingInfo);
 
 		VkCommandPoolCreateInfo commandPoolCreateInfo = {};
 		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -122,7 +121,6 @@ void Renderer::AsBuilder::BuildTlasBatch()
 	auto cmdBuff = renderDevice.CreateCmdBuffer(stage->cmdPool);
 
 	if (fenceSet) {
-		printf("TLAS:Waiting for fence\n");
 		vkWaitForFences(renderDevice.GetDevice(), 1, &stage->fence, VK_TRUE, UINT64_MAX);
 		vkResetFences(renderDevice.GetDevice(), 1, &stage->fence);
 		stage->submitted = false;
@@ -198,9 +196,10 @@ void Renderer::AsBuilder::BuildTlasBatch()
 		vkCmdBuildAccelerationStructuresKHR(cmdBuff, 1, &buildInfo, &pBuildOffsetInfo);
 	}
 
-	// vkEndCommandBuffer(cmdBuff);
+    vkEndCommandBuffer(cmdBuff);
 
-	CALL_VK(renderDevice.SubmitCmdBuffer(COMPUTE, &cmdBuff, 1, 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
+    auto queue = renderDevice.GetQueue(COMPUTE);
+    CALL_VK(renderDevice.SubmitCmdBuffer(queue, &cmdBuff, 1, 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
 
 	stage->submitted = true;
 }
@@ -234,7 +233,7 @@ void Renderer::AsBuilder::BuildBlasBatch(bool compact)
 	RtStaging::Batch& batch = stage->batch[compact];
 	auto& pBuildOffset = stage->pBuildOffset;
 	size_t nbBlas = batch.batchInfo.size();
-
+	
 	// Sanity check:
 	if (batch.batchInfo.size() == 0) {
 		return;
@@ -281,16 +280,17 @@ void Renderer::AsBuilder::BuildBlasBatch(bool compact)
 				VK_QUERY_TYPE_ACCELERATION_STRUCTURE_COMPACTED_SIZE_KHR, batch.queryPool, (uint32)i);
 		}
 
-		// vkEndCommandBuffer(info.cmd);
+		vkEndCommandBuffer(info.cmd);
 		commands[i] = info.cmd;
 	}
 
-	CALL_VK(renderDevice.SubmitCmdBuffer(COMPUTE, commands.data(), (uint32)commands.size(), 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
+    auto queue = renderDevice.GetQueue(COMPUTE);
+    CALL_VK(renderDevice.SubmitCmdBuffer(queue, commands.data(), (uint32)commands.size(), 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
 
 	stage->submitted = true;
 }
 
-void Renderer::AsBuilder::CompressBatch(RenderBackend& backend)
+void Renderer::AsBuilder::CompressBatch()
 {
 	RtStaging* stage = &rtStaging[currentStaging];
 	RtStaging::Batch& batch = stage->batch[1]; // compact batch
@@ -305,7 +305,6 @@ void Renderer::AsBuilder::CompressBatch(RenderBackend& backend)
 	}
 
 	if (fenceSet) {
-		printf("Waiting for fence\n");
 		vkWaitForFences(renderDevice.GetDevice(), 1, &stage->fence, VK_TRUE, UINT64_MAX);
 		vkResetFences(renderDevice.GetDevice(), 1, &stage->fence);
 		stage->submitted = false;
@@ -337,7 +336,7 @@ void Renderer::AsBuilder::CompressBatch(RenderBackend& backend)
 		VkAccelerationStructureCreateInfoKHR asCreateInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
 		asCreateInfo.size = compactSizes[idx];
 		asCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-		auto as = backend.CreateAcceleration(asCreateInfo, &buffHandle);
+        auto as = renderDevice.CreateAcceleration(asCreateInfo, &buffHandle);
 
 		// Copy the original BLAS to a compact version
 		VkCopyAccelerationStructureInfoKHR copyInfo{ VK_STRUCTURE_TYPE_COPY_ACCELERATION_STRUCTURE_INFO_KHR };
@@ -354,16 +353,23 @@ void Renderer::AsBuilder::CompressBatch(RenderBackend& backend)
 		// vkEndCommandBuffer(stage->compressionCommand);
 	}
 
-	CALL_VK(renderDevice.SubmitCmdBuffer(COMPUTE, &stage->compressionCommand, 1, 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
+
+    auto queue = renderDevice.GetQueue(COMPUTE);
+    CALL_VK(renderDevice.SubmitCmdBuffer(queue, &stage->compressionCommand, 1, 0, VK_NULL_HANDLE, VK_NULL_HANDLE, stage->fence));
 
 	stage->submitted = true;
 }
 
-void Renderer::AsBuilder::BuildAll(RenderBackend& backend)
+void Renderer::AsBuilder::BuildAll()
 {
 	this->BuildBlasBatchs();
-	this->CompressBatch(backend);
+    this->CompressBatch();
 	this->BuildTlasBatch();
+}
+
+void Renderer::AsBuilder::Shutdown()
+{
+    // TODO: finish this!
 }
 
 TRE_NS_END

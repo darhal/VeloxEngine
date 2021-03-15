@@ -4,18 +4,20 @@
 #include <array>
 #include <initializer_list>
 
-#include <Renderer/Common.hpp>
 #include <Engine/Core/DataStructure/Vector/Vector.hpp>
-#include <Engine/Core/Misc/Maths/Common.hpp>
+// #include <Engine/Core/Misc/Maths/Common.hpp>
+
+#include <Renderer/Common.hpp>
 #include <Renderer/Core/ObjectPool/ObjectPool.hpp>
 #include <Renderer/Core/Allocators/StackAllocator.hpp>
 #include <Renderer/Core/Hash/Hash.hpp>
 #include <Renderer/Core/Handle/Handle.hpp>
 #include <Renderer/Core/Hash/Hashable.hpp>
 #include <Renderer/Core/StaticVector/StaticVector.hpp>
+#include <Renderer/Core/ArrayView/ArrayView.hpp>
+
 #include "Utils.hpp"
 #include "Loader/Extensions.hpp"
-#include <Renderer/Core/ArrayView/ArrayView.hpp>
 
 TRE_NS_START
 
@@ -27,15 +29,19 @@ namespace Renderer
 		{\
 			VkResult r;\
 			if ((r = cmd) != VK_SUCCESS) {\
-				printf("[VK ERROR]: %s\n", GetVulkanResultString(r));\
+				TRE_LOGE("[VK ERROR]: %s", GetVulkanResultString(r));\
 			}\
 		}\
 
 	const std::initializer_list<const char*> VK_REQ_EXT = {
 		VK_KHR_SURFACE_EXTENSION_NAME,
 		VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 
+#if defined(OS_WINDOWS)
+		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#elif defined(OS_LINUX)
+		VK_KHR_XLIB_SURFACE_EXTENSION_NAME,
+#endif
 #if defined(DEBUG) && defined(VALIDATION_LAYERS)
 		VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 		VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
@@ -43,7 +49,9 @@ namespace Renderer
 	};
 
 	const std::initializer_list<const char*> VK_REQ_LAYERS = {
+#if defined(OS_WINDOWS)
 		"VK_LAYER_LUNARG_monitor",
+#endif
 #if defined(DEBUG) && defined(VALIDATION_LAYERS)
 		"VK_LAYER_KHRONOS_validation",
 #endif
@@ -76,15 +84,15 @@ namespace Renderer
 	CONSTEXPR static uint32 MAX_THREADS				= 1;
 
 	// Frame related constants:
-	CONSTEXPR static uint32	MAX_FRAMES				= 2;
-	CONSTEXPR static uint32	NUM_FRAMES				= 2;
-	CONSTEXPR static uint32	MAX_IMAGES_COUNT		= 4;
+    CONSTEXPR static uint32	MAX_FRAMES				= 2;
+    CONSTEXPR static uint32	NUM_FRAMES				= 2;
+    CONSTEXPR static uint32	MAX_IMAGES_COUNT		= 8;
 
 	// Descriptor related constants:
 	CONSTEXPR static uint32	MAX_DESCRIPTOR_SET		= 4;
 	CONSTEXPR static uint32	MAX_DESCRIPTOR_BINDINGS = 16;
 	CONSTEXPR static uint32 MAX_DESCRIPTOR_TYPES	= 11;
-	CONSTEXPR static uint32 MAX_SETS_PER_POOL		= 16;
+	CONSTEXPR static uint32 MAX_SETS_PER_POOL		= 1; // this have to be 1 on Intel graphics dunno why!
 	CONSTEXPR static uint32 MAX_PUSH_CONSTANT_SIZE  = 128;
 	CONSTEXPR static uint32 MAX_SHADER_CONSTANTS    = 16;
 
@@ -125,6 +133,11 @@ namespace Renderer
 	using ArrayViewItr = Utils::ArrayViewItr<T>;
 
 	typedef VkDeviceSize DeviceSize;
+
+    enum Features
+    {
+        RAY_TRACING = 0x1,
+    };
 
 	enum MemoryProperty
 	{
@@ -204,7 +217,7 @@ namespace Renderer
 		INPUT_ATTACHMENT = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
 	};
 
-	struct MemoryView
+    /*struct MemoryAllocation
 	{
 		VkDeviceMemory  memory;
 		DeviceSize	    offset;
@@ -212,7 +225,9 @@ namespace Renderer
 		DeviceSize		padding;
 		void*			mappedData;
 		uint32			alignment;
-	};
+
+        uint32          allocKey;
+    };*/
 
 	template<typename T>
 	struct VectorView
@@ -249,11 +264,12 @@ namespace Renderer
 
 		enum QueueFamilyTypes {
 			QFT_GRAPHICS = 0,
-			QFT_TRANSFER = 1,
-			QFT_COMPUTE = 2,
-			QFT_SPARSE = 3,
-			QFT_PRESENT = 4,
-
+			QFT_TRANSFER,
+			QFT_COMPUTE,
+			// QFT_RAY_TRACING,
+			QFT_SPARSE,
+			QFT_PRESENT,
+			
 			QFT_MAX
 		};
 
@@ -324,7 +340,11 @@ namespace Renderer
 			VkPhysicalDeviceProperties2			gpuProperties2;
 
 			// RT
-			VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtProperties;
+			VkPhysicalDeviceRayTracingPipelinePropertiesKHR  rtProperties;
+			VkPhysicalDeviceFeatures2						 deviceFeatures2;
+			VkPhysicalDeviceAccelerationStructureFeaturesKHR accelFeatures;
+			VkPhysicalDeviceRayTracingPipelineFeaturesKHR	 rtPipelineFeatures;
+			VkPhysicalDeviceBufferDeviceAddressFeatures		 buffAdrFeatures;
 
 			VkDevice							device;
 			QueueFamilyIndices					queueFamilyIndices;

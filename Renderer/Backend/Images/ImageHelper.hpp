@@ -236,6 +236,82 @@ namespace Renderer
 		return HasDepthComponent(format) || HasStencilComponent(format);
 	}
 
+	FORCEINLINE VkAccessFlags ImageOldLayoutToPossibleSrcAccess(VkImageLayout oldImageLayout)
+	{
+		// Source access mask controls actions that have to be finished on the old layout
+		// before it will be transitioned to the new layout
+		switch (oldImageLayout) {
+		case VK_IMAGE_LAYOUT_UNDEFINED:
+			// Image layout is undefined (or does not matter)
+			// Only valid as initial layout
+			// No flags required, listed only for completeness
+			return 0;
+			break;
+
+		case VK_IMAGE_LAYOUT_PREINITIALIZED:
+			// Image is preinitialized
+			// Only valid as initial layout for linear images, preserves memory contents
+			// Make sure host writes have been finished
+			return VK_ACCESS_HOST_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+			// Image is a color attachment
+			// Make sure any writes to the color buffer have been finished
+			return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+			// Image is a depth/stencil attachment
+			// Make sure any writes to the depth/stencil buffer have been finished
+			return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			// Image is a transfer source
+			// Make sure any reads from the image have been finished
+			return VK_ACCESS_TRANSFER_READ_BIT;
+		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			// Image is a transfer destination
+			// Make sure any writes to the image have been finished
+			return VK_ACCESS_TRANSFER_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+			// Image is read by a shader
+			// Make sure any shader reads from the image have been finished
+			return VK_ACCESS_SHADER_READ_BIT;
+		default:
+			// Other source layouts aren't handled (yet)
+			return ~0u;
+		}
+	}
+
+	FORCEINLINE VkAccessFlags ImageNewLayoutToPossibleDstAccess(VkImageLayout newImageLayout, VkImageMemoryBarrier* imageMemoryBarrier = NULL)
+	{
+		// Target layouts (new)
+			// Destination access mask controls the dependency for the new image layout
+		switch (newImageLayout) {
+		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			// Image will be used as a transfer destination
+			// Make sure any writes to the image have been finished
+			return VK_ACCESS_TRANSFER_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			// Image will be used as a transfer source
+			// Make sure any reads from the image have been finished
+			return VK_ACCESS_TRANSFER_READ_BIT;
+		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+			// Image will be used as a color attachment
+			// Make sure any writes to the color buffer have been finished
+			return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+			// Image layout will be used as a depth/stencil attachment
+			// Make sure any writes to depth/stencil buffer have been finished
+			return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+			// Image will be read in a shader (sampler, input attachment)
+			// Make sure any writes to the image have been finished
+			if (imageMemoryBarrier && imageMemoryBarrier->srcAccessMask == 0) {
+				imageMemoryBarrier->srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+			}
+			return VK_ACCESS_SHADER_READ_BIT;
+		default:
+			// Other source layouts aren't handled (yet)
+			return ~0u;
+		}
+	}
 
 	struct ImageViewCreateInfo
 	{
@@ -249,11 +325,11 @@ namespace Renderer
 		ImageViewMiscFlags misc = 0;
 		VkComponentMapping swizzle = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
 
-		static ImageViewCreateInfo ImageView(Image* img, VkImageViewType viewType)
+		static ImageViewCreateInfo ImageView(Image* img, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D)
 		{
 			ImageViewCreateInfo info;
 			info.image = img;
-			info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			info.viewType = viewType;
 			return info;
 		}
 	};
@@ -306,6 +382,18 @@ namespace Renderer
 			info.layout = HasDepthOrStencilComponent(format) ?
 				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL :
 				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			return info;
+		}
+
+		static ImageCreateInfo RtRenderTarget(uint32 width, uint32 height, VkFormat format = VK_FORMAT_B8G8R8A8_UNORM)
+		{
+			ImageCreateInfo info;
+			info.width = width;
+			info.height = height;
+			info.usage =  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT 
+				| VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+			info.format = format;
+			info.layout = VK_IMAGE_LAYOUT_GENERAL;
 			return info;
 		}
 

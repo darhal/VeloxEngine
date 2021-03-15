@@ -137,7 +137,7 @@ FORCEINLINE U* LinearAllocator::Allocate(Args&&... args)
 	this->InternalInit();
 
 	U* curr_adr = (U*)(m_Start + m_Offset);
-	const uint32 padding = 0; //CalculatePadding<U>(curr_adr);
+    const uint32 padding = 0; //CalculatePadding<U>(curr_adr);
 	ASSERTF((m_Offset + padding + sizeof(U)), "Failed to allocate the requested amount of bytes, allocator is out of memory.");
 
 	if (m_Offset + padding + sizeof(U) > m_TotalSize) { // Doesnt have enough size

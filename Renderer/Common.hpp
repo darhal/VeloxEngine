@@ -1,11 +1,20 @@
+#pragma once
 
 #define BUILD_EXEC
 #define COMPILE_DLL
 
 #if defined(COMPILE_DLL)
-#define RENDERER_API __declspec(dllexport)
+    #if defined(COMPILER_MSVC)
+        #define RENDERER_API __declspec(dllexport)
+    #else
+        #define RENDERER_API 
+    #endif
 #else
-#define RENDERER_API __declspec(dllimport)
+    #if defined(COMPILER_MSVC)
+        #define RENDERER_API __declspec(dllimport)
+    #else
+        #define RENDERER_API 
+    #endif
 #endif
 
 #undef UNICODE 
@@ -14,13 +23,15 @@
 #include <Engine/Core/Misc/Defines/Debug.hpp>
 #include <Renderer/Core/Logs/Logs.hpp>
 
-#pragma warning(disable:4251) // This is to avoid the spam of warning bcuz of std classes, more concrete solution must be found in the future
+#if defined(COMPILER_MSVC)
+    #pragma warning(disable:4251) // This is to avoid the spam of warning bcuz of std classes, more concrete solution must be found in the future
+#endif
 
 // #undef DEBUG
 // #define DEBUG
 
 #define VALIDATION_LAYERS
-//#undef VALIDATION_LAYERS
+// #undef VALIDATION_LAYERS
 
 #include <chrono>
 
@@ -34,5 +45,10 @@
     std::cout << "\nExecution of '" << name << "' took : " << duration.count() << " microsecond(s)" << std::endl; \
 
 #include <vulkan/vulkan.h>
-//TODO: checks on OS
+
+// checks on OS
+#if defined(OS_WINDOWS)
 #include <vulkan/vulkan_win32.h>
+#elif defined(OS_LINUX)
+#include <vulkan/vulkan_xlib.h>
+#endif

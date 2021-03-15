@@ -16,6 +16,8 @@ namespace Renderer
 	public:
 		Framebuffer(const RenderDevice& device, const RenderPass& rp, const RenderPassInfo& info);
 
+		~Framebuffer();
+
 		FORCEINLINE VkFramebuffer GetApiObject() const { return framebuffer; }
 
 		FORCEINLINE const RenderPass& GetRenderPass() const { return renderPass; }
@@ -25,6 +27,7 @@ namespace Renderer
 		FORCEINLINE uint32 GetHeight() const { return height; }
 		
 		static uint32 SetupRawViews(VkImageView* views, const RenderPassInfo& info);
+
 		static void ComputeDimensions(const RenderPassInfo& info, uint32& width, uint32& height);
 	private:
 		RenderPassInfo renderPassInfo;

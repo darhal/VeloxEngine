@@ -181,6 +181,102 @@ struct Math
 		// element was not present 
 		return -1;
 	}
+
+
+    FORCEINLINE static uint32 NextPow2(uint32 v)
+    {
+        v--;
+        v |= v >> 1;
+        v |= v >> 2;
+        v |= v >> 4;
+        v |= v >> 8;
+        v |= v >> 16;
+        v++;
+        return v;
+    }
+
+    FORCEINLINE static uint64 NextPow2(uint64 v)
+    {
+        v--;
+        v |= v >> 1;
+        v |= v >> 2;
+        v |= v >> 4;
+        v |= v >> 8;
+        v |= v >> 16;
+        v |= v >> 32;
+        v++;
+        return v;
+    }
+
+
+#ifdef _MSC_VER
+static inline int __builtin_ctz(unsigned x) {
+    unsigned long ret;
+    _BitScanForward(&ret, x);
+    return (int)ret;
+}
+
+static inline int __builtin_ctzll(unsigned long long x) {
+    unsigned long ret;
+    _BitScanForward64(&ret, x);
+    return (int)ret;
+}
+
+static inline int __builtin_ctzl(unsigned long x) {
+    return sizeof(x) == 8 ? __builtin_ctzll(x) : __builtin_ctz((uint32_t)x);
+}
+
+static inline int __builtin_clz(unsigned x) {
+    //unsigned long ret;
+    //_BitScanReverse(&ret, x);
+    //return (int)(31 ^ ret);
+    return (int)__lzcnt(x);
+}
+
+static inline int __builtin_clzll(unsigned long long x) {
+    //unsigned long ret;
+    //_BitScanReverse64(&ret, x);
+    //return (int)(63 ^ ret);
+    return (int)__lzcnt64(x);
+}
+
+static inline int __builtin_clzl(unsigned long x) {
+    return sizeof(x) == 8 ? __builtin_clzll(x) : __builtin_clz((uint32_t)x);
+}
+
+#ifdef __cplusplus
+static inline int __builtin_ctzl(unsigned long long x) {
+    return __builtin_ctzll(x);
+}
+
+static inline int __builtin_clzl(unsigned long long x) {
+    return __builtin_clzll(x);
+}
+#endif
+#endif
+
+    FORCEINLINE static uint32 Log2OfPow2(uint32 value) {
+		if (!value)
+			return 0;
+    #if defined(COMPILER_CLANG) || defined (COMPILER_GCC) || defined(COMPILER_MSVC)
+        return sizeof(uint32_t) * CHAR_BIT - __builtin_clz(value) - 1;
+    #else
+        return log2(value);
+    #endif
+    }
+
+
+	FORCEINLINE static uint64 Log2OfPow2(uint64 value)
+	{
+		if (!value)
+			return 0;
+#if defined(COMPILER_CLANG) || defined (COMPILER_GCC) || defined(COMPILER_MSVC)
+		return sizeof(uint64) * CHAR_BIT - __builtin_clzll(value) - 1;
+#else
+		return log2(value);
+#endif
+	}
+
 };
 
 TRE_NS_END

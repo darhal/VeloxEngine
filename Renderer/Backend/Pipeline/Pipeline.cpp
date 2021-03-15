@@ -2,14 +2,13 @@
 #include <Renderer/Backend/Common/Utils.hpp>
 #include <Renderer/Backend/RenderContext/RenderContext.hpp>
 #include <Renderer/Backend/RenderDevice/RenderDevice.hpp>
-#include <Renderer/Backend/RenderBackend.hpp>
 
 TRE_NS_START
 
 // Ray-tracing:
-void Renderer::Pipeline::Create(RenderBackend& backend, uint32 maxDepth, uint32 maxRayPayloadSize, uint32 maxRayHitAttribSize)
+void Renderer::Pipeline::Create(RenderDevice& device, uint32 maxDepth, uint32 maxRayPayloadSize, uint32 maxRayHitAttribSize)
 {
-    const RenderDevice& device = backend.GetRenderDevice();
+    renderDevice = &device;
 
     VkDynamicState dynamicStatesArray[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
@@ -31,8 +30,8 @@ void Renderer::Pipeline::Create(RenderBackend& backend, uint32 maxDepth, uint32 
     VkRayTracingPipelineInterfaceCreateInfoKHR pipelineInterface;
     pipelineInterface.pNext = NULL;
     pipelineInterface.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_INTERFACE_CREATE_INFO_KHR;
-    pipelineInterface.maxPipelineRayPayloadSize = 1; // TODO: paramterize this
-    pipelineInterface.maxPipelineRayHitAttributeSize = 1; // TODO: paramterize this
+    pipelineInterface.maxPipelineRayPayloadSize = maxRayPayloadSize;
+    pipelineInterface.maxPipelineRayHitAttributeSize = maxRayHitAttribSize;
 
 
     VkRayTracingPipelineCreateInfoKHR rayTraceInfo;
@@ -46,23 +45,26 @@ void Renderer::Pipeline::Create(RenderBackend& backend, uint32 maxDepth, uint32 
     rayTraceInfo.pGroups = shaderProgram->GetShaderGroups();
     rayTraceInfo.layout = shaderProgram->GetPipelineLayout().GetApiObject();
 
-    rayTraceInfo.pDynamicState = &dynamicState;
-    rayTraceInfo.maxPipelineRayRecursionDepth = 2; // TODO: paramterize this
-
+    rayTraceInfo.maxPipelineRayRecursionDepth = maxDepth;
+    rayTraceInfo.pDynamicState = NULL;//&dynamicState;
     rayTraceInfo.pLibraryInfo = NULL;
-    rayTraceInfo.pLibraryInterface = &pipelineInterface;
+    rayTraceInfo.pLibraryInterface = NULL; // &pipelineInterface;
     rayTraceInfo.basePipelineHandle = VK_NULL_HANDLE;
-    rayTraceInfo.basePipelineIndex = -1;
+    rayTraceInfo.basePipelineIndex = 0;
 
     VkDeferredOperationKHR deferredOperation = VK_NULL_HANDLE;
     vkCreateRayTracingPipelinesKHR(device.GetDevice(), deferredOperation, VK_NULL_HANDLE, 1, &rayTraceInfo, NULL, &pipeline);
 
-    sbt.Init(backend, *shaderProgram, *this);
+    sbt.Init(device, *shaderProgram, *this);
+
+    shaderProgram->DestroyShaderModules();
 }
 
 // Compute:
-void Renderer::Pipeline::Create(const RenderDevice& device)
+void Renderer::Pipeline::Create(RenderDevice& device)
 {
+    renderDevice = &device;
+
     VkComputePipelineCreateInfo info;
     info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     info.pNext = NULL;
@@ -73,11 +75,15 @@ void Renderer::Pipeline::Create(const RenderDevice& device)
     info.basePipelineIndex = -1;
 
     vkCreateComputePipelines(device.GetDevice(), VK_NULL_HANDLE, 1, &info, NULL, &pipeline);
+
+    shaderProgram->DestroyShaderModules();
 }
 
 // Graphics
 void Renderer::Pipeline::Create(const RenderContext& renderContext, const VertexInput& vertexInput, const GraphicsState& state)
 {
+    renderDevice = renderContext.GetRenderDevice();
+
     VkViewport viewport;
     VkRect2D scissor;
 
@@ -162,12 +168,26 @@ void Renderer::Pipeline::Create(const RenderContext& renderContext, const Vertex
         ASSERTF(true, "Failed to create graphics pipeline!");
     }
 
+    shaderProgram->DestroyShaderModules();
     printf("Creating new pipline\n");
 }
 
 void Renderer::Pipeline::Create(const RenderContext& renderContext, const GraphicsState& state)
 {
     this->Create(renderContext, shaderProgram->GetVertexInput(), state);
+}
+
+Renderer::Pipeline::~Pipeline()
+{
+    if (renderDevice) {
+        if (shaderProgram) {
+            shaderProgram->Destroy();
+        }
+
+        if (pipeline) {
+            vkDestroyPipeline(renderDevice->GetDevice(), pipeline, NULL);
+        }
+    }
 }
 
 TRE_NS_END
