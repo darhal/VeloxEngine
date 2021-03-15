@@ -152,7 +152,7 @@ int raster(RenderBackend& backend)
     ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
     };
 
-    printf("will CI run \n");
+    printf("will CI run ?s\n");
 
     Event ev;
     auto& window = *backend.GetRenderContext().GetWindow();
