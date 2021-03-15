@@ -95,7 +95,7 @@ namespace Renderer
     {
 		StagingBuffer& stage = stagingBuffers[currentBuffer];
 
-		if (!(stage.submitted || stage.shouldRun || stage.isBlitting)) {
+        if (!((stage.offset && !stage.submitted) || stage.shouldRun || stage.isBlitting)) {
 			return false;
 		}
 
@@ -156,7 +156,7 @@ namespace Renderer
     bool StagingManager::ResetStage(StagingBuffer& stage)
     {
         if (!(stage.submitted ||  stage.shouldRun || stage.isBlitting)) {
-            //printf("ABORTED\n");
+            // printf("ABORTED\n");
             return false;
         }
 
