@@ -79,7 +79,7 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
 {
     using namespace TRE::Renderer;
 
-    CommandBufferHandle cmd = dev.RequestCommandBuffer(CommandBuffer::GENERIC);
+    CommandBufferHandle cmd = dev.RequestCommandBuffer(CommandBuffer::Type::GENERIC);
 
     updateMVP(dev, uniformBuffer, glm::vec3(), cam);
     cmd->BindShaderProgram(program);
@@ -138,19 +138,19 @@ void RenderFrame(TRE::Renderer::RenderDevice& dev,
 
 int raster(RenderBackend& backend)
 {
+    INIT_BENCHMARK;
+
     const uint32 checkerboard[] = {
-        0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
-        ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
-        0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
-        ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
+    0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
+    ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
+    0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
+    ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
 
-        0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
-        ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
-        0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
-        ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
+    0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
+    ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
+    0u, ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u,
+    ~0u, 0u, ~0u, 0u, ~0u, 0u, ~0u, 0u,
     };
-
-    INIT_BENCHMARK
 
     Event ev;
     auto& window = *backend.GetRenderContext().GetWindow();
@@ -175,7 +175,7 @@ int raster(RenderBackend& backend)
     BufferHandle vertexIndexBuffer = backend.CreateBuffer(
         { vertexSize + indexSize, BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER | BufferUsage::INDEX_BUFFER },
         data);
-#endif
+#else
     for (int32_t i = 0; i < 12 * 3; i++) {
         vertecies[i].pos = glm::vec3{ g_vertex_buffer_data[i * 3], g_vertex_buffer_data[i * 3 + 1], g_vertex_buffer_data[i * 3 + 2] };
         vertecies[i].tex = glm::vec2{ g_uv_buffer_data[2 * i], g_uv_buffer_data[2 * i + 1] };
@@ -183,25 +183,25 @@ int raster(RenderBackend& backend)
         vertecies[i].normal = glm::vec3{ g_normal_buffer_data[i * 3], g_normal_buffer_data[i * 3 + 1], g_normal_buffer_data[i * 3 + 2] };
     }
 
-    // BufferHandle cpuVertexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::TRANSFER_SRC, MemoryUsage::CPU_ONLY }, vertecies);
     BufferHandle vertexIndexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::VERTEX_BUFFER, MemoryUsage::GPU_ONLY }, vertecies);
+    // BufferHandle cpuVertexBuffer = dev.CreateBuffer({ sizeof(vertecies), BufferUsage::TRANSFER_SRC, MemoryUsage::CPU_ONLY }, vertecies);
 
     glm::vec4 lightInfo[] = { glm::vec4(1.f, 0.5f, 0.5f, 0.f), glm::vec4(1.f, 1.f, 1.f, 0.f) };
     BufferHandle lightBuffer = dev.CreateBuffer({ sizeof(lightInfo), BufferUsage::STORAGE_BUFFER }, lightInfo);
-    BufferHandle uniformBuffer = dev.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), NULL, 3);
-
+#endif
+    // TODO: NEED WORK ON MEMORY FREEING!! (THIS IS DONE) (However we need to detect dedicated allocations from non dedicated allocs!)
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels =  stbi_load("Assets/box1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * texChannels;
-
     ImageHandle texture = dev.CreateImage(ImageCreateInfo::Texture2D(texWidth, texHeight, true), pixels);
     ImageViewHandle textureView = dev.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
     SamplerHandle sampler = dev.CreateSampler(SamplerInfo::Sampler2D(texture));
     free(pixels);
 
     Camera camera;
-    camera.SetPrespective(60.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 512.0f, true);
 
+    camera.SetPrespective(60.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 512.0f, true);
+    BufferHandle uniformBuffer = dev.CreateRingBuffer(BufferInfo::UniformBuffer(sizeof(MVP)), NULL, 3);
     GraphicsState state;
     // state.GetRasterizationState().polygonMode = VK_POLYGON_MODE_LINE;
     /*auto& depthStencilState = state.GetDepthStencilState();
@@ -230,8 +230,8 @@ int raster(RenderBackend& backend)
     // TODO: shader specilization constants
     // timeline = dev.RequestTimelineSemaphore();
 
-    //dev.GetStagingManager().Flush();
-    //dev.GetStagingManager().WaitPrevious();
+    dev.GetStagingManager().Flush();
+    dev.GetStagingManager().WaitPrevious();
 
     while (window.isOpen()) {
         auto tStart = std::chrono::high_resolution_clock::now();
