@@ -30,10 +30,12 @@ endif(MSVC)
 
 
 if(WIN32)
-    add_executable(${MODULE_NAME} ${SOURCE} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+    add_executable(${MODULE_NAME} ${SOURCE})
+    target_link_libraries(${MODULE_NAME} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${WINLIBS})
 	add_test(NAME ${MODULE_NAME} COMMAND ${MODULE_NAME})
 else(WIN32)
-    add_executable(${MODULE_NAME} ${SOURCE} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+    add_executable(${MODULE_NAME} ${SOURCE})
+    target_link_libraries(${MODULE_NAME} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 	add_test(NAME ${MODULE_NAME} COMMAND ${MODULE_NAME})
 endif(WIN32)
 
