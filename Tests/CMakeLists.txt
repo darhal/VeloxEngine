@@ -30,10 +30,10 @@ endif(MSVC)
 
 
 if(WIN32)
-    add_executable(${MODULE_NAME} ${SOURCE} ${GTEST_LIBRARY} Threads::Threads)
+    add_executable(${MODULE_NAME} ${SOURCE} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 	add_test(NAME ${MODULE_NAME} COMMAND ${MODULE_NAME})
 else(WIN32)
-    add_executable(${MODULE_NAME} ${SOURCE} ${GTEST_LIBRARY} Threads::Threads)
+    add_executable(${MODULE_NAME} ${SOURCE} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 	add_test(NAME ${MODULE_NAME} COMMAND ${MODULE_NAME})
 endif(WIN32)
 
