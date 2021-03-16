@@ -159,4 +159,6 @@ endif()
 
 add_subdirectory(Engine)
 add_subdirectory(Renderer)
+
+enable_testing()
 add_subdirectory(Tests)

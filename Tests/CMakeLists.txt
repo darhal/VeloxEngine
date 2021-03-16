@@ -1,8 +1,6 @@
 SET(MODULE_FOLDER Tests)
 SET(MODULE_NAME Tests)
 
-enable_testing()
-
 include_directories(${MODULE_FOLDER})
 if (MSVC_IDE)
 else(MSVC_IDE)
