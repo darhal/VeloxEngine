@@ -1171,34 +1171,112 @@ VkDeviceMemory Renderer::RenderDevice::CreateBufferMemory(const BufferInfo& info
     return mem;
 }
 
+Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkBuffer buffer, uint32 usage, MemoryUsage domain, uint32 multiplier)
+{
+    MemoryAllocation alloc;
+    VkMemoryRequirements2 memoryReqs;
+    VkMemoryDedicatedRequirements   dedicatedRegs{ VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS };
+    VkBufferMemoryRequirementsInfo2 bufferReqs{ VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2 };
+    memoryReqs.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+    memoryReqs.pNext = &dedicatedRegs;
+    bufferReqs.buffer = buffer;
+    vkGetBufferMemoryRequirements2(this->GetDevice(), &bufferReqs, &memoryReqs);
+    VkDeviceSize allocationSize = memoryReqs.memoryRequirements.size;
+    auto memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, (MemoryUsage)domain);
+
+    if (multiplier != 1) {
+        const VkDeviceSize alignMod = memoryReqs.memoryRequirements.size % memoryReqs.memoryRequirements.alignment;
+        const VkDeviceSize alignedSizeConst = memoryReqs.memoryRequirements.size + memoryReqs.memoryRequirements.alignment - alignMod;
+        allocationSize = alignedSizeConst * multiplier;
+    }
+
+    if (dedicatedRegs.requiresDedicatedAllocation || dedicatedRegs.prefersDedicatedAllocation) {
+        alloc.size = allocationSize;
+        alloc.offset = 0;
+        alloc.padding = 0;
+        alloc.alignment = memoryReqs.memoryRequirements.alignment;
+        alloc.allocKey = UINT32_MAX;
+
+        VkMemoryAllocateFlagsInfo memFlagInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
+
+        if (usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+            memFlagInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+
+        VkMemoryAllocateInfo memoryAllocateInfo;
+        memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        memoryAllocateInfo.pNext = &memFlagInfo;
+        memoryAllocateInfo.allocationSize = alloc.size;
+        memoryAllocateInfo.memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, domain);
+        CALL_VK(vkAllocateMemory(this->GetDevice(), &memoryAllocateInfo, NULL, &alloc.memory));
+        
+        if (domain == MemoryUsage::CPU_ONLY || domain == MemoryUsage::CPU_CACHED || domain == MemoryUsage::CPU_COHERENT) {
+            vkMapMemory(this->GetDevice(), alloc.memory, 0, alloc.size, 0, &alloc.mappedData);
+        }
+
+        printf("BUFFER Doing dedicated allocation\n");
+    } else {
+        alloc = gpuMemoryAllocator.Allocate(memoryTypeIndex, allocationSize, memoryReqs.memoryRequirements.alignment);
+    }
+
+    return alloc;
+}
+
+Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkImage image, uint32 usage, MemoryUsage domain, uint32 multiplier)
+{
+    MemoryAllocation alloc;
+    VkMemoryRequirements2 memoryReqs;
+    VkMemoryDedicatedRequirements   dedicatedRegs{ VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS };
+    VkImageMemoryRequirementsInfo2 imageReqs{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2 };
+    memoryReqs.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+    memoryReqs.pNext = &dedicatedRegs;
+    imageReqs.image = image;
+    vkGetImageMemoryRequirements2(this->GetDevice(), &imageReqs, &memoryReqs);
+    VkDeviceSize allocationSize = memoryReqs.memoryRequirements.size;
+    auto memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, (MemoryUsage)domain);
+
+    if (multiplier != 1) {
+        const VkDeviceSize alignMod = memoryReqs.memoryRequirements.size % memoryReqs.memoryRequirements.alignment;
+        const VkDeviceSize alignedSizeConst = memoryReqs.memoryRequirements.size + memoryReqs.memoryRequirements.alignment - alignMod;
+        allocationSize = alignedSizeConst * multiplier;
+    }
+    
+    if (dedicatedRegs.requiresDedicatedAllocation || dedicatedRegs.prefersDedicatedAllocation) {
+        alloc.size = allocationSize;
+        alloc.offset = 0;
+        alloc.padding = 0;
+        alloc.alignment = memoryReqs.memoryRequirements.alignment;
+        alloc.allocKey = UINT32_MAX;
+
+        VkMemoryAllocateFlagsInfo memFlagInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
+
+        if (usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+            memFlagInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+
+        VkMemoryAllocateInfo memoryAllocateInfo;
+        memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        memoryAllocateInfo.pNext = &memFlagInfo;
+        memoryAllocateInfo.allocationSize = alloc.size;
+        memoryAllocateInfo.memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, domain);
+        CALL_VK(vkAllocateMemory(this->GetDevice(), &memoryAllocateInfo, NULL, &alloc.memory));
+
+        if (domain == MemoryUsage::CPU_ONLY || domain == MemoryUsage::CPU_CACHED || domain == MemoryUsage::CPU_COHERENT) {
+            vkMapMemory(this->GetDevice(), alloc.memory, 0, alloc.size, 0, &alloc.mappedData);
+        }
+
+        printf("IMAGE Doing dedicated allocation\n");
+    } else {
+        const auto& limits = this->GetProperties().limits;
+        alloc = gpuMemoryAllocator.Allocate(memoryTypeIndex, allocationSize, MAX(memoryReqs.memoryRequirements.alignment, limits.bufferImageGranularity));
+    }
+
+    return alloc;
+}
 
 bool Renderer::RenderDevice::CreateBufferInternal(VkBuffer& outBuffer, MemoryAllocation& outMemoryView, const BufferInfo& createInfo)
 {
     outBuffer = this->CreateBufferHelper(createInfo);
-
-    // TODO: fix this!! this is quick and dirty way
-    if (!(createInfo.usage & BufferUsage::SHADER_DEVICE_ADDRESS)) {
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(this->GetDevice(), outBuffer, &memRequirements);
-        uint32 memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, createInfo.domain);
-        outMemoryView = gpuMemoryAllocator.Allocate(memoryTypeIndex, createInfo.size, memRequirements.alignment);
-
-        // printf("[Buffer] Size: %d | offset: %d | padding: %d\n", outMemoryView.size, outMemoryView.offset - outMemoryView.padding, outMemoryView.padding);
-        vkBindBufferMemory(this->GetDevice(), outBuffer, outMemoryView.memory, outMemoryView.offset);
-    } else {
-        outMemoryView.offset = 0;
-        outMemoryView.size = createInfo.size;
-        outMemoryView.padding = 0;
-        outMemoryView.mappedData = NULL;
-        outMemoryView.alignment = 0;
-
-        outMemoryView.memory = this->CreateBufferMemory(createInfo, outBuffer);
-
-        if (createInfo.domain == MemoryUsage::CPU_ONLY || createInfo.domain == MemoryUsage::CPU_CACHED || createInfo.domain == MemoryUsage::CPU_COHERENT) {
-            vkMapMemory(this->GetDevice(), outMemoryView.memory, 0, createInfo.size, 0, &outMemoryView.mappedData);
-        }
-    }
-
+    outMemoryView = this->AllocateMemory(outBuffer, createInfo.usage, createInfo.domain);
+    vkBindBufferMemory(this->GetDevice(), outBuffer, outMemoryView.memory, outMemoryView.offset);
     return true;
 }
 
@@ -1228,7 +1306,7 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo
     const DeviceSize padding = (alignment - (info.size % alignment)) % alignment;
     const DeviceSize alignedSize = info.size + padding;
     info.size = alignedSize * ringSize; //- padding; // here we must remove padding as we dont need it at the end but (otherwise waste of memory)
-                                                     // this is going to complicate our calulations later so better keep it
+                                        // this is going to complicate our calulations later so better keep it
     MemoryAllocation bufferMemory;
     VkBuffer apiBuffer;
 
@@ -1309,18 +1387,12 @@ Renderer::ImageHandle Renderer::RenderDevice::CreateImage(const ImageCreateInfo&
         ASSERTF(true, "failed to create a image!");
     }
 
-    const auto& limits = this->GetProperties().limits;
-
     MemoryAllocation imageMemory;
-    VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(this->GetDevice(), apiImage, &memRequirements);
-    uint32 memoryTypeIndex = this->FindMemoryTypeIndex(memRequirements.memoryTypeBits, memUsage);
-    imageMemory = gpuMemoryAllocator.Allocate(memoryTypeIndex, memRequirements.size, MAX(memRequirements.alignment, limits.bufferImageGranularity));
+    imageMemory = this->AllocateMemory(apiImage, (uint32)createInfo.usage, memUsage);
     // printf("[Image] Size: %d | offset: %d | padding: %d\n", imageMemory.size, imageMemory.offset - imageMemory.padding, imageMemory.padding);
     vkBindImageMemory(this->GetDevice(), apiImage, imageMemory.memory, imageMemory.offset);
-
     ImageHandle ret = ImageHandle(objectsPool.images.Allocate(*this, apiImage, createInfo, imageMemory));
-
+    
     if (data) {
         if (memUsage == MemoryUsage::GPU_ONLY) {
             stagingManager.Stage(*ret, data, createInfo.width * createInfo.height * FormatToChannelCount(createInfo.format));
@@ -1625,8 +1697,15 @@ void Renderer::RenderDevice::DestroyPendingObjects(PerFrame& frame)
         vkFreeMemory(dev, mem, NULL);
 
     // Free allocated memory:
-    for (auto allocKey : frame.freeAllocatedMemory)
-        gpuMemoryAllocator.Free(allocKey);
+    for (auto alloc : frame.freeAllocatedMemory) {
+        if (alloc.allocKey != UINT32_MAX) {
+            gpuMemoryAllocator.Free(alloc);
+        } else { // Dedicated memory
+            if (alloc.mappedData)
+                vkUnmapMemory(dev, alloc.memory);
+            vkFreeMemory(dev, alloc.memory, NULL);
+        }
+    }
 
     // Recycle:
     for (auto& sem : frame.recycleSemaphores)

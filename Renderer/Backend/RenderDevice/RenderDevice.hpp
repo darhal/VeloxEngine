@@ -221,7 +221,6 @@ namespace Renderer
 
         void FlushQueues();
 
-
         // Buffer Creation:
         BufferHandle CreateBuffer(const BufferInfo& createInfo, const void* data = NULL);
 
@@ -229,11 +228,15 @@ namespace Renderer
 
         bool CreateBufferInternal(VkBuffer& outBuffer, MemoryAllocation& outMemoryView, const BufferInfo& createInfo);
 
-
         // Image Creation:
         ImageHandle CreateImage(const ImageCreateInfo& createInfo, const void* data = NULL);
 
         ImageViewHandle CreateImageView(const ImageViewCreateInfo& createInfo);
+
+        // Memory allocation:
+        MemoryAllocation AllocateMemory(VkBuffer buffer, uint32 usage, MemoryUsage domain, uint32 multiplier = 1);
+
+        MemoryAllocation AllocateMemory(VkImage image, uint32 usage, MemoryUsage domain, uint32 multiplier = 1);
 
 
         // Sampler creation:

@@ -17,6 +17,8 @@ namespace Renderer
 	struct ImageCreateInfo;
 	struct ImageViewCreateInfo;
 
+	typedef ImageCreateInfo ImageInfo;
+
 	enum ImageMiscFlagBits
 	{
 		IMAGE_MISC_GENERATE_MIPS_BIT = 1 << 0,
