@@ -1,8 +1,8 @@
 SET(MODULE_FOLDER Tests)
 SET(MODULE_NAME Tests)
 
+find_package(Threads REQUIRED)
 find_package(GTest REQUIRED)
-find_package(pthread REQUIRED)
 
 enable_testing()
 
@@ -30,10 +30,10 @@ endif(MSVC)
 
 
 if(WIN32)
-    add_executable(${MODULE_NAME} ${SOURCE} ${GTEST_LIBRARY} ${PTHREAD_LIBRARY})
+    add_executable(${MODULE_NAME} ${SOURCE} ${GTEST_LIBRARY} Threads::Threads)
 	add_test(NAME ${MODULE_NAME} COMMAND ${MODULE_NAME})
 else(WIN32)
-    add_executable(${MODULE_NAME} ${SOURCE} ${GTEST_LIBRARY} ${PTHREAD_LIBRARY})
+    add_executable(${MODULE_NAME} ${SOURCE} ${GTEST_LIBRARY} Threads::Threads)
 	add_test(NAME ${MODULE_NAME} COMMAND ${MODULE_NAME})
 endif(WIN32)
 
