@@ -1,7 +1,7 @@
 #include <math.h>
 #include <gtest/gtest.h>
 
-double squareRoot(const double a) {
+static double squareRoot(const double a) {
     double b = sqrt(a);
     if(b != b) { // nan check
         return -1.0;
