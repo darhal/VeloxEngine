@@ -1,4 +1,5 @@
 #include <math.h>
+#include <gtest/gtest.h>
 
 double squareRoot(const double a) {
     double b = sqrt(a);
