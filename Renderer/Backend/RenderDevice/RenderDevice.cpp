@@ -190,7 +190,7 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const RenderInstance& renderIn
         for (uint32 i = 0; i < memProperties.memoryTypeCount; i++) {
             if ((memProperties.memoryTypes[i].propertyFlags & flags.first) == flags.first) {
                 internal.memoryTypeFlags[i] |= 1 << (uint32)usage;
-            } 
+            }
         }
     }
 
@@ -1308,11 +1308,7 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateBuffer(const BufferInfo& cr
     BufferHandle ret(objectsPool.buffers.Allocate(*this, apiBuffer, createInfo, bufferMemory));
 
     if (data) {
-        if (createInfo.domain == MemoryDomain::CPU_ONLY || createInfo.domain == MemoryDomain::CPU_CACHED || createInfo.domain == MemoryDomain::CPU_COHERENT) {
-            ret->WriteToBuffer(createInfo.size, data);
-        } else {
-            stagingManager.Stage(ret->apiBuffer, data, createInfo.size, 1);
-        }
+        ret->WriteToBuffer(createInfo.size, data);
     }
 
     return ret;
@@ -1335,11 +1331,7 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo
     BufferHandle ret(objectsPool.buffers.Allocate(*this, apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
 
     if (data) {
-        if (info.domain == MemoryDomain::CPU_ONLY || info.domain == MemoryDomain::CPU_CACHED || info.domain == MemoryDomain::CPU_COHERENT) {
-            ret->WriteToBuffer(createInfo.size, data);
-        } else {
-            stagingManager.Stage(ret->apiBuffer, data, createInfo.size, bufferMemory.alignment);
-        }
+        ret->WriteToBuffer(createInfo.size, data);
     }
 
     return ret;

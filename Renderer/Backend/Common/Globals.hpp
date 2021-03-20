@@ -153,7 +153,7 @@ namespace Renderer
 
 	enum class MemoryDomain
 	{
-		CPU_ONLY,			// Host-only, needs to be synced to GPU. Might be device local as well on iGPUs.
+        CPU_ONLY = 0,       // Host-only, needs to be synced to GPU. Might be device local as well on iGPUs.
 		CPU_CACHED,			// Host and cached
 		CPU_COHERENT,		// Host and coherent
 		LINKED_GPU_CPU,		// On desktop, directly mapped VRAM over PCI.
@@ -161,7 +161,10 @@ namespace Renderer
 		USAGE_UNKNOWN,
 	};
 
-	enum BufferUsage 
+    CONSTEXPR uint32 CPU_MEMORY_TYPES = 1u << (uint32)MemoryDomain::CPU_ONLY     | 1u << (uint32)MemoryDomain::CPU_CACHED   |
+                                        1u << (uint32)MemoryDomain::CPU_COHERENT | 1 << (uint32)MemoryDomain::LINKED_GPU_CPU;
+
+    enum BufferUsage
 	{
 		TRANSFER_SRC = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		TRANSFER_DST = VK_BUFFER_USAGE_TRANSFER_DST_BIT,

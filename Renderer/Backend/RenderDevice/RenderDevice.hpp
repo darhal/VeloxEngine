@@ -391,6 +391,11 @@ namespace Renderer
             return internal.memoryTypeFlags[typeIndex] & (1 << (uint32)usage);
         }
 
+        FORCEINLINE bool IsMemoryInDomains(uint32 typeIndex, uint32 domainsFlags) const
+        {
+            return internal.memoryTypeFlags[typeIndex] & domainsFlags;
+        }
+
         VkQueue GetQueue(CommandBuffer::Type type);
 
         FORCEINLINE VkQueue GetQueue(uint32 i) const { return internal.queues[i]; }
