@@ -63,7 +63,7 @@ Renderer::MemoryAllocation Renderer::TypedMemoryAllocator::Allocate(uint64 size,
     alloc.size       = (VkDeviceSize)allocation.size;
     alloc.alignment  = alignement;
     alloc.mappedData = allocators[i - 1].mappedData;
-    alloc.allocKey   = (i - 1) << 16 | memoryTypeIndex;
+    alloc.allocKey   = (i - 1) << MemoryAllocation::INDEX_SHIFT | memoryTypeIndex;
 
 	ASSERTF(alloc.padding != 0, "Padding is just assumed to be always 0 that was unfortuently not the case so revert back");
     return alloc;
@@ -72,7 +72,7 @@ Renderer::MemoryAllocation Renderer::TypedMemoryAllocator::Allocate(uint64 size,
 void Renderer::TypedMemoryAllocator::Free(const MemoryAllocation& allocation)
 {
     BuddyAllocator::Allocation alloc = { allocation.offset - allocation.padding, allocation.size };
-    allocators[allocation.allocKey >> 16].Free(alloc);
+    allocators[MemoryAllocation::GetIndex(allocation)].Free(alloc);
 }
 
 
@@ -105,7 +105,7 @@ Renderer::MemoryAllocation Renderer::MemoryAllocator2::Allocate(uint32 indexType
 
 void Renderer::MemoryAllocator2::Free(const MemoryAllocation& alloc)
 {
-    allocators[alloc.allocKey & ((1 << 16) - 1)].Free(alloc);
+    allocators[MemoryAllocation::GetTypeIndex(alloc)].Free(alloc);
 }
 
 

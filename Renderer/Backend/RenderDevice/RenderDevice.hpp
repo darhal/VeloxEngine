@@ -234,9 +234,9 @@ namespace Renderer
         ImageViewHandle CreateImageView(const ImageViewCreateInfo& createInfo);
 
         // Memory allocation:
-        MemoryAllocation AllocateMemory(VkBuffer buffer, uint32 usage, MemoryUsage domain, uint32 multiplier = 1);
+        MemoryAllocation AllocateMemory(VkBuffer buffer, uint32 usage, MemoryDomain domain, uint32 multiplier = 1);
 
-        MemoryAllocation AllocateMemory(VkImage image, uint32 usage, MemoryUsage domain, uint32 multiplier = 1);
+        MemoryAllocation AllocateMemory(VkImage image, uint32 usage, MemoryDomain domain, uint32 multiplier = 1);
 
 
         // Sampler creation:
@@ -322,13 +322,15 @@ namespace Renderer
 
         uint32 FindMemoryType(uint32 typeFilter, VkMemoryPropertyFlags properties) const;
 
-        uint32 FindMemoryTypeIndex(uint32 typeFilter, MemoryUsage usage) const;
+        uint32 FindMemoryTypeIndex(uint32 typeFilter, MemoryDomain usage) const;
+
+        std::pair<uint32, uint32> FindMemoryTypeFlag(MemoryDomain usage) const;
 
 
         // Memory:
-		VkDeviceMemory AllocateDedicatedMemory(VkImage image, MemoryUsage memoryDomain = MemoryUsage::GPU_ONLY) const;
+		VkDeviceMemory AllocateDedicatedMemory(VkImage image, MemoryDomain memoryDomain = MemoryDomain::GPU_ONLY) const;
 
-		VkDeviceMemory AllocateDedicatedMemory(VkBuffer buffer, MemoryUsage memoryDomain = MemoryUsage::GPU_ONLY) const;
+		VkDeviceMemory AllocateDedicatedMemory(VkBuffer buffer, MemoryDomain memoryDomain = MemoryDomain::GPU_ONLY) const;
 
 		void FreeDedicatedMemory(VkDeviceMemory memory) const;
 
@@ -383,6 +385,11 @@ namespace Renderer
         FORCEINLINE ObjectPool<CommandBuffer>& GetCommandBufferPool() { return objectsPool.commandBuffers; }
 
         FORCEINLINE HandlePool& GetObjectsPool() { return objectsPool; }
+
+        FORCEINLINE bool IsMemoryInDomain(uint32 typeIndex, MemoryDomain usage) const
+        {
+            return internal.memoryTypeFlags[typeIndex] & (1 << (uint32)usage);
+        }
 
         VkQueue GetQueue(CommandBuffer::Type type);
 

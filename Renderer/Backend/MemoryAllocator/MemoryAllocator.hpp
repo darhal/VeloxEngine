@@ -13,6 +13,8 @@ namespace Renderer
 
     struct MemoryAllocation
     {
+        CONSTEXPR static uint32 INDEX_SHIFT = 16;
+
         VkDeviceMemory memory;
         VkDeviceSize   size;
         VkDeviceSize   offset;
@@ -23,6 +25,16 @@ namespace Renderer
         // TODO: idea right now the memory type and the buddy allocator index are stored in alloc key
         // We can add both size and offset in terms of power of two that will be 2*log2(64) bits reserved so 8 bits each
         uint32         allocKey;
+
+        FORCEINLINE static uint32 GetTypeIndex(const MemoryAllocation& alloc)
+        {
+            return alloc.allocKey & ((1 << INDEX_SHIFT) - 1);
+        }
+
+        FORCEINLINE static uint32 GetIndex(const MemoryAllocation& alloc)
+        {
+            return alloc.allocKey >> INDEX_SHIFT;
+        }
     };
 
 

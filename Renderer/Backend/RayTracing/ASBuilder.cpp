@@ -16,12 +16,12 @@ Renderer::AsBuilder::AsBuilder(RenderDevice& device) :
 void Renderer::AsBuilder::Init()
 {
 	BufferCreateInfo info;
-	info.domain = MemoryUsage::GPU_ONLY;
+	info.domain = MemoryDomain::GPU_ONLY;
 	info.size = maxScratchSize;
 	info.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::STORAGE_BUFFER;
 
 	BufferCreateInfo stagingInfo;
-	stagingInfo.domain = MemoryUsage::CPU_COHERENT;
+	stagingInfo.domain = MemoryDomain::CPU_COHERENT;
 	stagingInfo.size = MAX_UPLOAD_BUFFER_SIZE;
 	stagingInfo.usage = BufferUsage::TRANSFER_SRC;
 

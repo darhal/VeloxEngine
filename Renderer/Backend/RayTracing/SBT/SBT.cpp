@@ -24,7 +24,7 @@ void Renderer::SBT::Init(RenderDevice& device, const ShaderProgram& program, Pip
 	BufferCreateInfo info;
 	info.size = sbtSize;
 	info.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::SHADER_BINDING_TABLE;
-	info.domain = MemoryUsage::CPU_COHERENT;
+	info.domain = MemoryDomain::CPU_COHERENT;
 
 	if (!sbtBuffer || sbtBuffer->GetBufferInfo().size != sbtSize) { // Update
         sbtBuffer = device.CreateBuffer(info);

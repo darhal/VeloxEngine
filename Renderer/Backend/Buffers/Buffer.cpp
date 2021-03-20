@@ -35,8 +35,9 @@ Renderer::Buffer::~Buffer()
 void Renderer::Buffer::WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset, VkDeviceSize alignement)
 {
 	ASSERTF(!data, "Can't write to a buffer that have its memory unmapped (or data is NULL)");
+    uint32 memIndex = MemoryAllocation::GetTypeIndex(bufferMemory);
 
-    if (bufferInfo.domain == MemoryUsage::CPU_ONLY || bufferInfo.domain == MemoryUsage::CPU_CACHED || bufferInfo.domain == MemoryUsage::CPU_COHERENT) {
+    if (!device.IsMemoryInDomain(memIndex, MemoryDomain::GPU_ONLY)) {
         void* bufferData = (uint8*)bufferMemory.mappedData + bufferMemory.offset + offset;
         memcpy(bufferData, data, size);
 
@@ -53,8 +54,9 @@ void Renderer::Buffer::WriteToBuffer(VkDeviceSize size, const void* data, VkDevi
 void Renderer::Buffer::WriteToRing(VkDeviceSize size, const void* data, VkDeviceSize offset, VkDeviceSize alignement)
 {
     ASSERTF(!data, "Can't write to a buffer that have its memory unmapped (or data is NULL)");
+    uint32 memIndex = MemoryAllocation::GetTypeIndex(bufferMemory);
 
-    if (bufferInfo.domain == MemoryUsage::CPU_ONLY || bufferInfo.domain == MemoryUsage::CPU_CACHED || bufferInfo.domain == MemoryUsage::CPU_COHERENT) {
+    if (!device.IsMemoryInDomain(memIndex, MemoryDomain::GPU_ONLY)) {
         bufferIndex = (bufferIndex + 1) % ringSize;
         void* bufferData = (uint8*)bufferMemory.mappedData + bufferMemory.offset + bufferIndex * unitSize + offset;
         memcpy(bufferData, data, size);

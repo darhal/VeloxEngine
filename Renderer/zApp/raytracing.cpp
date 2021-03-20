@@ -93,12 +93,12 @@ int rt(RenderBackend& backend)
         { sizeof(vertecies),
         BufferUsage::VERTEX_BUFFER | BufferUsage::STORAGE_BUFFER
         | BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_BUILD_INPUT_READ_ONLY,
-        MemoryUsage::GPU_ONLY }
+        MemoryDomain::GPU_ONLY }
     );
     BufferHandle acclIndexBuffer = dev.CreateBuffer(
         { indicies.size() * sizeof(uint32),
         BufferUsage::INDEX_BUFFER | BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_BUILD_INPUT_READ_ONLY,
-        MemoryUsage::GPU_ONLY }
+        MemoryDomain::GPU_ONLY }
     );
     dev.GetStagingManager().Stage(acclBuffer->GetApiObject(), &vertecies, sizeof(vertecies));
     dev.GetStagingManager().Stage(acclIndexBuffer->GetApiObject(), indicies.data(), indicies.size() * sizeof(uint32));

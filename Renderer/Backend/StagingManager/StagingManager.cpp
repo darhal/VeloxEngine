@@ -37,7 +37,7 @@ namespace Renderer
 		VkDevice device = renderDevice.GetDevice();
 
 		BufferCreateInfo info;
-		info.domain = MemoryUsage::CPU_COHERENT;
+		info.domain = MemoryDomain::CPU_COHERENT;
 		info.size = MAX_UPLOAD_BUFFER_SIZE;
 		info.usage = BufferUsage::TRANSFER_SRC;
 
@@ -312,14 +312,24 @@ namespace Renderer
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image				= image.GetApiObject();
-		barrier.srcAccessMask		= ImageUsageToPossibleAccess(image.GetInfo().usage); // TODO: some doubt there
-		barrier.dstAccessMask		= ImageUsageToPossibleAccess(image.GetInfo().usage); // TODO: same doubt
-		barrier.subresourceRange.aspectMask		= FormatToAspectMask(image.GetInfo().format);
-		barrier.subresourceRange.layerCount		= image.GetInfo().layers;
-		barrier.subresourceRange.levelCount		= image.GetInfo().levels;
+		barrier.srcAccessMask		= 0; // ImageUsageToPossibleAccess(image.GetInfo().usage); // TODO: some doubt there
+		barrier.dstAccessMask		= 0; // ImageUsageToPossibleAccess(image.GetInfo().usage); // TODO: same doubt
+		barrier.subresourceRange.aspectMask = FormatToAspectMask(image.GetInfo().format);
+		barrier.subresourceRange.layerCount	= image.GetInfo().layers;
+		barrier.subresourceRange.levelCount	= image.GetInfo().levels;
 
-		VkPipelineStageFlags sourceStage	  = ImageUsageToPossibleStages(image.GetInfo().usage);
-		VkPipelineStageFlags destinationStage = ImageUsageToPossibleStages(image.GetInfo().usage);
+		VkPipelineStageFlags sourceStage;
+		VkPipelineStageFlags destinationStage;
+		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+		/*if (renderDevice.IsTransferQueueSeprate()) {
+			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		} else {
+			sourceStage = ImageUsageToPossibleStages(image.GetInfo().usage);
+			destinationStage = ImageUsageToPossibleStages(image.GetInfo().usage);
+		}*/
 
 		vkCmdPipelineBarrier(
             GetCurrentCmd()->GetApiObject(),

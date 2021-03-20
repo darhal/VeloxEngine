@@ -270,7 +270,7 @@ void createStorageImage(RenderBackend& backend, StorageImage& storageImage, uint
     VkMemoryAllocateInfo memoryAllocateInfo{};
     memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     memoryAllocateInfo.allocationSize = memReqs.size;
-    memoryAllocateInfo.memoryTypeIndex = dev.FindMemoryTypeIndex(memReqs.memoryTypeBits, MemoryUsage::GPU_ONLY);
+    memoryAllocateInfo.memoryTypeIndex = dev.FindMemoryTypeIndex(memReqs.memoryTypeBits, MemoryDomain::GPU_ONLY);
     vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &storageImage.memory);
     vkBindImageMemory(device, storageImage.image, storageImage.memory, 0);
 
@@ -318,7 +318,7 @@ RayTracingScratchBuffer createScratchBuffer(RenderDevice& dev, VkDeviceSize size
     memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     memoryAllocateInfo.pNext = &memoryAllocateFlagsInfo;
     memoryAllocateInfo.allocationSize = memoryRequirements.size;
-    memoryAllocateInfo.memoryTypeIndex = dev.FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, MemoryUsage::GPU_ONLY);
+    memoryAllocateInfo.memoryTypeIndex = dev.FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, MemoryDomain::GPU_ONLY);
     vkAllocateMemory(dev.GetDevice(), &memoryAllocateInfo, nullptr, &scratchBuffer.memory);
     vkBindBufferMemory(dev.GetDevice(), scratchBuffer.handle, scratchBuffer.memory, 0);
 
@@ -346,7 +346,7 @@ void createAccelerationStructureBuffer(RenderDevice& dev, AccelerationStructure&
     memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     memoryAllocateInfo.pNext = &memoryAllocateFlagsInfo;
     memoryAllocateInfo.allocationSize = memoryRequirements.size;
-    memoryAllocateInfo.memoryTypeIndex = dev.FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, MemoryUsage::GPU_ONLY);
+    memoryAllocateInfo.memoryTypeIndex = dev.FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, MemoryDomain::GPU_ONLY);
     vkAllocateMemory(dev.GetDevice(), &memoryAllocateInfo, nullptr, &accelerationStructure.memory);
     vkBindBufferMemory(dev.GetDevice(), accelerationStructure.buffer, accelerationStructure.memory, 0);
 }
@@ -483,7 +483,7 @@ void createRayTracingPipeline(RenderBackend& backend, VkPipeline& pipeline, SBT&
     vkGetRayTracingShaderGroupHandlesKHR(device, pipeline, 0, groupCount, sbtSize, shaderHandleStorage.data());
 
     BufferInfo sbtBufferInfo;
-    sbtBufferInfo.domain = MemoryUsage::CPU_COHERENT;
+    sbtBufferInfo.domain = MemoryDomain::CPU_COHERENT;
     sbtBufferInfo.usage = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     sbtBufferInfo.size = groupHandleSize;
 
@@ -585,7 +585,7 @@ void createAccelerationStructure(RenderBackend& backend, AccelerationStructure& 
     // For the sake of simplicity we won't stage the vertex data to the GPU memory
     // Vertex buffer
     BufferInfo bufferInfo;
-    bufferInfo.domain = MemoryUsage::CPU_COHERENT;
+    bufferInfo.domain = MemoryDomain::CPU_COHERENT;
     bufferInfo.usage = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
     bufferInfo.size = vertices.size() * sizeof(Vertex);
     BufferHandle vertexBuffer = backend.CreateBuffer(bufferInfo, vertices.data());
@@ -716,7 +716,7 @@ void createAccelerationStructure(RenderBackend& backend, AccelerationStructure& 
 
         // Buffer for instance data
         BufferInfo bufferInfo2;
-        bufferInfo2.domain = MemoryUsage::CPU_COHERENT;
+        bufferInfo2.domain = MemoryDomain::CPU_COHERENT;
         bufferInfo2.usage = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
         bufferInfo2.size = sizeof(VkAccelerationStructureInstanceKHR);
         BufferHandle instancesBuffer = backend.CreateBuffer(bufferInfo2, &instance);
@@ -872,7 +872,7 @@ int rt()
     BufferHandle ubo = backend.CreateBuffer(BufferInfo::UniformBuffer(sizeof(CameraUBO)));
     CameraUBO uboData{};
     updateCameraUBO(backend, ubo, uboData, camera);
-    //ubo = backend.CreateBuffer({ sizeof(CameraUBO), BufferUsage::UNIFORM_BUFFER, MemoryUsage::GPU_ONLY }, &uboData);
+    //ubo = backend.CreateBuffer({ sizeof(CameraUBO), BufferUsage::UNIFORM_BUFFER, MemoryDomain::GPU_ONLY }, &uboData);
 
     auto rtImage = backend.CreateImage(ImageCreateInfo::RtRenderTarget(SCR_WIDTH, SCR_HEIGHT));
     auto rtView = backend.CreateImageView(ImageViewCreateInfo::ImageView(rtImage));
@@ -883,12 +883,12 @@ int rt()
         { sizeof(vertecies),
         BufferUsage::VERTEX_BUFFER | BufferUsage::STORAGE_BUFFER
         | BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_BUILD_INPUT_READ_ONLY,
-        MemoryUsage::GPU_ONLY }
+        MemoryDomain::GPU_ONLY }
     );
     BufferHandle acclIndexBuffer = backend.CreateBuffer(
         { indicies.size() * sizeof(uint32),
         BufferUsage::INDEX_BUFFER | BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_BUILD_INPUT_READ_ONLY,
-        MemoryUsage::GPU_ONLY }
+        MemoryDomain::GPU_ONLY }
     );
     backend.GetStagingManager().Stage(acclBuffer->GetApiObject(), &vertecies, sizeof(vertecies));
     backend.GetStagingManager().Stage(acclIndexBuffer->GetApiObject(), indicies.data(), indicies.size() * sizeof(uint32));

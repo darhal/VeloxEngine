@@ -176,6 +176,24 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const RenderInstance& renderIn
         }
     }
 
+    memset(internal.memoryTypeFlags, 0, sizeof(uint32)* VK_MAX_MEMORY_TYPES);
+    const VkPhysicalDeviceMemoryProperties& memProperties = this->GetMemoryProperties();
+    constexpr MemoryDomain memTypes[] = { 
+        MemoryDomain::CPU_ONLY,	    MemoryDomain::CPU_CACHED,
+        MemoryDomain::CPU_COHERENT, MemoryDomain::LINKED_GPU_CPU,
+        MemoryDomain::GPU_ONLY,
+    };
+
+    for (const MemoryDomain usage : memTypes) {
+        const auto flags = this->FindMemoryTypeFlag(usage);
+
+        for (uint32 i = 0; i < memProperties.memoryTypeCount; i++) {
+            if ((memProperties.memoryTypes[i].propertyFlags & flags.first) == flags.first) {
+                internal.memoryTypeFlags[i] |= 1 << (uint32)usage;
+            } 
+        }
+    }
+
     return 0;
 }
 
@@ -209,7 +227,7 @@ void Renderer::RenderDevice::Init(uint32 enabledFeatures)
         acclBuilder.Init();
 }
 
-VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkImage image, MemoryUsage memoryDomain) const
+VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkImage image, MemoryDomain memoryDomain) const
 {
     VkDeviceMemory memory;
     VkMemoryAllocateInfo info;
@@ -226,7 +244,7 @@ VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkImage image, Me
     return memory;
 }
 
-VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkBuffer buffer, MemoryUsage memoryDomain) const
+VkDeviceMemory Renderer::RenderDevice::AllocateDedicatedMemory(VkBuffer buffer, MemoryDomain memoryDomain) const
 {
     VkDeviceMemory memory;
     VkMemoryAllocateInfo info;
@@ -289,28 +307,34 @@ uint32 Renderer::RenderDevice::FindMemoryType(uint32 typeFilter, VkMemoryPropert
     return ~0u;
 }
 
-uint32 Renderer::RenderDevice::FindMemoryTypeIndex(uint32 typeFilter, MemoryUsage usage) const
+uint32 Renderer::RenderDevice::FindMemoryTypeIndex(uint32 typeFilter, MemoryDomain usage) const
+{
+    const auto flags = this->FindMemoryTypeFlag(usage);
+    return FindMemoryType(typeFilter, flags.first);
+}
+
+std::pair<uint32, uint32> Renderer::RenderDevice::FindMemoryTypeFlag(MemoryDomain usage) const
 {
     VkMemoryPropertyFlags required = 0;
-    // VkMemoryPropertyFlags preferred = 0;
+    VkMemoryPropertyFlags preferred = 0;
 
     switch (usage) {
-    case MemoryUsage::GPU_ONLY:
+    case MemoryDomain::GPU_ONLY:
         required |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         // preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         break;
-    case MemoryUsage::LINKED_GPU_CPU:
+    case MemoryDomain::LINKED_GPU_CPU:
         required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         break;
-    case MemoryUsage::CPU_ONLY:
+    case MemoryDomain::CPU_ONLY:
         required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
         // preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         break;
-    case MemoryUsage::CPU_CACHED:
+    case MemoryDomain::CPU_CACHED:
         required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
         // preferred |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
         break;
-    case MemoryUsage::CPU_COHERENT:
+    case MemoryDomain::CPU_COHERENT:
         required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
         // preferred |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
         break;
@@ -318,9 +342,8 @@ uint32 Renderer::RenderDevice::FindMemoryTypeIndex(uint32 typeFilter, MemoryUsag
         ASSERTF(true, "Unknown memory usage!");
     }
 
-    return FindMemoryType(typeFilter, required);
+    return std::make_pair(required, preferred);
 }
-
 
 VkCommandBuffer Renderer::RenderDevice::CreateCmdBuffer(VkCommandPool pool, VkCommandBufferLevel level, VkCommandBufferUsageFlags flag) const
 {
@@ -956,7 +979,7 @@ Renderer::TlasHandle Renderer::RenderDevice::CreateTlas(const TlasCreateInfo& cr
     BufferInfo bufferInfo;
     bufferInfo.size = createInfo.blasInstances.size() * sizeof(VkAccelerationStructureInstanceKHR);
     bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS;
-    bufferInfo.domain = MemoryUsage::GPU_ONLY;
+    bufferInfo.domain = MemoryDomain::GPU_ONLY;
     BufferHandle instanceBuffer = this->CreateBuffer(bufferInfo);
     VkDeviceAddress instanceAddress = this->GetBufferAddress(instanceBuffer);
 
@@ -1006,7 +1029,7 @@ VkAccelerationStructureKHR Renderer::RenderDevice::CreateAcceleration(VkAccelera
     BufferCreateInfo bufferInfo;
     bufferInfo.size = info.size;
     bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_STORAGE;
-    bufferInfo.domain = MemoryUsage::GPU_ONLY;
+    bufferInfo.domain = MemoryDomain::GPU_ONLY;
     *buffer = this->CreateBuffer(bufferInfo);
     info.buffer = (*buffer)->GetApiObject();
 
@@ -1020,7 +1043,7 @@ VkAccelerationStructureKHR Renderer::RenderDevice::CreateAcceleration(VkAccelera
     BufferCreateInfo bufferInfo;
     bufferInfo.size = info.size;
     bufferInfo.usage = BufferUsage::SHADER_DEVICE_ADDRESS | BufferUsage::ACCLS_STORAGE;
-    bufferInfo.domain = MemoryUsage::GPU_ONLY;
+    bufferInfo.domain = MemoryDomain::GPU_ONLY;
     *buffer = this->CreateBufferHelper(bufferInfo);
     this->CreateBufferMemory(bufferInfo, *buffer);
     info.buffer = *buffer;
@@ -1113,7 +1136,7 @@ VkBuffer Renderer::RenderDevice::CreateBufferHelper(const BufferInfo& info) cons
     bufferInfo.usage = info.usage;
     bufferInfo.sharingMode = (VkSharingMode)SharingMode::EXCLUSIVE;
 
-    if (info.domain == MemoryUsage::GPU_ONLY) {
+    if (info.domain == MemoryDomain::GPU_ONLY) {
         bufferInfo.usage |= BufferUsage::TRANSFER_DST;
     }
 
@@ -1171,7 +1194,7 @@ VkDeviceMemory Renderer::RenderDevice::CreateBufferMemory(const BufferInfo& info
     return mem;
 }
 
-Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkBuffer buffer, uint32 usage, MemoryUsage domain, uint32 multiplier)
+Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkBuffer buffer, uint32 usage, MemoryDomain domain, uint32 multiplier)
 {
     MemoryAllocation alloc;
     VkMemoryRequirements2 memoryReqs;
@@ -1182,7 +1205,7 @@ Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkBuffer buffe
     bufferReqs.buffer = buffer;
     vkGetBufferMemoryRequirements2(this->GetDevice(), &bufferReqs, &memoryReqs);
     VkDeviceSize allocationSize = memoryReqs.memoryRequirements.size;
-    auto memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, (MemoryUsage)domain);
+    auto memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, (MemoryDomain)domain);
 
     if (multiplier != 1) {
         const VkDeviceSize alignMod = memoryReqs.memoryRequirements.size % memoryReqs.memoryRequirements.alignment;
@@ -1190,7 +1213,7 @@ Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkBuffer buffe
         allocationSize = alignedSizeConst * multiplier;
     }
 
-    if (dedicatedRegs.requiresDedicatedAllocation || dedicatedRegs.prefersDedicatedAllocation) {
+    if (dedicatedRegs.requiresDedicatedAllocation || dedicatedRegs.prefersDedicatedAllocation || usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) {
         alloc.size = allocationSize;
         alloc.offset = 0;
         alloc.padding = 0;
@@ -1209,11 +1232,9 @@ Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkBuffer buffe
         memoryAllocateInfo.memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, domain);
         CALL_VK(vkAllocateMemory(this->GetDevice(), &memoryAllocateInfo, NULL, &alloc.memory));
         
-        if (domain == MemoryUsage::CPU_ONLY || domain == MemoryUsage::CPU_CACHED || domain == MemoryUsage::CPU_COHERENT) {
+        if (domain == MemoryDomain::CPU_ONLY || domain == MemoryDomain::CPU_CACHED || domain == MemoryDomain::CPU_COHERENT) {
             vkMapMemory(this->GetDevice(), alloc.memory, 0, alloc.size, 0, &alloc.mappedData);
         }
-
-        printf("BUFFER Doing dedicated allocation\n");
     } else {
         alloc = gpuMemoryAllocator.Allocate(memoryTypeIndex, allocationSize, memoryReqs.memoryRequirements.alignment);
     }
@@ -1221,7 +1242,7 @@ Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkBuffer buffe
     return alloc;
 }
 
-Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkImage image, uint32 usage, MemoryUsage domain, uint32 multiplier)
+Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkImage image, uint32 usage, MemoryDomain domain, uint32 multiplier)
 {
     MemoryAllocation alloc;
     VkMemoryRequirements2 memoryReqs;
@@ -1232,7 +1253,7 @@ Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkImage image,
     imageReqs.image = image;
     vkGetImageMemoryRequirements2(this->GetDevice(), &imageReqs, &memoryReqs);
     VkDeviceSize allocationSize = memoryReqs.memoryRequirements.size;
-    auto memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, (MemoryUsage)domain);
+    auto memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, (MemoryDomain)domain);
 
     if (multiplier != 1) {
         const VkDeviceSize alignMod = memoryReqs.memoryRequirements.size % memoryReqs.memoryRequirements.alignment;
@@ -1240,7 +1261,7 @@ Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkImage image,
         allocationSize = alignedSizeConst * multiplier;
     }
     
-    if (dedicatedRegs.requiresDedicatedAllocation || dedicatedRegs.prefersDedicatedAllocation) {
+    if (dedicatedRegs.requiresDedicatedAllocation || dedicatedRegs.prefersDedicatedAllocation || usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) {
         alloc.size = allocationSize;
         alloc.offset = 0;
         alloc.padding = 0;
@@ -1259,11 +1280,9 @@ Renderer::MemoryAllocation Renderer::RenderDevice::AllocateMemory(VkImage image,
         memoryAllocateInfo.memoryTypeIndex = this->FindMemoryTypeIndex(memoryReqs.memoryRequirements.memoryTypeBits, domain);
         CALL_VK(vkAllocateMemory(this->GetDevice(), &memoryAllocateInfo, NULL, &alloc.memory));
 
-        if (domain == MemoryUsage::CPU_ONLY || domain == MemoryUsage::CPU_CACHED || domain == MemoryUsage::CPU_COHERENT) {
+        if (domain == MemoryDomain::CPU_ONLY || domain == MemoryDomain::CPU_CACHED || domain == MemoryDomain::CPU_COHERENT) {
             vkMapMemory(this->GetDevice(), alloc.memory, 0, alloc.size, 0, &alloc.mappedData);
         }
-
-        printf("IMAGE Doing dedicated allocation\n");
     } else {
         const auto& limits = this->GetProperties().limits;
         alloc = gpuMemoryAllocator.Allocate(memoryTypeIndex, allocationSize, MAX(memoryReqs.memoryRequirements.alignment, limits.bufferImageGranularity));
@@ -1289,7 +1308,7 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateBuffer(const BufferInfo& cr
     BufferHandle ret(objectsPool.buffers.Allocate(*this, apiBuffer, createInfo, bufferMemory));
 
     if (data) {
-        if (createInfo.domain == MemoryUsage::CPU_ONLY || createInfo.domain == MemoryUsage::CPU_CACHED || createInfo.domain == MemoryUsage::CPU_COHERENT) {
+        if (createInfo.domain == MemoryDomain::CPU_ONLY || createInfo.domain == MemoryDomain::CPU_CACHED || createInfo.domain == MemoryDomain::CPU_COHERENT) {
             ret->WriteToBuffer(createInfo.size, data);
         } else {
             stagingManager.Stage(ret->apiBuffer, data, createInfo.size, 1);
@@ -1311,12 +1330,12 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo
     VkBuffer apiBuffer;
 
     // Removing padding from total size, as we dont need the last bytes for alignement
-    // alignedSize * NUM_FRAMES - padding, data, usage, memoryUsage, queueFamilies
+    // alignedSize * NUM_FRAMES - padding, data, usage, MemoryDomain, queueFamilies
     this->CreateBufferInternal(apiBuffer, bufferMemory, info);
     BufferHandle ret(objectsPool.buffers.Allocate(*this, apiBuffer, info, bufferMemory, (uint32)alignedSize, ringSize));
 
     if (data) {
-        if (info.domain == MemoryUsage::CPU_ONLY || info.domain == MemoryUsage::CPU_CACHED || info.domain == MemoryUsage::CPU_COHERENT) {
+        if (info.domain == MemoryDomain::CPU_ONLY || info.domain == MemoryDomain::CPU_CACHED || info.domain == MemoryDomain::CPU_COHERENT) {
             ret->WriteToBuffer(createInfo.size, data);
         } else {
             stagingManager.Stage(ret->apiBuffer, data, createInfo.size, bufferMemory.alignment);
@@ -1328,7 +1347,7 @@ Renderer::BufferHandle Renderer::RenderDevice::CreateRingBuffer(const BufferInfo
 
 Renderer::ImageHandle Renderer::RenderDevice::CreateImage(const ImageCreateInfo& createInfo, const void* data)
 {
-    MemoryUsage memUsage = MemoryUsage::USAGE_UNKNOWN;
+    MemoryDomain memUsage = MemoryDomain::USAGE_UNKNOWN;
 
     VkImageCreateInfo info;
     info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -1346,23 +1365,23 @@ Renderer::ImageHandle Renderer::RenderDevice::CreateImage(const ImageCreateInfo&
 
     switch(createInfo.domain) {
     case ImageDomain::PHYSICAL:
-        memUsage = MemoryUsage::GPU_ONLY;
+        memUsage = MemoryDomain::GPU_ONLY;
         info.tiling = VK_IMAGE_TILING_OPTIMAL;
         info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         break;
     case ImageDomain::TRANSIENT:
-        memUsage = MemoryUsage::GPU_ONLY;
+        memUsage = MemoryDomain::GPU_ONLY;
         info.tiling = VK_IMAGE_TILING_OPTIMAL;
         info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         info.usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
         break;
     case ImageDomain::LINEAR_HOST:
-        memUsage = MemoryUsage::CPU_ONLY;
+        memUsage = MemoryDomain::CPU_ONLY;
         info.tiling = VK_IMAGE_TILING_LINEAR;
         info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
         break;
     case ImageDomain::LINEAR_HOST_CACHED:
-        memUsage = MemoryUsage::CPU_CACHED;
+        memUsage = MemoryDomain::CPU_CACHED;
         info.tiling = VK_IMAGE_TILING_LINEAR;
         info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
         break;
@@ -1394,7 +1413,7 @@ Renderer::ImageHandle Renderer::RenderDevice::CreateImage(const ImageCreateInfo&
     ImageHandle ret = ImageHandle(objectsPool.images.Allocate(*this, apiImage, createInfo, imageMemory));
     
     if (data) {
-        if (memUsage == MemoryUsage::GPU_ONLY) {
+        if (memUsage == MemoryDomain::GPU_ONLY) {
             stagingManager.Stage(*ret, data, createInfo.width * createInfo.height * FormatToChannelCount(createInfo.format));
         } else {
             // TODO: add uploading directly from CPU

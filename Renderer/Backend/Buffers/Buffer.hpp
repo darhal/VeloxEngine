@@ -14,12 +14,12 @@ namespace Renderer
 	{
 		DeviceSize size      = 0;
 		uint32 usage		 = ~0u;
-		MemoryUsage domain   = MemoryUsage::GPU_ONLY;
+		MemoryDomain domain  = MemoryDomain::GPU_ONLY;
 		uint32 queueFamilies = QueueFamilyFlag::NONE;
 
 		static FORCEINLINE BufferInfo UniformBuffer(DeviceSize size)
 		{
-			return BufferInfo{ size, BufferUsage::UNIFORM_BUFFER, MemoryUsage::CPU_COHERENT , QueueFamilyFlag::NONE };
+			return BufferInfo{ size, BufferUsage::UNIFORM_BUFFER, MemoryDomain::CPU_COHERENT , QueueFamilyFlag::NONE };
 		}
 	};
 
@@ -56,10 +56,10 @@ namespace Renderer
         uint32 GetCurrentOffset() const { return bufferIndex * unitSize; }
 
 	protected:
-        RenderDevice& device;
-        BufferInfo    bufferInfo;
-        MemoryAllocation    bufferMemory;
-        VkBuffer      apiBuffer;
+        RenderDevice&    device;
+        BufferInfo       bufferInfo;
+        MemoryAllocation bufferMemory;
+        VkBuffer         apiBuffer;
 
         uint32		ringSize;
         uint32		unitSize;

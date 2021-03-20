@@ -151,14 +151,14 @@ namespace Renderer
 		DEVICE_UNCACHED = VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD,
 	};
 
-	enum class MemoryUsage
+	enum class MemoryDomain
 	{
-		USAGE_UNKNOWN,
-		GPU_ONLY,			// Device local. Probably not visible from CPU.
-		LINKED_GPU_CPU,		// On desktop, directly mapped VRAM over PCI.
 		CPU_ONLY,			// Host-only, needs to be synced to GPU. Might be device local as well on iGPUs.
 		CPU_CACHED,			// Host and cached
 		CPU_COHERENT,		// Host and coherent
+		LINKED_GPU_CPU,		// On desktop, directly mapped VRAM over PCI.
+		GPU_ONLY,			// Device local. Probably not visible from CPU.
+		USAGE_UNKNOWN,
 	};
 
 	enum BufferUsage 
@@ -349,6 +349,8 @@ namespace Renderer
 			VkDevice							device;
 			QueueFamilyIndices					queueFamilyIndices;
 			VkQueue								queues[QFT_MAX];
+
+			uint32								memoryTypeFlags[VK_MAX_MEMORY_TYPES];
 			bool								isPresentQueueSeprate;
 			bool								isTransferQueueSeprate;
 		};
