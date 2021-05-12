@@ -109,7 +109,7 @@ namespace Renderer
 
 		void ChangeImageLayout(VkCommandBuffer cmd, Image& image, VkImageLayout oldLayout, VkImageLayout newLayout);
 	private:
-        RenderDevice& renderDevice;
+        RenderDevice&       renderDevice;
         StagingBuffer       stagingBuffers[NUM_STAGES];
         CommandBufferHandle transferCmdBuff[NUM_CMDS];
         CommandBufferHandle blitCmdBuff[NUM_CMDS];

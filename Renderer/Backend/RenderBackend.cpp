@@ -73,7 +73,6 @@ void Renderer::RenderBackend::InitInstance(uint32 usage)
 #endif
 }
 
-
 Renderer::RenderBackend::~RenderBackend()
 {
     vkDeviceWaitIdle(renderDevice.internal.device);
@@ -82,7 +81,6 @@ Renderer::RenderBackend::~RenderBackend()
     renderDevice.Shutdown();
     renderInstance.DestroyRenderInstance();
 }
-
 
 void Renderer::RenderBackend::BeginFrame()
 {

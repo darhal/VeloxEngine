@@ -634,7 +634,7 @@ void Renderer::RenderDevice::FlushQueue(CommandBuffer::Type type, bool triggerSw
 {
     auto& submissions = this->GetQueueSubmissions(type);
 
-    if (!submissions.Size()){
+    if (!submissions.Size()) {
         return;
     }
 

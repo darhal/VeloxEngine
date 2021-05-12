@@ -39,7 +39,7 @@ namespace Renderer
 
         Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryAllocation& mem, uint32 unitSize, uint32 ringSize);
 
-        virtual ~Buffer();
+        ~Buffer();
 
         void WriteToBuffer(VkDeviceSize size, const void* data, VkDeviceSize offset = 0, VkDeviceSize alignement = 1);
 
