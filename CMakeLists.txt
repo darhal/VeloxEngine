@@ -28,7 +28,7 @@ ENDIF()
 
 IF(WIN32)
 	IF (NOT Vulkan_FOUND)
-		find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan PATHS ${CMAKE_SOURCE_DIR}/libs/vulkan)
+		find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan HINTS ${CMAKE_SOURCE_DIR} PATHS $ENV{VULKAN_SDK}/Lib)
 		IF (Vulkan_LIBRARY)
 			set(Vulkan_FOUND ON)
 			MESSAGE("Using bundled Vulkan library version")
