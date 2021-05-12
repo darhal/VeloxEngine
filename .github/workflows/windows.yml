@@ -34,14 +34,14 @@ jobs:
     
     - name: Install Packages (Vcpkg, Vulkan SDK, Google Tests)
       run: |
-        curl.exe --output vulkan-sdk.exe --url https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
         git clone https://github.com/Microsoft/vcpkg.git
-        .\vcpkg\bootstrap-vcpkg.bat
+        .\vcpkg\bootstrap-vcpkg.bat --triplet x64-windows
         vcpkg integrate install
-        vcpkg install gtest
+        vcpkg install gtest --triplet x64-windows
+        curl.exe --output vulkan-sdk.exe --url https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
         
     - name: Install Vulkan SDK
-      run: vulkan-sdk.exe /S
+      run: .\vulkan-sdk.exe /S
     
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
