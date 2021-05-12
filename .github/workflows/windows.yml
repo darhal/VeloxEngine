@@ -32,10 +32,13 @@ jobs:
         submodules: "recursive"
     - uses: ilammy/msvc-dev-cmd@v1
     
-    - name: Install Packages (Vulkan SDK, Google Tests)
+    - name: Install Packages (Vcpkg, Vulkan SDK, Google Tests)
       run: |
         curl.exe --output vulkan-sdk.exe --url https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
-        .\vcpkg install gtest
+        git clone https://github.com/Microsoft/vcpkg.git
+        .\vcpkg\bootstrap-vcpkg.bat
+        vcpkg integrate install
+        vcpkg install gtest
         
     - name: Install Vulkan SDK
       run: vulkan-sdk.exe /S
