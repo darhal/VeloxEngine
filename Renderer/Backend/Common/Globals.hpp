@@ -348,6 +348,7 @@ namespace Renderer
 			VkPhysicalDeviceAccelerationStructureFeaturesKHR accelFeatures;
 			VkPhysicalDeviceRayTracingPipelineFeaturesKHR	 rtPipelineFeatures;
 			VkPhysicalDeviceBufferDeviceAddressFeatures		 buffAdrFeatures;
+			VkPhysicalDeviceTimelineSemaphoreFeatures	     timelineSemaphoreFeatures;
 
 			VkDevice							device;
 			QueueFamilyIndices					queueFamilyIndices;

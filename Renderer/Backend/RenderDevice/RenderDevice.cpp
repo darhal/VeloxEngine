@@ -130,14 +130,17 @@ int32 Renderer::RenderDevice::CreateLogicalDevice(const RenderInstance& renderIn
 
     // Enable some device features:
     // TODO: check if the GPU supports this feature
+    // TODO: upgrade this to use VkPhysicalDeviceVulkan12Features  
     internal.accelFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
     internal.rtPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
     internal.buffAdrFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+    internal.timelineSemaphoreFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
 
     internal.deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     internal.deviceFeatures2.pNext = &internal.accelFeatures;
     internal.accelFeatures.pNext = &internal.rtPipelineFeatures;
     internal.rtPipelineFeatures.pNext = &internal.buffAdrFeatures;
+    internal.buffAdrFeatures.pNext = &internal.timelineSemaphoreFeatures;
     vkGetPhysicalDeviceFeatures2(internal.gpu, &internal.deviceFeatures2);
 
     //deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
