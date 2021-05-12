@@ -40,7 +40,8 @@ jobs:
         vcpkg integrate install
         vcpkg install gtest --triplet x64-windows
         curl.exe --output vulkan-sdk.exe --url https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
-        .\vulkan-sdk.exe /S
+        $install_vk = '.\vulkan-sdk.exe /S'
+        Start-Process -Verb RunAs cmd.exe -Args '/c', $install_vk
     
     - name: Create Build Environment
       shell: powershell
@@ -49,6 +50,7 @@ jobs:
       run: |
         $env:VULKAN_SDK="C:\VulkanSDK\1.2.176.1";
         echo $Env:VULKAN_SDK
+        Test-Path $Env:VULKAN_SDK
         cmake -E make_directory ${{github.workspace}}/build
 
     - name: Configure CMake
