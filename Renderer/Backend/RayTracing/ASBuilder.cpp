@@ -27,7 +27,7 @@ void Renderer::AsBuilder::Init()
 
 	for (int i = 0; i < NUM_FRAMES; i++) {
         rtStaging[i].scratchBuffer = renderDevice.CreateBufferHelper(info);
-        rtStaging[i].address = VK_NULL_HANDLE;
+        rtStaging[i].address = (VkDeviceAddress)VK_NULL_HANDLE;
 		rtStaging[i].submitted = false;
         rtStaging[i].stagingBuffer = renderDevice.CreateBufferHelper(stagingInfo);
 
