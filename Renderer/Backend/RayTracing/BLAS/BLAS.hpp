@@ -23,8 +23,8 @@ namespace Renderer
 
 		void AddGeometry(VkDeviceAddress vertexData,
 			VkDeviceSize vertexStride, uint32 vertexCount,
-			VkDeviceAddress transformData = VK_NULL_HANDLE,
-			VkDeviceAddress indexData = VK_NULL_HANDLE,
+			VkDeviceAddress transformData = (VkDeviceAddress)VK_NULL_HANDLE,
+			VkDeviceAddress indexData = (VkDeviceAddress)VK_NULL_HANDLE,
 			const AsOffset& offset = {0, 0, 0, 0},
 			uint32 flags = VK_GEOMETRY_OPAQUE_BIT_KHR,
 			VkFormat vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
