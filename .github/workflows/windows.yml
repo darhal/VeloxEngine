@@ -33,9 +33,9 @@ jobs:
     - uses: ilammy/msvc-dev-cmd@v1
     
     - name: Install Packages (Vulkan SDK, Google Tests)
-        run: |
-          curl.exe --output vulkan-sdk.exe --url https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
-          .\vcpkg install gtest
+      run:|
+        curl.exe --output vulkan-sdk.exe --url https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
+        .\vcpkg install gtest
         
     - name: Install Vulkan SDK
         run: vulkan-sdk.exe /S
