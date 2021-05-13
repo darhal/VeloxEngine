@@ -32,13 +32,6 @@ jobs:
       with:
         submodules: "recursive"
         
-    - name: Install Packages (Vulkan SDK)
-      shell: pwsh
-      run: |
-        curl -LS -o VulkanSDK.exe https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
-        7z x VulkanSDK.exe -o"${{ env.VULKAN_SDK }}"
-        $env:Path += ";${{ env.VULKAN_SDK }}\;${{ env.VULKAN_SDK }}\Bin\"
-    
     - name: Install Packages (Vcpkg, Vulkan SDK, Google Tests)
       shell: powershell
       run: |
@@ -46,6 +39,10 @@ jobs:
         .\vcpkg\bootstrap-vcpkg.bat
         vcpkg integrate install
         vcpkg install gtest --triplet x64-windows
+        curl -LS -o VulkanSDK.exe https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
+        7z x VulkanSDK.exe -o"${{ env.VULKAN_SDK }}"
+        $env:Path += ";${{ env.VULKAN_SDK }}\;${{ env.VULKAN_SDK }}\Bin\"
+        $env:VULKAN_SDK = "${{ env.VULKAN_SDK }}\"
     
     - name: Create Build Environment
       shell: powershell
@@ -63,6 +60,7 @@ jobs:
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: |
         $env:Path += ";${{ env.VULKAN_SDK }}\;${{ env.VULKAN_SDK }}\Bin\"
+        $env:VULKAN_SDK = "${{ env.VULKAN_SDK }}\"
         cmake -S ${{github.workspace}} -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_UNIT_TESTS=ON
 
     - name: Build

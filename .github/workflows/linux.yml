@@ -28,6 +28,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: "recursive"
     
     - name: Install Packages (Clang, Vulkan SDK, Google Tests)
       run: |

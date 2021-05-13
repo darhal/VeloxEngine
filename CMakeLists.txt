@@ -9,8 +9,6 @@ set(NAME TrikytaEngine3D)
 project(TrikytaEngine3D)
 
 include_directories(${PROJECT_SOURCE_DIR})
-include_directories($ENV{VULKAN_SDK}/Include)
-link_directories($ENV{VULKAN_SDK}/Lib)
 
 OPTION(USE_D2D_WSI "Build the project using Direct to Display swapchain" OFF)
 OPTION(USE_DIRECTFB_WSI "Build the project using DirectFB swapchain" OFF)
@@ -22,10 +20,10 @@ if (NOT DONT_USE_FIND_PACKAGE AND NOT CMAKE_VERSION VERSION_LESS 3.7.0)
 	find_package(Vulkan)
 endif()
 
-if (DONT_USE_FIND_PACKAGE AND WIN32)
+if (DONT_USE_FIND_PACKAGE)
+	include_directories("$ENV{VULKAN_SDK}/Include/")
+	link_directories("$ENV{VULKAN_SDK}/Lib/")
 	set(Vulkan_LIBRARY "$ENV{VULKAN_SDK}/Lib/vulkan-1.lib")
-	set(Vulkan_INCLUDE "$ENV{VULKAN_SDK}/Include")
-	include_directories(Vulkan_INCLUDE)
 	set(Vulkan_FOUND ON)
 endif()
 
@@ -91,8 +89,9 @@ ELSEIF(APPLE)
 ENDIF(WIN32)
 
 IF (NOT Vulkan_FOUND)
-	message(FATAL_ERROR "Could not find Vulkan library!")
+	message(FATAL_ERROR "Could not find Vulkan library! Please consider using -DDONT_USE_FIND_PACKAGE=1")
 ELSE()
+	include_directories("$ENV{VULKAN_SDK}/Include/")
 	message(STATUS ${Vulkan_LIBRARY})
 ENDIF()
 
@@ -103,7 +102,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX -D_USE_MATH_DEFINES")
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch-enum")
 endif()
-
 
 # Compiler specific stuff
 IF(MSVC)
