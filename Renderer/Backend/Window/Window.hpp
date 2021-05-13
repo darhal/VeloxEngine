@@ -5,8 +5,8 @@
 
 #include <Renderer/Backend/Common.hpp>
 #include <Renderer/Backend/Window/Event.hpp>
-#include <Engine/Core/Misc/Maths/Vec.hpp>
-#include <Engine/Core/Misc/Maths/Vec2.hpp>
+#include <Core/Math/Vec.hpp>
+#include <Core/Math/Vec2.hpp>
 
 namespace WindowStyle
 {

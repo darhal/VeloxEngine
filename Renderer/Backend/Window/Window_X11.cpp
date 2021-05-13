@@ -1,4 +1,4 @@
-#include <Engine/Core/Misc/Defines/Platform.hpp>
+#include <Core/Misc/Defines/Platform.hpp>
 
 #ifdef OS_LINUX
 

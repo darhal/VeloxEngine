@@ -23,9 +23,7 @@
 #endif
 
 #undef UNICODE 
-#include <Engine/Core/Misc/Defines/Common.hpp>
-#include <Engine/Core/Misc/Defines/PlatformInclude.hpp>
-#include <Engine/Core/Misc/Defines/Debug.hpp>
+#include <Core/Core.hpp>
 #include <Renderer/Backend/Core/Logs/Logs.hpp>
 
 #if defined(COMPILER_MSVC)

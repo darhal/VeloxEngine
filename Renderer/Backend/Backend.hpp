@@ -1,3 +1,5 @@
+#pragma once
+
 #define USE_AS_LIBRARY
 #include <Renderer/Backend/Common.hpp>
 #include <Renderer/Backend/Misc/stb_image.hpp>

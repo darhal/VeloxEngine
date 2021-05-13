@@ -10,7 +10,7 @@ project(TrikytaEngine3D)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
-# if (NOT DEFINED ${CMAKE_BUILD_TYPE})
+# if (not defined ${CMAKE_BUILD_TYPE})
 # 	set(CMAKE_BUILD_TYPE "Debug")
 # endif()
 

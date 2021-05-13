@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Renderer/Backend/Common.hpp>
-#include <Engine/Core/Misc/Maths/Maths.hpp>
+#include <Core/Math/Maths.hpp>
 
 TRE_NS_START
 
