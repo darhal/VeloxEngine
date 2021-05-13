@@ -50,8 +50,6 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: |
         refreshenv
-        echo $Env:VULKAN_SDK
-        Test-Path $Env:VULKAN_SDK
         cmake -E make_directory ${{github.workspace}}/build
 
     - name: Configure CMake
