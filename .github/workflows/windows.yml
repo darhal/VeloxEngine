@@ -42,6 +42,9 @@ jobs:
         curl.exe --output VulkanSDK.zip --url http://omarito.com/vk12/VulkanSDK.zip
         unzip VulkanSDK.zip
         $Env:VULKAN_SDK = "${{github.workspace}}/VulkanSDK"
+        refreshenv
+        echo $Env:VULKAN_SDK
+        Test-Path $Env:VULKAN_SDK
         choco install vulkan-sdk
         choco upgrade vulkan-sdk
         refreshenv
