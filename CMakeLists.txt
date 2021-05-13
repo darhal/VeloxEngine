@@ -22,6 +22,11 @@ if (NOT DONT_USE_FIND_PACKAGE AND NOT CMAKE_VERSION VERSION_LESS 3.7.0)
 	find_package(Vulkan)
 endif()
 
+if (DONT_USE_FIND_PACKAGE AND WIN32)
+	set(Vulkan_LIBRARY "$ENV{VULKAN_SDK}/Lib/vulkan-1.lib")
+	set(Vulkan_FOUND ON)
+endif()
+
 IF(UNIX AND NOT APPLE)
 	set(LINUX TRUE)
 ENDIF()
