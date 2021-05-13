@@ -31,22 +31,12 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: "recursive"
-    
-    - name: Get MSVC
-      uses: ilammy/msvc-dev-cmd@v1
-    
-    - name: Get latest CMake and ninja
-      # Using 'latest' branch, the most recent CMake and ninja are installed.
-      uses: lukka/get-cmake@latest
-    
+        
     - name: Install Packages (Vulkan SDK)
       shell: pwsh
       run: |
-        pip3 install wheel setuptools
-        pip3 install conan
-        choco install ninja
         curl -LS -o VulkanSDK.exe https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
-        7z x VulkanSDK.exe -o "${{ env.VULKAN_SDK }}"
+        7z x VulkanSDK.exe -o"${{ env.VULKAN_SDK }}"
         $env:Path += ";${{ env.VULKAN_SDK }}\;${{ env.VULKAN_SDK }}\Bin\"
     
     - name: Install Packages (Vcpkg, Vulkan SDK, Google Tests)
