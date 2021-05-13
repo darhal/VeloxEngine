@@ -30,7 +30,13 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: "recursive"
-    - uses: ilammy/msvc-dev-cmd@v1
+    
+    - name: Get latest MSVC
+      - uses: ilammy/msvc-dev-cmd@v1
+    
+    - name: Get latest CMake and ninja
+      # Using 'latest' branch, the most recent CMake and ninja are installed.
+      uses: lukka/get-cmake@latest
     
     - name: Install Packages (Vcpkg, Vulkan SDK, Google Tests)
       shell: powershell
@@ -45,8 +51,6 @@ jobs:
         refreshenv
         echo $Env:VULKAN_SDK
         Test-Path $Env:VULKAN_SDK
-        choco install vulkan-sdk
-        choco upgrade vulkan-sdk
         refreshenv
     
     - name: Create Build Environment
@@ -63,7 +67,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake -S .\.. -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_UNIT_TESTS=ON
+      run: cmake -S .\.. -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_UNIT_TESTS=ON -DDONT_USE_FIND_PACKAGE=1
 
     - name: Build
       working-directory: ${{github.workspace}}/build
