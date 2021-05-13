@@ -25,6 +25,7 @@ endif()
 if (DONT_USE_FIND_PACKAGE AND WIN32)
 	set(Vulkan_LIBRARY "$ENV{VULKAN_SDK}/Lib/vulkan-1.lib")
 	set(Vulkan_INCLUDE "$ENV{VULKAN_SDK}/Include")
+	include_directories(Vulkan_INCLUDE)
 	set(Vulkan_FOUND ON)
 endif()
 
