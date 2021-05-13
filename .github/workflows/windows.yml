@@ -41,7 +41,7 @@ jobs:
         vcpkg install gtest --triplet x64-windows
         curl.exe --output VulkanSDK.zip --url http://omarito.com/vk12/VulkanSDK.zip
         unzip VulkanSDK.zip
-        $Env:VULKAN_SDK = ${{github.workspace}}/VulkanSDK
+        $Env:VULKAN_SDK = "${{github.workspace}}/VulkanSDK"
         choco install vulkan-sdk
         choco upgrade vulkan-sdk
         refreshenv
