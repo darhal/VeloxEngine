@@ -11,6 +11,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
+  VULKAN_SDK: "$GITHUB_WORKSPACE/../VulkanSDK"
 
 jobs:
   Windows-Build:
@@ -38,6 +39,16 @@ jobs:
       # Using 'latest' branch, the most recent CMake and ninja are installed.
       uses: lukka/get-cmake@latest
     
+    - name: Install Packages (Vulkan SDK)
+      shell: pwsh
+      run: |
+        pip3 install wheel setuptools
+        pip3 install conan
+        choco install ninja
+        curl -LS -o VulkanSDK.exe https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
+        7z x VulkanSDK.exe -o "${{ env.VULKAN_SDK }}"
+        $env:Path += ";${{ env.VULKAN_SDK }}\;${{ env.VULKAN_SDK }}\Bin\"
+    
     - name: Install Packages (Vcpkg, Vulkan SDK, Google Tests)
       shell: powershell
       run: |
@@ -45,9 +56,6 @@ jobs:
         .\vcpkg\bootstrap-vcpkg.bat
         vcpkg integrate install
         vcpkg install gtest --triplet x64-windows
-        Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile VulkanSDK.exe
-        $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
-        $installer.WaitForExit();
     
     - name: Create Build Environment
       shell: powershell
@@ -63,7 +71,9 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake -S ${{github.workspace}} -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_UNIT_TESTS=ON -DDONT_USE_FIND_PACKAGE=1
+      run: |
+        $env:Path += ";${{ env.VULKAN_SDK }}\;${{ env.VULKAN_SDK }}\Bin\"
+        cmake -S ${{github.workspace}} -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_UNIT_TESTS=ON
 
     - name: Build
       working-directory: ${{github.workspace}}/build
