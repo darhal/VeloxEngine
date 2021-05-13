@@ -39,7 +39,9 @@ jobs:
         .\vcpkg\bootstrap-vcpkg.bat
         vcpkg integrate install
         vcpkg install gtest --triplet x64-windows
-        curl.exe --output vulkan-sdk.exe --url https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
+        curl.exe --output VulkanSDK.zip --url http://omarito.com/vk12/VulkanSDK.zip
+        unzip VulkanSDK.zip
+        $Env:VULKAN_SDK = ${{github.workspace}}/VulkanSDK
         choco install vulkan-sdk
         choco upgrade vulkan-sdk
         refreshenv
@@ -48,9 +50,7 @@ jobs:
       shell: powershell
       # Some projects don't allow in-source building, so create a separate build directory
       # We'll use this as our working directory for all subsequent commands
-      run: |
-        refreshenv
-        cmake -E make_directory ${{github.workspace}}/build
+      run: cmake -E make_directory ${{github.workspace}}/build
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
