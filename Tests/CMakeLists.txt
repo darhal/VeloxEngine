@@ -2,6 +2,7 @@ SET(MODULE_FOLDER Tests)
 SET(MODULE_NAME Tests)
 
 include_directories(${MODULE_FOLDER})
+
 if (MSVC_IDE)
 else(MSVC_IDE)
     find_package(Threads REQUIRED)
