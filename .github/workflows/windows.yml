@@ -32,7 +32,7 @@ jobs:
         submodules: "recursive"
     
     - name: Get latest MSVC
-      - uses: ilammy/msvc-dev-cmd@v1
+      uses: ilammy/msvc-dev-cmd@v1
     
     - name: Get latest CMake and ninja
       # Using 'latest' branch, the most recent CMake and ninja are installed.
