@@ -1,6 +1,9 @@
 # TrikytaEngine3D
-[![Linux Build](https://github.com/Darhal/TrikytaEngine3D/actions/workflows/linux.yml/badge.svg)](https://github.com/Darhal/TrikytaEngine3D/actions/workflows/linux.yml)
-[![Windows Build](https://github.com/Darhal/TrikytaEngine3D/actions/workflows/windows.yml/badge.svg)](https://github.com/Darhal/TrikytaEngine3D/actions/workflows/windows.yml)
+<p align="center">
+  <a href="https://github.com/Darhal/TrikytaEngine3D/actions/workflows/linux.yml"><img src="https://github.com/Darhal/TrikytaEngine3D/actions/workflows/linux.yml/badge.svg"></a>
+  <a href="https://github.com/Darhal/TrikytaEngine3D/actions/workflows/windows.yml"><img src="https://github.com/Darhal/TrikytaEngine3D/actions/workflows/windows.yml/badge.svg"></a>
+</p>
+
 A 3D engine written initially using OpenGL then rewritten to use the lower level graphics API Vulkan. The project aims to build everything from scratch (Data structures, Utilities, renderer, UI, physics, ...). The engine builds and runs on Windows and Linux. Support for Macos, Android and iOS is planned as well.
 
 # Friendly reminder
