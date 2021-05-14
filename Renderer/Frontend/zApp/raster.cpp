@@ -184,7 +184,7 @@ int raster(RenderBackend& backend)
 #endif
     // TODO: NEED WORK ON MEMORY FREEING!! (THIS IS DONE) (However we need to detect dedicated allocations from non dedicated allocs!)
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels =  stbi_load("Assets/box1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc* pixels =  stbi_load("../Assets/box1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * texChannels;
     ImageHandle texture = dev.CreateImage(ImageCreateInfo::Texture2D(texWidth, texHeight, true), pixels);
     ImageViewHandle textureView = dev.CreateImageView(ImageViewCreateInfo::ImageView(texture, VK_IMAGE_VIEW_TYPE_2D));
@@ -207,8 +207,8 @@ int raster(RenderBackend& backend)
 
     ShaderProgram program(dev,
         {
-            {"Shaders/vert.spv", ShaderProgram::VERTEX},
-            {"Shaders/frag.spv", ShaderProgram::FRAGMENT}
+            {"../Shaders/vert.spv", ShaderProgram::VERTEX},
+            {"../Shaders/frag.spv", ShaderProgram::FRAGMENT}
         });
     program.GetVertexInput().AddBinding(
         0, sizeof(Vertex),

@@ -293,7 +293,9 @@ void Renderer::CommandBuffer::SetUniformBuffer(uint32 set, uint32 binding, const
         dirty.dynamicSets |= 1u << set;
     }else{*/
         // update everything
-        b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetApiObject(), offset, range };
+
+        DeviceSize size = range == VK_WHOLE_SIZE ? buffer.GetUnitSize() : range;
+        b.resource.buffer = VkDescriptorBufferInfo{ buffer.GetApiObject(), offset, size };
         b.dynamicOffset = buffer.GetCurrentOffset();
 
         bindings.cache[set][binding] = (uint64)buffer.GetApiObject();

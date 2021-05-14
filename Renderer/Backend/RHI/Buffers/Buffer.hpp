@@ -31,8 +31,8 @@ namespace Renderer
     };
 
     class Buffer : public Utils::RefCounterEnabled<Buffer, BufferDeleter, HandleCounter>
-	{
-	public:
+    {
+    public:
         friend struct BufferDeleter;
 
         Buffer(RenderDevice& dev, VkBuffer buffer, const BufferInfo& info, const MemoryAllocation& mem);
@@ -45,15 +45,17 @@ namespace Renderer
 
         void WriteToRing(VkDeviceSize size, const void* data, VkDeviceSize offset = 0, VkDeviceSize alignement = 1);
 
-		FORCEINLINE VkBuffer GetApiObject() const { return apiBuffer; }
+        FORCEINLINE VkBuffer GetApiObject() const { return apiBuffer; }
 
-		FORCEINLINE const BufferInfo& GetBufferInfo() const { return bufferInfo; }
+        FORCEINLINE const BufferInfo& GetBufferInfo() const { return bufferInfo; }
 
         FORCEINLINE const MemoryAllocation& GetBufferMemory() const { return bufferMemory; }
 
         uint32 GetUnitSize() const { return unitSize; }
 
         uint32 GetCurrentOffset() const { return bufferIndex * unitSize; }
+
+        uint32 GetRingSize() const { return ringSize; }
 
 	protected:
         RenderDevice&    device;
