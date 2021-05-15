@@ -9,7 +9,9 @@ if (MSVC_IDE)
 else(MSVC_IDE)
     find_package(Threads REQUIRED)
     find_package(GTest REQUIRED)
+    find_package(GMock REQUIRED)
     include_directories(${GTEST_INCLUDE_DIR})
+    include_directories(${GMOCK_INCLUDE_DIR})
 endif(MSVC_IDE)
 
 SET(MODULE_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
@@ -38,7 +40,7 @@ if(WIN32)
     if (MSVC_IDE)
         target_link_libraries(${MODULE_NAME} ${CMAKE_THREAD_LIBS_INIT} ${WINLIBS}) #${GTEST_LIBRARY}
     else(MSVC_IDE)
-        target_link_libraries(${MODULE_NAME} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${WINLIBS})
+        target_link_libraries(${MODULE_NAME} ${GTEST_LIBRARY} ${GMOCK_INCLUDE_DIR} ${CMAKE_THREAD_LIBS_INIT} ${WINLIBS})
     endif(MSVC_IDE)
 
 	add_test(NAME ${MODULE_NAME} COMMAND ${MODULE_NAME})
