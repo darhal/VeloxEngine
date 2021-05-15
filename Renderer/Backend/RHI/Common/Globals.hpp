@@ -109,7 +109,7 @@ namespace Renderer
 	using ObjectPool = Utils::ObjectPool<T>;
 
 	template<typename T>
-	using Handle = Utils::Handle<T>;
+	using Handle = Utils::ObjectHandle<T>;
 
 	using HandleCounter = Utils::SingleThreadRefCounter;
 

@@ -12,7 +12,7 @@ typedef class TaskManager TaskScheduler;
 class TaskManager
 {
 public:
-    TaskManager(uint8 worker_count = std::thread::hardware_concurrency() - 1) : 
+    TaskManager(uint8 worker_count = ::std::thread::hardware_concurrency() - 1) : 
         m_Workers(NULL), m_TasksAllocator(NULL), m_AllocatedJobIndex(NULL),
 		m_Allocator(worker_count * (sizeof(Worker) + sizeof(uint32) + sizeof(Task) * MAX_TASK_CAPACITY_PER_QUEUE), true),
 		m_WorkersMaxCount(worker_count)
@@ -39,7 +39,7 @@ private:
     struct Worker {
         TaskExecutor m_Scheduler;
         WorkStealingQueue m_WorkStealingQueue;
-        std::thread m_WorkerThread;
+        ::std::thread m_WorkerThread;
     };
 
     Worker* m_Workers;
@@ -49,7 +49,7 @@ private:
     uint8 m_WorkersMaxCount;
 
 public:
-    //std::atomic<int32_t> m_TasksToDeleteCount;
+    //::std::atomic<int32_t> m_TasksToDeleteCount;
 };
 
 FORCEINLINE void TaskManager::Init() // shouldn't be inlined !
@@ -74,7 +74,7 @@ template<typename... Args>
 void TaskManager::AddWorker(uint8 id, void(*function)(TaskExecutor*, Args...), Args... args)
 {
     uint8 real_id = id % m_WorkersMaxCount;
-    new (&(m_Workers[real_id].m_WorkerThread)) std::thread(function, &(m_Workers[real_id].m_Scheduler), args...);
+    new (&(m_Workers[real_id].m_WorkerThread)) ::std::thread(function, &(m_Workers[real_id].m_Scheduler), args...);
 	m_Workers[real_id].m_WorkerThread.detach();
 }
 

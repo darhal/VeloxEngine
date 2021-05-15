@@ -17,7 +17,7 @@ struct AsyncFileRequest
 		READ_STRING, WRITE, PUT, GET_LINE, READ_BYTES, OPEN_FILE
 	};
 
-	typedef std::function<void(const AsyncFileRequest&)> CallBackFunction;
+	typedef ::std::function<void(const AsyncFileRequest&)> CallBackFunction;
 
 	AsyncFileRequest(File* h, const RequestType t, CallBackFunction& c, char* b, usize sz = 1) : 
 		fHandler(h), callback(c), rType(t)	
@@ -83,7 +83,7 @@ struct AsynFileManager
 	AsyncFileRequest& AddRequest(File* f, AsyncFileRequest::CallBackFunction& callback, Args&&... args)
 	{
 		mtx.lock();
-		auto& res = m_Requests.Emplace(f, REQUEST_TYPE, callback, std::forward<Args>(args)...);
+		auto& res = m_Requests.Emplace(f, REQUEST_TYPE, callback, ::std::forward<Args>(args)...);
 		mtx.unlock();
 		return res;
 	}
@@ -92,7 +92,7 @@ struct AsynFileManager
 
 	void BootUp()
 	{
-		m_Thread = std::thread(&AsynFileManager::ProcessRequests, this);
+		m_Thread = ::std::thread(&AsynFileManager::ProcessRequests, this);
 		//this->ProcessRequests();
 		m_Thread.detach();
 	}
@@ -105,8 +105,8 @@ struct AsynFileManager
 	}
 
 	Queue<AsyncFileRequest> m_Requests;
-	std::thread m_Thread;
-	std::mutex mtx;
+	::std::thread m_Thread;
+	::std::mutex mtx;
 };
 
 TRE_NS_END

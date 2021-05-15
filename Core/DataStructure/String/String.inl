@@ -334,13 +334,13 @@ INLINE Vector<BasicString<T>> BasicString<T>::Split(T delimter)
 
 	if (pch != NULL) {
 		while (pch != NULL) {
-			fragments.EmplaceBack(std::move(this->SubString(start_off, pch - last_pch - 1)));
+			fragments.EmplaceBack(::std::move(this->SubString(start_off, pch - last_pch - 1)));
 			start_off = pch - str_buffer + 1;
 			last_pch = pch;
 			pch = this->FindFirstHelper(pch + 1, delimter);
 		}
 
-		fragments.EmplaceBack(std::move(this->SubString(start_off, this->Length())));
+		fragments.EmplaceBack(::std::move(this->SubString(start_off, this->Length())));
 	}
 
 	return fragments;

@@ -6,7 +6,7 @@ FORCEINLINE Map<K, V, Alloc_t>::Map()
 }
 
 template<typename K, typename V, typename Alloc_t>
-FORCEINLINE Map<K, V, Alloc_t>::Map(Map<K, V, Alloc_t>&& other) : m_RBT(std::move(other.m_RBT))
+FORCEINLINE Map<K, V, Alloc_t>::Map(Map<K, V, Alloc_t>&& other) : m_RBT(::std::move(other.m_RBT))
 {
 }
 
@@ -14,7 +14,7 @@ template<typename K, typename V, typename Alloc_t>
 FORCEINLINE Map<K, V, Alloc_t>& Map<K, V, Alloc_t>::operator=(Map&& other)
 {
 	m_RBT.RedBalckTree<K, V, Alloc_t>::~RedBalckTree();
-	m_RBT = std::move(other.m_RBT);
+	m_RBT = ::std::move(other.m_RBT);
 	return *this;
 }
 
@@ -57,7 +57,7 @@ template<typename K, typename V, typename Alloc_t>
 template<typename ...Args>
 FORCEINLINE V& Map<K, V, Alloc_t>::Emplace(const K& key, Args&&... args)
 {
-	return m_RBT.Insert(key, std::forward<Args>(args)...);
+	return m_RBT.Insert(key, ::std::forward<Args>(args)...);
 }
 
 template<typename K, typename V, typename Alloc_t>

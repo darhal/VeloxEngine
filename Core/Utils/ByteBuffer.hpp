@@ -144,7 +144,7 @@ public:
 	}
 
 private:
-	std::vector<uint8> buffer;
+	::std::vector<uint8> buffer;
 	bool littleEndian;
 
 	ByteWriter(const ByteWriter&);

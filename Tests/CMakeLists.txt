@@ -4,6 +4,8 @@ SET(MODULE_NAME Tests)
 include_directories(${MODULE_FOLDER})
 
 if (MSVC_IDE)
+    # find_package(GTest REQUIRED)
+    # include_directories(${GTEST_INCLUDE_DIR})
 else(MSVC_IDE)
     find_package(Threads REQUIRED)
     find_package(GTest REQUIRED)
@@ -34,7 +36,7 @@ if(WIN32)
     add_executable(${MODULE_NAME} ${SOURCE})
 
     if (MSVC_IDE)
-        target_link_libraries(${MODULE_NAME} ${CMAKE_THREAD_LIBS_INIT} ${WINLIBS})
+        target_link_libraries(${MODULE_NAME} ${CMAKE_THREAD_LIBS_INIT} ${WINLIBS}) #${GTEST_LIBRARY}
     else(MSVC_IDE)
         target_link_libraries(${MODULE_NAME} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${WINLIBS})
     endif(MSVC_IDE)

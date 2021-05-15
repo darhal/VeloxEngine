@@ -16,7 +16,7 @@ void AsynFileManager::ProcessRequests()
 			mtx.unlock();
 		}
 
-		//std::this_thread::sleep_for();
+		//::std::this_thread::sleep_for();
 	}
 }
 

@@ -65,7 +65,7 @@ FORCEINLINE Component* Entity::AddComponent(Component* comp)
 template<typename Component, typename... Args>
 FORCEINLINE Component* Entity::CreateComponent(Args&&... args)
 {
-	Component component(std::forward<Args>(args)...);
+	Component component(::std::forward<Args>(args)...);
 	return m_Manager->AddComponent(*this, &component);
 }
 

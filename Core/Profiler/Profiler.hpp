@@ -27,9 +27,9 @@ struct ProfileResult
 {
 	String Name;
 
-	std::chrono::duration<double, std::micro> Start;
-	std::chrono::microseconds ElapsedTime;
-	std::thread::id ThreadID;
+	::std::chrono::duration<double, ::std::micro> Start;
+	::std::chrono::microseconds ElapsedTime;
+	::std::thread::id ThreadID;
 };
 
 struct ProfileSession
@@ -40,9 +40,9 @@ struct ProfileSession
 class Profiler : public Singleton<Profiler>
 {
 private:
-	std::mutex m_Mutex;
+	::std::mutex m_Mutex;
 	ProfileSession* m_CurrentSession;
-	std::ofstream m_OutputStream;
+	::std::ofstream m_OutputStream;
 public:
 	Profiler()
 		: m_CurrentSession(nullptr)
@@ -51,7 +51,7 @@ public:
 
 	void BeginSession(const String& name, const String& filepath = "results.json")
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
+		::std::lock_guard<::std::mutex> lock(m_Mutex);
 
 		if (m_CurrentSession) {
 			// If there is already a current session, then close it before beginning new one.
@@ -74,18 +74,18 @@ public:
 
 	void EndSession()
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
+		::std::lock_guard<::std::mutex> lock(m_Mutex);
 		InternalEndSession();
 	}
 
 	void WriteProfile(const ProfileResult& result)
 	{
-		std::stringstream json;
+		::std::stringstream json;
 
-		std::string name = result.Name.Buffer();
-		std::replace(name.begin(), name.end(), '"', '\'');
+		::std::string name = result.Name.Buffer();
+		::std::replace(name.begin(), name.end(), '"', '\'');
 
-		json << std::setprecision(3) << std::fixed;
+		json << ::std::setprecision(3) << ::std::fixed;
 		json << ",{";
 		json << "\"cat\":\"function\",";
 		json << "\"dur\":" << (result.ElapsedTime.count()) << ',';
@@ -96,7 +96,7 @@ public:
 		json << "\"ts\":" << result.Start.count();
 		json << "}";
 
-		std::lock_guard<std::mutex> lock(m_Mutex);
+		::std::lock_guard<::std::mutex> lock(m_Mutex);
 		if (m_CurrentSession) {
 			m_OutputStream << json.str();
 			m_OutputStream.flush();
@@ -137,7 +137,7 @@ public:
 	ProfileTimer(const char* name)
 		: m_Name(name), m_Stopped(false)
 	{
-		m_StartTimepoint = std::chrono::steady_clock::now();
+		m_StartTimepoint = ::std::chrono::steady_clock::now();
 	}
 
 	~ProfileTimer()
@@ -148,17 +148,17 @@ public:
 
 	void Stop()
 	{
-		auto endTimepoint = std::chrono::steady_clock::now();
-		auto highResStart = std::chrono::duration<double, std::micro>{ m_StartTimepoint.time_since_epoch() };
-		auto elapsedTime = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint).time_since_epoch() - std::chrono::time_point_cast<std::chrono::microseconds>(m_StartTimepoint).time_since_epoch();
+		auto endTimepoint = ::std::chrono::steady_clock::now();
+		auto highResStart = ::std::chrono::duration<double, ::std::micro>{ m_StartTimepoint.time_since_epoch() };
+		auto elapsedTime = ::std::chrono::time_point_cast<::std::chrono::microseconds>(endTimepoint).time_since_epoch() - ::std::chrono::time_point_cast<::std::chrono::microseconds>(m_StartTimepoint).time_since_epoch();
 
-		Profiler::Instance().WriteProfile({ m_Name, highResStart, elapsedTime, std::this_thread::get_id() });
+		Profiler::Instance().WriteProfile({ m_Name, highResStart, elapsedTime, ::std::this_thread::get_id() });
 
 		m_Stopped = true;
 	}
 private:
 	const char* m_Name;
-	std::chrono::time_point<std::chrono::steady_clock> m_StartTimepoint;
+	::std::chrono::time_point<::std::chrono::steady_clock> m_StartTimepoint;
 	bool m_Stopped;
 };
 

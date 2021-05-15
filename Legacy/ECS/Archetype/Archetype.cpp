@@ -1,5 +1,6 @@
 #include "Archetype.hpp"
 #include "Chunk/ArchetypeChunk.hpp"
+#include <Core/Memory/Utils/Utils.hpp>
 #include <Core/ECS/Entity/Entity.hpp>
 #include <Core/ECS/Component/BaseComponent.hpp>
 #include <Core/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
@@ -7,7 +8,7 @@
 TRE_NS_START
 
 Archetype::Archetype(EntityManager* manager, const Bitset& bitset, const Vector<ComponentTypeID>& ids) :
-	m_TypesToBuffer(), m_Signature(std::move(bitset)),
+	m_TypesToBuffer(), m_Signature(::std::move(bitset)),
 	m_Manager(manager), m_OccupiedChunks(NULL), m_FreeChunks(NULL),
 	m_TypesCount((uint32)ids.Size()), m_ComponentsArraySize(0), m_Id(0)
 {
@@ -32,12 +33,12 @@ Archetype::Archetype(EntityManager* manager, const Vector<ComponentTypeID>& ids)
 }
 
 Archetype::Archetype(EntityManager* manager, const Bitset& bitset) :
-	m_TypesToBuffer(), m_Signature(std::move(bitset)),
+	m_TypesToBuffer(), m_Signature(::std::move(bitset)),
 	m_Manager(manager), m_OccupiedChunks(NULL), m_FreeChunks(NULL),
 	m_TypesCount(0), m_ComponentsArraySize(0), m_Id(0)
 {
 	// Calculate size for all the components
-	String str = Utils::ToString(m_Signature);
+	String str = Helper::ToString(m_Signature);
 	for (uint32 id = 0; id < m_Signature.Length(); id++) {
 		if (m_Signature.Get(id)) {
 			m_TypesToBuffer.Emplace(id, m_ComponentsArraySize);
@@ -80,7 +81,7 @@ ArchetypeChunk* Archetype::GenerateChunk()
 	usize total_chunk_size = sizeof(ArchetypeChunk) + sizeof(EntityID) * ArchetypeChunk::CAPACITY + m_ComponentsArraySize;
 
 	// Allocate
-	uint8* total_buffer = Allocate<uint8>(total_chunk_size);
+	uint8* total_buffer = Utils::Allocate<uint8>(total_chunk_size);
 	uint8* comp_buffer_off = total_buffer + sizeof(ArchetypeChunk);
 	ArchetypeChunk* temp_free_chunk = m_FreeChunks;
 	m_FreeChunks = new (total_buffer) ArchetypeChunk(this, comp_buffer_off);

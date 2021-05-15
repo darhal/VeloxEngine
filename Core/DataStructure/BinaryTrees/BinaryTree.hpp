@@ -20,7 +20,7 @@ public:
 	{
 	public:
 		template<typename... Args>
-		BinaryTreeLeaf(BinaryTreeLeaf* r, BinaryTreeLeaf* l, Args&&... args) : element(std::forward<Args>(args)...), right(r), left(l)
+		BinaryTreeLeaf(BinaryTreeLeaf* r, BinaryTreeLeaf* l, Args&&... args) : element(::std::forward<Args>(args)...), right(r), left(l)
 		{}
 
 		BinaryTreeLeaf* GetRight() { return right; }
@@ -33,14 +33,14 @@ public:
 		template<typename... Args>
 		T& EmplaceRight(Args&&... args){
 			right = m_Allocator.template Allocate<BTLeaf>();
-			new (right) BTLeaf(NULL, NULL, std::forward<Args>(args)...);
+			new (right) BTLeaf(NULL, NULL, ::std::forward<Args>(args)...);
 			return *right;
 		}
 
 		template<typename... Args>
 		T& EmplaceLeft(Args&&... args){
 			left = m_Allocator.template Allocate<BTLeaf>();
-			new (left) BTLeaf(NULL, NULL, std::forward<Args>(args)...);
+			new (left) BTLeaf(NULL, NULL, ::std::forward<Args>(args)...);
 			return *left;
 		}
 

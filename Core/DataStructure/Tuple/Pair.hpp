@@ -18,14 +18,14 @@ struct Pair
 	{}
 
 	template<typename... Args>
-	Pair(const T1& f, Args&&... args) : first(f), second(std::forward<Args>(args)...)
+	Pair(const T1& f, Args&&... args) : first(f), second(::std::forward<Args>(args)...)
 	{}
 
 	template<typename... Args>
-	Pair(T1&& f, Args&&... args) : first(std::forward<T1>(f)), second(std::forward<Args>(args)...)
+	Pair(T1&& f, Args&&... args) : first(::std::forward<T1>(f)), second(::std::forward<Args>(args)...)
 	{}
 
-	Pair(T1&& f, T2&& s) : first(std::forward<T1>(f)), second(std::forward<T2>(s))
+	Pair(T1&& f, T2&& s) : first(::std::forward<T1>(f)), second(::std::forward<T2>(s))
 	{}
 
 	// Copy ctor
@@ -33,7 +33,7 @@ struct Pair
 	{}
 
 	// Move ctor
-	Pair(Pair<T1, T2>&& other) : first(std::move(other.first)), second(std::move(other.second))
+	Pair(Pair<T1, T2>&& other) : first(::std::move(other.first)), second(::std::move(other.second))
 	{}
 
 	// Copy =
@@ -47,8 +47,8 @@ struct Pair
 	// Move =
 	Pair<T1, T2>& operator=(Pair<T1, T2>&& other)
 	{
-		first = std::move(other.first);
-		second = std::move(other.second);
+		first = ::std::move(other.first);
+		second = ::std::move(other.second);
 		return *this;
 	}
 

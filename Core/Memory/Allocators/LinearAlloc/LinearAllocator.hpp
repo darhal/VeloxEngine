@@ -145,7 +145,7 @@ FORCEINLINE U* LinearAllocator::Allocate(Args&&... args)
 	}
 
 	curr_adr += padding;
-	new (curr_adr) U(std::forward<Args>(args)...);
+	new (curr_adr) U(::std::forward<Args>(args)...);
 	m_Offset += padding + sizeof(U);
 	return curr_adr;
 }

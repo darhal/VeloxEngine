@@ -35,7 +35,7 @@ namespace Renderer
 
 			~FramebufferNode()
 			{
-			    Framebuffer::~Framebuffer();
+			    static_cast<Framebuffer*>(this)->~Framebuffer();
 			}
 		};
 

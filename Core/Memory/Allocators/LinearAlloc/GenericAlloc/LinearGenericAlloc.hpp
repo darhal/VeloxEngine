@@ -53,7 +53,7 @@ uint32 LinearGenericAlloc::Allocate(uint32 count)
 template<typename T>
 uint32 LinearGenericAlloc::Deallocate(uint32 handle, uint32 count)
 {
-	Deallocate(handle, sizeof(T) * count, alignof(T));
+	return Deallocate(handle, sizeof(T) * count, alignof(T));
 }
 
 template<typename T>

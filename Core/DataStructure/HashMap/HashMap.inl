@@ -20,7 +20,7 @@ FORCEINLINE typename HashMap<K, V, CHAINING, S>::HashNode& HashMap<K, V, CHAININ
 {
 	usize index = this->CalculateIndex(key);
 	HashTab_t* listAdr = this->InternalListCheck(index);
-	return listAdr->EmplaceBack(std::forward<K>(key), std::forward<V>(value));
+	return listAdr->EmplaceBack(::std::forward<K>(key), ::std::forward<V>(value));
 }
 
 template<typename K, typename V, usize S>
@@ -29,7 +29,7 @@ FORCEINLINE typename HashMap<K, V, CHAINING, S>::HashNode& HashMap<K, V, CHAININ
 {
 	usize index = this->CalculateIndex(key);
 	HashTab_t* listAdr = this->InternalListCheck(index);
-	return listAdr->EmplaceBack(key, std::forward<Args>(args)...);
+	return listAdr->EmplaceBack(key, ::std::forward<Args>(args)...);
 }
 
 template<typename K, typename V, usize S>
@@ -38,7 +38,7 @@ FORCEINLINE typename HashMap<K, V, CHAINING, S>::HashNode& HashMap<K, V, CHAININ
 {
 	usize index = this->CalculateIndex(key);
 	HashTab_t* listAdr = this->InternalListCheck(index);
-	return listAdr->EmplaceBack(std::forward<K>(key), std::forward<Args>(args)...);
+	return listAdr->EmplaceBack(::std::forward<K>(key), ::std::forward<Args>(args)...);
 }
 
 template<typename K, typename V, usize S>
@@ -186,7 +186,7 @@ template<typename K, typename V, usize S>
 FORCEINLINE typename HashMap<K, V, PROBING, S>::HashPair& HashMap<K, V, PROBING, S>::Put(K&& key, V&& value)
 {
 	HashTab_t listAdr = this->CalculateAdress(key);
-	return *(new (&listAdr->pair) HashPair(std::forward<K>(key), std::forward<V>(value)));
+	return *(new (&listAdr->pair) HashPair(::std::forward<K>(key), ::std::forward<V>(value)));
 }
 
 template<typename K, typename V, usize S>
@@ -194,7 +194,7 @@ template<typename... Args>
 FORCEINLINE typename HashMap<K, V, PROBING, S>::HashPair& HashMap<K, V, PROBING, S>::Emplace(const K& key, Args&&... args)
 {
 	HashTab_t listAdr = this->CalculateAdress(key);
-	return *(new (&listAdr->pair) HashPair(key, std::forward<Args>(args)...));
+	return *(new (&listAdr->pair) HashPair(key, ::std::forward<Args>(args)...));
 }
 
 template<typename K, typename V, usize S>
@@ -202,7 +202,7 @@ template<typename... Args>
 FORCEINLINE typename HashMap<K, V, PROBING, S>::HashPair& HashMap<K, V, PROBING, S>::Emplace(K&& key, Args&& ...args)
 {
 	HashTab_t listAdr = this->CalculateAdress(key);
-	return *(new (&listAdr->pair) HashPair(std::forward<K>(key), std::forward<Args>(args)...));
+	return *(new (&listAdr->pair) HashPair(::std::forward<K>(key), ::std::forward<Args>(args)...));
 }
 
 template<typename K, typename V, usize S>
@@ -598,7 +598,7 @@ FORCEINLINE usize HashMap<K, V, PROBING, S>::CalculateHash(const K& key) const
 }
 
 template<typename K, typename V, usize S>
-template<typename Ki, typename Vi, typename std::enable_if<HAVE_DTOR(Ki) || HAVE_DTOR(Vi), int>::type>
+template<typename Ki, typename Vi, typename ::std::enable_if<HAVE_DTOR(Ki) || HAVE_DTOR(Vi), int>::type>
 FORCEINLINE void HashMap<K, V, PROBING, S>::DestroyMap(HashMap<Ki, Vi, PROBING, S>& map)
 {
     for (usize i = 0; i < map.m_Capacity; i++) {
@@ -613,7 +613,7 @@ FORCEINLINE void HashMap<K, V, PROBING, S>::DestroyMap(HashMap<Ki, Vi, PROBING, 
 }
 
 template<typename K, typename V, usize S>
-template<typename Ki, typename Vi, typename std::enable_if<NO_DTOR(Ki) && NO_DTOR(Vi), int>::type>
+template<typename Ki, typename Vi, typename ::std::enable_if<NO_DTOR(Ki) && NO_DTOR(Vi), int>::type>
 FORCEINLINE void HashMap<K, V, PROBING, S>::DestroyMap(HashMap<Ki, Vi, PROBING, S>& map)
 {
     // DO NOTHING

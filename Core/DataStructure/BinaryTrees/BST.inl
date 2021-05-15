@@ -11,7 +11,7 @@ FORCEINLINE BinarySearchTree<T, Alloc_t>::~BinarySearchTree()
 
 template<typename T, typename Alloc_t>
 template<typename ...Args>
-FORCEINLINE BinarySearchTree<T, Alloc_t>::BinarySearchTree(Args&&... args) : BinaryTree<T, Alloc_t>(std::forward<Args>(args)...)
+FORCEINLINE BinarySearchTree<T, Alloc_t>::BinarySearchTree(Args&&... args) : BinaryTree<T, Alloc_t>(::std::forward<Args>(args)...)
 {
 }
 
@@ -98,11 +98,11 @@ FORCEINLINE typename BinarySearchTree<T, Alloc_t>::BTLeaf& BinarySearchTree<T, A
 {
 	if (BTree::m_Root == NULL) {
 		BTree::m_Root = BTree::m_Allocator.template Allocate<BTLeaf>();
-		new (BTree::m_Root) BTLeaf(NULL, NULL, std::forward<Args>(args)...);
+		new (BTree::m_Root) BTLeaf(NULL, NULL, ::std::forward<Args>(args)...);
 		return *BTree::m_Root;
 	}
 	auto newLeaf = BTree::m_Allocator.template Allocate<BTLeaf>();
-	new (newLeaf) BTLeaf(NULL, NULL, std::forward<Args>(args)...);
+	new (newLeaf) BTLeaf(NULL, NULL, ::std::forward<Args>(args)...);
 	this->InsertHelper(BTree::m_Root, newLeaf);
 	return *newLeaf;
 }

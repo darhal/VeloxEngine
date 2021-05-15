@@ -14,6 +14,7 @@ file(GLOB_RECURSE SOURCE CONFIGURE_DEPENDS
     "*.hpp"
     "*.cpp"
     "*.c"
+    "*.inl"
 )
 
 if (MSVC)

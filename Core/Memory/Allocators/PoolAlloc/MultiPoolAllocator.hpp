@@ -102,7 +102,7 @@ public:
 
 	MultiPoolAllocator(MultiPoolAllocator&& other) :
 		m_ItemSize(other.m_ItemSize), m_ItemsNumber(other.m_ItemsNumber),
-		m_Arena(std::move(other.m_Arena)), m_Freelist(other.m_Freelist)
+		m_Arena(::std::move(other.m_Arena)), m_Freelist(other.m_Freelist)
 	{}
 
 	MultiPoolAllocator(MultiPoolAllocator& other) :
@@ -112,10 +112,10 @@ public:
 
 	MultiPoolAllocator& operator=(MultiPoolAllocator&& other)
 	{
-		m_ItemSize = std::move(other.m_ItemSize);
-		m_ItemsNumber = std::move(other.m_ItemsNumber);
-		m_Arena = std::move(other.m_Arena);
-		m_Freelist = std::move(other.m_Freelist);
+		m_ItemSize = ::std::move(other.m_ItemSize);
+		m_ItemsNumber = ::std::move(other.m_ItemsNumber);
+		m_Arena = ::std::move(other.m_Arena);
+		m_Freelist = ::std::move(other.m_Freelist);
 
 		return *this;
 	}
@@ -125,7 +125,7 @@ public:
 		if (m_Freelist == NULL) {
 			UniquePointer<PoolArena> newArena(new PoolArena(m_ItemSize, m_ItemsNumber));
 			//printf(">> List is empty allocating more Start at = %d\n", newArena->GetStorage());
-			newArena->SetNext(std::move(m_Arena));
+			newArena->SetNext(::std::move(m_Arena));
 			m_Arena = newArena;
 			m_Freelist = m_Arena->GetStorage();
 		}
@@ -141,7 +141,7 @@ public:
 	T* Allocate(Args&&... args)
 	{
 		T* result = (T*) this->Allocate();
-		new (result) T(std::forward<Args>(args)...);
+		new (result) T(::std::forward<Args>(args)...);
 		return result;
 	}
 
@@ -173,7 +173,7 @@ public:
 				if (ptr == NULL) return;
 		#endif
 
-		Destroy<T>(ptr);
+		Utils::Destroy<T>(ptr);
 		this->Deallocate((void*)ptr);
 	}
 

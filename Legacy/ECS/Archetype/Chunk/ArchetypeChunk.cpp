@@ -118,7 +118,7 @@ void ArchetypeChunk::DestroyComponentInternal(ArchetypeChunk* last_chunk, Compon
 
 	usize srcIndex = size * last_chunk->m_EntitiesCount;
 	BaseComponent* srcComponent = (BaseComponent*) &(last_chunk->GetComponentBuffer(type_id)[srcIndex]);
-	std::memcpy(destComponent, srcComponent, size);
+	::std::memcpy(destComponent, srcComponent, size);
 }
 
 void ArchetypeChunk::RemoveComponentInternal(ArchetypeChunk* last_chunk, ComponentTypeID type_id, uint8* components_buffer, EntityID internal_id)
@@ -131,7 +131,7 @@ void ArchetypeChunk::RemoveComponentInternal(ArchetypeChunk* last_chunk, Compone
 
 	usize srcIndex = size * last_chunk->m_EntitiesCount;
 	BaseComponent* srcComponent = (BaseComponent*) &(last_chunk->GetComponentBuffer(type_id)[srcIndex]);
-	std::memcpy(destComponent, srcComponent, size);
+	::std::memcpy(destComponent, srcComponent, size);
 }
 
 BaseComponent* ArchetypeChunk::UpdateComponentMemoryInternal(uint32 internal_id, Entity& entity, BaseComponent* component, ComponentTypeID component_id)

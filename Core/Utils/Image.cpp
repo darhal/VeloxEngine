@@ -74,7 +74,7 @@ Image::Image(uint8* pixels, uint size)
 	Load(pixels, size);
 }
 
-Image::Image(const std::string& filename)
+Image::Image(const ::std::string& filename)
 {
 	image = 0;
 	Load(filename);
@@ -96,7 +96,7 @@ void Image::Load(uint8* pixels, uint size)
 
 	// Load data from memory
 	ByteReader data(size, true);
-	std::memcpy(data.Data(), pixels, size);
+	::std::memcpy(data.Data(), pixels, size);
 
 	// Determine format and process
 	if (data.PeekByte(0) == 'B' && data.PeekByte(1) == 'M')
@@ -112,7 +112,7 @@ void Image::Load(uint8* pixels, uint size)
 	}
 }
 
-void Image::Load(const std::string& filename)
+void Image::Load(const ::std::string& filename)
 {
 	// Unload image
 	if (image) 
@@ -123,11 +123,11 @@ void Image::Load(const std::string& filename)
 	height = 0;
 
 	// Load data from file
-	std::ifstream file(filename.c_str(), std::ios::binary | std::ios::ate);
+	::std::ifstream file(filename.c_str(), ::std::ios::binary | ::std::ios::ate);
 	ASSERTF(!file.is_open(), "File could not be opened!");
 
 	uint fileSize = (uint)file.tellg();
-	file.seekg(0, std::ios::beg);
+	file.seekg(0, ::std::ios::beg);
 
 	ByteReader data(fileSize, true);
 	file.read((char*)data.Data(), fileSize);
@@ -148,7 +148,7 @@ void Image::Load(const std::string& filename)
 	}
 }
 
-void Image::Save(const std::string& filename, ImageFileFormat::image_file_format_t format)
+void Image::Save(const ::std::string& filename, ImageFileFormat::image_file_format_t format)
 {
 	if (image == 0 || width == 0 || height == 0) return;
 
@@ -207,7 +207,7 @@ void Image::LoadBMP(ByteReader& data)
 	this->height = (uint16)height;
 }
 
-void Image::SaveBMP(const std::string& filename)
+void Image::SaveBMP(const ::std::string& filename)
 {
 	ByteWriter data(true);
 	uint padding = (width * 3) % 4;
@@ -246,7 +246,7 @@ void Image::SaveBMP(const std::string& filename)
 		}
 	}
 
-	std::ofstream file(filename.c_str(), std::ios::binary);
+	::std::ofstream file(filename.c_str(), ::std::ios::binary);
 	ASSERTF(!file.is_open(), "File could not be opened!");
 
 	file.write((char*)data.Data(), data.Length());
@@ -296,7 +296,7 @@ void Image::LoadTGA(ByteReader& data)
 
 void Image::DecodeRLE(ByteReader& data, uint decodedLength, uint8 bytesPerPixel)
 {
-	std::vector<uint8> buffer;
+	::std::vector<uint8> buffer;
 
 	while (buffer.size() < decodedLength)
 	{
@@ -327,7 +327,7 @@ void Image::DecodeRLE(ByteReader& data, uint decodedLength, uint8 bytesPerPixel)
 	memcpy(data.Data(), &buffer[0], decodedLength);
 }
 
-void Image::SaveTGA(const std::string& filename)
+void Image::SaveTGA(const ::std::string& filename)
 {
 	ByteWriter data(true);
 
@@ -342,7 +342,7 @@ void Image::SaveTGA(const std::string& filename)
 	data.WriteUbyte(0); // Image descriptor (No alpha depth or direction)
 
 	// Pixel data
-	std::vector<uint8> pixelData;
+	::std::vector<uint8> pixelData;
 	pixelData.reserve(width * height * 3);
 
 	for (short y = height - 1; y >= 0; y--)
@@ -364,14 +364,14 @@ void Image::SaveTGA(const std::string& filename)
 	data.WriteUint(0);
 	data.WriteString("TRUEVISION-XFILE.");
 
-	std::ofstream file(filename.c_str(), std::ios::binary);
+	::std::ofstream file(filename.c_str(), ::std::ios::binary);
 	ASSERTF(!file.is_open(), "File could not be opened!");
 	file.write((char*)data.Data(), data.Length());
 
 	file.close();
 }
 
-inline void flushRLE(ByteWriter& data, std::vector<Color>& backlog)
+inline void flushRLE(ByteWriter& data, ::std::vector<Color>& backlog)
 {
 	if (backlog.size() > 0)
 	{
@@ -385,7 +385,7 @@ inline void flushRLE(ByteWriter& data, std::vector<Color>& backlog)
 	}
 }
 
-inline void flushNonRLE(ByteWriter& data, std::vector<Color>& backlog, Color& lastColor)
+inline void flushNonRLE(ByteWriter& data, ::std::vector<Color>& backlog, Color& lastColor)
 {
 	if (backlog.size() > 1)
 	{
@@ -404,9 +404,9 @@ inline void flushNonRLE(ByteWriter& data, std::vector<Color>& backlog, Color& la
 	}
 }
 
-void Image::EncodeRLE(ByteWriter& data, std::vector<uint8>& pixels, uint16 width)
+void Image::EncodeRLE(ByteWriter& data, ::std::vector<uint8>& pixels, uint16 width)
 {
-	std::vector<Color> backlog;
+	::std::vector<Color> backlog;
 	Color lastColor;
 	bool rleMode = false;
 
@@ -483,7 +483,7 @@ void Image::LoadJPEG(ByteReader& data)
 	this->height = (uint16)cinfo.output_height;
 }
 
-void Image::SaveJPEG(const std::string& filename)
+void Image::SaveJPEG(const ::std::string& filename)
 {
 	FILE* file = fopen(filename.c_str(), "wb");
 	ASSERTF(!file, "File could not be opened!");
@@ -506,7 +506,7 @@ void Image::SaveJPEG(const std::string& filename)
 	jpeg_set_quality(&cinfo, 90, true);
 
 	// Prepare pixel data
-	std::vector<uint8> pixelData;
+	::std::vector<uint8> pixelData;
 	pixelData.reserve(width * height * 3);
 
 	for (uint16 y = 0; y < height; y++)
@@ -561,7 +561,7 @@ void Image::LoadPNG(ByteReader& data)
 	image = new Color[info->width * info->height];
 
 	png_uint_32 rowLength = png_get_rowbytes(png, info);
-	std::vector<uint8> row(rowLength);
+	::std::vector<uint8> row(rowLength);
 
 	for (uint16 y = 0; y < info->height; y++)
 	{
@@ -584,7 +584,7 @@ void Image::LoadPNG(ByteReader& data)
 	png_destroy_read_struct(&png, &info, NULL);
 }
 
-void Image::SavePNG(const std::string& filename)
+void Image::SavePNG(const ::std::string& filename)
 {
 	FILE* file = fopen(filename.c_str(), "wb");
 	ASSERTF(!file, "File could not be opened!");
@@ -601,7 +601,7 @@ void Image::SavePNG(const std::string& filename)
 	png_write_info(png, info);
 
 	// Prepare pixel data
-	std::vector<uint8> pixelData;
+	::std::vector<uint8> pixelData;
 	pixelData.reserve(width * height * 4);
 
 	for (uint16 y = 0; y < height; y++)

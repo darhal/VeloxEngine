@@ -420,7 +420,7 @@ template<typename T, typename Alloc_t>
 	if (cell_width % 2 == 0) ++cell_width;
 
 	// formatted_rows will hold the results
-	::std::vector<std::string> formatted_rows;
+	::std::vector<::std::string> formatted_rows;
 
 	// some of these counting variables are related,
 	// so its should be possible to eliminate some of them.

@@ -9,13 +9,13 @@
 TRE_NS_START
 
 struct Hash {
-	template<typename T, typename std::enable_if<std::is_class<T>::value || std::is_union<T>::value, bool>::type = true>
+	template<typename T, typename ::std::enable_if<::std::is_class<T>::value || ::std::is_union<T>::value, bool>::type = true>
 	FORCEINLINE static usize GetHash(const T& val) { return val.GetHash(); }
 
 	template<typename T>
 	FORCEINLINE static usize GetHash(const T* val) { return (usize)val; }
 
-	template<typename T, typename std::enable_if<std::is_enum<T>::value, bool>::type = true>
+	template<typename T, typename ::std::enable_if<::std::is_enum<T>::value, bool>::type = true>
 	FORCEINLINE static usize GetHash(const T& enm) { return (usize)enm; }
 
 	template<typename = void>

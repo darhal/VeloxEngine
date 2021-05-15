@@ -76,7 +76,7 @@ TRE_NS_START
 #endif
 }*/
 
-struct Utils
+namespace Helper
 {
 	FORCEINLINE static String ToString(const Bitset& bitset)
 	{

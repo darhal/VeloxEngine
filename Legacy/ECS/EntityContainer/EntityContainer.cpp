@@ -40,7 +40,7 @@ void EntityContainer::Remove(ID id)
 	ID old_id = entity_to_delete.GetEntityID();
 
 	Entity& last_element = m_Entities[--m_ObjectCount]; // Get last element
-	new (&entity_to_delete) Entity(std::move(last_element)); // Swap last element and element to delete
+	new (&entity_to_delete) Entity(::std::move(last_element)); // Swap last element and element to delete
 	
 	/*ArchetypeChunk* chunk = entity_to_delete.GetChunk(); // No need for this because m_Id wont change anyways
 	if (chunk)

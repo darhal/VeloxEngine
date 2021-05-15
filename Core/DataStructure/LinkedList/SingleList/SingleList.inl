@@ -14,7 +14,7 @@ template<typename ...Args>
 FORCEINLINE T& SingleList<T, Alloc_t>::EmplaceFront(Args&& ...args)
 {
 	Node* node_ptr = (Node*) m_Allocator.Allocate(sizeof(Node));
-	new (node_ptr) Node(m_Head, std::forward<Args>(args)...);
+	new (node_ptr) Node(m_Head, ::std::forward<Args>(args)...);
 	m_Head = node_ptr;
 	return node_ptr->m_Obj;
 }
@@ -77,7 +77,7 @@ FORCEINLINE bool SingleList<T, Alloc_t>::IsEmpty() const
 }
 
 template<typename U, typename A>
-template<typename T, typename Alloc, typename std::enable_if<HAVE_DTOR(T), int>::type>
+template<typename T, typename Alloc, typename ::std::enable_if<HAVE_DTOR(T), int>::type>
 void SingleList<U, A>::EmptyList(SingleList<T, Alloc>& list)
 {
 	auto head = list.m_Head;
@@ -91,7 +91,7 @@ void SingleList<U, A>::EmptyList(SingleList<T, Alloc>& list)
 }
 
 template<typename U, typename A>
-template<typename T, typename Alloc, typename std::enable_if<NO_DTOR(T), int>::type>
+template<typename T, typename Alloc, typename ::std::enable_if<NO_DTOR(T), int>::type>
 void SingleList<U, A>::EmptyList(SingleList<T, Alloc>& list)
 {
 	auto head = list.m_Head;
@@ -104,7 +104,7 @@ void SingleList<U, A>::EmptyList(SingleList<T, Alloc>& list)
 }
 
 template<typename U, typename A>
-template<typename T, typename Alloc, typename std::enable_if<HAVE_DTOR(T), int>::type>
+template<typename T, typename Alloc, typename ::std::enable_if<HAVE_DTOR(T), int>::type>
 void SingleList<U, A>::Destroy(SingleList<T, Alloc>& list)
 {
 	auto head = list.m_Head;
@@ -116,7 +116,7 @@ void SingleList<U, A>::Destroy(SingleList<T, Alloc>& list)
 }
 
 template<typename U, typename A>
-template<typename T, typename Alloc, typename std::enable_if<NO_DTOR(T), int>::type>
+template<typename T, typename Alloc, typename ::std::enable_if<NO_DTOR(T), int>::type>
 void SingleList<U, A>::Destroy(SingleList<T, Alloc>& list)
 {
 }

@@ -17,6 +17,13 @@ include_directories(${PROJECT_SOURCE_DIR})
 # Set preprocessor defines
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX -D_USE_MATH_DEFINES")
 
+# Compiler flags
+if (MSVC)
+	# add_compile_options(/W4 /WX)
+else(MSVC)
+	# add_compile_options(-Wpedantic -Wall -Wextra)
+endif(MSVC)
+
 # Clang specific stuff
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch-enum")
@@ -79,6 +86,10 @@ add_subdirectory(Engine)
 # set(BUILD_UNIT_TESTS true)
 
 if (BUILD_UNIT_TESTS)
+	if (MSVC)
+		set(CMAKE_TOOLCHAIN_FILE "${CMAKE_BINARY_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+	endif(MSVC)
+
 	enable_testing()
 	add_subdirectory(Tests)
 endif(BUILD_UNIT_TESTS)

@@ -47,7 +47,7 @@ FORCEINLINE U* PoolAllocator::Allocate(Args&&... args)
 	ASSERTF((m_ChunkSize < sizeof(U)), "Pool chunk size is smaller than sizeof(U)."); // Doesnt have enough size per chunk
 	U* freePosition = (U*)m_FreeList.Pop();
 	ASSERTF((freePosition == NULL), "Pool is full (empty free positions) //TODO: Allocate another arena in the future.");
-	new (freePosition) U(std::forward<Args>(args)...);
+	new (freePosition) U(::std::forward<Args>(args)...);
 	return freePosition;
 }
 

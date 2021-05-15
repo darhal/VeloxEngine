@@ -20,7 +20,7 @@ public:
 	struct Node{
 		template<typename... Args>
 		Node(Node* next, Args&&... args) : 
-			m_Obj(std::forward<Args>(args)...), m_Next(next) {}
+			m_Obj(::std::forward<Args>(args)...), m_Next(next) {}
 
 		T m_Obj;
 		Node* m_Next;
@@ -59,16 +59,16 @@ private:
 	Node* m_Head;
 	Alloc_t m_Allocator;
 
-	template<typename U, typename A, typename std::enable_if<NO_DTOR(U), int>::type = 0>
+	template<typename U, typename A, typename ::std::enable_if<NO_DTOR(U), int>::type = 0>
 	static void EmptyList(SingleList<U, A>& list);
 
-	template<typename U, typename A, typename std::enable_if<HAVE_DTOR(U), int>::type = 0>
+	template<typename U, typename A, typename ::std::enable_if<HAVE_DTOR(U), int>::type = 0>
 	static void EmptyList(SingleList<U, A>& list);
 
-	template<typename U, typename A, typename std::enable_if<HAVE_DTOR(U), int>::type = 0>
+	template<typename U, typename A, typename ::std::enable_if<HAVE_DTOR(U), int>::type = 0>
 	static void Destroy(SingleList<U, A>& list);
 
-	template<typename U, typename A, typename std::enable_if<NO_DTOR(U), int>::type = 0>
+	template<typename U, typename A, typename ::std::enable_if<NO_DTOR(U), int>::type = 0>
 	static void Destroy(SingleList<U, A>& list);
 
 public:

@@ -23,7 +23,7 @@ public:
 
 	Array(const Array<T, S>& other);
 	Array<T, S>& operator=(const Array<T, S>& other);
-	//Array(const std::initializer_list<T>& list);
+	//Array(const ::std::initializer_list<T>& list);
 	~Array();
 
 	FORCEINLINE T& At(usize i);
@@ -65,22 +65,22 @@ private:
 
 namespace Details {
 	template<typename T, usize S>
-	static typename std::enable_if<!std::is_fundamental<T>::value>::type DestroyAll(const Array<T, S>& array) {
+	static typename ::std::enable_if<!::std::is_fundamental<T>::value>::type DestroyAll(const Array<T, S>& array) {
 		for (usize i = 0; i < array.Length(); i++) {
 			array[i].~T(); // call dtor on all elements
 		}
 	}
 
 	template<typename T, usize S>
-	static typename std::enable_if<std::is_fundamental<T>::value>::type DestroyAll(const Array<T, S>& array) {} //Do nothing
+	static typename ::std::enable_if<::std::is_fundamental<T>::value>::type DestroyAll(const Array<T, S>& array) {} //Do nothing
 
 	template<typename T>
-	static typename std::enable_if<!std::is_fundamental<T>::value>::type Destroy(T& obj) {
+	static typename ::std::enable_if<!::std::is_fundamental<T>::value>::type Destroy(T& obj) {
 		obj.~T();
 	}
 
 	template<typename T>
-	static typename std::enable_if<std::is_fundamental<T>::value>::type Destroy(T& obj) {} //Do nothing
+	static typename ::std::enable_if<::std::is_fundamental<T>::value>::type Destroy(T& obj) {} //Do nothing
 }
 
 TRE_NS_END
@@ -93,14 +93,14 @@ Array<T, S>::Array() : m_Length(0)
 }
 
 /*template<typename T, usize S>
-Array<T, S>::Array(const std::initializer_list<T>& list) : m_Length(list.size())
+Array<T, S>::Array(const ::std::initializer_list<T>& list) : m_Length(list.size())
 {
 	//m_Data = list;
 }*/
 
 /*template<typename T, usize S>
 template<typename... Args>
-Array<T, S>::Array(Args&&... args) : m_Length(sizeof...(Args)), m_Data{ static_cast<T>(std::forward<Args>(args))... }
+Array<T, S>::Array(Args&&... args) : m_Length(sizeof...(Args)), m_Data{ static_cast<T>(::std::forward<Args>(args))... }
 {
 }*/
 
@@ -128,7 +128,7 @@ template<typename... Args>
 FORCEINLINE void Array<T, S>::ConstructFill(Args&& ...args)
 {
 	for (usize i = 0; i < CAPACITY; i++) {
-		m_Data[i] = T(std::forward<Args>(args)...);
+		m_Data[i] = T(::std::forward<Args>(args)...);
 	}
 	m_Length = CAPACITY;
 }
@@ -138,7 +138,7 @@ template<typename ...Args>
 FORCEINLINE void Array<T, S>::ConstructAt(usize i, Args&& ...args)
 {
 	ASSERTF((i >= CAPACITY || i >= m_Length), "Usage of PutAt with bad parameter index out of bound.");
-	m_Data[i] = T(std::forward<Args>(args)...);
+	m_Data[i] = T(::std::forward<Args>(args)...);
 }
 
 template<typename T, usize S>
@@ -147,7 +147,7 @@ FORCEINLINE void Array<T, S>::EmplaceBack(Args&& ...args)
 {
 	ASSERTF((m_Length > CAPACITY), "Usage of PutAt with bad parameter index out of bound.");
 	if (m_Length > CAPACITY) return;
-	m_Data[m_Length++] = T(std::forward<Args>(args)...);
+	m_Data[m_Length++] = T(::std::forward<Args>(args)...);
 }
 
 

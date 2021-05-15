@@ -30,13 +30,13 @@ namespace Renderer
 		};
 
 		template <typename T>
-		class Handle;
+		class ObjectHandle;
 
 		template<typename T, typename DeleterT = std::default_delete<T>, typename CounterT = SingleThreadRefCounter>
 		class RefCounterEnabled
 		{
 		public:
-			using Handle = Handle<T>;
+			using Handle = ObjectHandle<T>;
 			using Base = T;
 			using Deleter = DeleterT;
 			using Counter = CounterT;
@@ -71,7 +71,7 @@ namespace Renderer
 		class RefCounterEnabled<void, void, void>
 		{
 		public:
-			using Handle = Handle<void*>;
+			using Handle = ObjectHandle<void*>;
 			using Base = void;
 			using Deleter = void;
 			using Counter = void;
@@ -81,32 +81,32 @@ namespace Renderer
 		};
 
 		template<typename T>
-		class Handle
+		class ObjectHandle
 		{
 		public:
-			Handle() = default;
+			ObjectHandle() = default;
 
-			explicit Handle(T* handle)
+			explicit ObjectHandle(T* handle)
 				: data(handle)
 			{
 			}
 
-			~Handle()
+			~ObjectHandle()
 			{
 				this->Reset();
 			}
 
-			Handle(const Handle& other)
+			ObjectHandle(const ObjectHandle& other)
 			{
 				*this = other;
 			}
 
-			Handle(Handle&& other) noexcept
+			ObjectHandle(ObjectHandle&& other) noexcept
 			{
 				*this = std::move(other);
 			}
 
-			Handle& operator=(const Handle& other)
+			ObjectHandle& operator=(const ObjectHandle& other)
 			{
 				using ReferenceBase = RefCounterEnabled<typename T::Base, typename T::Deleter, typename T::Counter>;
 
@@ -120,7 +120,7 @@ namespace Renderer
 				return *this;
 			}
 
-			Handle& operator=(Handle&& other) noexcept
+			ObjectHandle& operator=(ObjectHandle&& other) noexcept
 			{
 				if (this != &other) {
 					this->Reset();  // Release any old data held
@@ -165,12 +165,12 @@ namespace Renderer
 				return data != NULL;
 			}
 
-			bool operator==(const Handle& other) const
+			bool operator==(const ObjectHandle& other) const
 			{
 				return data == other.data;
 			}
 
-			bool operator!=(const Handle& other) const
+			bool operator!=(const ObjectHandle& other) const
 			{
 				return data != other.data;
 			}

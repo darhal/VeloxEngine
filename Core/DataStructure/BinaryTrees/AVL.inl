@@ -195,7 +195,7 @@ FORCEINLINE void AVL<T, Alloc_t>::Insert(Args&&... args)
 {
 	// PART 1: Ordinary BST insert
 	AVLNode* node = m_Allocator.template Allocate<AVLNode>();
-	new (node) AVLNode(NULL, NULL, NULL, std::forward<Args>(args)...);
+	new (node) AVLNode(NULL, NULL, NULL, ::std::forward<Args>(args)...);
 
 	AVLNode* y = NULL;
 	AVLNode* x = this->m_Root;
@@ -241,17 +241,17 @@ void AVL<T, Alloc_t>::PrintHelper(AVLNode* root, String indent, bool last)
 {
 	// print the tree structure on the screen
 	if (root != NULL) {
-		std::cout << indent;
+		::std::cout << indent;
 		if (last) {
-			std::cout << "R----";
+			::std::cout << "R----";
 			indent += "     ";
 		}
 		else {
-			std::cout << "L----";
+			::std::cout << "L----";
 			indent += "|    ";
 		}
 
-		std::cout << root->data << "( BF = " << root->bf << ")" << std::endl;
+		::std::cout << root->data << "( BF = " << root->bf << ")" << ::std::endl;
 
 		PrintHelper(root->left, indent, false);
 		PrintHelper(root->right, indent, true);
