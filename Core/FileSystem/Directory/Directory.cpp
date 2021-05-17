@@ -12,7 +12,7 @@ TRE_NS_START
 
 Directory::Directory(const String& path) : m_DirPath(path)
 {
-    int32 r = stat(m_DirPath.Buffer(), &m_Informations);
+	[[maybe_unused]] int32 r = stat(m_DirPath.Buffer(), &m_Informations);
     ASSERTF(r == -1, "Failed to load direcoty informations (Linux implementation)");   
 }
 

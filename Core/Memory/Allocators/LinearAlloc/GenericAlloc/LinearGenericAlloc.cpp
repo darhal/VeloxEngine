@@ -15,7 +15,7 @@ uint32 LinearGenericAlloc::Allocate(uint32 size, uint32 alignement)
 {
 	this->Reallocate(size);
 
-	char* curr_adr = (char*)m_Start + m_Offset;
+	[[maybe_unused]] char* curr_adr = (char*)m_Start + m_Offset;
 	uint32 old_off = m_Offset + alignement;
 	m_Offset += size + alignement;
 	return old_off;

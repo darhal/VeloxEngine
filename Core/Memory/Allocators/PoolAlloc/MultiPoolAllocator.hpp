@@ -120,7 +120,7 @@ public:
 		return *this;
 	}
 
-	void* Allocate(uint32 sz = 0, uint32 alignement = 0)
+	void* Allocate([[maybe_unused]] uint32 sz = 0, [[maybe_unused]] uint32 alignement = 0)
 	{
 		if (m_Freelist == NULL) {
 			UniquePointer<PoolArena> newArena(new PoolArena(m_ItemSize, m_ItemsNumber));

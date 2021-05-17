@@ -91,7 +91,7 @@ FORCEINLINE uint8 TaskManager::GetWorkerThreadCount() const
 FORCEINLINE Task* TaskManager::AllocateTask(uint8 worker_id)
 {
 	const uint32 index = m_AllocatedJobIndex[worker_id]++;
-	return &m_TasksAllocator[worker_id * MAX_TASK_CAPACITY_PER_QUEUE * sizeof(Task) + index & (MAX_TASK_CAPACITY_PER_QUEUE - 1)];
+	return &m_TasksAllocator[(worker_id * MAX_TASK_CAPACITY_PER_QUEUE * sizeof(Task) + index) & (MAX_TASK_CAPACITY_PER_QUEUE - 1)];
 }
 
 TRE_NS_END

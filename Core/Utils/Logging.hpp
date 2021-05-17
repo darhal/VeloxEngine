@@ -64,18 +64,18 @@ private:
 		return logtype2str[v];
 	}
 
-	FORCEINLINE static const uint8 GetColorFromLogType(LogType v) {
+	FORCEINLINE static uint8 GetColorFromLogType(LogType v) {
 		return logtype2color[v];
 	}
 
-	FORCEINLINE static void GetDateString(char* buffer, uint32 size)
+	FORCEINLINE static void GetDateString(char* buffer, [[maybe_unused]] uint32 size)
 	{
 		time_t t = time(NULL);
 		struct tm tm = *localtime(&t);
 		strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", &tm);
 	}
 
-	FORCEINLINE static void SetColor(uint8 color_code)
+	FORCEINLINE static void SetColor([[maybe_unused]] uint8 color_code)
 	{
 #if defined(OS_WINDOWS)
 		// const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);

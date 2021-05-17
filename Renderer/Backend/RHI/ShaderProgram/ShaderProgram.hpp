@@ -113,7 +113,7 @@ namespace Renderer
 
 		FORCEINLINE const VkRayTracingShaderGroupCreateInfoKHR* GetShaderGroups() const { return rtShaderGroups.data(); }
 
-		FORCEINLINE const uint32 GetShaderGroupsCount() const { return (uint32)rtShaderGroups.size(); }
+		FORCEINLINE uint32 GetShaderGroupsCount() const { return (uint32)rtShaderGroups.size(); }
 
 		static VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& code);
 	private:

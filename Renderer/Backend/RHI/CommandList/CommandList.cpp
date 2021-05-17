@@ -579,7 +579,7 @@ void Renderer::CommandBuffer::CopyBufferToImage(const Buffer& srcBuffer, const I
 }
 
 void Renderer::CommandBuffer::CopyBufferToImage(const Buffer& srcBuffer, const Image& dstImage, VkDeviceSize bufferOffset,
-    uint32 mipLevel, uint32_t bufferRowLength, uint32_t bufferImageHeight)
+    uint32 mipLevel, [[maybe_unused]] uint32_t bufferRowLength, [[maybe_unused]] uint32_t bufferImageHeight)
 {
     const auto& info = dstImage.GetInfo();
     VkBufferImageCopy copy;
@@ -614,7 +614,7 @@ void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buf
 }
 
 void Renderer::CommandBuffer::CopyImageToBuffer(const Image& srcImage, const Buffer& dstBuffer, VkDeviceSize bufferOffset, 
-    uint32 mipLevel, uint32_t bufferRowLength, uint32_t bufferImageHeight)
+    uint32 mipLevel, [[maybe_unused]] uint32_t bufferRowLength, [[maybe_unused]] uint32_t bufferImageHeight)
 {
     const auto& info = srcImage.GetInfo();
     VkBufferImageCopy copy;
@@ -803,7 +803,7 @@ void Renderer::CommandBuffer::ChangeImageLayout(const Image& image, VkImageLayou
     ChangeImageLayout(image, oldLayout, newLayout, subresourceRange, srcStageMask, dstStageMask);
 }
 
-void Renderer::CommandBuffer::UpdateDescriptorSet(uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout,
+void Renderer::CommandBuffer::UpdateDescriptorSet([[maybe_unused]] uint32 set, VkDescriptorSet descSet, const DescriptorSetLayout& layout,
                                                   const ResourceBinding* bindings)
 {
     ASSERT(set >= MAX_DESCRIPTOR_SET);
@@ -1185,7 +1185,7 @@ void Renderer::CommandBuffer::SetStencilOpState(VkStencilOpState front, VkStenci
     stateUpdate = true;
 }
 
-void Renderer::CommandBuffer::SetLogicOp(VkBool32 logicOpEnable, VkLogicOp logicOp)
+void Renderer::CommandBuffer::SetLogicOp(VkBool32 logicOpEnable, [[maybe_unused]] VkLogicOp logicOp)
 {
     ASSERT(!state);
 

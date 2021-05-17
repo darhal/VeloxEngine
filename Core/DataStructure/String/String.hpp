@@ -288,14 +288,13 @@ const T& BasicString<T>::operator[] (const NUMERIC_TYPE i) const
 template<typename T, usize NB_CHAR>
 void BadCharHeuristic(const BasicString<T>& str, ssize size, int32(&badchar)[NB_CHAR])
 {
-	int32 i;
 	// Initialize all occurrences as -1  
-	for (i = 0; i < NB_CHAR; i++)
+	for (usize i = 0; i < NB_CHAR; i++)
 		badchar[i] = -1;
 
 	// Fill the actual value of last occurrence  
 	// of a character  
-	for (i = 0; i < size; i++)
+	for (ssize i = 0; i < size; i++)
 		badchar[(uint32)str[i]] = i;
 }
 
@@ -349,7 +348,7 @@ ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat, uin
 			occurrence of bad character in pattern
 			is on the right side of the current
 			character. */
-			s += MAX(1, j - badchar[txt_buffer[s + j]]);
+			s += MAX(1, j - badchar[static_cast<uint32>(txt_buffer[s + j])]);
 		}
 	}
 

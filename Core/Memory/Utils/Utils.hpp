@@ -6,7 +6,7 @@
 #include <cstring>
 #include <new>
 
-FORCEINLINE static const usize CalculatePadding(const usize baseAddress, const usize alignment) 
+FORCEINLINE static usize CalculatePadding(const usize baseAddress, const usize alignment) 
 {
 	if(alignment == 0)
 		return 0;
@@ -17,17 +17,17 @@ FORCEINLINE static const usize CalculatePadding(const usize baseAddress, const u
 	return padding;
 }
 
-template<typename OBJ_TYPE_TO_BE_ALIGNED>
-FORCEINLINE static const usize CalculatePadding(const usize baseAddress) 
+template<typename T>
+FORCEINLINE static usize CalculatePadding(const usize baseAddress) 
 {
-	const usize alignment  = alignof(OBJ_TYPE_TO_BE_ALIGNED);
+	const usize alignment  = alignof(T);
 	const usize multiplier = (baseAddress / alignment) + 1;
 	const usize alignedAddress = multiplier * alignment;
 	const usize padding = alignedAddress - baseAddress;
 	return padding;
 }
 
-FORCEINLINE static const ::std::size_t CalculatePaddingWithHeader(const ::std::size_t baseAddress, const ::std::size_t alignment, const ::std::size_t headerSize) 
+FORCEINLINE static ::std::size_t CalculatePaddingWithHeader(const ::std::size_t baseAddress, const ::std::size_t alignment, const ::std::size_t headerSize) 
 {
 	if(alignment == 0)
 		return 0;

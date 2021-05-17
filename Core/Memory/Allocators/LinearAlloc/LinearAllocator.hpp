@@ -27,9 +27,9 @@ public:
 
 	FORCEINLINE void Free();
 
-	void* Allocate(uint32 size, uint32 alignement = 0) override;
+	void* Allocate(uint32 size, [[maybe_unused]] uint32 alignement = 0) override;
 
-	FORCEINLINE void Deallocate(void* ptr) override;
+	FORCEINLINE void Deallocate([[maybe_unused]] void* ptr) override;
 	
 	template<typename U, typename... Args>
 	FORCEINLINE U* Allocate(Args&&... arg);
@@ -46,7 +46,7 @@ public:
 
 	FORCEINLINE uint32 GetOffset() const { return m_Offset; }
 
-	const void Dump() const;
+	void Dump() const;
 private:
 	FORCEINLINE void InternalInit();
 
@@ -81,7 +81,7 @@ FORCEINLINE LinearAllocator::~LinearAllocator()
 	this->Free();
 }
 
-FORCEINLINE void LinearAllocator::Deallocate(void* ptr)
+FORCEINLINE void LinearAllocator::Deallocate([[maybe_unused]] void* ptr)
 {
 }
 

@@ -117,14 +117,14 @@ FORCEINLINE void File::Put(const String& content) const
 FORCEINLINE void File::Put(const char* content) const
 {
     ASSERTF(m_File == NULL, "Can't write to the file (FILE pointer is NULL)");
-    int32 opr = fputs(content, m_File);
+    [[maybe_unused]] int32 opr = fputs(content, m_File);
     ASSERTF(opr <= 0, "Failed to write buffer to the file");
 }
 
 FORCEINLINE void File::Put(int32 content) const
 {
     ASSERTF(m_File == NULL, "Can't write to the file (FILE pointer is NULL)");
-    int32 opr = fputc(content, m_File);
+    [[maybe_unused]] int32 opr = fputc(content, m_File);
     ASSERTF(opr == EOF, "Failed to write buffer to the file");
 }
 

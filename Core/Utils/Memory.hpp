@@ -3,10 +3,37 @@
 #include <type_traits>
 #include <cstring>
 #include <utility>
+#include <new>
 #include <Core/Misc/Defines/Common.hpp>
 
 namespace TRE::Utils
 {
+	enum class Increment {};
+	enum class Decrement {};
+
+	template <typename integral>
+	constexpr bool IsAligned(integral x, usize a) noexcept
+	{
+		return (x & (integral(a) - 1)) == 0;
+	}
+
+	template <typename integral>
+	constexpr integral AlignUp(integral x, usize a) noexcept
+	{
+		return integral((x + (integral(a) - 1)) & ~integral(a - 1));
+	}
+
+	template <typename integral>
+	constexpr integral AlignDown(integral x, usize a) noexcept
+	{
+		return integral(x & ~integral(a - 1));
+	}
+
+	FORCEINLINE void* AllocateBytes(usize sz, usize al)
+	{
+		return ::operator new(sz, static_cast<std::align_val_t>(al));
+	}
+
 	FORCEINLINE void* AllocateBytes(usize sz)
 	{
 		return ::operator new(sz);
@@ -18,10 +45,10 @@ namespace TRE::Utils
 		if (sz == 0)
 			return nullptr;
 
-		return static_cast<T*>(::operator new(sz * sizeof(T)));
+		return static_cast<T*>(::operator new(sz * sizeof(T), static_cast<std::align_val_t>(alignof(T))));
 	}
 
-	FORCEINLINE void FreeMemory(void* ptr)
+	FORCEINLINE void FreeMemory(void* ptr) noexcept
 	{
 		if (ptr)
 			::operator delete(ptr);
@@ -51,9 +78,35 @@ namespace TRE::Utils
 	}
 
 	template<POD T>
+	FORCEINLINE void MoveForward(T* dst, T* src, ssize start, ssize end)
+	{
+		Copy(dst + start, src + end, end - start);
+	}
+
+	template<POD T>
+	FORCEINLINE void MoveBackward(T* dst, T* src, ssize start, ssize end)
+	{
+		for (usize i = start; i > end; i--) {
+			dst[i] = src[i];
+		}
+	}
+
+	template<POD T>
 	FORCEINLINE void MoveConstruct(T* dst, T* src, usize count = 1) noexcept
 	{
 		Copy(dst, src, count);
+	}
+
+	template<POD T>
+	FORCEINLINE void MoveConstructForward(T* dst, T* src, ssize start, ssize end)
+	{
+		Copy(dst + start, src + start, end - start);
+	}
+
+	template<POD T>
+	FORCEINLINE void MoveConstructBackward(T* dst, T* src, ssize start, ssize end)
+	{
+		Utils::MoveBackward(dst, src, start, end);
 	}
 
 	template<POD T>
@@ -106,6 +159,25 @@ namespace TRE::Utils
 	{
 		for (usize i = 0; i < count; i++) {
 			dst[i] = T(::std::move(src[i]));
+			src[i].~T();
+		}
+	}
+
+	template<typename T>
+	FORCEINLINE void MoveForward(T* dst, T* src, ssize start, ssize end)
+	{
+		for (usize i = start; i < end; i++) {
+			dst[i] = T(::std::move(src[i]));
+			src[i].~T();
+		}
+	}
+
+	template<typename T>
+	FORCEINLINE void MoveBackward(T* dst, T* src, ssize start, ssize end)
+	{
+		for (usize i = start; i > end; i--) {
+			dst[i] = T(::std::move(src[i]));
+			src[i].~T();
 		}
 	}
 
@@ -113,6 +185,23 @@ namespace TRE::Utils
 	FORCEINLINE void MoveConstruct(T* dst, T* src, usize count = 1)
 	{
 		for (usize i = 0; i < count; i++) {
+			new (&dst[i]) T(::std::move(src[i]));
+			src[i].~T();
+		}
+	}
+
+	template<typename T>
+	FORCEINLINE void MoveConstructForward(T* dst, T* src, ssize start, ssize end)
+	{
+		for (usize i = start; i < end; i++) {
+			new (&dst[i]) T(::std::move(src[i]));
+		}
+	}
+
+	template<typename T>
+	FORCEINLINE void MoveConstructBackward(T* dst, T* src, ssize start, ssize end)
+	{
+		for (usize i = start; i > end; i--) {
 			new (&dst[i]) T(::std::move(src[i]));
 		}
 	}
@@ -134,7 +223,7 @@ namespace TRE::Utils
 	}
 
 	template<typename T>
-	FORCEINLINE void Destroy(T* ptr, usize count = 1)
+	FORCEINLINE void Destroy(T* ptr, usize count = 1) noexcept
 	{
 		for (usize i = 0; i < count; i++) {
 			ptr[i].~T();
@@ -142,7 +231,7 @@ namespace TRE::Utils
 	}
 
 	template<typename T>
-	FORCEINLINE void Free(T* ptr, usize count = 1)
+	FORCEINLINE void Free(T* ptr, usize count = 1) noexcept
 	{
 		Utils::Destroy(ptr, count);
 		Utils::FreeMemory(ptr);

@@ -315,7 +315,7 @@ bool Vector<T>::PopFront() noexcept
         return false;
     
     m_Data[0].~T();
-    // FIXME: Verify this later
+    // This is safe slot 1 is moved to slot 0 and so on slot n+1 will be moved in slot n...
     Utils::Move(m_Data, m_Data + 1, --m_Length);
     return m_Length;
 }
@@ -347,6 +347,28 @@ bool Vector<T>::Reserve(usize sz)
 
     this->Reallocate(sz * DEFAULT_GROW_SIZE);
     return true;
+}
+
+template<typename T>
+void Vector<T>::Reallocate(usize nCap) // I think this can be optimized! to just copy and dont delete the thing or use move ctor.
+{
+    T* newData = Utils::Allocate<T>(nCap);
+    Utils::MoveConstruct(newData, m_Data, m_Length);
+    Utils::FreeMemory(m_Data);
+    m_Data = newData;
+    m_Capacity = nCap;
+}
+
+template<typename T>
+bool Vector<T>::Allocate(usize cap)
+{
+    if (m_Data == NULL) {
+        m_Capacity = cap > m_Capacity ? cap : m_Capacity;
+        m_Data = Utils::Allocate<T>(m_Capacity);
+        return true;
+    }
+
+    return false;
 }
 
 template<typename T>
@@ -382,8 +404,8 @@ T& Vector<T>::Insert(usize i, const T& obj)
     } else {
         this->Allocate();
         T* dest = m_Data + i;
-        // TODO: This will cause aliasing ?
-        Utils::Move(m_Data + i + 1, dest + 1, m_Length - i); // shift all of this to keep place for the new element
+        // shift all of this to keep place for the new element
+        Utils::MoveConstructBackward(m_Data + m_Length + 1, m_Data + m_Length, m_Length - 1, m_Length - i - 1);
         new (dest) T(obj);
         m_Length++;
         return *(dest);
@@ -430,8 +452,8 @@ T& Vector<T>::Emplace(usize i, Args&&... args)
     } else {
         this->Allocate();
         T* dest = m_Data + i;
-        // TODO: This will cause aliasing ?
-        Utils::Move(m_Data + i + 1, dest + 1, m_Length - i); // shift all of this to keep place for the new element
+        // shift all of this to keep place for the new element
+        Utils::MoveConstructBackward(m_Data + m_Length + 1, m_Data + m_Length, m_Length - 1, m_Length - i - 1);
         new (dest) T(::std::forward<Args>(args)...);
         m_Length++;
         return *(dest);
@@ -497,28 +519,6 @@ T& Vector<T>::EmplaceFront(Args&&... args)
 }
 
 template<typename T>
-void Vector<T>::Reallocate(usize nCap) // I think this can be optimized! to just copy and dont delete the thing or use move ctor.
-{
-    T* newData = Utils::Allocate<T>(nCap);
-    Utils::MoveConstruct(newData, m_Data, m_Length);
-    Utils::FreeMemory(m_Data);
-    m_Data = newData;
-    m_Capacity = nCap;
-}
-
-template<typename T>
-bool Vector<T>::Allocate(usize cap)
-{
-    if (m_Data == NULL) {
-        m_Capacity = cap > m_Capacity ? cap : m_Capacity;
-        m_Data = Utils::Allocate<T>(m_Capacity);
-        return true;
-    }
-
-    return false;
-}
-
-template<typename T>
 void Vector<T>::Append(const Vector<T>& other)
 {
     this->Reserve(m_Length + other.m_Length);
@@ -532,6 +532,7 @@ void Vector<T>::Append(Vector<T>&& other)
     this->Reserve(m_Length + other.m_Length);
     Utils::Move(m_Data + m_Length, other.m_Data, other.m_Length);
     m_Length += other.m_Length;
+    other.m_Length = 0;
 }
 
 template<typename T>
@@ -573,7 +574,7 @@ void Vector<T>::Erease(Iterator itr) noexcept
     (*itr_ptr).~T();
     usize start = usize(itr_ptr - m_Data);
     usize end = usize(m_Data + m_Length - itr_ptr);
-    Utils::Move(m_Data + start, m_Data + end + 1, m_Length - end);
+    Utils::MoveConstruct(m_Data + start, m_Data + end + 1, m_Length - end);
     m_Length -= 1;
 }
 
@@ -707,9 +708,10 @@ template<typename T>
 Vector<T>::Vector(const Vector<T>& other) : 
     m_Data(nullptr), m_Length(other.m_Length), m_Capacity(other.m_Capacity)
 {
-    // This just works as allocate 0 will return nullptr
-    m_Data = Utils::Allocate<T>(m_Length);
-    Utils::Copy(other.m_Data, m_Data, m_Length);
+    if (m_Length) {
+        m_Data = Utils::Allocate<T>(m_Length);
+        Utils::Copy(other.m_Data, m_Data, m_Length);
+    }
 }
 
 template<typename T>

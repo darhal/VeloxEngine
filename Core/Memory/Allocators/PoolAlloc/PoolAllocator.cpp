@@ -41,7 +41,7 @@ FORCEINLINE PoolAllocator& PoolAllocator::Reset()
 	return *this;
 }
 
-FORCEINLINE void* PoolAllocator::Allocate(uint32 size, uint32 alignement)
+FORCEINLINE void* PoolAllocator::Allocate(uint32 size, [[maybe_unused]] uint32 alignement)
 {
 	ASSERTF((size > m_ChunkSize), "Failed to allocate the requested amount of bytes, requested size is bigger than block size.");
 	if (size > m_ChunkSize) return NULL;
