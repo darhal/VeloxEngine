@@ -45,13 +45,15 @@ namespace TRE::Utils
 		if (sz == 0)
 			return nullptr;
 
-		return static_cast<T*>(::operator new(sz * sizeof(T), static_cast<std::align_val_t>(alignof(T))));
+		// return static_cast<T*>(::operator new(sz * sizeof(T), static_cast<std::align_val_t>(alignof(T))));
+		return static_cast<T*>(::operator new(sz * sizeof(T)));
 	}
 
 	FORCEINLINE void FreeMemory(void* ptr) noexcept
 	{
 		if (ptr)
 			::operator delete(ptr);
+		//delete ptr;
 	}
 
 #if __cplusplus >= 202002L
@@ -86,7 +88,7 @@ namespace TRE::Utils
 	template<POD T>
 	FORCEINLINE void MoveBackward(T* dst, T* src, ssize start, ssize end)
 	{
-		for (usize i = start; i > end; i--) {
+		for (ssize i = start; i > end; i--) {
 			dst[i] = src[i];
 		}
 	}
@@ -166,7 +168,7 @@ namespace TRE::Utils
 	template<typename T>
 	FORCEINLINE void MoveForward(T* dst, T* src, ssize start, ssize end)
 	{
-		for (usize i = start; i < end; i++) {
+		for (ssize i = start; i < end; i++) {
 			dst[i] = T(::std::move(src[i]));
 			src[i].~T();
 		}
@@ -175,7 +177,7 @@ namespace TRE::Utils
 	template<typename T>
 	FORCEINLINE void MoveBackward(T* dst, T* src, ssize start, ssize end)
 	{
-		for (usize i = start; i > end; i--) {
+		for (ssize i = start; i > end; i--) {
 			dst[i] = T(::std::move(src[i]));
 			src[i].~T();
 		}
@@ -186,14 +188,13 @@ namespace TRE::Utils
 	{
 		for (usize i = 0; i < count; i++) {
 			new (&dst[i]) T(::std::move(src[i]));
-			src[i].~T();
 		}
 	}
 
 	template<typename T>
 	FORCEINLINE void MoveConstructForward(T* dst, T* src, ssize start, ssize end)
 	{
-		for (usize i = start; i < end; i++) {
+		for (ssize i = start; i < end; i++) {
 			new (&dst[i]) T(::std::move(src[i]));
 		}
 	}
@@ -201,7 +202,7 @@ namespace TRE::Utils
 	template<typename T>
 	FORCEINLINE void MoveConstructBackward(T* dst, T* src, ssize start, ssize end)
 	{
-		for (usize i = start; i > end; i--) {
+		for (ssize i = start; i > end; i--) {
 			new (&dst[i]) T(::std::move(src[i]));
 		}
 	}

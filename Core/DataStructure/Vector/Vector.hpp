@@ -282,7 +282,7 @@ void Vector<T>::Fill(const T& obj, usize length)
 }
 
 template<typename T>
-template<typename ...Args>
+template<typename... Args>
 T& Vector<T>::EmplaceBack(Args&&... args)
 {
     this->Reserve(m_Length + 1);
@@ -293,9 +293,7 @@ T& Vector<T>::EmplaceBack(Args&&... args)
 template<typename T>
 T& Vector<T>::PushBack(const T& obj)
 {
-    this->Reserve(m_Length + 1);
-    new (m_Data + m_Length) T(obj);
-    return *(m_Data + (m_Length++));
+    return this->EmplaceBack(obj);
 }
 
 template<typename T>
@@ -387,35 +385,13 @@ void Vector<T>::Resize(usize newSize)
 template<typename T>
 T& Vector<T>::Insert(usize i, const T& obj)
 {
-    ASSERTF(i > m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
-
-    if (m_Length + 1 >= m_Capacity) {
-        usize nCap = (m_Length + 1) * DEFAULT_GROW_SIZE;
-        T* newData = Utils::Allocate<T>(nCap);
-        T* dest = newData + i;
-        Utils::MoveConstruct(newData, m_Data, i);
-        Utils::MoveConstruct(newData + i + 1, m_Data + i + 1, m_Length - i);
-        new (dest) T(obj);
-        Utils::FreeMemory(m_Data);
-        m_Data = newData;
-        m_Capacity = nCap;
-        m_Length++;
-        return *(dest);
-    } else {
-        this->Allocate();
-        T* dest = m_Data + i;
-        // shift all of this to keep place for the new element
-        Utils::MoveConstructBackward(m_Data + m_Length + 1, m_Data + m_Length, m_Length - 1, m_Length - i - 1);
-        new (dest) T(obj);
-        m_Length++;
-        return *(dest);
-    }
+    return this->Emplace(i, obj);
 }
 
 template<typename T>
 T& Vector<T>::PushFront(const T& obj)
 {
-    this->Insert(0, obj);
+    return this->Insert(0, obj);
 }
 
 template<typename T>
@@ -442,7 +418,7 @@ T& Vector<T>::Emplace(usize i, Args&&... args)
         T* newData = Utils::Allocate<T>(nCap);
         T* dest = newData + i;
         Utils::MoveConstruct(newData, m_Data, i);
-        Utils::MoveConstruct(newData + i + 1, m_Data + i + 1, m_Length - i);
+        Utils::MoveConstructForward(newData + 1, m_Data, i, m_Length);
         new (dest) T(::std::forward<Args>(args)...);
         Utils::FreeMemory(m_Data);
         m_Data = newData;
@@ -453,7 +429,7 @@ T& Vector<T>::Emplace(usize i, Args&&... args)
         this->Allocate();
         T* dest = m_Data + i;
         // shift all of this to keep place for the new element
-        Utils::MoveConstructBackward(m_Data + m_Length + 1, m_Data + m_Length, m_Length - 1, m_Length - i - 1);
+        Utils::MoveConstructBackward(m_Data + 1, m_Data, m_Length - 1, i - 1);
         new (dest) T(::std::forward<Args>(args)...);
         m_Length++;
         return *(dest);
@@ -463,26 +439,7 @@ T& Vector<T>::Emplace(usize i, Args&&... args)
 template<typename T>
 T& Vector<T>::InsertFast(usize i, const T& obj)
 {
-    ASSERTF(i > m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
-
-    if (m_Length + 1 >= m_Capacity) { // The default way might be faster as we have to reallocate the memory and copy the objects anyways
-        return this->Insert(i, obj);
-    }
-
-    this->Allocate();
-    T* element = m_Data + i;
-
-    if (i >= m_Length) {
-        new (element) T(obj);
-    } else {
-        T* last = m_Data + m_Length;
-        T temp(::std::move(*element));
-        new (element) T(obj);
-        new (last) T(::std::move(temp));
-    }
-
-    m_Length++;
-    return *element;
+    return this->EmplaceFast(i, obj);
 }
 
 template<typename T>
@@ -553,15 +510,17 @@ template<typename T>
 void Vector<T>::Erease(usize start, usize end) noexcept
 {
     ASSERTF((start >= m_Length || end > m_Length), "[%" SZu "..%" SZu "] interval isn't included in the range [0..%" SZu "]", start, end, m_Length);
+    ASSERTF((end < start), "end must be greater than start");
+    
     usize size = end - start;
-    T* start_ptr = m_Data + start;
-    T* end_ptr = m_Data + end;
+    if (size == 0) 
+        return;
 
-    do {
-        (*start_ptr++).~T();
-    } while (start_ptr < end_ptr);
+    for (usize i = start; i < end; i++) {
+        m_Data[i].~T();
+    }
 
-    Utils::MoveConstruct(m_Data + start, m_Data + end + 1, m_Length - end);
+    Utils::MoveConstruct(m_Data + start, m_Data + end, m_Length - end);
     m_Length -= size;
 }
 
@@ -574,7 +533,7 @@ void Vector<T>::Erease(Iterator itr) noexcept
     (*itr_ptr).~T();
     usize start = usize(itr_ptr - m_Data);
     usize end = usize(m_Data + m_Length - itr_ptr);
-    Utils::MoveConstruct(m_Data + start, m_Data + end + 1, m_Length - end);
+    Utils::MoveConstruct(m_Data + start, m_Data + start + 1, end - 1);
     m_Length -= 1;
 }
 
