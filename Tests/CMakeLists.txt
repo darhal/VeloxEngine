@@ -36,18 +36,17 @@ endif(MSVC)
 
 if(WIN32)
     add_executable(${MODULE_NAME} ${SOURCE})
-
     if (MSVC_IDE)
         target_link_libraries(${MODULE_NAME} ${CMAKE_THREAD_LIBS_INIT} ${WINLIBS}) #${GTEST_LIBRARY}
     else(MSVC_IDE)
         target_link_libraries(${MODULE_NAME} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${WINLIBS}) #
     endif(MSVC_IDE)
-
-	add_test(NAME ${MODULE_NAME} COMMAND ${MODULE_NAME})
 else(WIN32)
     add_executable(${MODULE_NAME} ${SOURCE})
     target_link_libraries(${MODULE_NAME} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-	add_test(NAME ${MODULE_NAME} COMMAND ${MODULE_NAME})
 endif(WIN32)
 
+# gtest_add_tests(TARGET ${MODULE_NAME} TEST_PREFIX)
+gtest_discover_tests(${MODULE_NAME} TEST_PREFIX)
+add_test(NAME ${MODULE_NAME} COMMAND ${MODULE_NAME})
 set_target_properties(${MODULE_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${MODULE_FOLDER})
