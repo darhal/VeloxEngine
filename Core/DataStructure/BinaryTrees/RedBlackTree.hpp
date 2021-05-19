@@ -51,7 +51,7 @@ public:
 
 		template<typename... Args>
 		RedBlackNode(RedBlackNode* p, RedBlackNode* r, RedBlackNode* l, const K& key, Args&&... args) : 
-			key(key), value(::std::forward<Args>(args)...), parent(p), left(l), right(r), color(true)
+			key(key), value(std::forward<Args>(args)...), parent(p), left(l), right(r), color(true)
 		{}
 
 		RedBlackNode(const RedBlackNode& other) : 
@@ -59,7 +59,7 @@ public:
 		{}
 
 		RedBlackNode(RedBlackNode&& other) : 
-			key(::std::move(other.key)), value(::std::move(other.value)), parent(other.parent), right(other.right), left(other.left), color(color)
+			key(std::move(other.key)), value(std::move(other.value)), parent(other.parent), right(other.right), left(other.left), color(color)
 		{}
 
 		RedBlackNode* GetRight() { return right; }
@@ -177,7 +177,7 @@ private:
 public:
 
 	template<typename DataType>
-	class GIterator : public ::std::iterator<::std::bidirectional_iterator_tag, DataType, ptrdiff_t, DataType*, DataType&>
+	class GIterator : public std::iterator<std::bidirectional_iterator_tag, DataType, ptrdiff_t, DataType*, DataType&>
 	{
 	public:
 		GIterator(const RedBalckTree<K, T, Alloc_t>* instance) : m_Node(instance->m_Root), m_TreeInstance(instance)

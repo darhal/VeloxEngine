@@ -7,7 +7,7 @@
 #   include <windows.h>
 #   define TASK_YIELD() YieldProcessor()
 #   define TASK_COMPILER_BARRIER _ReadWriteBarrier()
-#   define TASK_MEMORY_BARRIER ::std::atomic_thread_fence(::std::memory_order_seq_cst);
+#   define TASK_MEMORY_BARRIER std::atomic_thread_fence(std::memory_order_seq_cst);
 #else
 #   include <emmintrin.h>
 #   define TASK_YIELD() _mm_pause()
@@ -32,7 +32,7 @@ public:
 
 private:
     Task** m_Entries;
-    ::std::atomic<uint64_t> m_Top;
+    std::atomic<uint64_t> m_Top;
     uint64_t m_Bottom;
     int32 m_Capacity;
 };
@@ -101,7 +101,7 @@ FORCEINLINE Task* WorkStealingQueue::Pop()
 		}
 		else {
 			// popping the last element in the queue
-			if (!::std::atomic_compare_exchange_strong(&m_Top, &top, top)) {
+			if (!std::atomic_compare_exchange_strong(&m_Top, &top, top)) {
 				// failed race against Steal()
 				job = NULL;
 			}
@@ -132,7 +132,7 @@ FORCEINLINE Task* WorkStealingQueue::Steal()
 		Task* job = m_Entries[top & (m_Capacity - 1)];
 
 		// CAS serves as a compiler barrier as-is.
-		if (!::std::atomic_compare_exchange_strong(&m_Top, &top, top + 1)) {
+		if (!std::atomic_compare_exchange_strong(&m_Top, &top, top + 1)) {
 			// concurrent Steal()/Pop() got this entry first.
 			return NULL;
 		}

@@ -45,7 +45,7 @@ class BasicString
 {
 private:
 	typedef BasicString<T> CLASS_TYPE;
-	typedef typename ::std::make_unsigned<T>::type UT;
+	typedef typename std::make_unsigned<T>::type UT;
 public:
 	typedef T* Iterator;
 	typedef T& RefIterator;
@@ -295,7 +295,7 @@ void BadCharHeuristic(const BasicString<T>& str, ssize size, int32(&badchar)[NB_
 	// Fill the actual value of last occurrence  
 	// of a character  
 	for (ssize i = 0; i < size; i++)
-		badchar[(uint32)str[i]] = i;
+		badchar[(uint32)str[i]] = int32(i);
 }
 
 /* A pattern searching function that uses Bad
@@ -303,7 +303,7 @@ Character Heuristic of Boyer Moore Algorithm */
 template<typename T>
 ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat, uint32 start = 0)
 {
-	CONSTEXPR usize NB_OF_CHARS = 2 * ::std::numeric_limits<uint16>::max() + 1;
+	CONSTEXPR usize NB_OF_CHARS = 2 * std::numeric_limits<uint16>::max() + 1;
 	int32 badchar[NB_OF_CHARS];
 
 	ssize m = (ssize)pat.Size();
@@ -448,7 +448,7 @@ static bool operator<(const BasicString<T>& lhs, const BasicString<T>& rhs)
 }
 
 template<typename T>
-::std::ostream& operator<<(::std::ostream& os, const BasicString<T>& m) {
+std::ostream& operator<<(std::ostream& os, const BasicString<T>& m) {
 	return os << m.Buffer();
 }
 

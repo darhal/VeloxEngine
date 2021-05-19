@@ -67,7 +67,7 @@ template<typename T, typename Container>
 template<typename... Args>
 FORCEINLINE T& Stack<T, Container>::Emplace(Args&&... args)
 {
-	return m_Stack.EmplaceBack(::std::forward<Args>(args)...);
+	return m_Stack.EmplaceBack(std::forward<Args>(args)...);
 }
 
 

@@ -91,5 +91,9 @@ if (BUILD_UNIT_TESTS)
 	endif(MSVC)
 
 	enable_testing()
-	add_subdirectory(Tests)
+	add_subdirectory(Tests/Tests)
 endif(BUILD_UNIT_TESTS)
+
+if (BUILD_BENCHMARKS)
+	add_subdirectory(Tests/Benchmarks)
+endif(BUILD_BENCHMARKS)

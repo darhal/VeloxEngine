@@ -66,7 +66,7 @@ Task* WorkStealingQueue::Pop()
             return job;
         } else {
             // popping the last element in the queue
-            if (!::std::atomic_compare_exchange_strong(&m_Top, &top, top)) {
+            if (!std::atomic_compare_exchange_strong(&m_Top, &top, top)) {
                 // failed race against Steal()
                 job = NULL;
             }
@@ -97,7 +97,7 @@ Task* WorkStealingQueue::Steal()
         Task *job = m_Entries[top & (m_Capacity-1)];
 
         // CAS serves as a compiler barrier as-is.
-        if (!::std::atomic_compare_exchange_strong(&m_Top, &top, top+1)) {
+        if (!std::atomic_compare_exchange_strong(&m_Top, &top, top+1)) {
             // concurrent Steal()/Pop() got this entry first.
             return NULL;
         }

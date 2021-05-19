@@ -38,7 +38,7 @@ void Bitset::Fill(bool bit)
 	if (is_small) {
 		uint8 bit_len = this->GetSmallLength();
 		uint32 nb_of_bytes_to_set = (uint32)Math::Floor((double)bit_len / (double)(sizeof(uint8) * BITS_PER_BYTE));
-		memset(m_Data, bit ? ::std::numeric_limits<uint8>::max() : 0, nb_of_bytes_to_set * sizeof(uint8));
+		memset(m_Data, bit ? std::numeric_limits<uint8>::max() : 0, nb_of_bytes_to_set * sizeof(uint8));
 		int32 rest_of_bits = (bit_len - nb_of_bytes_to_set * sizeof(uint8) * BITS_PER_BYTE);
 		if (rest_of_bits > 0) {
 			m_Data[nb_of_bytes_to_set] |= (uint16(1) << (rest_of_bits)) - 1;
@@ -46,7 +46,7 @@ void Bitset::Fill(bool bit)
 	}else {
 		usize bit_len = this->GetNormalLength();
 		uint32 nb_of_usize_to_set = (uint32)Math::Floor((double)bit_len / (double)(sizeof(usize) * BITS_PER_BYTE));
-		memset(m_Bits, bit ? ::std::numeric_limits<uint32>::max() : 0, (usize)nb_of_usize_to_set * sizeof(usize));
+		memset(m_Bits, bit ? std::numeric_limits<uint32>::max() : 0, (usize)nb_of_usize_to_set * sizeof(usize));
 		int32 rest_of_bits = int32(bit_len - nb_of_usize_to_set * sizeof(usize) * BITS_PER_BYTE);
 		if (rest_of_bits > 0) {
 			m_Bits[nb_of_usize_to_set] |= (usize(1) << (rest_of_bits)) - 1;

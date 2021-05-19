@@ -7,7 +7,7 @@ template<typename... Args>
 FORCEINLINE BinaryTree<T, Alloc_t>::BinaryTree(Args&&... args) : m_Root(NULL), m_Allocator(sizeof(BTLeaf), NODE_CHUNKS)
 {
 	m_Root = m_Allocator.template Allocate<BTLeaf>();
-	new (m_Root) BTLeaf(NULL, NULL, ::std::forward<Args>(args)...);
+	new (m_Root) BTLeaf(NULL, NULL, std::forward<Args>(args)...);
 }
 
 template<typename T, typename Alloc_t>
@@ -180,11 +180,11 @@ FORCEINLINE typename BinaryTree<T, Alloc_t>::BTLeaf*  BinaryTree<T, Alloc_t>::In
 	if (cur == NULL) cur = m_Root;
 	ASSERTF((m_Root == NULL), "Attempt to insert in a tree with a NULL root!");
 	/*if (cur == NULL) {
-		this->SetRoot(::std::forward<Args>(args)...);
+		this->SetRoot(std::forward<Args>(args)...);
 		return;
 	}*/
 	cur->right = m_Allocator.template Allocate<BTLeaf>();
-	new (cur->right) BTLeaf(NULL, NULL, ::std::forward<Args>(args)...);
+	new (cur->right) BTLeaf(NULL, NULL, std::forward<Args>(args)...);
 	return cur->right;
 }
 
@@ -195,11 +195,11 @@ FORCEINLINE typename BinaryTree<T, Alloc_t>::BTLeaf*  BinaryTree<T, Alloc_t>::In
 	if (cur == NULL) cur = m_Root;
 	ASSERTF((m_Root == NULL), "Attempt to insert in a tree with a NULL root!");
 	/*if (cur == NULL) {
-		this->SetRoot(::std::forward<Args>(args)...);
+		this->SetRoot(std::forward<Args>(args)...);
 		return;
 	}*/
 	cur->left = m_Allocator.template Allocate<BTLeaf>();
-	new (cur->left) BTLeaf(NULL, NULL, ::std::forward<Args>(args)...);
+	new (cur->left) BTLeaf(NULL, NULL, std::forward<Args>(args)...);
 	return cur->left;
 }
 
@@ -209,10 +209,10 @@ FORCEINLINE typename BinaryTree<T, Alloc_t>::BTLeaf* BinaryTree<T, Alloc_t>::Set
 {
 	if (m_Root == NULL) {
 		m_Root = m_Allocator.template Allocate<BTLeaf>();
-		new (m_Root) BTLeaf(NULL, NULL, ::std::forward<Args>(args)...);
+		new (m_Root) BTLeaf(NULL, NULL, std::forward<Args>(args)...);
 		return m_Root;
 	}
-	m_Root->element = T(::std::forward<Args>(args)...);
+	m_Root->element = T(std::forward<Args>(args)...);
 	return m_Root;
 }
 
@@ -226,7 +226,7 @@ FORCEINLINE typename BinaryTree<T, Alloc_t>::BTLeaf* BinaryTree<T, Alloc_t>::Ins
 		cur = cur->right;
 	}
 	cur->right = m_Allocator.template Allocate<BTLeaf>();
-	new (cur->right) BTLeaf(NULL, NULL, ::std::forward<Args>(args)...);
+	new (cur->right) BTLeaf(NULL, NULL, std::forward<Args>(args)...);
 	return cur->right;
 }
 
@@ -240,7 +240,7 @@ FORCEINLINE typename BinaryTree<T, Alloc_t>::BTLeaf* BinaryTree<T, Alloc_t>::Ins
 		cur = cur->left;
 	}
 	cur->left = m_Allocator.template Allocate<BTLeaf>();
-	new (cur->left) BTLeaf(NULL, NULL, ::std::forward<Args>(args)...);
+	new (cur->left) BTLeaf(NULL, NULL, std::forward<Args>(args)...);
 	return cur->left;
 }
 
@@ -249,13 +249,13 @@ FORCEINLINE void BinaryTree<T, Alloc_t>::PrintBT(const String& prefix, const BTL
 {
 	if (node != NULL)
 	{
-		::std::cout << prefix;
+		std::cout << prefix;
 		const wchar_t* c3 = L"\u2515\u2500\u2500";
 		const wchar_t* c4 = L"\u251C\u2500\u2500";
-		::std::wcout << (isLeft ? "L--" : "R--");
+		std::wcout << (isLeft ? "L--" : "R--");
 
 		// print the value of the node
-		::std::cout << node->element << ::std::endl;
+		std::cout << node->element << std::endl;
 
 		// enter the next tree level - left and right branch
 		PrintBT(prefix + (isLeft ? "|   " : "    "), node->left, true);
@@ -333,8 +333,8 @@ typename BinaryTree<T, Alloc_t>::display_rows BinaryTree<T, Alloc_t>::get_row_di
 {
 	// start off by traversing the tree to
 	// build a vector of vectors of Node pointers
-	::std::vector<Node*> traversal_stack;
-	::std::vector< ::std::vector<Node*> > rows;
+	std::vector<Node*> traversal_stack;
+	std::vector< std::vector<Node*> > rows;
 	if (!m_Root) return display_rows();
 
 	Node* p = m_Root;
@@ -383,16 +383,16 @@ typename BinaryTree<T, Alloc_t>::display_rows BinaryTree<T, Alloc_t>::get_row_di
 	// so if there is no actual Node at a struct's location,
 	// its boolean "present" field is set to false.
 	// The struct also contains a string representation of
-	// its Node's value, created using a ::std::stringstream object.
+	// its Node's value, created using a std::stringstream object.
 	display_rows rows_disp;
-	::std::stringstream ss;
+	std::stringstream ss;
 	for (const auto& row : rows) {
 		rows_disp.emplace_back();
 		for (Node* pn : row) {
 			if (pn) {
 				ss << pn->element;
 				rows_disp.back().push_back(cell_display(ss.str()));
-				ss = ::std::stringstream();
+				ss = std::stringstream();
 			}
 			else {
 				rows_disp.back().push_back(cell_display());
@@ -403,8 +403,8 @@ typename BinaryTree<T, Alloc_t>::display_rows BinaryTree<T, Alloc_t>::get_row_di
 }
 
 template<typename T, typename Alloc_t>
-::std::vector<::std::string> BinaryTree<T, Alloc_t>::row_formatter(const display_rows& rows_disp) const {
-	using s_t = ::std::string::size_type;
+std::vector<std::string> BinaryTree<T, Alloc_t>::row_formatter(const display_rows& rows_disp) const {
+	using s_t = std::string::size_type;
 
 	// First find the maximum value string length and put it in cell_width
 	s_t cell_width = 0;
@@ -420,7 +420,7 @@ template<typename T, typename Alloc_t>
 	if (cell_width % 2 == 0) ++cell_width;
 
 	// formatted_rows will hold the results
-	::std::vector<::std::string> formatted_rows;
+	std::vector<std::string> formatted_rows;
 
 	// some of these counting variables are related,
 	// so its should be possible to eliminate some of them.
@@ -441,14 +441,14 @@ template<typename T, typename Alloc_t>
 		// text offsets.
 		s_t space = (s_t(1) << r) * (cell_width + 1) / 2 - 1;
 		// "row" holds the line of text currently being assembled
-		::std::string row;
+		std::string row;
 		// iterate over each element in this row
 		for (s_t c = 0; c < row_elem_count; ++c) {
 			// add padding, more when this is not the leftmost element
 			row += string(c ? left_pad * 2 + 1 : left_pad, ' ');
 			if (cd_row[c].present) {
 				// This position corresponds to an existing Node
-				const ::std::string& valstr = cd_row[c].valstr;
+				const std::string& valstr = cd_row[c].valstr;
 				// Try to pad the left and right sides of the value string
 				// with the same number of spaces.  If padding requires an
 				// odd number of spaces, right-sided children get the longer
@@ -478,7 +478,7 @@ template<typename T, typename Alloc_t>
 		s_t left_space = space + 1;
 		s_t right_space = space - 1;
 		for (s_t sr = 0; sr < space; ++sr) {
-			::std::string row;
+			std::string row;
 			for (s_t c = 0; c < row_elem_count; ++c) {
 				if (c % 2 == 0) {
 					row += string(c ? left_space * 2 + 1 : left_space, ' ');
@@ -499,7 +499,7 @@ template<typename T, typename Alloc_t>
 	}
 
 	// Reverse the result, placing the root node at the beginning (top)
-	::std::reverse(formatted_rows.begin(), formatted_rows.end());
+	std::reverse(formatted_rows.begin(), formatted_rows.end());
 
 	return formatted_rows;
 }
@@ -509,7 +509,7 @@ template<typename T, typename Alloc_t>
 // At least one string in the vector will end up beginning
 // with no space characters.
 template<typename T, typename Alloc_t>
-static void BinaryTree<T, Alloc_t>::trim_rows_left(::std::vector<::std::string>& rows) {
+static void BinaryTree<T, Alloc_t>::trim_rows_left(std::vector<std::string>& rows) {
 	if (!rows.size()) return;
 	auto min_space = rows.front().length();
 	for (const auto& row : rows) {
@@ -530,7 +530,7 @@ void BinaryTree<T, Alloc_t>::Dump() const
 
 	// If this tree is empty, tell someone
 	if (d == 0) {
-		::std::cout << " <empty tree>\n";
+		std::cout << " <empty tree>\n";
 		return;
 	}
 
@@ -542,6 +542,6 @@ void BinaryTree<T, Alloc_t>::Dump() const
 	trim_rows_left(formatted_rows);
 	// then dump the text to cout.
 	for (const auto& row : formatted_rows) {
-		::std::cout << ' ' << row << '\n';
+		std::cout << ' ' << row << '\n';
 	}
 }*/

@@ -27,13 +27,13 @@ FORCEINLINE static usize CalculatePadding(const usize baseAddress)
 	return padding;
 }
 
-FORCEINLINE static ::std::size_t CalculatePaddingWithHeader(const ::std::size_t baseAddress, const ::std::size_t alignment, const ::std::size_t headerSize) 
+FORCEINLINE static std::size_t CalculatePaddingWithHeader(const std::size_t baseAddress, const std::size_t alignment, const std::size_t headerSize) 
 {
 	if(alignment == 0)
 		return 0;
 	
-	::std::size_t padding = CalculatePadding(baseAddress, alignment);
-	::std::size_t neededSpace = headerSize;
+	std::size_t padding = CalculatePadding(baseAddress, alignment);
+	std::size_t neededSpace = headerSize;
 
 	if (padding < neededSpace) {
 		neededSpace -= padding; // Header does not fit - Calculate next aligned address that header fits
@@ -77,7 +77,7 @@ template<typename T, typename... Args>
 FORCEINLINE static void ConstructRange(T* begin, T* end, Args&&... args)
 {
 	while (begin != end) {
-		new ((void*)begin) T(::std::forward<Args>(args)...);
+		new ((void*)begin) T(std::forward<Args>(args)...);
 		begin++;
 	}
 }
@@ -88,7 +88,7 @@ FORCEINLINE static void MoveRange(T* begin, T* dest, usize num_obj)
 	memmove(dest, begin, num_obj*sizeof(T));
 }
 
-template<typename T, typename ::std::enable_if<!::std::is_pod<T>::value, bool>::type = false>
+template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type = false>
 FORCEINLINE static void Deallocate(T* ptr, usize sz = 1)
 {
 	//printf("*** NON Pod Deallocate\n");
@@ -102,7 +102,7 @@ FORCEINLINE static void Deallocate(T* ptr, usize sz = 1)
 	::operator delete((void*)ptr);
 }
 
-template<typename T, typename ::std::enable_if<!::std::is_pod<T>::value, bool>::type = false>
+template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type = false>
 FORCEINLINE static void CopyRangeTo(T* begin, T* dest, usize len)
 {
 	usize i = 0;
@@ -115,7 +115,7 @@ FORCEINLINE static void CopyRangeTo(T* begin, T* dest, usize len)
 	//memcpy(dest, begin, len * sizeof(T));
 }
 
-template<typename T, typename ::std::enable_if<!::std::is_pod<T>::value, bool>::type = false>
+template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type = false>
 FORCEINLINE static void FillRange(const T& obj, T* dest, usize len)
 {
 	usize i = 0;
@@ -127,19 +127,19 @@ FORCEINLINE static void FillRange(const T& obj, T* dest, usize len)
 	//memcpy(dest, begin, len * sizeof(T));
 }
 
-template<typename T, typename ::std::enable_if<!::std::is_pod<T>::value, bool>::type = false>
+template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type = false>
 FORCEINLINE static void MoveRangeTo(T* begin, T* dest, usize len)
 {
 	usize i = 0;
 	while (i < len) {
-		new (dest) T(::std::move(*begin));
+		new (dest) T(std::move(*begin));
 		begin++;
 		dest++;
 		i++;
 	}
 }
 
-template<typename T, typename ::std::enable_if<!::std::is_pod<T>::value, bool>::type = false>
+template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type = false>
 FORCEINLINE static void DeleteRange(T* begin, T* end)
 {
 	//printf("*** NON Pod DELETE\n");
@@ -149,7 +149,7 @@ FORCEINLINE static void DeleteRange(T* begin, T* end)
 	}
 }
 
-template<typename T, typename ::std::enable_if<!::std::is_pod<T>::value, bool>::type = false>
+template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type = false>
 FORCEINLINE static void DefaultConstructRange(T* begin, T* end)
 {
 	while (begin != end) {
@@ -158,7 +158,7 @@ FORCEINLINE static void DefaultConstructRange(T* begin, T* end)
 	}
 }
 
-template<typename T, typename ::std::enable_if<!::std::is_pod<T>::value, bool>::type = false>
+template<typename T, typename std::enable_if<!std::is_pod<T>::value, bool>::type = false>
 FORCEINLINE static void DestroyObjects(T* ptr, usize sz = 0)
 {
 	//printf("*** NON Pod Deallocate\n");
@@ -172,14 +172,14 @@ FORCEINLINE static void DestroyObjects(T* ptr, usize sz = 0)
 /**********FOR POD TYPES********/
 
 
-template<typename T, typename ::std::enable_if<::std::is_pod<T>::value, bool>::type = true>
+template<typename T, typename std::enable_if<std::is_pod<T>::value, bool>::type = true>
 FORCEINLINE static void CopyRangeTo(T* begin, T* dest, usize len)
 {
 	memcpy(dest, begin, len * sizeof(T));
 	//printf("Pod Copy\n");
 }
 
-template<typename T, typename ::std::enable_if<::std::is_pod<T>::value, bool>::type = true>
+template<typename T, typename std::enable_if<std::is_pod<T>::value, bool>::type = true>
 FORCEINLINE static void FillRange(const T& obj, T* dest, usize len)
 {
 	usize i = 0;
@@ -191,18 +191,18 @@ FORCEINLINE static void FillRange(const T& obj, T* dest, usize len)
 	//printf("Pod Copy\n");
 }
 
-template<typename T, typename ::std::enable_if<::std::is_pod<T>::value, bool>::type = true>
+template<typename T, typename std::enable_if<std::is_pod<T>::value, bool>::type = true>
 FORCEINLINE static void MoveRangeTo(T* begin, T* dest, usize len)
 {
 	memcpy(dest, begin, len * sizeof(T));
 }
 
-template<typename T, typename ::std::enable_if<::std::is_pod<T>::value, bool>::type = true>
+template<typename T, typename std::enable_if<std::is_pod<T>::value, bool>::type = true>
 FORCEINLINE static void DeleteRange(T* begin, T* end)
 {
 }
 
-template<typename T, typename ::std::enable_if<::std::is_pod<T>::value, bool>::type = true>
+template<typename T, typename std::enable_if<std::is_pod<T>::value, bool>::type = true>
 FORCEINLINE static void DefaultConstructRange(T* begin, T* end)
 {
 	while (begin != end) {
@@ -212,7 +212,7 @@ FORCEINLINE static void DefaultConstructRange(T* begin, T* end)
 	//printf("Pod Construct\n");
 }
 
-template<typename T, typename ::std::enable_if<::std::is_pod<T>::value, bool>::type = true>
+template<typename T, typename std::enable_if<std::is_pod<T>::value, bool>::type = true>
 FORCEINLINE static void Deallocate(T* ptr, usize sz = 1)
 {
 	::operator delete((void*)ptr);
@@ -220,19 +220,19 @@ FORCEINLINE static void Deallocate(T* ptr, usize sz = 1)
 	//printf("Pod Deallocate\n");
 }
 
-template<typename T, typename ::std::enable_if<::std::is_pod<T>::value, bool>::type = true>
+template<typename T, typename std::enable_if<std::is_pod<T>::value, bool>::type = true>
 FORCEINLINE static void DestroyObjects(T* ptr, usize sz = 0)
 {
 	return;
 }
 
-template<typename T, typename ::std::enable_if<HAVE_DTOR(T), int>::type = 0>
+template<typename T, typename std::enable_if<HAVE_DTOR(T), int>::type = 0>
 FORCEINLINE static void Destroy(T* obj)
 {
 	obj->T::~T();
 }
 
-template<typename T, typename ::std::enable_if<NO_DTOR(T), int>::type = 0>
+template<typename T, typename std::enable_if<NO_DTOR(T), int>::type = 0>
 FORCEINLINE static void Destroy(T* obj)
 {
 	// Do nothing

@@ -18,7 +18,7 @@ public:
 		template<typename... Args>
 		AVLNode(AVLNode* parent, AVLNode* left, AVLNode* right, Args&&... args) : 
 			parent(parent), left(left), right(right),  bf(0),
-			data(::std::forward<Args>(args)...)
+			data(std::forward<Args>(args)...)
 		{}
 		T data;
 		AVLNode* left;

@@ -12,9 +12,9 @@ struct Task
 {
     TaskFunction m_Function;
     Task* m_Parent;
-    ::std::atomic<int32> m_UnfinishedJobs; // atomic
+    std::atomic<int32> m_UnfinishedJobs; // atomic
     
-	::std::atomic<uint32> m_ContinuationCount;
+	std::atomic<uint32> m_ContinuationCount;
 	Task* m_Continuations[15];
 
     union {

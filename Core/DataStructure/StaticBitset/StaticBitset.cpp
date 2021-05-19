@@ -9,7 +9,7 @@ void StaticBitset<N>::Fill(bool bit)
 {
 	uint8 bit_len = N;
 	uint32 nb_of_bytes_to_set = Math::DivFloor(bit_len, sizeof(uint8) * BITS_PER_BYTE);
-	memset(m_Bits, bit ? ::std::numeric_limits<uint8>::max() : 0, nb_of_bytes_to_set * sizeof(uint8));
+	memset(m_Bits, bit ? std::numeric_limits<uint8>::max() : 0, nb_of_bytes_to_set * sizeof(uint8));
 	int32 rest_of_bits = (bit_len - nb_of_bytes_to_set * sizeof(uint8) * BITS_PER_BYTE);
 
 	if (rest_of_bits > 0) {

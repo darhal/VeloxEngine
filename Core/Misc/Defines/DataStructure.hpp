@@ -5,7 +5,7 @@
 #include <map>
 
 template<typename T>
-using StdVector = ::std::vector<T>;
-typedef ::std::string StdString;
+using StdVector = std::vector<T>;
+typedef std::string StdString;
 template<typename K, typename V>
-using StdMap = ::std::map<K, V>;
+using StdMap = std::map<K, V>;

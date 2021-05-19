@@ -31,7 +31,7 @@ void PackedArray<T>::Remove(ID id)
 	object_to_delete.second.~T(); // Call dtor
 
 	Pair<ID, T>& last_element = m_Objects[--m_ObjectCount]; // Get last element
-	new (&object_to_delete) Pair<ID, T>(::std::move(last_element)); // Swap last element and element to delete
+	new (&object_to_delete) Pair<ID, T>(std::move(last_element)); // Swap last element and element to delete
 
 	indices[object_to_delete.first].index = in.index; // object to delete here is actually the last element we just swapped
 	in.index = INVALID_INDEX; // Invalidate old index

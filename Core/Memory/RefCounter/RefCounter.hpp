@@ -32,7 +32,7 @@ public:
 
 	CONSTEXPR static bool IsThreadSafe = true;
 private:
-	::std::atomic<uint32> m_refCounter;
+	std::atomic<uint32> m_refCounter;
 };
 
 template<>

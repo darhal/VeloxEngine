@@ -21,13 +21,17 @@ public:
     typedef GIterator<const T> CIterator;
 
 public:
+    CONSTEXPR static usize DEFAULT_CAPACITY = 8;
+    CONSTEXPR static usize DEFAULT_GROW_SIZE = 2;
+
+public:
     Vector() noexcept;
 
-    Vector(usize sz, const T& obj);
-
     Vector(usize sz) noexcept;
+
+    Vector(usize sz, const T& obj);
     
-    Vector(const ::std::initializer_list<T>& list);
+    // Vector(const std::initializer_list<T>& list);
 
     template<usize S>
     Vector(T(&arr)[S]);
@@ -141,9 +145,9 @@ public:
 
     friend void Swap(Vector<T>& first, Vector<T>& second) noexcept
     {
-        ::std::swap(first.m_Data, second.m_Data);
-        ::std::swap(first.m_Length, second.m_Length);
-        ::std::swap(first.m_Capacity, second.m_Capacity);
+        std::swap(first.m_Data, second.m_Data);
+        std::swap(first.m_Length, second.m_Length);
+        std::swap(first.m_Capacity, second.m_Capacity);
     }
 
     friend void swap(Vector<T>& first, Vector<T>& second) noexcept
@@ -156,16 +160,13 @@ private:
     bool Allocate(usize cap = 0);
 
 private:
-    CONSTEXPR static usize DEFAULT_CAPACITY	 = 8;
-    CONSTEXPR static usize DEFAULT_GROW_SIZE = 2;
-
     T*    m_Data;
     usize m_Length;
     usize m_Capacity;
 
 public:
     template<typename DataType>
-    class GIterator : public ::std::iterator<::std::random_access_iterator_tag, DataType, ptrdiff_t, DataType*, DataType&>
+    class GIterator : public std::iterator<std::random_access_iterator_tag, DataType, ptrdiff_t, DataType*, DataType&>
     {
     public:
         GIterator() noexcept : m_Current(m_Data) { }
@@ -251,8 +252,8 @@ Vector<T>::Vector(T* data, usize size)
     Utils::CopyConstruct(m_Data, data, m_Length);
 }
 
-template<typename T>
-Vector<T>::Vector(const ::std::initializer_list<T>& list) 
+/*template<typename T>
+Vector<T>::Vector(const std::initializer_list<T>& list) 
     : m_Data(NULL), m_Length(list.size()), m_Capacity(list.size())
 {
     m_Data = Utils::Allocate<T>(m_Capacity);
@@ -262,7 +263,7 @@ Vector<T>::Vector(const ::std::initializer_list<T>& list)
         new (ptr) T(obj);
         ptr++;
     }
-}
+}*/
 
 template<typename T>
 Vector<T>::~Vector()
@@ -286,7 +287,7 @@ template<typename... Args>
 T& Vector<T>::EmplaceBack(Args&&... args)
 {
     this->Reserve(m_Length + 1);
-    new (m_Data + m_Length) T(::std::forward<Args>(args)...);
+    new (m_Data + m_Length) T(std::forward<Args>(args)...);
     return *(m_Data + (m_Length++));
 }
 
@@ -327,7 +328,7 @@ bool Vector<T>::PopFrontFast() noexcept
     m_Data[0].~T();
 
     if (--m_Length != 0) {
-        new (m_Data) T(::std::move(m_Data[m_Length + 1]));
+        new (m_Data) T(std::move(m_Data[m_Length + 1]));
     }
 
     return false;
@@ -398,7 +399,7 @@ template<typename T>
 template<typename... Args>
 T& Vector<T>::EmplaceFrontFast(Args&&... args)
 {
-    return this->EmplaceFast(0, ::std::forward<Args>(args)...);
+    return this->EmplaceFast(0, std::forward<Args>(args)...);
 }
 
 template<typename T>
@@ -414,12 +415,12 @@ T& Vector<T>::Emplace(usize i, Args&&... args)
     ASSERTF(i > m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
 
     if (m_Length + 1 >= m_Capacity) {
-        usize nCap = (m_Length + 1) * DEFAULT_GROW_SIZE;
+        usize nCap = m_Capacity * DEFAULT_GROW_SIZE;
         T* newData = Utils::Allocate<T>(nCap);
         T* dest = newData + i;
         Utils::MoveConstruct(newData, m_Data, i);
         Utils::MoveConstructForward(newData + 1, m_Data, i, m_Length);
-        new (dest) T(::std::forward<Args>(args)...);
+        new (dest) T(std::forward<Args>(args)...);
         Utils::FreeMemory(m_Data);
         m_Data = newData;
         m_Capacity = nCap;
@@ -430,7 +431,7 @@ T& Vector<T>::Emplace(usize i, Args&&... args)
         T* dest = m_Data + i;
         // shift all of this to keep place for the new element
         Utils::MoveConstructBackward(m_Data + 1, m_Data, m_Length - 1, i - 1);
-        new (dest) T(::std::forward<Args>(args)...);
+        new (dest) T(std::forward<Args>(args)...);
         m_Length++;
         return *(dest);
     }
@@ -449,19 +450,19 @@ T& Vector<T>::EmplaceFast(usize i, Args&&... args)
     ASSERTF(i > m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
 
     if (m_Length + 1 >= m_Capacity) { // The default way might be faster as we have to reallocate the memory and copy the objects anyways
-        return this->EmplaceBack(i, ::std::forward<Args>(args)...);
+        return this->Emplace(i, std::forward<Args>(args)...);
     }
 
     this->Allocate();
     T* element = m_Data + i;
     
     if (i >= m_Length) {
-        new (element) T(::std::forward<Args>(args)...);
+        new (element) T(std::forward<Args>(args)...);
     } else {
         T* last = m_Data + m_Length;
-        T temp(::std::move(*element));
-        new (element) T(::std::forward<Args>(args)...);
-        new (last) T(::std::move(temp));
+        T temp(std::move(*element));
+        new (element) T(std::forward<Args>(args)...);
+        new (last) T(std::move(temp));
     }
 
     m_Length++;
@@ -472,7 +473,7 @@ template<typename T>
 template<typename ...Args>
 T& Vector<T>::EmplaceFront(Args&&... args)
 {
-    return this->Emplace(0, ::std::forward<Args>(args)...);
+    return this->Emplace(0, std::forward<Args>(args)...);
 }
 
 template<typename T>
@@ -502,7 +503,7 @@ Vector<T>& Vector<T>::operator+=(const Vector<T>& other)
 template<typename T>
 Vector<T>& Vector<T>::operator+=(Vector<T>&& other)
 {
-    this->Append(::std::forward<Vector<T>>(other));
+    this->Append(std::forward<Vector<T>>(other));
     return *this;
 }
 
@@ -551,7 +552,7 @@ void Vector<T>::EreaseFast(Iterator itr) noexcept
     
     (*itr_ptr).~T();
     T* last_ptr = m_Data + m_Length - 1;
-    new (itr_ptr) T(::std::move(*last_ptr));
+    new (itr_ptr) T(std::move(*last_ptr));
     m_Length -= 1;
 }
 
@@ -691,7 +692,7 @@ Vector<T>::Vector(Vector<T>&& other) noexcept
 template<typename T>
 Vector<T>& Vector<T>::operator=(Vector<T>&& other) noexcept
 {
-    Vector<T> tmp(::std::move(other));
+    Vector<T> tmp(std::move(other));
     Swap(*this, tmp);
     return *this;
 }
@@ -735,7 +736,7 @@ typename Vector<T>::CIterator Vector<T>::cend() const noexcept
 template<typename T>
 void swap(typename Vector<T>::Iterator& a, typename Vector<T>::Iterator& b) noexcept
 {
-    ::std::swap(*a, *b);
+    std::swap(*a, *b);
 }
 
 TRE_NS_END

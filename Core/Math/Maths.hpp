@@ -48,10 +48,10 @@ struct Math
 	/*
 	*Arithmetic operations : 
 	*/
-	template<typename T, typename ::std::enable_if<::std::is_signed<T>::value == true, bool>::type = true>
+	template<typename T, typename std::enable_if<std::is_signed<T>::value == true, bool>::type = true>
 	FORCEINLINE static const T Abs(T x) { return (x < 0) ? -x : x; }
 
-	template<typename T, typename ::std::enable_if<::std::is_unsigned<T>::value == true, bool>::type = true>
+	template<typename T, typename std::enable_if<std::is_unsigned<T>::value == true, bool>::type = true>
 	FORCEINLINE static const T Abs(T x) { return x; }
 
 	template<typename T>

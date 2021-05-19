@@ -76,7 +76,7 @@
 	typedef unsigned int     	usize_type;
 #else
 	typedef signed	 long long  ssize_type;
-	typedef ::std::size_t 		usize_type;
+	typedef std::size_t 		usize_type;
 #endif
 
 #if defined(OS_WINDOWS)

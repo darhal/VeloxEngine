@@ -58,7 +58,7 @@ template<typename T, typename Container>
 template<typename ...Args>
 FORCEINLINE T& Queue<T, Container>::Emplace(Args&&... args)
 {
-	return m_Queue.EmplaceBack(::std::forward<Args>(args)...);
+	return m_Queue.EmplaceBack(std::forward<Args>(args)...);
 }
 
 template<typename T, typename Container>

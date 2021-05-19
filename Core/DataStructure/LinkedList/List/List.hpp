@@ -21,7 +21,7 @@ public:
 	struct Node
 	{
 		template<typename... Args>
-		Node(Node* prev, Node* next, Args&&... args) : m_Obj(::std::forward<Args>(args)...), m_Next(next), m_Previous(prev)
+		Node(Node* prev, Node* next, Args&&... args) : m_Obj(std::forward<Args>(args)...), m_Next(next), m_Previous(prev)
 		{
 			if (m_Previous != NULL) 
 				m_Previous->m_Next = this;
@@ -38,7 +38,7 @@ public:
 public:
 	FORCEINLINE List();
 	FORCEINLINE List(usize nbChunk);
-	FORCEINLINE List(const ::std::initializer_list<T>& list);
+	FORCEINLINE List(const std::initializer_list<T>& list);
 	template<usize S>
 	FORCEINLINE List(const T(&objs_array)[S]);
 
@@ -86,21 +86,21 @@ private:
 	Alloc_t m_Allocator;
 
 private:
-	template<typename U, typename A, typename ::std::enable_if<NO_DTOR(U), int>::type = 0>
+	template<typename U, typename A, typename std::enable_if<NO_DTOR(U), int>::type = 0>
 	static void EmptyList(List<U, A>& list);
 
-	template<typename U, typename A, typename ::std::enable_if<HAVE_DTOR(U), int>::type = 0>
+	template<typename U, typename A, typename std::enable_if<HAVE_DTOR(U), int>::type = 0>
 	static void EmptyList(List<U, A>& list);
 
-	template<typename U, typename A, typename ::std::enable_if<HAVE_DTOR(U), int>::type = 0>
+	template<typename U, typename A, typename std::enable_if<HAVE_DTOR(U), int>::type = 0>
 	static void Destroy(List<U, A>& list);
 
-	template<typename U, typename A, typename ::std::enable_if<NO_DTOR(U), int>::type = 0>
+	template<typename U, typename A, typename std::enable_if<NO_DTOR(U), int>::type = 0>
 	static void Destroy(List<U, A>& list);
 
 public:
 	template<typename DataType>
-	class GIterator : public ::std::iterator<::std::bidirectional_iterator_tag, DataType, ptrdiff_t, DataType*, DataType&>
+	class GIterator : public std::iterator<std::bidirectional_iterator_tag, DataType, ptrdiff_t, DataType*, DataType&>
 	{
 	public:
 		GIterator() noexcept : m_CurrentNode(m_Head) { }

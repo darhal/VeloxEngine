@@ -130,7 +130,7 @@
 //	FORCEINLINE void print();
 //
 //#if __cplusplus <= 201103L
-//	FORCEINLINE Matrix(const ::std::initializer_list<::std::initializer_list<float>>&);
+//	FORCEINLINE Matrix(const std::initializer_list<std::initializer_list<float>>&);
 //#endif
 //
 //};
@@ -248,9 +248,9 @@
 //	for (uint8 i = 0; i < 4; i++) {
 //		_m128 x = rows[i];
 //		for (uint8 j = 0; j < 4; j++) {
-//			::std::cout << x.m128_f32[j] << ", ";
+//			std::cout << x.m128_f32[j] << ", ";
 //		}
-//		::std::cout << ::std::endl;
+//		std::cout << std::endl;
 //	}
 //}
 //
@@ -281,10 +281,10 @@
 //}
 //
 //#if __cplusplus <= 201103L
-//	FORCEINLINE Matrix<float, SIMD, 4, 4>::Matrix(const ::std::initializer_list<::std::initializer_list<float>>& list)
+//	FORCEINLINE Matrix<float, SIMD, 4, 4>::Matrix(const std::initializer_list<std::initializer_list<float>>& list)
 //	{
 //		uint8 i = 0, j;
-//		for (const ::std::initializer_list<float>& elm : list) {
+//		for (const std::initializer_list<float>& elm : list) {
 //			if (i >= 4) { break; }
 //			j = 0;
 //			float data[4];

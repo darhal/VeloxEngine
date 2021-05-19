@@ -81,7 +81,7 @@ public:
 	struct HashNode {
 		enum NodeTag { FREE = 0, OCCUPIED = 1, TOMBSTONE = 2 };
 
-		HashNode(HashNode&& other) : pair(::std::move(other.pair)), tag(other.tag)
+		HashNode(HashNode&& other) : pair(std::move(other.pair)), tag(other.tag)
 		{}
 
 		HashPair pair;
@@ -158,10 +158,10 @@ private:
 
 	FORCEINLINE HashTab_t Reinsert(HashTab_t src, HashTab_t dest);
 
-	template<typename Ki, typename Vi, typename ::std::enable_if<HAVE_DTOR(Ki) || HAVE_DTOR(Vi), int>::type = 0>
+	template<typename Ki, typename Vi, typename std::enable_if<HAVE_DTOR(Ki) || HAVE_DTOR(Vi), int>::type = 0>
 	FORCEINLINE static void DestroyMap(HashMap<Ki, Vi, PROBING, SIZE>& map);
 
-	template<typename Ki, typename Vi, typename ::std::enable_if<NO_DTOR(Ki) && NO_DTOR(Vi), int>::type = 0>
+	template<typename Ki, typename Vi, typename std::enable_if<NO_DTOR(Ki) && NO_DTOR(Vi), int>::type = 0>
 	FORCEINLINE static void DestroyMap(HashMap<Ki, Vi, PROBING, SIZE>& map);
 
 	static const usize  DEFAULT_LIST_CAPACITY = SIZE;

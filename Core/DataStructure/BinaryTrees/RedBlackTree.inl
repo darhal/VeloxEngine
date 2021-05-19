@@ -3,7 +3,7 @@
 /************************************************************/
 
 template<typename K, typename T, typename Alloc_t>
-FORCEINLINE RedBalckTree<K, T, Alloc_t>::RedBalckTree(const Alloc_t& allocator) : m_Root(TNULL), m_Allocator(::std::move(allocator))
+FORCEINLINE RedBalckTree<K, T, Alloc_t>::RedBalckTree(const Alloc_t& allocator) : m_Root(TNULL), m_Allocator(std::move(allocator))
 {
 }
 
@@ -14,7 +14,7 @@ FORCEINLINE RedBalckTree<K, T, Alloc_t>::RedBalckTree() : m_Root(TNULL), m_Alloc
 
 template<typename K, typename T, typename Alloc_t>
 FORCEINLINE RedBalckTree<K, T, Alloc_t>::RedBalckTree(RedBalckTree<K, T, Alloc_t>&& other) : 
-	m_Root(other.m_Root), m_Allocator(::std::move(other.m_Allocator))
+	m_Root(other.m_Root), m_Allocator(std::move(other.m_Allocator))
 {
 }
 
@@ -32,7 +32,7 @@ RedBalckTree<K, T, Alloc_t>& RedBalckTree<K, T, Alloc_t>::operator=(RedBalckTree
 {
 	this->DestroyTree(m_Root);
 	m_Root = other.m_Root; 
-	m_Allocator = ::std::move(m_Allocator);
+	m_Allocator = std::move(m_Allocator);
 	return *this;
 }
 
@@ -57,7 +57,7 @@ template<typename ...Args>
 FORCEINLINE RedBalckTree<K, T, Alloc_t>::RedBalckTree(const K& key, Args&&... args) : m_Root(TNULL), m_Allocator(sizeof(RBNode), NODE_CHUNKS)
 {
 	m_Root = m_Allocator.template Allocate<RBNode>();
-	new (m_Root) RBNode(NULL, NULL, NULL, key, ::std::forward<Args>(args)...);
+	new (m_Root) RBNode(NULL, NULL, NULL, key, std::forward<Args>(args)...);
 }
 
 template<typename K, typename T, typename Alloc_t>
@@ -72,7 +72,7 @@ FORCEINLINE T& RedBalckTree<K, T, Alloc_t>::Insert(const K& key, Args&& ...args)
 {
 	// Ordinary Binary Search Insertion
 	RBNode* node = m_Allocator.template Allocate<RBNode>();
-	new (node) RBNode(NULL, TNULL, TNULL, key, ::std::forward<Args>(args)...);
+	new (node) RBNode(NULL, TNULL, TNULL, key, std::forward<Args>(args)...);
 
 	RBNode* y = NULL;
 	RBNode* x = m_Root;
@@ -591,18 +591,18 @@ void RedBalckTree<K, T, Alloc_t>::PrintHelper(RBNode* node, String indent, bool 
 {
 	// print the tree structure on the screen
 	if (node != NULL) {
-		::std::cout << indent;
+		std::cout << indent;
 		
 		if (last) {
-			::std::cout << "R----";
+			std::cout << "R----";
 			indent += String("     ");
 		}else {
-			::std::cout << "L----";
+			std::cout << "L----";
 			indent += String("|    ");
 		}
 
 		String sColor = node->color ? String("RED") : String("BLACK");
-		::std::cout << node->value << "(" << sColor << ")" << ::std::endl;
+		std::cout << node->value << "(" << sColor << ")" << std::endl;
 		PrintHelper(node->left, indent, false);
 		PrintHelper(node->right, indent, true);
 	}

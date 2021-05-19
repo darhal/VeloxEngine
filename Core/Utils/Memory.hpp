@@ -4,13 +4,11 @@
 #include <cstring>
 #include <utility>
 #include <new>
+#include <algorithm>
 #include <Core/Misc/Defines/Common.hpp>
 
 namespace TRE::Utils
 {
-	enum class Increment {};
-	enum class Decrement {};
-
 	template <typename integral>
 	constexpr bool IsAligned(integral x, usize a) noexcept
 	{
@@ -42,9 +40,6 @@ namespace TRE::Utils
 	template<typename T>
 	FORCEINLINE T* Allocate(usize sz)
 	{
-		if (sz == 0)
-			return nullptr;
-
 		// return static_cast<T*>(::operator new(sz * sizeof(T), static_cast<std::align_val_t>(alignof(T))));
 		return static_cast<T*>(::operator new(sz * sizeof(T)));
 	}
@@ -57,32 +52,32 @@ namespace TRE::Utils
 	}
 
 #if __cplusplus >= 202002L
-	template<typename T>
-	concept POD = (::std::is_standard_layout_v<T> && ::std::is_trivial_v<T>) || ::std::is_trivially_copyable_v<T> || ::std::is_trivially_destructible_v<T>;
-
+//	template<typename T>
+//	concept POD = (std::is_standard_layout_v<T> && std::is_trivial_v<T>) || std::is_trivially_copyable_v<T> || std::is_trivially_destructible_v<T>;
+// #define POD typename
 	// POD TYPES:
 	template<POD T>
 	FORCEINLINE void Copy(T* dst, const T* src, usize count = 1) noexcept
 	{
-		::std::memcpy(dst, src, count * sizeof(T));
+		std::memcpy(dst, src, count * sizeof(T));
 	}
 
 	template<POD T>
 	FORCEINLINE void CopyConstruct(T* dst, const T* src, usize count = 1) noexcept
 	{
-		Copy(dst, src, count);
+		Utils::Copy(dst, src, count);
 	}
 
 	template<POD T>
 	FORCEINLINE void Move(T* dst, T* src, usize count = 1) noexcept
 	{
-		Copy(dst, src, count);
+		Utils::Copy(dst, src, count);
 	}
 
 	template<POD T>
 	FORCEINLINE void MoveForward(T* dst, T* src, ssize start, ssize end)
 	{
-		Copy(dst + start, src + end, end - start);
+		Utils::Copy(dst + start, src + end, end - start);
 	}
 
 	template<POD T>
@@ -91,18 +86,21 @@ namespace TRE::Utils
 		for (ssize i = start; i > end; i--) {
 			dst[i] = src[i];
 		}
+
+		// std::memmove(dst + end, src + end, start - end);
+		//Utils::Copy(dst + end - 1, src + end - 1, start - end);
 	}
 
 	template<POD T>
 	FORCEINLINE void MoveConstruct(T* dst, T* src, usize count = 1) noexcept
 	{
-		Copy(dst, src, count);
+		Utils::Copy(dst, src, count);
 	}
 
 	template<POD T>
 	FORCEINLINE void MoveConstructForward(T* dst, T* src, ssize start, ssize end)
 	{
-		Copy(dst + start, src + start, end - start);
+		Utils::Copy(dst + start, src + start, end - start);
 	}
 
 	template<POD T>
@@ -135,7 +133,7 @@ namespace TRE::Utils
 	template<POD T>
 	FORCEINLINE void Free(T* ptr, usize count = 1) noexcept
 	{
-		FreeMemory(ptr);
+		Utils::FreeMemory(ptr);
 	}
 #endif
 
@@ -160,7 +158,7 @@ namespace TRE::Utils
 	FORCEINLINE void Move(T* dst, T* src, usize count = 1)
 	{
 		for (usize i = 0; i < count; i++) {
-			dst[i] = T(::std::move(src[i]));
+			dst[i] = T(std::move(src[i]));
 			src[i].~T();
 		}
 	}
@@ -169,7 +167,7 @@ namespace TRE::Utils
 	FORCEINLINE void MoveForward(T* dst, T* src, ssize start, ssize end)
 	{
 		for (ssize i = start; i < end; i++) {
-			dst[i] = T(::std::move(src[i]));
+			dst[i] = T(std::move(src[i]));
 			src[i].~T();
 		}
 	}
@@ -178,7 +176,7 @@ namespace TRE::Utils
 	FORCEINLINE void MoveBackward(T* dst, T* src, ssize start, ssize end)
 	{
 		for (ssize i = start; i > end; i--) {
-			dst[i] = T(::std::move(src[i]));
+			dst[i] = T(std::move(src[i]));
 			src[i].~T();
 		}
 	}
@@ -187,7 +185,7 @@ namespace TRE::Utils
 	FORCEINLINE void MoveConstruct(T* dst, T* src, usize count = 1)
 	{
 		for (usize i = 0; i < count; i++) {
-			new (&dst[i]) T(::std::move(src[i]));
+			new (&dst[i]) T(std::move(src[i]));
 		}
 	}
 
@@ -195,7 +193,7 @@ namespace TRE::Utils
 	FORCEINLINE void MoveConstructForward(T* dst, T* src, ssize start, ssize end)
 	{
 		for (ssize i = start; i < end; i++) {
-			new (&dst[i]) T(::std::move(src[i]));
+			new (&dst[i]) T(std::move(src[i]));
 		}
 	}
 
@@ -203,7 +201,7 @@ namespace TRE::Utils
 	FORCEINLINE void MoveConstructBackward(T* dst, T* src, ssize start, ssize end)
 	{
 		for (ssize i = start; i > end; i--) {
-			new (&dst[i]) T(::std::move(src[i]));
+			new (&dst[i]) T(std::move(src[i]));
 		}
 	}
 
@@ -219,7 +217,7 @@ namespace TRE::Utils
 	FORCEINLINE void MemSet(T* dst, T&& src, usize count = 1)
 	{
 		for (usize i = 0; i < count; i++) {
-			dst[i] = T(::std::forward(src));
+			dst[i] = T(std::forward(src));
 		}
 	}
 

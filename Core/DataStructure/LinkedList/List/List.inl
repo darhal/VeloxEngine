@@ -9,7 +9,7 @@ FORCEINLINE List<T, Alloc>::List(usize nbChunk) : m_Head(NULL), m_Tail(NULL), m_
 }
 
 template<typename T, typename Alloc>
-FORCEINLINE List<T, Alloc>::List(const ::std::initializer_list<T>& list) : m_Head(NULL), m_Tail(NULL), m_Allocator(sizeof(Node), list.size(), true)
+FORCEINLINE List<T, Alloc>::List(const std::initializer_list<T>& list) : m_Head(NULL), m_Tail(NULL), m_Allocator(sizeof(Node), list.size(), true)
 {
 	for (usize i = 0; i < list.size(); i++) {
 		this->PushBack(list[i]);
@@ -37,7 +37,7 @@ template<typename... Args>
 FORCEINLINE T& List<T, Alloc>::EmplaceBack(Args&&... args)
 {
 	Node* node_ptr = (Node*) m_Allocator.Allocate(sizeof(Node));
-	new (node_ptr) Node(m_Tail, NULL, ::std::forward<Args>(args)...);
+	new (node_ptr) Node(m_Tail, NULL, std::forward<Args>(args)...);
 
 	if (m_Head == NULL) 
 		m_Head = node_ptr;
@@ -51,7 +51,7 @@ template<typename... Args>
 FORCEINLINE T& List<T, Alloc>::EmplaceFront(Args&&... args)
 {
 	Node* node_ptr = (Node*)m_Allocator.Allocate(sizeof(Node));
-	new (node_ptr) Node(NULL, m_Head, ::std::forward<Args>(args)...);
+	new (node_ptr) Node(NULL, m_Head, std::forward<Args>(args)...);
 
 	if (m_Head == NULL) 
 		m_Tail = node_ptr;
@@ -92,7 +92,7 @@ FORCEINLINE T& List<T, Alloc>::Emplace(Iterator itr, Args&&... args)
 {
 	Node* node_ptr = (Node*)m_Allocator.Allocate(sizeof(Node));
 	Node* node = itr->m_CurrentNode;
-	new (node_ptr) Node(node->m_Previous ? node->m_Previous : NULL, node, ::std::forward<Args>(args)...);
+	new (node_ptr) Node(node->m_Previous ? node->m_Previous : NULL, node, std::forward<Args>(args)...);
 	return node_ptr->m_Obj;
 }
 
@@ -105,7 +105,7 @@ FORCEINLINE T& List<T, Alloc>::Emplace(usize index, Args&&... args)
 
 	while (head != NULL) {
 		if (i == index) {
-			return Emplace(head, ::std::forward<Args>(args)...);
+			return Emplace(head, std::forward<Args>(args)...);
 		}
 
 		head = head->m_Next;
@@ -210,7 +210,7 @@ FORCEINLINE void List<T, Alloc>::Clear()
 
 
 template<typename U, typename A>
-template<typename T, typename Alloc, typename ::std::enable_if<HAVE_DTOR(T), int>::type>
+template<typename T, typename Alloc, typename std::enable_if<HAVE_DTOR(T), int>::type>
 void List<U, A>::EmptyList(List<T, Alloc>& list)
 {
 	auto head = list.m_Head;
@@ -224,7 +224,7 @@ void List<U, A>::EmptyList(List<T, Alloc>& list)
 }
 
 template<typename U, typename A>
-template<typename T, typename Alloc, typename ::std::enable_if<NO_DTOR(T), int>::type>
+template<typename T, typename Alloc, typename std::enable_if<NO_DTOR(T), int>::type>
 void List<U, A>::EmptyList(List<T, Alloc>& list)
 {
 	auto head = list.m_Head;
@@ -237,7 +237,7 @@ void List<U, A>::EmptyList(List<T, Alloc>& list)
 }
 
 template<typename U, typename A>
-template<typename T, typename Alloc, typename ::std::enable_if<HAVE_DTOR(T), int>::type>
+template<typename T, typename Alloc, typename std::enable_if<HAVE_DTOR(T), int>::type>
 void List<U, A>::Destroy(List<T, Alloc>& list)
 {
 	auto head = list.m_Head;
@@ -249,7 +249,7 @@ void List<U, A>::Destroy(List<T, Alloc>& list)
 }
 
 template<typename U, typename A>
-template<typename T, typename Alloc, typename ::std::enable_if<NO_DTOR(T), int>::type>
+template<typename T, typename Alloc, typename std::enable_if<NO_DTOR(T), int>::type>
 void List<U, A>::Destroy(List<T, Alloc>& list)
 {
 }

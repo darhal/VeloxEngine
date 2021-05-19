@@ -65,7 +65,7 @@ private:
 
 public:
 	template<typename DataType>
-	class GIterator : public ::std::iterator<::std::random_access_iterator_tag, DataType, ptrdiff_t, DataType*, DataType&>
+	class GIterator : public std::iterator<std::random_access_iterator_tag, DataType, ptrdiff_t, DataType*, DataType&>
 	{
 	public:
 		GIterator() : m_Current(m_Objects) {}
@@ -109,7 +109,7 @@ Pair<typename PackedArray<T>::ID, T>& PackedArray<T>::Emplace(Args... args)
 	Index& in = this->GetIndexArray()[id];
 	m_FreelistDequeue = in.next_free;
 	in.index = m_ObjectCount++;
-	Pair<ID, T>* pair = new (&m_Objects[in.index]) Pair<ID, T>(id, ::std::forward<Args>(args)...);
+	Pair<ID, T>* pair = new (&m_Objects[in.index]) Pair<ID, T>(id, std::forward<Args>(args)...);
 	return *pair;
 }
 

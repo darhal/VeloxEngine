@@ -52,7 +52,7 @@ public:
 		return tmat;
 	}
 
-	template<typename T, typename ::std::enable_if<!::std::is_same<T, class_type>::value, void>::type>
+	template<typename T, typename std::enable_if<!std::is_same<T, class_type>::value, void>::type>
 	FORCEINLINE class_type& operator*=(T scalar)
 	{
 		TYPE s = static_cast<TYPE>(scalar);
@@ -70,7 +70,7 @@ public:
 		return *this = res;
 	}
 
-	template<typename T, typename ::std::enable_if<!::std::is_same<T, class_type>::value, void>::type>
+	template<typename T, typename std::enable_if<!std::is_same<T, class_type>::value, void>::type>
 	friend FORCEINLINE class_type operator*(const class_type& mat, T scalar)
 	{
 		TYPE s = static_cast<TYPE>(scalar);
@@ -83,7 +83,7 @@ public:
 		return mat_res;
 	}
 
-	template<typename T, typename ::std::enable_if<!::std::is_same<T, class_type>::value, void>::type>
+	template<typename T, typename std::enable_if<!std::is_same<T, class_type>::value, void>::type>
 	friend FORCEINLINE class_type operator*(T scalar, const class_type& mat)
 	{
 		TYPE s = static_cast<TYPE>(scalar);
@@ -133,7 +133,7 @@ public:
 	}
 
 #if __cplusplus <= 201103L
-	FORCEINLINE Matrix(const ::std::initializer_list<::std::initializer_list<TYPE>>&);
+	FORCEINLINE Matrix(const std::initializer_list<std::initializer_list<TYPE>>&);
 #endif
 };
 
@@ -180,10 +180,10 @@ FORCEINLINE Matrix<TYPE, proc, R, C>::Matrix(U scalar)
 
 #if __cplusplus <= 201103L
 template<typename TYPE, proc_type proc, uint8 R, uint8 C>
-FORCEINLINE Matrix<TYPE, proc, R, C>::Matrix(const ::std::initializer_list<::std::initializer_list<TYPE>>& list)
+FORCEINLINE Matrix<TYPE, proc, R, C>::Matrix(const std::initializer_list<std::initializer_list<TYPE>>& list)
 {
 	uint8 i = 0, j;
-	for (const ::std::initializer_list<TYPE>& elm : list) {
+	for (const std::initializer_list<TYPE>& elm : list) {
 		j = 0;
 		for (const TYPE v : elm) {
 			this->m[i][j] = v;
@@ -200,9 +200,9 @@ FORCEINLINE void Matrix<TYPE, proc, R, C>::print()
 	for (uint8 i = 0; i < R; i++) {
 		for (uint8 j = 0; j < C; j++) {
 			//printf("%d", i);
-			::std::cout << m[i][j] << ", ";
+			std::cout << m[i][j] << ", ";
 		}
-		::std::cout << ::std::endl;
+		std::cout << std::endl;
 	}
 }
 

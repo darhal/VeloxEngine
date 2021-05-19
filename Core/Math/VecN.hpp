@@ -82,7 +82,7 @@ public:
 		}
 	}
 
-	Vec(const ::std::initializer_list<TYPE>& list)
+	Vec(const std::initializer_list<TYPE>& list)
 	{
 		uint8 i = 0;
 		for (TYPE elm : list) {
