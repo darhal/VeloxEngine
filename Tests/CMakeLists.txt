@@ -16,6 +16,7 @@ endif(MSVC_IDE)
 
 SET(MODULE_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
 message(STATUS "Generating project file for example in ${MODULE_FOLDER}")
+include(GoogleTest)
 
 # Sources
 file(GLOB_RECURSE SOURCE CONFIGURE_DEPENDS  LIST_DIRECTORIES false
