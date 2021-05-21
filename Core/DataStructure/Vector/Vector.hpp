@@ -21,8 +21,8 @@ public:
     typedef GIterator<const T> CIterator;
 
 public:
-    CONSTEXPR static usize DEFAULT_CAPACITY = 8;
-    CONSTEXPR static usize DEFAULT_GROW_SIZE = 2;
+    CONSTEXPR const static usize DEFAULT_CAPACITY = 8;
+    CONSTEXPR const static usize DEFAULT_GROW_SIZE = 3;
 
 public:
     Vector() noexcept;
@@ -40,7 +40,7 @@ public:
 
     ~Vector();
 
-    bool Reserve(usize sz);
+    FORCEINLINE bool Reserve(usize sz);
 
     template<typename... Args>
     T& EmplaceBack(Args&&... args);
@@ -155,9 +155,9 @@ public:
         Swap(first, second);
     }
 private:
-    void Reallocate(usize nCap);
+    FORCEINLINE void Reallocate(usize nCap);
 
-    bool Allocate(usize cap = 0);
+    FORCEINLINE bool Allocate(usize cap = 0);
 
 private:
     T*    m_Data;
@@ -335,7 +335,7 @@ bool Vector<T>::PopFrontFast() noexcept
 }
 
 template<typename T>
-bool Vector<T>::Reserve(usize sz)
+FORCEINLINE bool Vector<T>::Reserve(usize sz)
 {
     if (this->Allocate(sz)) {
         return true;
@@ -349,7 +349,7 @@ bool Vector<T>::Reserve(usize sz)
 }
 
 template<typename T>
-void Vector<T>::Reallocate(usize nCap) // I think this can be optimized! to just copy and dont delete the thing or use move ctor.
+FORCEINLINE void Vector<T>::Reallocate(usize nCap) // I think this can be optimized! to just copy and dont delete the thing or use move ctor.
 {
     T* newData = Utils::Allocate<T>(nCap);
     Utils::MoveConstruct(newData, m_Data, m_Length);
@@ -359,7 +359,7 @@ void Vector<T>::Reallocate(usize nCap) // I think this can be optimized! to just
 }
 
 template<typename T>
-bool Vector<T>::Allocate(usize cap)
+FORCEINLINE bool Vector<T>::Allocate(usize cap)
 {
     if (m_Data == NULL) {
         m_Capacity = cap > m_Capacity ? cap : m_Capacity;
@@ -430,7 +430,7 @@ T& Vector<T>::Emplace(usize i, Args&&... args)
         this->Allocate();
         T* dest = m_Data + i;
         // shift all of this to keep place for the new element
-        Utils::MoveConstructBackward(m_Data + 1, m_Data, m_Length - 1, i - 1);
+        Utils::MoveConstructBackward(m_Data + 1, m_Data, m_Length - 1, i);
         new (dest) T(std::forward<Args>(args)...);
         m_Length++;
         return *(dest);

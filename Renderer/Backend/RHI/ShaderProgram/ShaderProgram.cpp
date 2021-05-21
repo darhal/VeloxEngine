@@ -92,6 +92,8 @@ void Renderer::ShaderProgram::ReflectShaderCode(const void* spirvCode, size_t si
                 vertexInput.AddAttribute(inputVarsReflect[i]->location, (VkFormat)(inputVarsReflect[i]->format - bugPatchDiff));
             }
         }
+
+        free(inputVarsReflect);
     }
 
     // Enumerate descriptors:

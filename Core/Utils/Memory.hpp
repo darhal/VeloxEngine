@@ -52,9 +52,10 @@ namespace TRE::Utils
 	}
 
 #if __cplusplus >= 202002L
-//	template<typename T>
-//	concept POD = (std::is_standard_layout_v<T> && std::is_trivial_v<T>) || std::is_trivially_copyable_v<T> || std::is_trivially_destructible_v<T>;
-// #define POD typename
+	template<typename T>
+	concept POD = (std::is_standard_layout_v<T> && std::is_trivial_v<T>) || std::is_trivially_copyable_v<T> || std::is_trivially_destructible_v<T>;
+	// #define POD typename
+
 	// POD TYPES:
 	template<POD T>
 	FORCEINLINE void Copy(T* dst, const T* src, usize count = 1) noexcept
@@ -83,12 +84,7 @@ namespace TRE::Utils
 	template<POD T>
 	FORCEINLINE void MoveBackward(T* dst, T* src, ssize start, ssize end)
 	{
-		for (ssize i = start; i > end; i--) {
-			dst[i] = src[i];
-		}
-
-		// std::memmove(dst + end, src + end, start - end);
-		//Utils::Copy(dst + end - 1, src + end - 1, start - end);
+		std::memmove(dst + end, src + end, (start - end + 1) * sizeof(T));
 	}
 
 	template<POD T>
@@ -137,6 +133,7 @@ namespace TRE::Utils
 	}
 #endif
 
+//#if 0
 	// NON POD TYPES :
 	template<typename T>
 	FORCEINLINE void Copy(T* dst, const T* src, usize count = 1)
@@ -175,7 +172,7 @@ namespace TRE::Utils
 	template<typename T>
 	FORCEINLINE void MoveBackward(T* dst, T* src, ssize start, ssize end)
 	{
-		for (ssize i = start; i > end; i--) {
+		for (ssize i = start; i >= end; i--) {
 			dst[i] = T(std::move(src[i]));
 			src[i].~T();
 		}
@@ -200,7 +197,7 @@ namespace TRE::Utils
 	template<typename T>
 	FORCEINLINE void MoveConstructBackward(T* dst, T* src, ssize start, ssize end)
 	{
-		for (ssize i = start; i > end; i--) {
+		for (ssize i = start; i >= end; i--) {
 			new (&dst[i]) T(std::move(src[i]));
 		}
 	}
@@ -235,4 +232,5 @@ namespace TRE::Utils
 		Utils::Destroy(ptr, count);
 		Utils::FreeMemory(ptr);
 	}
+//#endif
 }

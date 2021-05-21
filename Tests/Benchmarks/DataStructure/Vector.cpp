@@ -46,6 +46,10 @@ void StdVectorEmplaceFront(benchmark::State& state)
     }
 }
 
+std::vector<usize> insertPos;
+std::vector<usize> erasePos;
+std::vector<std::pair<usize, usize>> ereaseRange;
+
 void VectorInsert(benchmark::State& state)
 {
     constexpr auto NB = 100'000'000;
@@ -61,6 +65,7 @@ void VectorInsert(benchmark::State& state)
 
         state.PauseTiming();
         pos = distr(gen) % vec.Size();
+        insertPos.push_back(pos);
         state.ResumeTiming();
     }
 }
@@ -72,13 +77,19 @@ void StdVectorInsert(benchmark::State& state)
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
     std::vector<int> vec;
-    int pos = 0;
+    usize pos = 0;
 
     for (auto _ : state) {
         vec.insert(vec.begin() + pos, pos);
 
         state.PauseTiming();
-        pos = distr(gen) % vec.size();
+        if (insertPos.size()) {
+            pos = insertPos.front();
+            insertPos.erase(insertPos.begin());
+        } else {
+            pos = distr(gen) % vec.size();
+        }
+        
         state.ResumeTiming();
     }
 }
@@ -101,6 +112,7 @@ void VectorErease(benchmark::State& state)
         }
 
         pos1 = distr(gen) % vec.Size();
+        erasePos.emplace_back(pos1);
 
         state.ResumeTiming();
         vec.Erease(pos1);
@@ -123,7 +135,13 @@ void StdVectorErease(benchmark::State& state)
             vec.emplace_back(i);
         }
 
-        pos1 = distr(gen) % vec.size();
+        if (erasePos.size()) {
+            pos1 = erasePos.front();
+            erasePos.erase(erasePos.begin());
+        } else {
+            pos1 = distr(gen) % vec.size();
+        }
+        
 
         state.ResumeTiming();
         vec.erase(vec.begin() + pos1);
@@ -150,6 +168,7 @@ void VectorEreaseRange(benchmark::State& state)
 
         pos1 = distr(gen) % vec.Size();
         pos2 = distr(gen) % vec.Size();
+        ereaseRange.emplace_back(pos1, pos2);
 
         if (pos1 > pos2)
             std::swap(pos1, pos2);
@@ -176,8 +195,16 @@ void StdVectorEreaseRange(benchmark::State& state)
             vec.emplace_back(i);
         }
 
-        pos1 = distr(gen) % vec.size();
-        pos2 = distr(gen) % vec.size();
+        if (ereaseRange.size()) {
+            auto [p1, p2] = ereaseRange.front();
+            pos1 = p1;
+            pos2 = p2;
+            ereaseRange.erase(ereaseRange.begin());
+        } else {
+            pos1 = distr(gen) % vec.size();
+            pos2 = distr(gen) % vec.size();
+        }
+        
 
         if (pos1 > pos2)
             std::swap(pos1, pos2);
