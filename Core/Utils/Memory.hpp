@@ -76,13 +76,13 @@ namespace TRE::Utils
 	}
 
 	template<POD T>
-	FORCEINLINE void MoveForward(T* dst, T* src, ssize start, ssize end)
+	FORCEINLINE void MoveForward(T* dst, T* src, ssize start, ssize end) noexcept
 	{
 		Utils::Copy(dst + start, src + end, end - start);
 	}
 
 	template<POD T>
-	FORCEINLINE void MoveBackward(T* dst, T* src, ssize start, ssize end)
+	FORCEINLINE void MoveBackward(T* dst, T* src, ssize start, ssize end) noexcept
 	{
 		std::memmove(dst + end, src + end, (start - end + 1) * sizeof(T));
 	}
@@ -94,13 +94,13 @@ namespace TRE::Utils
 	}
 
 	template<POD T>
-	FORCEINLINE void MoveConstructForward(T* dst, T* src, ssize start, ssize end)
+	FORCEINLINE void MoveConstructForward(T* dst, T* src, ssize start, ssize end) noexcept
 	{
 		Utils::Copy(dst + start, src + start, end - start);
 	}
 
 	template<POD T>
-	FORCEINLINE void MoveConstructBackward(T* dst, T* src, ssize start, ssize end)
+	FORCEINLINE void MoveConstructBackward(T* dst, T* src, ssize start, ssize end) noexcept
 	{
 		Utils::MoveBackward(dst, src, start, end);
 	}
@@ -133,10 +133,10 @@ namespace TRE::Utils
 	}
 #endif
 
-//#if 0
+// #if 0
 	// NON POD TYPES :
 	template<typename T>
-	FORCEINLINE void Copy(T* dst, const T* src, usize count = 1)
+	FORCEINLINE void Copy(T* dst, const T* src, usize count = 1) noexcept
 	{
 		for (usize i = 0; i < count; i++) {
 			dst[i] = T(src[i]);
@@ -144,7 +144,7 @@ namespace TRE::Utils
 	}
 
 	template<typename T>
-	FORCEINLINE void CopyConstruct(T* dst, const T* src, usize count = 1)
+	FORCEINLINE void CopyConstruct(T* dst, const T* src, usize count = 1) noexcept
 	{
 		for (usize i = 0; i < count; i++) {
 			new (&dst[i]) T(src[i]);
@@ -152,7 +152,7 @@ namespace TRE::Utils
 	}
 
 	template<typename T>
-	FORCEINLINE void Move(T* dst, T* src, usize count = 1)
+	FORCEINLINE void Move(T* dst, T* src, usize count = 1) noexcept
 	{
 		for (usize i = 0; i < count; i++) {
 			dst[i] = T(std::move(src[i]));
@@ -161,7 +161,7 @@ namespace TRE::Utils
 	}
 
 	template<typename T>
-	FORCEINLINE void MoveForward(T* dst, T* src, ssize start, ssize end)
+	FORCEINLINE void MoveForward(T* dst, T* src, ssize start, ssize end) noexcept
 	{
 		for (ssize i = start; i < end; i++) {
 			dst[i] = T(std::move(src[i]));
@@ -170,7 +170,7 @@ namespace TRE::Utils
 	}
 
 	template<typename T>
-	FORCEINLINE void MoveBackward(T* dst, T* src, ssize start, ssize end)
+	FORCEINLINE void MoveBackward(T* dst, T* src, ssize start, ssize end) noexcept
 	{
 		for (ssize i = start; i >= end; i--) {
 			dst[i] = T(std::move(src[i]));
@@ -179,7 +179,7 @@ namespace TRE::Utils
 	}
 
 	template<typename T>
-	FORCEINLINE void MoveConstruct(T* dst, T* src, usize count = 1)
+	FORCEINLINE void MoveConstruct(T* dst, T* src, usize count = 1) noexcept
 	{
 		for (usize i = 0; i < count; i++) {
 			new (&dst[i]) T(std::move(src[i]));
@@ -187,7 +187,7 @@ namespace TRE::Utils
 	}
 
 	template<typename T>
-	FORCEINLINE void MoveConstructForward(T* dst, T* src, ssize start, ssize end)
+	FORCEINLINE void MoveConstructForward(T* dst, T* src, ssize start, ssize end) noexcept
 	{
 		for (ssize i = start; i < end; i++) {
 			new (&dst[i]) T(std::move(src[i]));
@@ -195,7 +195,7 @@ namespace TRE::Utils
 	}
 
 	template<typename T>
-	FORCEINLINE void MoveConstructBackward(T* dst, T* src, ssize start, ssize end)
+	FORCEINLINE void MoveConstructBackward(T* dst, T* src, ssize start, ssize end) noexcept
 	{
 		for (ssize i = start; i >= end; i--) {
 			new (&dst[i]) T(std::move(src[i]));
@@ -203,7 +203,7 @@ namespace TRE::Utils
 	}
 
 	template<typename T>
-	FORCEINLINE void MemSet(T* dst, const T& src, usize count = 1)
+	FORCEINLINE void MemSet(T* dst, const T& src, usize count = 1) noexcept
 	{
 		for (usize i = 0; i < count; i++) {
 			dst[i] = T(src);
@@ -211,7 +211,7 @@ namespace TRE::Utils
 	}
 
 	template<typename T>
-	FORCEINLINE void MemSet(T* dst, T&& src, usize count = 1)
+	FORCEINLINE void MemSet(T* dst, T&& src, usize count = 1) noexcept
 	{
 		for (usize i = 0; i < count; i++) {
 			dst[i] = T(std::forward(src));
@@ -232,5 +232,5 @@ namespace TRE::Utils
 		Utils::Destroy(ptr, count);
 		Utils::FreeMemory(ptr);
 	}
-//#endif
+// #endif
 }

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -26,7 +26,7 @@ endif(MSVC)
 
 # Clang specific stuff
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch-enum")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch-enum -Wno-unknown-attributes")
 endif()
 
 # Compiler specific stuff

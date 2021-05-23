@@ -68,7 +68,8 @@ void Renderer::Swapchain::CreateSwapchain()
     createInfo.imageColorSpace  = surfaceFormat.colorSpace;
     createInfo.imageExtent      = extent;
     createInfo.imageArrayLayers = 1;
-    createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    createInfo.imageUsage       = static_cast<VkImageUsageFlags>(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) 
+                                | static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
     const Internal::QueueFamilyIndices& indices = renderDevice.GetQueueFamilyIndices();
     uint32 queueFamilyIndices[]       = { indices.queueFamilies[Internal::QFT_GRAPHICS], indices.queueFamilies[Internal::QFT_PRESENT] };

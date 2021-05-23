@@ -5,7 +5,7 @@
 void VectorEmplaceBack(benchmark::State& state)
 {
     TRE::Vector<int> vec;
-    vec.Reserve(vec.DEFAULT_CAPACITY);
+    // vec.Reserve(vec.DEFAULT_CAPACITY);
 
     for (auto _ : state) {
         // This code gets timed
@@ -26,8 +26,8 @@ void StdVectorEmplaceBack(benchmark::State& state)
 
 void VectorEmplaceFront(benchmark::State& state)
 {
-    TRE::Vector<int> vec(true, TRE::Vector<int>::DEFAULT_CAPACITY);
-    vec.Reserve(vec.DEFAULT_CAPACITY);
+    TRE::Vector<int> vec;
+    // vec.Reserve(vec.DEFAULT_CAPACITY);
 
     for (auto _ : state) {
         // This code gets timed
@@ -42,7 +42,7 @@ void StdVectorEmplaceFront(benchmark::State& state)
 
     for (auto _ : state) {
         // This code gets timed
-        vec.insert(vec.begin() + 0, 5);
+        vec.insert(vec.begin(), 5);
     }
 }
 
@@ -57,7 +57,7 @@ void VectorInsert(benchmark::State& state)
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
     TRE::Vector<int> vec;
-    vec.Reserve(vec.DEFAULT_CAPACITY);
+    // vec.Reserve(vec.DEFAULT_CAPACITY);
     int pos = 0;
 
     for (auto _ : state) {
@@ -78,14 +78,14 @@ void StdVectorInsert(benchmark::State& state)
     std::uniform_int_distribution<> distr(0, NB); // define the range
     std::vector<int> vec;
     usize pos = 0;
+    usize index = 0;
 
     for (auto _ : state) {
-        vec.insert(vec.begin() + pos, pos);
+        vec.insert(vec.begin() + pos, (int)pos);
 
         state.PauseTiming();
-        if (insertPos.size()) {
-            pos = insertPos.front();
-            insertPos.erase(insertPos.begin());
+        if (index < insertPos.size()) {
+            pos = insertPos[index++];
         } else {
             pos = distr(gen) % vec.size();
         }
@@ -127,6 +127,7 @@ void StdVectorErease(benchmark::State& state)
     std::uniform_int_distribution<> distr(0, NB); // define the range
     std::vector<int> vec;
     usize pos1 = 0;
+    usize index = 0;
 
     for (auto _ : state) {
         state.PauseTiming();
@@ -135,14 +136,12 @@ void StdVectorErease(benchmark::State& state)
             vec.emplace_back(i);
         }
 
-        if (erasePos.size()) {
-            pos1 = erasePos.front();
-            erasePos.erase(erasePos.begin());
+        if (index < erasePos.size()) {
+            pos1 = erasePos[index++];
         } else {
             pos1 = distr(gen) % vec.size();
         }
         
-
         state.ResumeTiming();
         vec.erase(vec.begin() + pos1);
     }
@@ -187,6 +186,7 @@ void StdVectorEreaseRange(benchmark::State& state)
     std::vector<int> vec;
     usize pos1 = 0;
     usize pos2 = 0;
+    usize index = 0;
 
     for (auto _ : state) {
         state.PauseTiming();
@@ -195,20 +195,17 @@ void StdVectorEreaseRange(benchmark::State& state)
             vec.emplace_back(i);
         }
 
-        if (ereaseRange.size()) {
-            auto [p1, p2] = ereaseRange.front();
+        if (index < ereaseRange.size()) {
+            auto [p1, p2] = ereaseRange[index++];
             pos1 = p1;
             pos2 = p2;
-            ereaseRange.erase(ereaseRange.begin());
         } else {
             pos1 = distr(gen) % vec.size();
             pos2 = distr(gen) % vec.size();
         }
         
-
         if (pos1 > pos2)
             std::swap(pos1, pos2);
-
 
         state.ResumeTiming();
         vec.erase(vec.begin() + pos1, vec.begin() + pos2);
