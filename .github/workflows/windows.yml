@@ -46,7 +46,7 @@ jobs:
         cmake --build "build" --config Release --target install
         curl -LS -o VulkanSDK.exe https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
         7z x VulkanSDK.exe -o"${{ env.VULKAN_SDK }}"
-        $env:Path += ";${{ env.VULKAN_SDK }}\;${{ env.VULKAN_SDK }}\Bin\"
+        $env:Path += "C:\Program Files (x86)\googletest-distribution;${{ env.VULKAN_SDK }}\;${{ env.VULKAN_SDK }}\Bin\"
         $env:VULKAN_SDK = "${{ env.VULKAN_SDK }}\"
     
     - name: Create Build Environment
