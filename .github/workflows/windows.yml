@@ -34,10 +34,16 @@ jobs:
     - name: Install Packages (Vcpkg, Vulkan SDK, Google Tests)
       shell: pwsh
       run: |
-        git clone https://github.com/Microsoft/vcpkg.git
-        .\vcpkg\bootstrap-vcpkg.bat
-        vcpkg integrate install
-        vcpkg install gtest --triplet x64-windows
+        git clone https://github.com/google/benchmark.git
+        cd benchmark
+        cmake -E make_directory "build"
+        cmake -E chdir "build" cmake ../ -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_GTEST_TESTS=OFF
+        cmake --build "build" --config Release --target install
+        git clone https://github.com/google/googletest.git
+        cd googletest
+        cmake -E make_directory "build"
+        cmake -E chdir "build" cmake ../ -DCMAKE_BUILD_TYPE=Release
+        cmake --build "build" --config Release --target install
         curl -LS -o VulkanSDK.exe https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe
         7z x VulkanSDK.exe -o"${{ env.VULKAN_SDK }}"
         $env:Path += ";${{ env.VULKAN_SDK }}\;${{ env.VULKAN_SDK }}\Bin\"
