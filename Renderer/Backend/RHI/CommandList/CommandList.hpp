@@ -90,9 +90,9 @@ namespace Renderer
 
         void BindVertexBuffer(const Buffer& buffer);
 
-        void BindIndexBuffer(const Buffer& buffer, DeviceSize offset);
+        void BindIndexBuffer(const Buffer& buffer, DeviceSize offset, VkIndexType indexType = VK_INDEX_TYPE_UINT16);
 
-        void BindIndexBuffer(const Buffer& buffer);
+        void BindIndexBuffer(const Buffer& buffer, VkIndexType indexType = VK_INDEX_TYPE_UINT16);
 
 		void DrawIndexed(uint32 indexCount, uint32 instanceCount = 1, uint32 firstIndex = 0, int32 vertexOffset = 0, uint32 firstInstance = 0);
 

@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 set(CMAKE_CXX_STANDARD 20)
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 set(NAME TrikytaEngine3D)
 project(TrikytaEngine3D)
@@ -83,17 +83,11 @@ add_subdirectory(Core)
 add_subdirectory(Renderer)
 add_subdirectory(Engine)
 
-# set(BUILD_UNIT_TESTS true)
-
-if (BUILD_UNIT_TESTS)
-	if (MSVC)
-		set(CMAKE_TOOLCHAIN_FILE "${CMAKE_BINARY_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
-	endif(MSVC)
-
-	enable_testing()
-	add_subdirectory(Tests/Tests)
-endif(BUILD_UNIT_TESTS)
-
 if (BUILD_BENCHMARKS)
 	add_subdirectory(Tests/Benchmarks)
 endif(BUILD_BENCHMARKS)
+
+if (BUILD_UNIT_TESTS)
+	enable_testing()
+	add_subdirectory(Tests/Tests)
+endif(BUILD_UNIT_TESTS)

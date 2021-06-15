@@ -11,8 +11,8 @@
 
 using namespace TRE;
 
-const unsigned int SCR_WIDTH = 640; //1920 / 2;
-const unsigned int SCR_HEIGHT = 480; //1080 / 2;
+const unsigned int SCR_WIDTH = 800; //1920 / 2;
+const unsigned int SCR_HEIGHT = 600; //1080 / 2;
 
 struct Vertex
 {

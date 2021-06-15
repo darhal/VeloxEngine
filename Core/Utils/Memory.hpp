@@ -51,10 +51,9 @@ namespace TRE::Utils
 		//delete ptr;
 	}
 
-#if __cplusplus >= 202002L
+#if defined(COMPILER_MSVC) || __cplusplus >= 202002L
 	template<typename T>
-	concept POD = (std::is_standard_layout_v<T> && std::is_trivial_v<T>) || std::is_trivially_copyable_v<T> || std::is_trivially_destructible_v<T>;
-	// #define POD typename
+	concept POD = (std::is_standard_layout_v<T> && std::is_trivial_v<T>) || (std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>);
 
 	// POD TYPES:
 	template<POD T>
@@ -133,7 +132,6 @@ namespace TRE::Utils
 	}
 #endif
 
-// #if 0
 	// NON POD TYPES :
 	template<typename T>
 	FORCEINLINE void Copy(T* dst, const T* src, usize count = 1) noexcept
@@ -232,5 +230,4 @@ namespace TRE::Utils
 		Utils::Destroy(ptr, count);
 		Utils::FreeMemory(ptr);
 	}
-// #endif
 }

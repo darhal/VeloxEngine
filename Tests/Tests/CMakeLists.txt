@@ -1,21 +1,18 @@
 SET(MODULE_FOLDER Tests)
 SET(MODULE_NAME Tests)
 
-include_directories(${MODULE_FOLDER})
-
-if (MSVC_IDE)
-    # find_package(GTest REQUIRED)
-    # include_directories(${GTEST_INCLUDE_DIR})
-else(MSVC_IDE)
-    find_package(Threads REQUIRED)
-    find_package(GTest REQUIRED)
-    # find_package(GMock REQUIRED)
-    include_directories(${GTEST_INCLUDE_DIR})
-    # include_directories(${GMOCK_INCLUDE_DIR})
-endif(MSVC_IDE)
-
 SET(MODULE_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${MODULE_FOLDER})
 message(STATUS "Generating project file for example in ${MODULE_FOLDER}")
+
+find_package(Threads REQUIRED)
+find_package(GTest REQUIRED)
+IF (NOT GTEST_FOUND)
+	message(FATAL_ERROR "Could not find Google Tests library!")
+ENDIF()
+include_directories(${GTEST_INCLUDE_DIR})
+
+
 include(GoogleTest)
 
 # Sources
@@ -34,19 +31,8 @@ if (MSVC)
     endforeach()
 endif(MSVC)
 
-
-if(WIN32)
-    add_executable(${MODULE_NAME} ${SOURCE})
-    if (MSVC_IDE)
-        target_link_libraries(${MODULE_NAME} ${CMAKE_THREAD_LIBS_INIT} ${WINLIBS}) #${GTEST_LIBRARY}
-    else(MSVC_IDE)
-        target_link_libraries(${MODULE_NAME} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${WINLIBS}) #
-    endif(MSVC_IDE)
-else(WIN32)
-    add_executable(${MODULE_NAME} ${SOURCE})
-    target_link_libraries(${MODULE_NAME} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-endif(WIN32)
-
+add_executable(${MODULE_NAME} ${SOURCE})
+target_link_libraries(${MODULE_NAME} ${GTEST_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 # gtest_add_tests(TARGET ${MODULE_NAME} TEST_PREFIX)
 gtest_discover_tests(${MODULE_NAME} TEST_PREFIX)
 add_test(NAME ${MODULE_NAME} COMMAND ${MODULE_NAME})
