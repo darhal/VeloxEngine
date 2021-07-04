@@ -24,6 +24,32 @@ public:
 
     constexpr void Append(const BasicString2<T>& str);
 
+    constexpr void PushBack(T ch);
+
+    constexpr void PopBack();
+
+    constexpr void Insert(usize pos, T ch);
+
+    constexpr void Insert(usize pos, const T* str, usize sz = 0);
+
+    constexpr void Insert(usize pos, const BasicString2<T>& str);
+
+    constexpr void Erease(usize index, usize count);
+
+    constexpr bool StartsWith(const T* str, usize sz = 0);
+
+    constexpr bool StartsWith(const BasicString2<T>& str);
+
+    constexpr bool EndsWith(const T* str, usize sz = 0);
+
+    constexpr bool EndsWith(const BasicString2<T>& str);
+
+    constexpr BasicString2<T> SubString(usize index, usize count);
+
+    constexpr T Front() const { return m_Data[0]; }
+
+    constexpr T Back() const { return m_Data[m_Size - 1]; }
+
     constexpr bool Reserve(usize size);
 
     constexpr usize Size() const { return m_Size; }
@@ -35,6 +61,8 @@ public:
     constexpr T* Data() { return m_Data; }
 
     constexpr T operator[](usize i) const { return m_Data[i]; }
+
+    constexpr bool Empty() const { return m_Size == 0; }
 
 private:
     constexpr void Reallocate(usize nCap);
@@ -117,7 +145,107 @@ constexpr void BasicString2<T>::Append(const T* str, usize sz)
 template<typename T>
 constexpr void BasicString2<T>::Append(const BasicString2<T>& str)
 {
-    this->Append(str.Data(), str.Size());
+    return this->Append(str.Data(), str.Size());
+}
+
+template<typename T>
+constexpr void BasicString2<T>::PushBack(T ch)
+{
+    return this->Append(ch);
+}
+
+template<typename T>
+constexpr void BasicString2<T>::PopBack()
+{
+    if (m_Size)
+        m_Data[m_Size--] = NULL_TERMINATOR;
+}
+
+template<typename T>
+constexpr void BasicString2<T>::Insert(usize pos, T ch)
+{
+    // TODO: assert pos is good and in range
+    // TODO :  Room for optimizatio here by handling the case of reserve manually
+    this->Reserve(m_Size + 2);
+    Utils::MoveConstructBackward(m_Data + 1, m_Data, m_Size, pos);
+    m_Data[pos] = ch;
+    m_Data[m_Size++] = NULL_TERMINATOR;
+}
+
+template<typename T>
+constexpr void BasicString2<T>::Insert(usize pos, const T* str, usize sz)
+{
+    // TODO: assert pos is good and in range
+    if (str != nullptr && sz == 0)
+        sz = strlen(str);
+
+    // TODO :  Room for optimizatio here by handling the case of reserve manually
+    this->Reserve(m_Size + sz + 1);
+    Utils::MoveConstructBackward(m_Data + pos, m_Data, m_Size, m_Size - pos);
+    Utils::Copy(m_Data + pos, str, sz);
+    m_Size += sz;
+    m_Data[m_Size] = NULL_TERMINATOR;
+}
+
+template<typename T>
+constexpr void BasicString2<T>::Insert(usize pos, const BasicString2<T>& str)
+{
+    return this->Insert(pos, str.Data(), str.Size());
+}
+
+template<typename T>
+constexpr void BasicString2<T>::Erease(usize index, usize count)
+{
+    // TODO : Assert index and count are in range
+    Utils::MoveConstructBackward(m_Data + index, m_Data, m_Size, index + count);
+    m_Size -= count;
+    m_Data[m_Size] = NULL_TERMINATOR;
+}
+
+template<typename T>
+constexpr bool BasicString2<T>::StartsWith(const T* str, usize sz)
+{
+    if (str != nullptr && sz == 0)
+        sz = strlen(str);
+
+    if (sz > m_Size)
+        return false;
+
+    for (usize i = 0; i < sz; i++) {
+        if (m_Data[i] != str[i])
+            return false;
+    }
+
+    return true;
+}
+
+template<typename T>
+constexpr bool BasicString2<T>::StartsWith(const BasicString2<T>& str)
+{
+    return this->StartsWith(str.Data(), str.Size());
+}
+
+template<typename T>
+constexpr bool BasicString2<T>::EndsWith(const T* str, usize sz)
+{
+    if (str != nullptr && sz == 0)
+        sz = strlen(str);
+
+    if (sz > m_Size)
+        return false;
+
+    for (usize i = sz; i >= 0; i--){
+        if (m_Data[i] != str[i])
+            return false;
+    }
+
+    return true;
+}
+
+template<typename T>
+constexpr bool BasicString2<T>::EndsWith(const BasicString2<T>& str)
+{
+    return this->StartsWith(str.Data(), str.Size());
 }
 
 template<typename T>
@@ -139,9 +267,8 @@ constexpr void BasicString2<T>::Reallocate(usize nCap)
     T* newData = Utils::Allocate<T>(nCap);
     Utils::Copy(newData, m_Data, m_Size + 1);
 
-    if (!this->IsSmall()) {
+    if (!this->IsSmall())
         Utils::FreeMemory(m_Data);
-    }
 
     m_Data = newData;
     m_Capacity = nCap;
