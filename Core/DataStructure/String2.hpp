@@ -2,6 +2,7 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Utils/Memory.hpp>
+#include <Core/Utils/Common.hpp>
 
 TRE_NS_START
 
@@ -158,33 +159,71 @@ template<typename T>
 constexpr void BasicString2<T>::PopBack()
 {
     if (m_Size)
-        m_Data[m_Size--] = NULL_TERMINATOR;
+        m_Data[--m_Size] = NULL_TERMINATOR;
 }
 
 template<typename T>
 constexpr void BasicString2<T>::Insert(usize pos, T ch)
 {
     // TODO: assert pos is good and in range
-    // TODO :  Room for optimizatio here by handling the case of reserve manually
-    this->Reserve(m_Size + 2);
-    Utils::MoveConstructBackward(m_Data + 1, m_Data, m_Size, pos);
-    m_Data[pos] = ch;
-    m_Data[m_Size++] = NULL_TERMINATOR;
+    // ASSERTF(pos > m_Size, "Given index is out of bound please choose from [0..%" SZu "].", m_Size);
+
+    usize cap = this->Capacity();
+
+    if (m_Size + 2 >= cap) {
+        usize nCap = cap * DEFAULT_GROW_SIZE;
+        T* newData = Utils::Allocate<T>(nCap);
+        Utils::Copy(newData, m_Data, pos);
+        newData[pos] = ch;
+        Utils::Copy(newData + pos + 1, m_Data + pos, m_Size - pos);
+
+        if (!this->IsSmall())
+            Utils::FreeMemory(m_Data);
+
+        m_Data = newData;
+        m_Capacity = nCap;
+        m_Data[++m_Size] = NULL_TERMINATOR;
+    } else {
+        // shift all of this to keep place for the new element
+        Utils::MoveConstructBackward(m_Data + 1, m_Data, m_Size - 1, pos);
+        m_Data[pos] = ch;
+        m_Data[++m_Size] = NULL_TERMINATOR;
+    }
+
+    // return this->Insert(pos, &ch, 1);
 }
 
 template<typename T>
 constexpr void BasicString2<T>::Insert(usize pos, const T* str, usize sz)
 {
     // TODO: assert pos is good and in range
+
     if (str != nullptr && sz == 0)
         sz = strlen(str);
 
-    // TODO :  Room for optimizatio here by handling the case of reserve manually
-    this->Reserve(m_Size + sz + 1);
-    Utils::MoveConstructBackward(m_Data + pos, m_Data, m_Size, m_Size - pos);
-    Utils::Copy(m_Data + pos, str, sz);
-    m_Size += sz;
-    m_Data[m_Size] = NULL_TERMINATOR;
+    usize cap = this->Capacity();
+
+    if (m_Size + sz + 1 >= cap) {
+        usize nCap = (m_Size + sz) * DEFAULT_GROW_SIZE;
+        T* newData = Utils::Allocate<T>(nCap);
+        Utils::Copy(newData, m_Data, pos);
+        Utils::Copy(newData + pos, str, sz);
+        Utils::Copy(newData + pos + sz, m_Data + pos, m_Size - pos);
+
+        if (!this->IsSmall())
+            Utils::FreeMemory(m_Data);
+
+        m_Data = newData;
+        m_Capacity = nCap;
+        m_Size += sz;
+        m_Data[m_Size] = NULL_TERMINATOR;
+    } else {
+        // shift all of this to keep place for the new element
+        Utils::MoveConstructBackward(m_Data + sz, m_Data, m_Size - 1, pos);
+        Utils::Copy(m_Data + pos, str, sz);
+        m_Size += sz;
+        m_Data[m_Size] = NULL_TERMINATOR;
+    }
 }
 
 template<typename T>
@@ -197,7 +236,12 @@ template<typename T>
 constexpr void BasicString2<T>::Erease(usize index, usize count)
 {
     // TODO : Assert index and count are in range
-    Utils::MoveConstructBackward(m_Data + index, m_Data, m_Size, index + count);
+
+    if (count > m_Size - index)
+        count = m_Size - index;
+
+    auto end = index + count;
+    Utils::MoveConstruct(m_Data + index, m_Data + end, m_Size - end);
     m_Size -= count;
     m_Data[m_Size] = NULL_TERMINATOR;
 }
@@ -211,12 +255,13 @@ constexpr bool BasicString2<T>::StartsWith(const T* str, usize sz)
     if (sz > m_Size)
         return false;
 
-    for (usize i = 0; i < sz; i++) {
+    /*for (usize i = 0; i < sz; i++) {
         if (m_Data[i] != str[i])
             return false;
-    }
+    }*/
 
-    return true;
+    // return true;
+    return strncmp(m_Data, str, sz) == 0;
 }
 
 template<typename T>
@@ -234,18 +279,27 @@ constexpr bool BasicString2<T>::EndsWith(const T* str, usize sz)
     if (sz > m_Size)
         return false;
 
-    for (usize i = sz; i >= 0; i--){
-        if (m_Data[i] != str[i])
+    /*for (usize i = 0; i < sz; i++) {
+        if (m_Data[m_Size - sz + i - 1] != str[i])
             return false;
-    }
+    }*/
 
-    return true;
+    // return true;
+    return strncmp(m_Data + m_Size - sz, str, sz) == 0;
 }
 
 template<typename T>
 constexpr bool BasicString2<T>::EndsWith(const BasicString2<T>& str)
 {
     return this->StartsWith(str.Data(), str.Size());
+}
+
+template<typename T>
+constexpr BasicString2<T> BasicString2<T>::SubString(usize index, usize count)
+{
+    if (count > m_Size - index)
+        count = m_Size - index;
+    return BasicString2(this->Data() + index, count);
 }
 
 template<typename T>
