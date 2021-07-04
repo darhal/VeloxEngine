@@ -1,6 +1,6 @@
 #include <random>
 #include <benchmark/benchmark.h>
-#include <Core/DataStructure/Vector/Vector.hpp>
+#include <Core/DataStructure/Vector.hpp>
 
 void VectorEmplaceBack(benchmark::State& state)
 {

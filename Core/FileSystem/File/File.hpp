@@ -2,7 +2,7 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/FileSystem/Utils/Utility.hpp>
-#include <Core/DataStructure/String/String.hpp>
+#include <Core/DataStructure/String.hpp>
 #include <stdio.h>
 #include <stdarg.h>
 

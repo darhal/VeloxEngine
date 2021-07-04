@@ -2,7 +2,7 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
-#include <Core/DataStructure/LinkedList/List/List.hpp>
+#include <Core/DataStructure/List.hpp>
 
 TRE_NS_START
 

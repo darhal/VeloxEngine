@@ -2,7 +2,7 @@
 
 #include <Renderer/Backend/Common.hpp>
 #include <Renderer/Backend/RHI/Common/Globals.hpp>
-#include <Core/DataStructure/Vector/Vector.hpp>
+#include <Core/DataStructure/Vector.hpp>
 #include <Renderer/Backend/RHI/Images/ImageHelper.hpp>
 #include <Renderer/Backend/RHI/Images/Image.hpp>
 

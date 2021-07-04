@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Core/Misc/Defines/Common.hpp"
-#include "Core/DataStructure/String/String.hpp"
-#include "Core/DataStructure/Vector/Vector.hpp"
-#include "Core/DataStructure/Tuple/Pair.hpp"
+#include "Core/DataStructure/String.hpp"
+#include "Core/DataStructure/Vector.hpp"
+#include "Core/DataStructure/Pair.hpp"
 
 #if defined(OS_LINUX) || defined(OS_UNIX)
     #include <sys/types.h>

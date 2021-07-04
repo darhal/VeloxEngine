@@ -4,7 +4,7 @@
 #include <array>
 #include <initializer_list>
 
-#include <Core/DataStructure/Vector/Vector.hpp>
+#include <Core/DataStructure/Vector.hpp>
 // #include <Core/Math/Common.hpp>
 
 #include <Renderer/Backend/Common.hpp>

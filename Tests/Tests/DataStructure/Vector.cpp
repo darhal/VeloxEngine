@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <random>
-#include <Core/DataStructure/Vector/Vector.hpp>
+#include <Core/DataStructure/Vector.hpp>
 
 template<typename T1, typename T2>
 auto TestVectors(const T1& x, const T2& y)

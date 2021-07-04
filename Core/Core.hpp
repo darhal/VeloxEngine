@@ -4,4 +4,4 @@
 #include <Core/Misc/Defines/PlatformInclude.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 
-#include <Core/DataStructure/Vector/Vector.hpp>
+#include <Core/DataStructure/Vector.hpp>

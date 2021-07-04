@@ -6,7 +6,6 @@ include_directories(${MODULE_FOLDER})
 message(STATUS "Generating project file for example in ${MODULE_FOLDER}")
 include(GoogleTest)
 
-
 find_package(benchmark REQUIRED)
 IF (NOT benchmark_FOUND)
 	message(FATAL_ERROR "Could not find Google Benchmark library!")

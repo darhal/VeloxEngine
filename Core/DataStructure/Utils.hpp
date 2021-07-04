@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Core/Misc/Defines/Common.hpp>
-#include <Core/DataStructure/Bitset/Bitset.hpp>
-#include <Core/DataStructure/String/String.hpp>
+#include <Core/DataStructure/Bitset.hpp>
+#include <Core/DataStructure/String.hpp>
 
 TRE_NS_START
 

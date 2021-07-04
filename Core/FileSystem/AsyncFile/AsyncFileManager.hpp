@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Core/Misc/Defines/Common.hpp"
-#include "Core/DataStructure/String/String.hpp"
-#include "Core/DataStructure/Queue/Queue.hpp"
+#include "Core/DataStructure/String.hpp"
+#include "Core/DataStructure/Queue.hpp"
 #include "Core/FileSystem/File/File.hpp"
 #include <functional>
 #include <thread>

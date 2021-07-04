@@ -8,6 +8,10 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 set(NAME TrikytaEngine3D)
 project(TrikytaEngine3D)
 
+OPTION(BUILD_BENCHMARKS "Build the benchmarks" OFF)
+OPTION(BUILD_UNIT_TESTS "Build the unit tests" OFF)
+
+
 include_directories(${PROJECT_SOURCE_DIR})
 
 # if (not defined ${CMAKE_BUILD_TYPE})
@@ -82,6 +86,7 @@ link_directories(${CMAKE_BINARY_DIR}/Libs)
 add_subdirectory(Core)
 add_subdirectory(Renderer)
 add_subdirectory(Engine)
+
 
 if (BUILD_BENCHMARKS)
 	add_subdirectory(Tests/Benchmarks)

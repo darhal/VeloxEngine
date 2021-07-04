@@ -9,19 +9,19 @@
 
 namespace TRE::Utils
 {
-	template <typename integral>
+    template<typename integral>
 	constexpr bool IsAligned(integral x, usize a) noexcept
 	{
 		return (x & (integral(a) - 1)) == 0;
 	}
 
-	template <typename integral>
+    template<typename integral>
 	constexpr integral AlignUp(integral x, usize a) noexcept
 	{
 		return integral((x + (integral(a) - 1)) & ~integral(a - 1));
 	}
 
-	template <typename integral>
+    template<typename integral>
 	constexpr integral AlignDown(integral x, usize a) noexcept
 	{
 		return integral(x & ~integral(a - 1));
@@ -121,12 +121,12 @@ namespace TRE::Utils
 	}
 
 	template<POD T>
-	FORCEINLINE void Destroy(T* ptr, usize count = 1) noexcept
+    FORCEINLINE void Destroy(T* /*ptr*/, usize /*count = 1*/) noexcept
 	{
 	}
 
 	template<POD T>
-	FORCEINLINE void Free(T* ptr, usize count = 1) noexcept
+    FORCEINLINE void Free(T* ptr, usize /*count = 1*/) noexcept
 	{
 		Utils::FreeMemory(ptr);
 	}
