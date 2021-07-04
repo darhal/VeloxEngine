@@ -28,7 +28,7 @@ public:
 
     constexpr usize Size() const { return m_Size; }
 
-    constexpr bool IsSmall() const { return m_Size < NB_CHAR_SMALL; }
+    constexpr bool IsSmall() const { return m_Data == m_Buffer; }
 
     constexpr usize Capacity() const { return this->IsSmall() ? NB_CHAR_SMALL : m_Capacity; }
 
@@ -50,7 +50,7 @@ private:
     usize m_Size;
 
     union {
-        T m_Buffer[SSO_SIZE];
+        T m_Buffer[NB_CHAR_SMALL + 1];
         usize m_Capacity;
     };
 };
@@ -65,10 +65,10 @@ template<typename T>
 constexpr BasicString2<T>::BasicString2(const T* data, usize size)
     : m_Size(size)
 {
-    if (this->IsSmall()) {
+    if (m_Size < NB_CHAR_SMALL) {
         m_Data = m_Buffer;
     }else{
-        m_Data = Utils::Allocate<T>(m_Size);
+        m_Data = Utils::Allocate<T>(m_Size + 1);
         m_Capacity = m_Size;
     }
 
@@ -123,7 +123,9 @@ constexpr void BasicString2<T>::Append(const BasicString2<T>& str)
 template<typename T>
 constexpr bool BasicString2<T>::Reserve(usize size)
 {
-    if (size < m_Capacity || size < NB_CHAR_SMALL)
+    usize cap = this->Capacity();
+
+    if (size < cap)
         return false;
 
     size = size * DEFAULT_GROW_SIZE;
@@ -135,10 +137,11 @@ template<typename T>
 constexpr void BasicString2<T>::Reallocate(usize nCap)
 {
     T* newData = Utils::Allocate<T>(nCap);
-    Utils::Copy(newData, m_Data, m_Size);
+    Utils::Copy(newData, m_Data, m_Size + 1);
 
-    if (!this->IsSmall())
+    if (!this->IsSmall()) {
         Utils::FreeMemory(m_Data);
+    }
 
     m_Data = newData;
     m_Capacity = nCap;

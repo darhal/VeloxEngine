@@ -11,7 +11,6 @@ project(TrikytaEngine3D)
 OPTION(BUILD_BENCHMARKS "Build the benchmarks" OFF)
 OPTION(BUILD_UNIT_TESTS "Build the unit tests" OFF)
 
-
 include_directories(${PROJECT_SOURCE_DIR})
 
 # if (not defined ${CMAKE_BUILD_TYPE})
