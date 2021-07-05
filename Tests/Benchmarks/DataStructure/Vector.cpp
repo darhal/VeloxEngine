@@ -52,178 +52,153 @@ std::vector<std::pair<usize, usize>> ereaseRange;
 
 void VectorInsert(benchmark::State& state)
 {
-    constexpr auto NB = 100'000'000;
+    const auto NB = state.max_iterations;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
+
     TRE::Vector<int> vec;
     // vec.Reserve(vec.DEFAULT_CAPACITY);
     int pos = 0;
 
-    for (auto _ : state) {
-        vec.Insert(pos, pos);
+    for (usize i = 0; i < NB; i++) {
+        insertPos.emplace_back(pos);
+        pos = distr(gen) % (i + 1);
+    }
 
+    pos = 0;
+
+    for (auto _ : state) {
         state.PauseTiming();
-        pos = distr(gen) % vec.Size();
-        insertPos.push_back(pos);
+        usize index = insertPos[pos++];
         state.ResumeTiming();
+
+        vec.Insert(index, index);
     }
 }
 
 void StdVectorInsert(benchmark::State& state)
 {
-    constexpr auto NB = 100'000'000;
-    std::random_device rd; // obtain a random number from hardware
-    std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(0, NB); // define the range
     std::vector<int> vec;
     usize pos = 0;
-    usize index = 0;
 
     for (auto _ : state) {
-        vec.insert(vec.begin() + pos, (int)pos);
-
         state.PauseTiming();
-        if (index < insertPos.size()) {
-            pos = insertPos[index++];
-        } else {
-            pos = distr(gen) % vec.size();
-        }
-        
+        usize index = insertPos[pos++];
         state.ResumeTiming();
+
+        vec.insert(vec.begin() + index, index);
     }
 }
 
 void VectorErease(benchmark::State& state)
 {
-    constexpr auto NB = 100;
+    const auto NB = state.max_iterations;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
-    TRE::Vector<int> vec;
-    vec.Reserve(vec.DEFAULT_CAPACITY);
     usize pos1 = 0;
+
+    TRE::Vector<int> vec;
+
+    for (usize i = 0; i < NB; i++) {
+        erasePos.emplace_back(pos1);
+        vec.EmplaceBack(i);
+        pos1 = distr(gen) % (i + 1);
+    }
+
+    pos1 = 0;
 
     for (auto _ : state) {
         state.PauseTiming();
-
-        for (auto i = 0; i < NB; i++) {
-            vec.EmplaceBack(i);
-        }
-
-        pos1 = distr(gen) % vec.Size();
-        erasePos.emplace_back(pos1);
-
+        usize index = erasePos[pos1++] % vec.Size();
         state.ResumeTiming();
-        vec.Erease(pos1);
+
+        vec.Erease(index);
     }
 }
 
 void StdVectorErease(benchmark::State& state)
 {
-    constexpr auto NB = 100;
-    std::random_device rd; // obtain a random number from hardware
-    std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(0, NB); // define the range
+    const auto NB = state.max_iterations;
     std::vector<int> vec;
     usize pos1 = 0;
-    usize index = 0;
+
+    for (usize i = 0; i < NB; i++) {
+        vec.emplace_back(i);
+    }
 
     for (auto _ : state) {
         state.PauseTiming();
-
-        for (auto i = 0; i < NB; i++) {
-            vec.emplace_back(i);
-        }
-
-        if (index < erasePos.size()) {
-            pos1 = erasePos[index++];
-        } else {
-            pos1 = distr(gen) % vec.size();
-        }
-        
+        usize index = erasePos[pos1++] % vec.size();
         state.ResumeTiming();
-        vec.erase(vec.begin() + pos1);
+
+        vec.erase(vec.begin() + index);
     }
 }
 
 void VectorEreaseRange(benchmark::State& state)
 {
-    constexpr auto NB = 100;
+    const auto NB = state.max_iterations;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
-    TRE::Vector<int> vec;
-    vec.Reserve(vec.DEFAULT_CAPACITY);
     usize pos1 = 0;
     usize pos2 = 0;
 
-    for (auto _ : state) {
-        state.PauseTiming();
-
-        for (auto i = 0; i < NB; i++) {
-            vec.EmplaceBack(i);
-        }
-
-        pos1 = distr(gen) % vec.Size();
-        pos2 = distr(gen) % vec.Size();
-        ereaseRange.emplace_back(pos1, pos2);
+    for (usize i = 0; i < NB; i++) {
+        pos1 = distr(gen) % (i+1);
+        pos2 = distr(gen) % (i+1);
 
         if (pos1 > pos2)
             std::swap(pos1, pos2);
 
+        ereaseRange.emplace_back(pos1, pos2);
+    }
+
+    pos1 = 0;
+
+    for (auto _ : state) {
+        state.PauseTiming();
+        TRE::Vector<int> vec;
+        for (usize i = 0; i < NB; i++)
+            vec.EmplaceBack(i);
+        auto p = ereaseRange[pos1++];
         state.ResumeTiming();
-        vec.Erease(pos1, pos2);
+
+        vec.Erease(p.first, p.second);
     }
 }
 
 void StdVectorEreaseRange(benchmark::State& state)
 {
-    constexpr auto NB = 100;
-    std::random_device rd; // obtain a random number from hardware
-    std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(0, NB); // define the range
-    std::vector<int> vec;
-    usize pos1 = 0;
-    usize pos2 = 0;
+    const auto NB = state.max_iterations;
     usize index = 0;
 
     for (auto _ : state) {
         state.PauseTiming();
-
-        for (auto i = 0; i < NB; i++) {
+        std::vector<int> vec;
+        for (usize i = 0; i < NB; i++)
             vec.emplace_back(i);
-        }
-
-        if (index < ereaseRange.size()) {
-            auto [p1, p2] = ereaseRange[index++];
-            pos1 = p1;
-            pos2 = p2;
-        } else {
-            pos1 = distr(gen) % vec.size();
-            pos2 = distr(gen) % vec.size();
-        }
-        
-        if (pos1 > pos2)
-            std::swap(pos1, pos2);
-
+        auto p = ereaseRange[index++];
         state.ResumeTiming();
-        vec.erase(vec.begin() + pos1, vec.begin() + pos2);
+
+        vec.erase(vec.begin() + p.first, vec.begin() + p.second);
     }
 }
 
 // Register the function as a benchmark
-BENCHMARK(VectorEmplaceBack);
-BENCHMARK(StdVectorEmplaceBack);
+BENCHMARK(VectorEmplaceBack)->Iterations(5'000'000);
+BENCHMARK(StdVectorEmplaceBack)->Iterations(5'000'000);
 
-BENCHMARK(VectorEmplaceFront);
-BENCHMARK(StdVectorEmplaceFront);
+BENCHMARK(VectorEmplaceFront)->Iterations(250'000);
+BENCHMARK(StdVectorEmplaceFront)->Iterations(250'000);
 
-BENCHMARK(VectorInsert);
-BENCHMARK(StdVectorInsert);
+BENCHMARK(VectorInsert)->Iterations(500'000);
+BENCHMARK(StdVectorInsert)->Iterations(500'000);
 
-BENCHMARK(VectorErease);
-BENCHMARK(StdVectorErease);
+BENCHMARK(VectorErease)->Iterations(50'000);
+BENCHMARK(StdVectorErease)->Iterations(50'000);
 
-BENCHMARK(VectorEreaseRange);
-BENCHMARK(StdVectorEreaseRange);
+BENCHMARK(VectorEreaseRange)->Iterations(50'000);
+BENCHMARK(StdVectorEreaseRange)->Iterations(50'000);

@@ -120,6 +120,12 @@ namespace TRE::Utils
 		}
 	}
 
+    template<POD T>
+    FORCEINLINE bool MemCmp(const T* s1, const T* s2, usize count = 1)
+    {
+        return std::memcmp(s1, s2, sizeof(T) * count) == 0;
+    }
+
 	template<POD T>
     FORCEINLINE void Destroy(T* /*ptr*/, usize /*count = 1*/) noexcept
 	{
@@ -215,6 +221,17 @@ namespace TRE::Utils
 			dst[i] = T(std::forward(src));
 		}
 	}
+
+    template<typename T>
+    FORCEINLINE bool MemCmp(const T* s1, const T* s2, usize count = 1)
+    {
+        for (usize i = 0; i < count; i++) {
+            if (s1[i] != s2[i])
+                return false;
+        }
+
+        return true;
+    }
 
 	template<typename T>
 	FORCEINLINE void Destroy(T* ptr, usize count = 1) noexcept

@@ -1,8 +1,11 @@
 #pragma once
 
+#include <string.h>
+
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Utils/Memory.hpp>
 #include <Core/Utils/Common.hpp>
+#include <Core/Misc/Defines/Debug.hpp>
 
 TRE_NS_START
 
@@ -10,60 +13,64 @@ template<typename T>
 class BasicString2
 {
 public:
-    constexpr BasicString2();
+    FORCEINLINE constexpr BasicString2();
 
     constexpr BasicString2(const T* data, usize size);
 
+    FORCEINLINE constexpr BasicString2(const std::basic_string<T>& str);
+
     template<usize S>
-    constexpr BasicString2(const T(&str)[S]);
+    FORCEINLINE constexpr BasicString2(const T(&str)[S]);
 
-    constexpr ~BasicString2();
+    FORCEINLINE constexpr ~BasicString2() noexcept;
 
-    constexpr void Append(T ch);
+    FORCEINLINE constexpr void Append(T ch);
 
     constexpr void Append(const T* str, usize sz = 0);
 
-    constexpr void Append(const BasicString2<T>& str);
+    FORCEINLINE constexpr void Append(const BasicString2<T>& str);
 
     constexpr void PushBack(T ch);
 
-    constexpr void PopBack();
+    FORCEINLINE constexpr void PopBack() noexcept;
 
     constexpr void Insert(usize pos, T ch);
 
     constexpr void Insert(usize pos, const T* str, usize sz = 0);
 
-    constexpr void Insert(usize pos, const BasicString2<T>& str);
+    FORCEINLINE constexpr void Insert(usize pos, const BasicString2<T>& str);
 
-    constexpr void Erease(usize index, usize count);
+    constexpr void Erase(usize index, usize count) noexcept;
 
-    constexpr bool StartsWith(const T* str, usize sz = 0);
+    constexpr bool StartsWith(const T* str, usize sz = 0) noexcept;
 
-    constexpr bool StartsWith(const BasicString2<T>& str);
+    constexpr bool StartsWith(const BasicString2<T>& str) noexcept;
 
-    constexpr bool EndsWith(const T* str, usize sz = 0);
+    constexpr bool EndsWith(const T* str, usize sz = 0) noexcept;
 
-    constexpr bool EndsWith(const BasicString2<T>& str);
-
-    constexpr BasicString2<T> SubString(usize index, usize count);
-
-    constexpr T Front() const { return m_Data[0]; }
-
-    constexpr T Back() const { return m_Data[m_Size - 1]; }
+    constexpr bool EndsWith(const BasicString2<T>& str) noexcept;
 
     constexpr bool Reserve(usize size);
 
-    constexpr usize Size() const { return m_Size; }
+    FORCEINLINE constexpr BasicString2<T> SubString(usize index, usize count);
 
-    constexpr bool IsSmall() const { return m_Data == m_Buffer; }
+    FORCEINLINE constexpr T Front() const noexcept { return m_Data[0]; }
 
-    constexpr usize Capacity() const { return this->IsSmall() ? NB_CHAR_SMALL : m_Capacity; }
+    FORCEINLINE constexpr T Back() const noexcept { return m_Data[m_Size - 1]; }
 
-    constexpr T* Data() { return m_Data; }
+    FORCEINLINE constexpr usize Size() const noexcept{ return m_Size; }
 
-    constexpr T operator[](usize i) const { return m_Data[i]; }
+    FORCEINLINE constexpr bool IsSmall() const noexcept { return m_Data == m_Buffer; }
 
-    constexpr bool Empty() const { return m_Size == 0; }
+    FORCEINLINE constexpr usize Capacity() const noexcept { return this->IsSmall() ? NB_CHAR_SMALL : m_Capacity; }
+
+    FORCEINLINE constexpr T* Data() noexcept { return m_Data; }
+
+    FORCEINLINE constexpr const T* Data() const noexcept { return m_Data; }
+
+    FORCEINLINE constexpr T operator[](usize i) const noexcept { return m_Data[i]; }
+
+    FORCEINLINE constexpr bool Empty() const noexcept { return m_Size == 0; }
 
 private:
     constexpr void Reallocate(usize nCap);
@@ -85,7 +92,7 @@ private:
 };
 
 template<typename T>
-constexpr BasicString2<T>::BasicString2() : m_Data(m_Buffer), m_Size(0), m_Buffer{}
+FORCEINLINE constexpr BasicString2<T>::BasicString2() : m_Data(m_Buffer), m_Size(0), m_Buffer{}
 {
 
 }
@@ -105,15 +112,22 @@ constexpr BasicString2<T>::BasicString2(const T* data, usize size)
 }
 
 template<typename T>
+FORCEINLINE constexpr BasicString2<T>::BasicString2(const std::basic_string<T>& str)
+    : BasicString2(str.c_str(), str.size())
+{
+
+}
+
+template<typename T>
 template<usize S>
-constexpr BasicString2<T>::BasicString2(const T(&str)[S])
+FORCEINLINE constexpr BasicString2<T>::BasicString2(const T(&str)[S])
     : BasicString2(str, S - 1)
 {
 
 }
 
 template<typename T>
-constexpr BasicString2<T>::~BasicString2()
+FORCEINLINE constexpr BasicString2<T>::~BasicString2() noexcept
 {
     if (!this->IsSmall()) {
         Utils::FreeMemory(m_Data);
@@ -121,7 +135,7 @@ constexpr BasicString2<T>::~BasicString2()
 }
 
 template<typename T>
-constexpr void BasicString2<T>::Append(T ch)
+FORCEINLINE constexpr void BasicString2<T>::Append(T ch)
 {
     this->Reserve(m_Size + 2);
     m_Data[m_Size++] = ch;
@@ -144,19 +158,19 @@ constexpr void BasicString2<T>::Append(const T* str, usize sz)
 }
 
 template<typename T>
-constexpr void BasicString2<T>::Append(const BasicString2<T>& str)
+FORCEINLINE constexpr void BasicString2<T>::Append(const BasicString2<T>& str)
 {
     return this->Append(str.Data(), str.Size());
 }
 
 template<typename T>
-constexpr void BasicString2<T>::PushBack(T ch)
+FORCEINLINE constexpr void BasicString2<T>::PushBack(T ch)
 {
     return this->Append(ch);
 }
 
 template<typename T>
-constexpr void BasicString2<T>::PopBack()
+FORCEINLINE constexpr void BasicString2<T>::PopBack() noexcept
 {
     if (m_Size)
         m_Data[--m_Size] = NULL_TERMINATOR;
@@ -165,8 +179,7 @@ constexpr void BasicString2<T>::PopBack()
 template<typename T>
 constexpr void BasicString2<T>::Insert(usize pos, T ch)
 {
-    // TODO: assert pos is good and in range
-    // ASSERTF(pos > m_Size, "Given index is out of bound please choose from [0..%" SZu "].", m_Size);
+    TRE_ASSERTF(pos <= m_Size, "Given index is out of bound. Index must be in  [0..%" SZu "[", m_Size);
 
     usize cap = this->Capacity();
 
@@ -196,7 +209,7 @@ constexpr void BasicString2<T>::Insert(usize pos, T ch)
 template<typename T>
 constexpr void BasicString2<T>::Insert(usize pos, const T* str, usize sz)
 {
-    // TODO: assert pos is good and in range
+   TRE_ASSERTF(pos <= m_Size, "Given index is out of bound. Index must be in  [0..%" SZu "[", m_Size);
 
     if (str != nullptr && sz == 0)
         sz = strlen(str);
@@ -227,15 +240,18 @@ constexpr void BasicString2<T>::Insert(usize pos, const T* str, usize sz)
 }
 
 template<typename T>
-constexpr void BasicString2<T>::Insert(usize pos, const BasicString2<T>& str)
+FORCEINLINE constexpr void BasicString2<T>::Insert(usize pos, const BasicString2<T>& str)
 {
     return this->Insert(pos, str.Data(), str.Size());
 }
 
 template<typename T>
-constexpr void BasicString2<T>::Erease(usize index, usize count)
+constexpr void BasicString2<T>::Erase(usize index, usize count) noexcept
 {
-    // TODO : Assert index and count are in range
+    TRE_ASSERTF(index < m_Size, "Given index is out of bound. Index must be in  [0..%" SZu "[", m_Size);
+
+    if (!count)
+        return;
 
     if (count > m_Size - index)
         count = m_Size - index;
@@ -247,7 +263,7 @@ constexpr void BasicString2<T>::Erease(usize index, usize count)
 }
 
 template<typename T>
-constexpr bool BasicString2<T>::StartsWith(const T* str, usize sz)
+constexpr bool BasicString2<T>::StartsWith(const T* str, usize sz) noexcept
 {
     if (str != nullptr && sz == 0)
         sz = strlen(str);
@@ -261,17 +277,17 @@ constexpr bool BasicString2<T>::StartsWith(const T* str, usize sz)
     }*/
 
     // return true;
-    return strncmp(m_Data, str, sz) == 0;
+    return Utils::MemCmp(m_Data, str, sz);
 }
 
 template<typename T>
-constexpr bool BasicString2<T>::StartsWith(const BasicString2<T>& str)
+FORCEINLINE constexpr bool BasicString2<T>::StartsWith(const BasicString2<T>& str) noexcept
 {
     return this->StartsWith(str.Data(), str.Size());
 }
 
 template<typename T>
-constexpr bool BasicString2<T>::EndsWith(const T* str, usize sz)
+constexpr bool BasicString2<T>::EndsWith(const T* str, usize sz) noexcept
 {
     if (str != nullptr && sz == 0)
         sz = strlen(str);
@@ -285,17 +301,17 @@ constexpr bool BasicString2<T>::EndsWith(const T* str, usize sz)
     }*/
 
     // return true;
-    return strncmp(m_Data + m_Size - sz, str, sz) == 0;
+    return Utils::MemCmp(m_Data + m_Size - sz, str, sz);
 }
 
 template<typename T>
-constexpr bool BasicString2<T>::EndsWith(const BasicString2<T>& str)
+FORCEINLINE constexpr bool BasicString2<T>::EndsWith(const BasicString2<T>& str) noexcept
 {
     return this->StartsWith(str.Data(), str.Size());
 }
 
 template<typename T>
-constexpr BasicString2<T> BasicString2<T>::SubString(usize index, usize count)
+FORCEINLINE constexpr BasicString2<T> BasicString2<T>::SubString(usize index, usize count)
 {
     if (count > m_Size - index)
         count = m_Size - index;

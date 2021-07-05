@@ -70,7 +70,7 @@ if (CMAKE_BUILD_TYPE MATCHES "Release")
 	if (MSVC)
 		# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Oxyib")
 	else(MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 	endif()
 
 	# message("Release buildddd a")
