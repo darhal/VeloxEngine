@@ -7,11 +7,12 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/Memory/Memory.hpp>
+#include <Core/Memory/GenericAllocator.hpp>
 
 TRE_NS_START
 
-template<typename T>
-class Vector
+template<typename T, typename Alloc = GenericAllocator>
+class Vector : public Alloc
 {
 public:
     template<typename PointerType>
@@ -27,11 +28,11 @@ public:
 public:
     FORCEINLINE Vector() noexcept;
 
-    FORCEINLINE Vector(usize sz) noexcept;
+    FORCEINLINE Vector(usize sz);
 
     FORCEINLINE Vector(usize sz, const T& obj);
     
-    Vector(const std::initializer_list<T>& list);
+    FORCEINLINE Vector(const std::initializer_list<T>& list);
 
     template<usize S>
     FORCEINLINE Vector(T(&arr)[S]);
@@ -89,9 +90,9 @@ public:
 
     FORCEINLINE void Resize(usize newSize);
 
-    FORCEINLINE void Append(const Vector<T>& other);
+    FORCEINLINE void Append(const Vector<T, Alloc>& other);
 
-    FORCEINLINE void Append(Vector<T>&& other);
+    FORCEINLINE void Append(Vector<T, Alloc>&& other);
 
     FORCEINLINE bool IsEmpty() const noexcept;
 
@@ -129,33 +130,36 @@ public:
 
     FORCEINLINE CIterator cend() const noexcept;
 
-    FORCEINLINE Vector(const Vector<T>& other);
+    FORCEINLINE Vector(const Vector<T, Alloc>& other);
 
-    FORCEINLINE Vector& operator=(const Vector<T>& other);
+    FORCEINLINE Vector& operator=(const Vector<T, Alloc>& other);
 
-    FORCEINLINE Vector(Vector<T>&& other) noexcept;
+    FORCEINLINE Vector(Vector<T, Alloc>&& other) noexcept;
 
-    FORCEINLINE Vector& operator=(Vector<T>&& other) noexcept;
+    FORCEINLINE Vector& operator=(Vector<T, Alloc>&& other) noexcept;
 
-    FORCEINLINE Vector& operator+=(const Vector<T>& other);
+    FORCEINLINE Vector& operator+=(const Vector<T, Alloc>& other);
 
-    FORCEINLINE Vector& operator+=(Vector<T>&& other);
+    FORCEINLINE Vector& operator+=(Vector<T, Alloc>&& other);
 
     FORCEINLINE T* StealPtr() noexcept;
 
-    FORCEINLINE friend void Swap(Vector<T>& first, Vector<T>& second) noexcept
+    FORCEINLINE friend void Swap(Vector<T, Alloc>& first, Vector<T, Alloc>& second) noexcept
     {
         std::swap(first.m_Data, second.m_Data);
         std::swap(first.m_Length, second.m_Length);
         std::swap(first.m_Capacity, second.m_Capacity);
     }
 
-    FORCEINLINE friend void swap(Vector<T>& first, Vector<T>& second) noexcept
+    FORCEINLINE friend void swap(Vector<T, Alloc>& first, Vector<T, Alloc>& second) noexcept
     {
         Swap(first, second);
     }
+
 private:
-    FORCEINLINE void Reallocate(usize nCap);
+    FORCEINLINE void ReserveHelper(usize nCap);
+
+    FORCEINLINE void Free(T* data, usize sz);
 
 private:
     T*    m_Data;
@@ -214,86 +218,81 @@ public:
     };
 };
 
-template<typename T>
-FORCEINLINE Vector<T>::Vector() noexcept
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>::Vector() noexcept
     : m_Data(NULL), m_Length(0), m_Capacity(0)
 {
 }
 
-template<typename T>
-FORCEINLINE Vector<T>::Vector(usize sz) noexcept
-    : m_Data(Utils::Allocate<T>(sz)), m_Length(0), m_Capacity(sz)
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>::Vector(usize sz)
+    : m_Data(this->template Allocate<T>(sz)), m_Length(0), m_Capacity(sz)
 {
 }
 
-template<typename T>
-FORCEINLINE Vector<T>::Vector(usize sz, const T& obj)
-    : m_Data(Utils::Allocate<T>(sz)), m_Length(0), m_Capacity(sz)
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>::Vector(usize sz, const T& obj)
+    : m_Data(this->template Allocate<T>(sz)), m_Length(0), m_Capacity(sz)
 {
     this->Fill(m_Capacity, obj);
 }
 
-template<typename T>
-template<usize S>
-FORCEINLINE Vector<T>::Vector(T(&arr)[S])
-    : m_Data(Utils::Allocate<T>(S)), m_Length(S), m_Capacity(S)
-{
-    Utils::CopyConstruct(m_Data, arr, m_Length);
-}
-
-template<typename T>
-FORCEINLINE Vector<T>::Vector(T* data, usize size)
-    : m_Data(Utils::Allocate<T>(size)), m_Length(size), m_Capacity(size)
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>::Vector(T* data, usize size)
+    : m_Data(this->template Allocate<T>(size)), m_Length(size), m_Capacity(size)
 {
     Utils::CopyConstruct(m_Data, data, m_Length);
 }
 
-template<typename T>
-Vector<T>::Vector(const std::initializer_list<T>& list) 
-    : m_Data(Utils::Allocate<T>(list.size())), m_Length(list.size()), m_Capacity(list.size())
+template<typename T, typename Alloc>
+template<usize S>
+FORCEINLINE Vector<T, Alloc>::Vector(T(&arr)[S])
+    : Vector(arr, S)
 {
-    T* ptr = m_Data;
 
-    for (const T& obj : list) {
-        new (ptr) T(obj);
-        ptr++;
-    }
 }
 
-template<typename T>
-FORCEINLINE Vector<T>::~Vector()
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>::Vector(const std::initializer_list<T>& list)
+    : Vector(list.begin(), list.size())
+{
+
+}
+
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>::~Vector()
 {
     if (m_Data != NULL) {
-        Utils::Free(m_Data, m_Length);
+        this->Free(m_Data, m_Length);
         m_Data = NULL;
     }
 }
 
-template<typename T>
-void Vector<T>::Fill(usize length, const T& obj)
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::Fill(usize length, const T& obj)
 {
     this->Reserve(length);
     Utils::MemSet(m_Data, obj, length);
     m_Length = length;
 }
 
-template<typename T>
+template<typename T, typename Alloc>
 template<typename... Args>
-T& Vector<T>::EmplaceBack(Args&&... args)
+T& Vector<T, Alloc>::EmplaceBack(Args&&... args)
 {
     this->Reserve(m_Length + 1);
     new (m_Data + m_Length) T(std::forward<Args>(args)...);
     return *(m_Data + (m_Length++));
 }
 
-template<typename T>
-FORCEINLINE T& Vector<T>::PushBack(const T& obj)
+template<typename T, typename Alloc>
+FORCEINLINE T& Vector<T, Alloc>::PushBack(const T& obj)
 {
     return this->EmplaceBack(obj);
 }
 
-template<typename T>
-FORCEINLINE bool Vector<T>::PopBack() noexcept
+template<typename T, typename Alloc>
+FORCEINLINE bool Vector<T, Alloc>::PopBack() noexcept
 {
     if (m_Length <= 0)
         return false;
@@ -302,8 +301,8 @@ FORCEINLINE bool Vector<T>::PopBack() noexcept
     return m_Length;
 }
 
-template<typename T>
-bool Vector<T>::PopFront() noexcept
+template<typename T, typename Alloc>
+bool Vector<T, Alloc>::PopFront() noexcept
 {
     if (m_Length <= 0) 
         return false;
@@ -314,8 +313,8 @@ bool Vector<T>::PopFront() noexcept
     return m_Length;
 }
 
-template<typename T>
-bool Vector<T>::PopFrontFast() noexcept
+template<typename T, typename Alloc>
+bool Vector<T, Alloc>::PopFrontFast() noexcept
 {
     if (m_Length <= 0)
         return false;
@@ -329,30 +328,42 @@ bool Vector<T>::PopFrontFast() noexcept
     return false;
 }
 
-template<typename T>
-FORCEINLINE bool Vector<T>::Reserve(usize sz)
+template<typename T, typename Alloc>
+FORCEINLINE bool Vector<T, Alloc>::Reserve(usize sz)
 {
     if (sz < m_Capacity)
         return false;
 
     // sz = sz ? sz * DEFAULT_GROW_SIZE : DEFAULT_CAPACITY;
     sz = (sz * DEFAULT_GROW_SIZE) + DEFAULT_CAPACITY;
-    this->Reallocate(sz);
+    this->ReserveHelper(sz);
     return true;
 }
 
-template<typename T>
-FORCEINLINE void Vector<T>::Reallocate(usize nCap) // I think this can be optimized! to just copy and dont delete the thing or use move ctor.
+template<typename T, typename Alloc>
+FORCEINLINE void Vector<T, Alloc>::ReserveHelper(usize nCap)
 {
-    T* newData = Utils::Allocate<T>(nCap);
-    Utils::MoveConstruct(newData, m_Data, m_Length);
-    Utils::FreeMemory(m_Data);
-    m_Data = newData;
+    // I think this can be optimized! to just copy and dont delete the thing or use move ctor.
+    T* newData = this->template Reallocate<T>(m_Data, nCap);
+
+    if (newData != m_Data) {
+        Utils::MoveConstruct(newData, m_Data, m_Length);
+        this->FreeMemory(m_Data);
+        m_Data = newData;
+    }
+
     m_Capacity = nCap;
 }
 
-template<typename T>
-void Vector<T>::Resize(usize newSize)
+template<typename T, typename Alloc>
+FORCEINLINE void Vector<T, Alloc>::Free(T* data, usize sz)
+{
+    Utils::Destroy(data, sz);
+    this->FreeMemory(data);
+}
+
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::Resize(usize newSize)
 {
     if (newSize < m_Length) {
         usize offset = m_Length - newSize;
@@ -364,46 +375,50 @@ void Vector<T>::Resize(usize newSize)
     }
 }
 
-template<typename T>
-FORCEINLINE T& Vector<T>::Insert(usize i, const T& obj)
+template<typename T, typename Alloc>
+FORCEINLINE T& Vector<T, Alloc>::Insert(usize i, const T& obj)
 {
     return this->Emplace(i, obj);
 }
 
-template<typename T>
-FORCEINLINE T& Vector<T>::PushFront(const T& obj)
+template<typename T, typename Alloc>
+FORCEINLINE T& Vector<T, Alloc>::PushFront(const T& obj)
 {
     return this->Insert(0, obj);
 }
 
-template<typename T>
+template<typename T, typename Alloc>
 template<typename... Args>
-FORCEINLINE T& Vector<T>::EmplaceFrontFast(Args&&... args)
+FORCEINLINE T& Vector<T, Alloc>::EmplaceFrontFast(Args&&... args)
 {
     return this->EmplaceFast(0, std::forward<Args>(args)...);
 }
 
-template<typename T>
-FORCEINLINE T& Vector<T>::PushFrontFast(const T& obj)
+template<typename T, typename Alloc>
+FORCEINLINE T& Vector<T, Alloc>::PushFrontFast(const T& obj)
 {
     return this->InsertFast(0, obj);
 }
 
-template<typename T>
+template<typename T, typename Alloc>
 template<typename... Args>
-T& Vector<T>::Emplace(usize i, Args&&... args)
+T& Vector<T, Alloc>::Emplace(usize i, Args&&... args)
 {
     TRE_ASSERTF(i <= m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
 
     if (m_Length + 1 >= m_Capacity) {
         // usize nCap = m_Capacity ? m_Capacity * DEFAULT_GROW_SIZE : DEFAULT_CAPACITY;
         usize nCap = (m_Capacity * DEFAULT_GROW_SIZE) + DEFAULT_CAPACITY;
-        T* newData = Utils::Allocate<T>(nCap);
+        T* newData = this->template Reallocate<T>(m_Data, nCap);
         T* dest = newData + i;
-        Utils::MoveConstruct(newData, m_Data, i);
         Utils::MoveConstructForward(newData + 1, m_Data, i, m_Length);
         new (dest) T(std::forward<Args>(args)...);
-        Utils::FreeMemory(m_Data);
+
+        if (newData != m_Data) {
+            Utils::MoveConstruct(newData, m_Data, i);
+            this->FreeMemory(m_Data);
+        }
+
         m_Data = newData;
         m_Capacity = nCap;
         m_Length++;
@@ -418,15 +433,15 @@ T& Vector<T>::Emplace(usize i, Args&&... args)
     }
 }
 
-template<typename T>
-FORCEINLINE T& Vector<T>::InsertFast(usize i, const T& obj)
+template<typename T, typename Alloc>
+FORCEINLINE T& Vector<T, Alloc>::InsertFast(usize i, const T& obj)
 {
     return this->EmplaceFast(i, obj);
 }
 
-template<typename T>
+template<typename T, typename Alloc>
 template<typename... Args>
-T& Vector<T>::EmplaceFast(usize i, Args&&... args)
+T& Vector<T, Alloc>::EmplaceFast(usize i, Args&&... args)
 {
     TRE_ASSERTF(i <= m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
 
@@ -449,23 +464,23 @@ T& Vector<T>::EmplaceFast(usize i, Args&&... args)
     return *element;
 }
 
-template<typename T>
+template<typename T, typename Alloc>
 template<typename ...Args>
-FORCEINLINE T& Vector<T>::EmplaceFront(Args&&... args)
+FORCEINLINE T& Vector<T, Alloc>::EmplaceFront(Args&&... args)
 {
     return this->Emplace(0, std::forward<Args>(args)...);
 }
 
-template<typename T>
-FORCEINLINE void Vector<T>::Append(const Vector<T>& other)
+template<typename T, typename Alloc>
+FORCEINLINE void Vector<T, Alloc>::Append(const Vector<T, Alloc>& other)
 {
     this->Reserve(m_Length + other.m_Length);
     Utils::Copy(m_Data + m_Length, other.m_Data, other.m_Length);
     m_Length += other.m_Length;
 }
 
-template<typename T>
-FORCEINLINE void Vector<T>::Append(Vector<T>&& other)
+template<typename T, typename Alloc>
+FORCEINLINE void Vector<T, Alloc>::Append(Vector<T, Alloc>&& other)
 {
     this->Reserve(m_Length + other.m_Length);
     Utils::Move(m_Data + m_Length, other.m_Data, other.m_Length);
@@ -473,22 +488,22 @@ FORCEINLINE void Vector<T>::Append(Vector<T>&& other)
     other.m_Length = 0;
 }
 
-template<typename T>
-FORCEINLINE Vector<T>& Vector<T>::operator+=(const Vector<T>& other)
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>& Vector<T, Alloc>::operator+=(const Vector<T, Alloc>& other)
 {
     this->Append(other);
     return *this;
 }
 
-template<typename T>
-FORCEINLINE Vector<T>& Vector<T>::operator+=(Vector<T>&& other)
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>& Vector<T, Alloc>::operator+=(Vector<T, Alloc>&& other)
 {
-    this->Append(std::forward<Vector<T>>(other));
+    this->Append(std::forward<Vector<T, Alloc>>(other));
     return *this;
 }
 
-template<typename T>
-void Vector<T>::Erease(usize start, usize end) noexcept
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::Erease(usize start, usize end) noexcept
 {
     TRE_ASSERTF(start < m_Length && end <= m_Length, "[%" SZu "..%" SZu "] interval isn't included in the range [0..%" SZu "]", start, end, m_Length);
     TRE_ASSERTF(end >= start, "end must be greater than start");
@@ -505,8 +520,8 @@ void Vector<T>::Erease(usize start, usize end) noexcept
     m_Length -= size;
 }
 
-template<typename T>
-void Vector<T>::Erease(Iterator itr) noexcept
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::Erease(Iterator itr) noexcept
 {
     T* itr_ptr = itr.GetPtr();
     TRE_ASSERTF((itr_ptr < m_Data + m_Length && itr_ptr >= m_Data), "The given iterator doesn't belong to the Vector.");
@@ -518,14 +533,14 @@ void Vector<T>::Erease(Iterator itr) noexcept
     m_Length -= 1;
 }
 
-template<typename T>
-FORCEINLINE void Vector<T>::Erease(usize index) noexcept
+template<typename T, typename Alloc>
+FORCEINLINE void Vector<T, Alloc>::Erease(usize index) noexcept
 {
     return this->Erease(this->begin() + index);
 }
 
-template<typename T>
-FORCEINLINE void Vector<T>::EreaseFast(Iterator itr) noexcept
+template<typename T, typename Alloc>
+FORCEINLINE void Vector<T, Alloc>::EreaseFast(Iterator itr) noexcept
 {
     T* itr_ptr = itr.GetPtr();
     TRE_ASSERTF((itr_ptr < m_Data + m_Length && itr_ptr >= m_Data), "The given iterator doesn't belong to the Vector.");
@@ -536,14 +551,14 @@ FORCEINLINE void Vector<T>::EreaseFast(Iterator itr) noexcept
     m_Length -= 1;
 }
 
-template<typename T>
-FORCEINLINE void Vector<T>::EreaseFast(usize index) noexcept
+template<typename T, typename Alloc>
+FORCEINLINE void Vector<T, Alloc>::EreaseFast(usize index) noexcept
 {
     return this->EreaseFast(this->begin() + index);
 }
 
-template<typename T>
-FORCEINLINE T* Vector<T>::StealPtr() noexcept
+template<typename T, typename Alloc>
+FORCEINLINE T* Vector<T, Alloc>::StealPtr() noexcept
 {
     T* data_ptr = m_Data;
     m_Length = 0;
@@ -552,39 +567,39 @@ FORCEINLINE T* Vector<T>::StealPtr() noexcept
     return data_ptr;
 }
 
-template<typename T>
-FORCEINLINE void Vector<T>::Clear() noexcept
+template<typename T, typename Alloc>
+FORCEINLINE void Vector<T, Alloc>::Clear() noexcept
 {
     Utils::Destroy(m_Data, m_Length);
     m_Length = 0;
 }
 
-template<typename T>
-FORCEINLINE bool Vector<T>::IsEmpty() const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE bool Vector<T, Alloc>::IsEmpty() const noexcept
 {
     return this->Size() == 0;
 }
 
-template<typename T>
-FORCEINLINE usize Vector<T>::Capacity() const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE usize Vector<T, Alloc>::Capacity() const noexcept
 {
     return m_Capacity;
 }
 
-template<typename T>
-FORCEINLINE usize Vector<T>::Length() const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE usize Vector<T, Alloc>::Length() const noexcept
 {
     return m_Length;
 }
 
-template<typename T>
-FORCEINLINE usize Vector<T>::Size() const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE usize Vector<T, Alloc>::Size() const noexcept
 {
     return m_Length;
 }
 
-template<typename T>
-FORCEINLINE T* Vector<T>::Back() const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE T* Vector<T, Alloc>::Back() const noexcept
 {
     if (m_Length == 0)
         return NULL;
@@ -592,129 +607,129 @@ FORCEINLINE T* Vector<T>::Back() const noexcept
     return m_Data + m_Length - 1;
 }
 
-template<typename T>
-FORCEINLINE T* Vector<T>::Front() const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE T* Vector<T, Alloc>::Front() const noexcept
 {
     return m_Data;
 }
 
-/*template<typename T>
-const T* Vector<T>::At(usize i)
+/*template<typename T, typename Alloc>
+const T* Vector<T, Alloc>::At(usize i)
 {
     ASSERTF((i >= m_Length), "Bad usage of vector function At index out of bounds");
     return &m_Data[i];
 }
 
-template<typename T>
-const T* Vector<T>::operator[](usize i)
+template<typename T, typename Alloc>
+const T* Vector<T, Alloc>::operator[](usize i)
 {
     if (i >= m_Length) return NULL;
     return At(i);
 }*/
 
-template<typename T>
-FORCEINLINE T& Vector<T>::Get(usize i) noexcept
+template<typename T, typename Alloc>
+FORCEINLINE T& Vector<T, Alloc>::Get(usize i) noexcept
 {
-    return At(i);
+    return this->At(i);
 }
 
-template<typename T>
-FORCEINLINE T& Vector<T>::At(usize i) noexcept
+template<typename T, typename Alloc>
+FORCEINLINE T& Vector<T, Alloc>::At(usize i) noexcept
 {
     TRE_ASSERTF(i < m_Length, "Bad usage of vector function At index out of bounds");
     return m_Data[i];
 }
 
-template<typename T>
-FORCEINLINE T& Vector<T>::operator[](usize i) noexcept
+template<typename T, typename Alloc>
+FORCEINLINE T& Vector<T, Alloc>::operator[](usize i) noexcept
 {
-    return At(i);
+    return this->At(i);
 }
 
-template<typename T>
-FORCEINLINE const T& Vector<T>::At(usize i) const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE const T& Vector<T, Alloc>::At(usize i) const noexcept
 {
     TRE_ASSERTF((i < m_Length), "Bad usage of vector function At index out of bounds");
     return m_Data[i];
 }
 
-template<typename T>
-FORCEINLINE const T& Vector<T>::operator[](usize i) const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE const T& Vector<T, Alloc>::operator[](usize i) const noexcept
 {
     return this->At(i);
 }
 
-template<typename T>
-FORCEINLINE Vector<T>::Vector(const Vector<T>& other) :
-    m_Data(nullptr), m_Length(other.m_Length), m_Capacity(other.m_Capacity)
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>::Vector(const Vector<T, Alloc>& other) :
+    Alloc(other), m_Data(nullptr), m_Length(other.m_Length), m_Capacity(other.m_Capacity)
 {
     if (m_Capacity) {
-        m_Data = Utils::Allocate<T>(m_Capacity);
+        m_Data = this->template Allocate<T>(m_Capacity);
         Utils::Copy(other.m_Data, m_Data, m_Length);
     }
 }
 
-template<typename T>
-FORCEINLINE Vector<T>& Vector<T>::operator=(const Vector<T>& other)
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>& Vector<T, Alloc>::operator=(const Vector<T, Alloc>& other)
 {
-    Vector<T> tmp(other);
+    Vector<T, Alloc> tmp(other);
     Swap(*this, tmp);
     return *this;
 }
 
-template<typename T>
-FORCEINLINE Vector<T>::Vector(Vector<T>&& other) noexcept
-    : m_Data(other.m_Data), m_Length(other.m_Length), m_Capacity(other.m_Capacity)
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>::Vector(Vector<T, Alloc>&& other) noexcept
+    : Alloc(other), m_Data(other.m_Data), m_Length(other.m_Length), m_Capacity(other.m_Capacity)
 {
     other.m_Data = NULL;
 }
 
-template<typename T>
-FORCEINLINE Vector<T>& Vector<T>::operator=(Vector<T>&& other) noexcept
+template<typename T, typename Alloc>
+FORCEINLINE Vector<T, Alloc>& Vector<T, Alloc>::operator=(Vector<T, Alloc>&& other) noexcept
 {
-    Vector<T> tmp(std::move(other));
+    Vector<T, Alloc> tmp(std::move(other));
     Swap(*this, tmp);
     return *this;
 }
 
-template<typename T>
-FORCEINLINE const typename Vector<T>::Iterator Vector<T>::begin() const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE const typename Vector<T, Alloc>::Iterator Vector<T, Alloc>::begin() const noexcept
 {
     return Iterator(m_Data);
 }
 
-template<typename T>
-FORCEINLINE const typename Vector<T>::Iterator Vector<T>::end() const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE const typename Vector<T, Alloc>::Iterator Vector<T, Alloc>::end() const noexcept
 {
     return Iterator(m_Data + m_Length);
 }
 
-template<typename T>
-FORCEINLINE typename Vector<T>::Iterator Vector<T>::begin() noexcept
+template<typename T, typename Alloc>
+FORCEINLINE typename Vector<T, Alloc>::Iterator Vector<T, Alloc>::begin() noexcept
 {
     return Iterator(m_Data);
 }
 
-template<typename T>
-FORCEINLINE typename Vector<T>::Iterator Vector<T>::end() noexcept
+template<typename T, typename Alloc>
+FORCEINLINE typename Vector<T, Alloc>::Iterator Vector<T, Alloc>::end() noexcept
 {
     return Iterator(m_Data + m_Length);
 }
 
-template<typename T>
-FORCEINLINE typename Vector<T>::CIterator Vector<T>::cbegin() const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE typename Vector<T, Alloc>::CIterator Vector<T, Alloc>::cbegin() const noexcept
 {
     return CIterator(m_Data);
 }
 
-template<typename T>
-FORCEINLINE typename Vector<T>::CIterator Vector<T>::cend() const noexcept
+template<typename T, typename Alloc>
+FORCEINLINE typename Vector<T, Alloc>::CIterator Vector<T, Alloc>::cend() const noexcept
 {
     return CIterator(m_Data + m_Length);
 }
 
-template<typename T>
-void swap(typename Vector<T>::Iterator& a, typename Vector<T>::Iterator& b) noexcept
+template<typename T, typename Alloc>
+void swap(typename Vector<T, Alloc>::Iterator& a, typename Vector<T, Alloc>::Iterator& b) noexcept
 {
     std::swap(*a, *b);
 }

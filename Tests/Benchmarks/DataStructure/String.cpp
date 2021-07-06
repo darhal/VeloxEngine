@@ -302,32 +302,32 @@ void StdStringErease(benchmark::State& state)
 }
 
 // Register the function as a benchmark
-BENCHMARK(StringEmptyDecl);
-BENCHMARK(StdStringEmptyDecl);
+//BENCHMARK(StringEmptyDecl);
+//BENCHMARK(StdStringEmptyDecl);
 
-BENCHMARK(StringSsoDecl);
-BENCHMARK(StdStringSsoDecl);
+//BENCHMARK(StringSsoDecl);
+//BENCHMARK(StdStringSsoDecl);
 
-BENCHMARK(StringDecl);
-BENCHMARK(StdStringDecl);
+//BENCHMARK(StringDecl);
+//BENCHMARK(StdStringDecl);
 
-BENCHMARK(StringAppend);
-BENCHMARK(StdStringAppend);
+//BENCHMARK(StringAppend);
+//BENCHMARK(StdStringAppend);
 
-BENCHMARK(StringAppend2);
-BENCHMARK(StdStringAppend2);
+//BENCHMARK(StringAppend2);
+//BENCHMARK(StdStringAppend2);
 
-BENCHMARK(StringPopBack)->Iterations(1'000'000);
-BENCHMARK(StdStringPopBack)->Iterations(1'000'000);
+//BENCHMARK(StringPopBack)->Iterations(1'000'000);
+//BENCHMARK(StdStringPopBack)->Iterations(1'000'000);
 
-BENCHMARK(StringInsertChar)->Iterations(50'000);
-BENCHMARK(StdStringInsertChar)->Iterations(50'000);
+//BENCHMARK(StringInsertChar)->Iterations(50'000);
+//BENCHMARK(StdStringInsertChar)->Iterations(50'000);
 
-BENCHMARK(StringInsertString)->Iterations(10'000);
-BENCHMARK(StdStringInsertString)->Iterations(10'000);
+//BENCHMARK(StringInsertString)->Iterations(10'000);
+//BENCHMARK(StdStringInsertString)->Iterations(10'000);
 
-BENCHMARK(StringErease)->Iterations(10'000);
-BENCHMARK(StdStringErease)->Iterations(10'000);
+//BENCHMARK(StringErease)->Iterations(10'000);
+//BENCHMARK(StdStringErease)->Iterations(10'000);
 
 //BENCHMARK(StringAppend2);
 //BENCHMARK(StdStringAppend2);

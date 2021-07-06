@@ -16,7 +16,26 @@ public:
         return Utils::AllocateBytes(sz, al);
     }
 
-    FORCEINLINE constexpr void Free(void* ptr) noexcept
+    template<typename T>
+    FORCEINLINE constexpr T* Allocate(usize count)
+    {
+        void* data = this->AllocateBytes(sizeof(T) * count);
+        return static_cast<T*>(data);
+    }
+
+    FORCEINLINE constexpr void* ReallocateBytes(void* ptr, usize sz, usize al = 1)
+    {
+        return this->AllocateBytes(sz, al);
+    }
+
+    template<typename T>
+    FORCEINLINE constexpr T* Reallocate(T* ptr, usize count)
+    {
+        void* data = this->AllocateBytes(sizeof(T) * count);
+        return static_cast<T*>(data);
+    }
+
+    FORCEINLINE constexpr void FreeMemory(void* ptr) noexcept
     {
         return Utils::FreeMemory(ptr);
     }

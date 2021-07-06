@@ -1,10 +1,16 @@
 #include <random>
 #include <benchmark/benchmark.h>
 #include <Core/DataStructure/Vector.hpp>
+#include <Core/Memory/LocalAllocator.hpp>
+
+using namespace TRE;
+
+template<typename T>
+using SmallVector = Vector<T, LocalAllocator<100'000 * 4>>;
 
 void VectorEmplaceBack(benchmark::State& state)
 {
-    TRE::Vector<int> vec;
+    SmallVector<int> vec;
     // vec.Reserve(vec.DEFAULT_CAPACITY);
 
     for (auto _ : state) {
@@ -26,7 +32,7 @@ void StdVectorEmplaceBack(benchmark::State& state)
 
 void VectorEmplaceFront(benchmark::State& state)
 {
-    TRE::Vector<int> vec;
+    SmallVector<int> vec;
     // vec.Reserve(vec.DEFAULT_CAPACITY);
 
     for (auto _ : state) {
@@ -57,7 +63,7 @@ void VectorInsert(benchmark::State& state)
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
 
-    TRE::Vector<int> vec;
+    SmallVector<int> vec;
     // vec.Reserve(vec.DEFAULT_CAPACITY);
     int pos = 0;
 
@@ -99,7 +105,7 @@ void VectorErease(benchmark::State& state)
     std::uniform_int_distribution<> distr(0, NB); // define the range
     usize pos1 = 0;
 
-    TRE::Vector<int> vec;
+    SmallVector<int> vec;
 
     for (usize i = 0; i < NB; i++) {
         erasePos.emplace_back(pos1);
@@ -160,7 +166,7 @@ void VectorEreaseRange(benchmark::State& state)
 
     for (auto _ : state) {
         state.PauseTiming();
-        TRE::Vector<int> vec;
+        SmallVector<int> vec;
         for (usize i = 0; i < NB; i++)
             vec.EmplaceBack(i);
         auto p = ereaseRange[pos1++];

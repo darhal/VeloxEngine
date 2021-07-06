@@ -3,14 +3,14 @@
 TRE_NS_START
 
 template<typename T>
-BasicString<T>::BasicString()
+BasicString2<T>::BasicString2()
 {
 	m_Data[0] = T(0);
 	SetSmallLength(1);
 }
 
 template<typename T>
-BasicString<T>::BasicString(usize capacity, usize len)
+BasicString2<T>::BasicString2(usize capacity, usize len)
 {
 	if (capacity <= SSO_SIZE) {
 		m_Data[0] = T(0);
@@ -25,7 +25,7 @@ BasicString<T>::BasicString(usize capacity, usize len)
 }
 
 template<typename T>
-BasicString<T>::~BasicString()
+BasicString2<T>::~BasicString2()
 {
 	if (!this->IsSmall() && m_Buffer != NULL) {
 		::operator delete(m_Buffer);
@@ -33,43 +33,43 @@ BasicString<T>::~BasicString()
 }
 
 template<typename T>
-INLINE const T* BasicString<T>::Buffer() const
+INLINE const T* BasicString2<T>::Buffer() const
 {
 	return this->IsSmall() ? m_Data : m_Buffer;
 }
 
 template<typename T>
-INLINE usize BasicString<T>::Size() const
+INLINE usize BasicString2<T>::Size() const
 {
 	return this->Length() - 1;
 }
 
 template<typename T>
-INLINE usize BasicString<T>::Capacity() const
+INLINE usize BasicString2<T>::Capacity() const
 {
 	return this->IsSmall() ? SSO_SIZE : m_Capacity;
 }
 
 template<typename T>
-INLINE bool BasicString<T>::IsEmpty() const
+INLINE bool BasicString2<T>::IsEmpty() const
 {
 	return this->Size() == 0;
 }
 
 template<typename T>
-INLINE typename BasicString<T>::Iterator BasicString<T>::begin() noexcept
+INLINE typename BasicString2<T>::Iterator BasicString2<T>::begin() noexcept
 { 
 	return this->EditableBuffer(); 
 }
 
 template<typename T>
-INLINE typename BasicString<T>::Iterator BasicString<T>::end() noexcept
+INLINE typename BasicString2<T>::Iterator BasicString2<T>::end() noexcept
 {
 	return this->EditableBuffer() + this->Size(); 
 }
 
 template<typename T>
-INLINE void BasicString<T>::Reserve(usize s)
+INLINE void BasicString2<T>::Reserve(usize s)
 {
 	if (s < SSO_SIZE) return; // force using the local buffer!
 	if (s <= this->Capacity()) return;
@@ -89,7 +89,7 @@ INLINE void BasicString<T>::Reserve(usize s)
 }
 
 template<typename T>
-void BasicString<T>::Resize(usize s)
+void BasicString2<T>::Resize(usize s)
 {
 	usize len = this->Length();
 	if (s == len) return;
@@ -126,7 +126,7 @@ void BasicString<T>::Resize(usize s)
 }
 
 template<typename T>
-INLINE void BasicString<T>::Clear()
+INLINE void BasicString2<T>::Clear()
 {
 	bool isSmall = this->IsSmall();
 	if (isSmall) {
@@ -140,7 +140,7 @@ INLINE void BasicString<T>::Clear()
 }
 
 template<typename T>
-void BasicString<T>::Append(const BasicString<T>& str)
+void BasicString2<T>::Append(const BasicString2<T>& str)
 {
 	usize tlen        = this->Length() - 1; // -1 is to remove the trailing null terminator
 	usize slen	      = str.Length();
@@ -168,7 +168,7 @@ void BasicString<T>::Append(const BasicString<T>& str)
 }
 
 template<typename T>
-void BasicString<T>::Append(const char* str)
+void BasicString2<T>::Append(const char* str)
 {
 	usize tlen = this->Length() - 1; // -1 is to remove the trailing null terminator
 	usize slen = strlen(str) + 1;
@@ -196,26 +196,26 @@ void BasicString<T>::Append(const char* str)
 }
 
 template<typename T>
-INLINE T BasicString<T>::At(usize i) const
+INLINE T BasicString2<T>::At(usize i) const
 {
 	ASSERTF((i > Length()), "Bad usage of String::At (index out of bound).");
 	return this->Buffer()[i];
 }
 
 template<typename T>
-INLINE T BasicString<T>::Back() const
+INLINE T BasicString2<T>::Back() const
 {
 	return this->Buffer()[this->Size()-1];
 }
 
 template<typename T>
-INLINE T BasicString<T>::Front() const
+INLINE T BasicString2<T>::Front() const
 {
 	return this->Buffer()[0];
 }
 
 template<typename T>
-void BasicString<T>::PushBack(T c)
+void BasicString2<T>::PushBack(T c)
 {
 	usize len = this->Length();
 	this->Reserve((len + 1*SPARE_RATE));
@@ -226,7 +226,7 @@ void BasicString<T>::PushBack(T c)
 }
 
 template<typename T>
-void BasicString<T>::PopBack()
+void BasicString2<T>::PopBack()
 {
 	usize len = this->Length();
 	if (len <= 1) return;
@@ -236,7 +236,7 @@ void BasicString<T>::PopBack()
 }
 
 template<typename T>
-void BasicString<T>::Erase(usize pos, usize offset)
+void BasicString2<T>::Erase(usize pos, usize offset)
 {
 	usize len = this->Length();
 	if (pos >= len) return;
@@ -256,13 +256,13 @@ void BasicString<T>::Erase(usize pos, usize offset)
 }
 
 template<typename T>
-void BasicString<T>::Insert(usize pos, const BasicString<T>& str)
+void BasicString2<T>::Insert(usize pos, const BasicString2<T>& str)
 {
 	usize tlen = this->Length(); // remove the trailing null
 	usize slen = str.Length() - 1;
 	this->Resize(tlen + slen);
 	//Shift the last part to the end
-	BasicString<T> temp_str(tlen - pos);
+    BasicString2<T> temp_str(tlen - pos);
 	temp_str.Copy(*this, pos, tlen);
 	T* this_buffer = this->EditableBuffer();
 	const T* temp_buffer = temp_str.Buffer();
@@ -280,7 +280,7 @@ void BasicString<T>::Insert(usize pos, const BasicString<T>& str)
 }
 
 template<typename T>
-void BasicString<T>::Copy(const BasicString<T>& str, usize pos, usize offset)
+void BasicString2<T>::Copy(const BasicString2<T>& str, usize pos, usize offset)
 {
 	usize slen = str.Length();
 	//ASSERTF((offset > slen), "Bad usage of String::Copy() pos or offset is out of bound.");
@@ -310,23 +310,23 @@ void BasicString<T>::Copy(const BasicString<T>& str, usize pos, usize offset)
 }
 
 template<typename T>
-INLINE BasicString<T> BasicString<T>::SubString(usize pos, usize off) const
+INLINE BasicString2<T> BasicString2<T>::SubString(usize pos, usize off) const
 {
-	BasicString<T> temp_str(off + 1);
+    BasicString2<T> temp_str(off + 1);
 	temp_str.Copy(*this, pos, off);
 	return temp_str;
 }
 
 template<typename T>
-INLINE ssize BasicString<T>::Find(const BasicString<T>& pattren, uint32 start) const
+INLINE ssize BasicString2<T>::Find(const BasicString2<T>& pattren, uint32 start) const
 {
 	return SearchBoyerMoore(*this, pattren, start);
 }
 
 template<typename T>
-INLINE Vector<BasicString<T>> BasicString<T>::Split(T delimter)
+INLINE Vector<BasicString2<T>> BasicString2<T>::Split(T delimter)
 {
-	Vector<BasicString<T>> fragments;
+    Vector<BasicString2<T>> fragments;
 	usize start_off = 0;
 	T* str_buffer = this->EditableBuffer();
 	T* pch = this->FindFirstHelper(str_buffer, delimter);
@@ -347,7 +347,7 @@ INLINE Vector<BasicString<T>> BasicString<T>::Split(T delimter)
 }
 
 template<typename T>
-INLINE int32 BasicString<T>::FindFirst(T delimter)
+INLINE int32 BasicString2<T>::FindFirst(T delimter)
 {
 	T* str_buffer = this->EditableBuffer();
 	T* pch = this->FindFirstHelper(str_buffer, delimter);
@@ -359,7 +359,7 @@ INLINE int32 BasicString<T>::FindFirst(T delimter)
 }
 
 template<typename T>
-INLINE int32 BasicString<T>::FindLast(T delimter)
+INLINE int32 BasicString2<T>::FindLast(T delimter)
 {
 	T* str_buffer = this->EditableBuffer();
 	T* pch = this->FindLastHelper(str_buffer, delimter, this->Length());
@@ -371,7 +371,7 @@ INLINE int32 BasicString<T>::FindLast(T delimter)
 }
 
 template<typename T>
-INLINE void BasicString<T>::EraseAfterTheLast(T delimter)
+INLINE void BasicString2<T>::EraseAfterTheLast(T delimter)
 {
 	T* str_buffer = this->EditableBuffer();
 	T* pch = this->FindLastHelper(str_buffer, delimter, this->Length());
@@ -380,7 +380,7 @@ INLINE void BasicString<T>::EraseAfterTheLast(T delimter)
 }
 
 template<typename T>
-INLINE void BasicString<T>::EraseAfterTheFirst(T delimter)
+INLINE void BasicString2<T>::EraseAfterTheFirst(T delimter)
 {
 	T* str_buffer = this->EditableBuffer();
 	T* pch = this->FindFirstHelper(str_buffer, delimter);
@@ -389,7 +389,7 @@ INLINE void BasicString<T>::EraseAfterTheFirst(T delimter)
 }
 
 template<typename T>
-INLINE T* BasicString<T>::FindLastHelper(T* buffer, T delimter, usize length)
+INLINE T* BasicString2<T>::FindLastHelper(T* buffer, T delimter, usize length)
 {
 	T* start = buffer + length;
 	for (usize i = length; start != buffer; i--) {
@@ -402,7 +402,7 @@ INLINE T* BasicString<T>::FindLastHelper(T* buffer, T delimter, usize length)
 }
 
 template<typename T>
-INLINE T* BasicString<T>::FindFirstHelper(T* buffer, T delimter) 
+INLINE T* BasicString2<T>::FindFirstHelper(T* buffer, T delimter)
 {
 	usize len = this->Length();
 
@@ -417,7 +417,7 @@ INLINE T* BasicString<T>::FindFirstHelper(T* buffer, T delimter)
 
 //Copy ctor copy assignement
 template<typename T>
-BasicString<T>::BasicString(const BasicString<T>& other)
+BasicString2<T>::BasicString2(const BasicString2<T>& other)
 {
 	bool IsOtherSmall = other.IsSmall();
 	usize len = other.Length();
@@ -441,7 +441,7 @@ BasicString<T>::BasicString(const BasicString<T>& other)
 }
 
 template<typename T>
-BasicString<T>& BasicString<T>::operator=(const BasicString<T>& other)
+BasicString2<T>& BasicString2<T>::operator=(const BasicString2<T>& other)
 {
 	if (this == &other) {
 		return *this;
@@ -475,7 +475,7 @@ BasicString<T>& BasicString<T>::operator=(const BasicString<T>& other)
 
 //Move ctor move assignement
 template<typename T>
-BasicString<T>::BasicString(BasicString<T>&& other)
+BasicString2<T>::BasicString2(BasicString2<T>&& other)
 {
 	bool IsOtherSmall = other.IsSmall();
 	usize len = other.Length();
@@ -496,7 +496,7 @@ BasicString<T>::BasicString(BasicString<T>&& other)
 }
 
 template<typename T>
-BasicString<T>& BasicString<T>::operator=(BasicString<T>&& other)
+BasicString2<T>& BasicString2<T>::operator=(BasicString2<T>&& other)
 {
 	bool IsOtherSmall = other.IsSmall();
 	usize len = other.Length();
@@ -518,21 +518,21 @@ BasicString<T>& BasicString<T>::operator=(BasicString<T>&& other)
 }
 
 template<typename T>
-INLINE BasicString<T>& BasicString<T>::operator+=(const BasicString<T>& other)
+INLINE BasicString2<T>& BasicString2<T>::operator+=(const BasicString2<T>& other)
 {
 	this->Append(other);
 	return *this;
 }
 
 template<typename T>
-INLINE BasicString<T>& BasicString<T>::operator+=(const char* other)
+INLINE BasicString2<T>& BasicString2<T>::operator+=(const char* other)
 {
 	this->Append(other);
 	return *this;
 }
 
 template<typename T>
-INLINE usize BasicString<T>::Length() const
+INLINE usize BasicString2<T>::Length() const
 {
 #if ENDIANNESS == LITTLE_ENDIAN
 	return this->IsSmall() ? SSO_SIZE - m_Data[SSO_MI] : (m_Length << 1) >> 1;
@@ -542,7 +542,7 @@ INLINE usize BasicString<T>::Length() const
 }
 
 template<typename T>
-INLINE usize BasicString<T>::Length()
+INLINE usize BasicString2<T>::Length()
 {
 #if ENDIANNESS == LITTLE_ENDIAN
 	return this->IsSmall() ? SSO_SIZE - m_Data[SSO_MI] : (m_Length << 1) >> 1;
@@ -554,7 +554,7 @@ INLINE usize BasicString<T>::Length()
 /********** PRIVATE FUNCTIONS **********/
 
 template<typename T>
-INLINE bool BasicString<T>::IsSmall() const
+INLINE bool BasicString2<T>::IsSmall() const
 {  
 #if ENDIANNESS == LITTLE_ENDIAN
 	return !(m_Data[SSO_MI] & hight_bit_mask_normal_str); // if the bit is 0 then its small string otherwise its normal
@@ -564,7 +564,7 @@ INLINE bool BasicString<T>::IsSmall() const
 }
 
 template<typename T>
-INLINE void BasicString<T>::SetLength(usize nlen)
+INLINE void BasicString2<T>::SetLength(usize nlen)
 {
 	if (this->IsSmall() && nlen <= SSO_SIZE) {
 		SetSmallLength(nlen);
@@ -574,7 +574,7 @@ INLINE void BasicString<T>::SetLength(usize nlen)
 }
 
 template<typename T>
-INLINE void BasicString<T>::SetSmallLength(usize nlen)
+INLINE void BasicString2<T>::SetSmallLength(usize nlen)
 {
 #if ENDIANNESS == LITTLE_ENDIAN
 	m_Data[SSO_MI] = T(SSO_SIZE - nlen); // Highest bit must be 0!
@@ -585,7 +585,7 @@ INLINE void BasicString<T>::SetSmallLength(usize nlen)
 }
 
 template<typename T>
-INLINE void BasicString<T>::SetNormalLength(usize nlen)
+INLINE void BasicString2<T>::SetNormalLength(usize nlen)
 {
 #if ENDIANNESS == LITTLE_ENDIAN
 	m_Length = nlen | hight_bit_mask_normal_str;
@@ -595,21 +595,21 @@ INLINE void BasicString<T>::SetNormalLength(usize nlen)
 }
 
 template<typename T>
-INLINE void BasicString<T>::SetCapacity(usize ncap)
+INLINE void BasicString2<T>::SetCapacity(usize ncap)
 {
 	if (this->IsSmall()) return;
 	m_Capacity = ncap;
 }
 
 template<typename T>
-INLINE T* BasicString<T>::EditableBuffer()
+INLINE T* BasicString2<T>::EditableBuffer()
 {
 	return this->IsSmall() ? m_Data : m_Buffer;
 }
 
-template class BasicString<char>;
-template class BasicString<char16_t>;
-template class BasicString<wchar_t>;
-//template class BasicString<int>; //char32_t
+template class BasicString2<char>;
+template class BasicString2<char16_t>;
+template class BasicString2<wchar_t>;
+//template class BasicString2<int>; //char32_t
 
 TRE_NS_END

@@ -2,7 +2,7 @@
 
 #include <Renderer/Backend/Common.hpp>
 #include <Renderer/Backend/RHI/Common/Globals.hpp>
-#include <Core/Math/Maths.hpp>
+#include <Legacy/Math/Maths.hpp>
 
 TRE_NS_START
 

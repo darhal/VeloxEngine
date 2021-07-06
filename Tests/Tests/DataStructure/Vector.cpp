@@ -2,6 +2,12 @@
 #include <gmock/gmock.h>
 #include <random>
 #include <Core/DataStructure/Vector.hpp>
+#include <Core/Memory/LocalAllocator.hpp>
+
+using namespace TRE;
+
+template<typename T>
+using SmallVector = Vector<T, LocalAllocator<512 * 4>>;
 
 template<typename T1, typename T2>
 auto TestVectors(const T1& x, const T2& y)
@@ -17,9 +23,9 @@ auto TestVectors(const T1& x, const T2& y)
 
 TEST(VectorTests, EmplaceBack)
 {
-    constexpr auto NB = 100;
-    using namespace TRE;
-    Vector<int> x;
+    constexpr auto NB = 1'000;
+
+    SmallVector<int> x;
     std::vector<int> y;
 
     for (int i = 0; i < NB; i++) {
@@ -31,9 +37,9 @@ TEST(VectorTests, EmplaceBack)
 
 TEST(VectorTests, PushBack)
 {
-    constexpr auto NB = 100;
-    using namespace TRE;
-    Vector<int> x;
+    constexpr auto NB = 1'000;
+
+    SmallVector<int> x;
     std::vector<int> y;
 
     for (int i = 0; i < NB; i++) {
@@ -45,9 +51,8 @@ TEST(VectorTests, PushBack)
 
 TEST(VectorTests, EmplaceFront)
 {
-    constexpr auto NB = 100;
-    using namespace TRE;
-    Vector<int> x;
+    constexpr auto NB = 1'000;
+    SmallVector<int> x;
     std::vector<int> y;
 
     for (int i = 0; i < NB; i++) {
@@ -59,9 +64,8 @@ TEST(VectorTests, EmplaceFront)
 
 TEST(VectorTests, PushFront)
 {
-    constexpr auto NB = 100;
-    using namespace TRE;
-    Vector<int> x;
+    constexpr auto NB = 1'000;
+    SmallVector<int> x;
     std::vector<int> y;
 
     for (int i = 0; i < NB; i++) {
@@ -73,13 +77,12 @@ TEST(VectorTests, PushFront)
 
 TEST(VectorTests, Insert)
 {
-    constexpr auto NB = 100;
+    constexpr auto NB = 1'000;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
 
-    using namespace TRE;
-    Vector<int> x;
+    SmallVector<int> x;
     std::vector<int> y;
     int pos = 0;
 
@@ -93,13 +96,12 @@ TEST(VectorTests, Insert)
 
 TEST(VectorTests, Emplace)
 {
-    constexpr auto NB = 100;
+    constexpr auto NB = 1'000;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
 
-    using namespace TRE;
-    Vector<int> x;
+    SmallVector<int> x;
     std::vector<int> y;
     int pos = 0;
 
@@ -113,13 +115,12 @@ TEST(VectorTests, Emplace)
 
 TEST(VectorTests, PopBack)
 {
-    constexpr auto NB = 100;
+    constexpr auto NB = 1'000;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
 
-    using namespace TRE;
-    Vector<int> x;
+    SmallVector<int> x;
     std::vector<int> y;
     int pos = 0;
 
@@ -140,13 +141,12 @@ TEST(VectorTests, PopBack)
 
 TEST(VectorTests, PopFront)
 {
-    constexpr auto NB = 100;
+    constexpr auto NB = 1'000;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
 
-    using namespace TRE;
-    Vector<int> x;
+    SmallVector<int> x;
     std::vector<int> y;
     int pos = 0;
 
@@ -167,13 +167,12 @@ TEST(VectorTests, PopFront)
 
 TEST(VectorTests, EreaseOne)
 {
-    constexpr auto NB = 1000;
+    constexpr auto NB = 1'000;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
 
-    using namespace TRE;
-    Vector<int> x;
+    SmallVector<int> x;
     std::vector<int> y;
     int pos = 0;
 
@@ -195,13 +194,12 @@ TEST(VectorTests, EreaseOne)
 
 TEST(VectorTests, EreaseRange)
 {
-    constexpr auto NB = 750;
+    constexpr auto NB = 1'000;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
 
-    using namespace TRE;
-    Vector<int> x;
+    SmallVector<int> x;
     std::vector<int> y;
     usize pos1 = 0;
     usize pos2 = 0;

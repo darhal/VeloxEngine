@@ -3,7 +3,7 @@
 /************************************************************************************************************
 										* Trikyta Engine 3D *
 
-BasicString class is written using the technique that uses small string optimisation :
+BasicString2 class is written using the technique that uses small string optimisation :
 	Resources : https://youtu.be/kPR8h4-qZdk
 
 Small String : Static buffer that is already on the stack, Its size is either
@@ -41,48 +41,48 @@ Lets imagine its 4 here
 TRE_NS_START
 
 template<typename T>
-class BasicString
+class BasicString2
 {
 private:
-	typedef BasicString<T> CLASS_TYPE;
+    typedef BasicString2<T> CLASS_TYPE;
 	typedef typename std::make_unsigned<T>::type UT;
 public:
 	typedef T* Iterator;
 	typedef T& RefIterator;
 	typedef const T* CIterator;
 
-	BasicString();
+    BasicString2();
 
-	BasicString(usize capacity, usize len = 0);
+    BasicString2(usize capacity, usize len = 0);
 
 	template<usize S>
-	BasicString(const T(&str)[S], bool nop);
+    BasicString2(const T(&str)[S], bool nop);
 	// template<usize S>
-	// BasicString(const T(&str)[S], usize capacity);
+    // BasicString2(const T(&str)[S], usize capacity);
 
-	BasicString(const char* str);
+    BasicString2(const char* str);
 
-	~BasicString();
+    ~BasicString2();
 
 	// Copy ctor copy assignement
-	BasicString(const BasicString<T>& other);
-	BasicString<T>& operator=(const BasicString<T>& other);
+    BasicString2(const BasicString2<T>& other);
+    BasicString2<T>& operator=(const BasicString2<T>& other);
 
 	// Move ctor move assignement
-	BasicString(BasicString<T>&& other);
-	BasicString<T>& operator=(BasicString<T>&& other);
+    BasicString2(BasicString2<T>&& other);
+    BasicString2<T>& operator=(BasicString2<T>&& other);
 
 	INLINE void Reserve(usize s);
 	INLINE void Clear();
 	void Resize(usize s);
 	
-	void Append(const BasicString<T>& str);
+    void Append(const BasicString2<T>& str);
 	void Append(const char* str);
 	void PushBack(T c);
 	void PopBack();
 	void Erase(usize pos, usize offset);
-	void Insert(usize pos, const BasicString<T>& str);
-	void Copy(const BasicString<T>& str, usize pos, usize offset);
+    void Insert(usize pos, const BasicString2<T>& str);
+    void Copy(const BasicString2<T>& str, usize pos, usize offset);
 
 	INLINE usize		   Length()							         ;
 	INLINE const T*	   	   Buffer()							    const;
@@ -92,11 +92,11 @@ public:
 	INLINE T			   At(usize i)							const;
 	INLINE T			   Back()								const;
 	INLINE T			   Front()								const;
-	INLINE ssize		   Find(const BasicString<T>& pattren, uint32 start = 0)  const;
-	INLINE BasicString<T>  SubString(usize pos, usize off)	    const;
+    INLINE ssize		   Find(const BasicString2<T>& pattren, uint32 start = 0)  const;
+    INLINE BasicString2<T>  SubString(usize pos, usize off)	    const;
 	INLINE bool		   	   IsEmpty()							const;
 
-	INLINE Vector<BasicString<T>> Split(T delimter);
+    INLINE Vector<BasicString2<T>> Split(T delimter);
 	INLINE int32 FindLast(T delimter);
 	INLINE int32 FindFirst(T delimter);
 	INLINE void EraseAfterTheLast(T delimter);
@@ -115,8 +115,8 @@ public:
 	template<typename NUMERIC_TYPE>
 	const T& operator[](const NUMERIC_TYPE i) const;
 
-	INLINE BasicString<T>& operator+=(const BasicString<T>& other);
-	INLINE BasicString<T>& operator+=(const char* other);
+    INLINE BasicString2<T>& operator+=(const BasicString2<T>& other);
+    INLINE BasicString2<T>& operator+=(const char* other);
 
 	INLINE bool IsSmall() const;
 public:
@@ -153,7 +153,7 @@ private:
 	template<usize S>
 	struct InitString<S, true>
 	{
-		void operator()(BasicString<T>* obj, const T(&str)[S])
+        void operator()(BasicString2<T>* obj, const T(&str)[S])
 		{
 			usize len = strlen(str) + 1;
 
@@ -168,7 +168,7 @@ private:
 	template<usize S>
 	struct InitString<S, false>
 	{
-		void operator()(BasicString<T>* obj, const T(&str)[S])
+        void operator()(BasicString2<T>* obj, const T(&str)[S])
 		{
 			usize len = strlen(str) + 1;
 			usize real_cap = S * SPARE_RATE;
@@ -191,9 +191,9 @@ private:
 
 template<typename T>
 template<usize S>
-BasicString<T>::BasicString(const T(&str)[S], bool nop)
+BasicString2<T>::BasicString2(const T(&str)[S], bool nop)
 {
-	BasicString<T>::InitString<S, S <= SSO_SIZE>()(this, str);
+    BasicString2<T>::InitString<S, S <= SSO_SIZE>()(this, str);
 	/*if (S <= SSO_SIZE) { // here its <= because we will count the trailing null
 		for (usize i = 0; i < S; i++) {
 			m_Data[i] = str[i];
@@ -214,7 +214,7 @@ BasicString<T>::BasicString(const T(&str)[S], bool nop)
 
 /*template<typename T>
 template<usize S>
-BasicString<T>::BasicString(const T(&str)[S], usize capacity)
+BasicString2<T>::BasicString2(const T(&str)[S], usize capacity)
 {
 	if (capacity < S) 
 		capacity = S;
@@ -241,7 +241,7 @@ BasicString<T>::BasicString(const T(&str)[S], usize capacity)
 }*/
 
 template<typename T>
-BasicString<T>::BasicString(const char* str)
+BasicString2<T>::BasicString2(const char* str)
 {
 	usize len = strlen(str) + 1; 
 	usize S = len;
@@ -269,24 +269,24 @@ BasicString<T>::BasicString(const char* str)
 
 template<typename T>
 template<typename NUMERIC_TYPE>
-T& BasicString<T>::operator[] (const NUMERIC_TYPE i)
+T& BasicString2<T>::operator[] (const NUMERIC_TYPE i)
 {
-	ASSERTF((usize)i > (usize)m_Length, "Bad usage of [] with BasicString class, given index out of bounds.");
+    ASSERTF((usize)i > (usize)m_Length, "Bad usage of [] with BasicString2 class, given index out of bounds.");
 	return this->EditableBuffer()[i];
 }
 
 template<typename T>
 template<typename NUMERIC_TYPE>
-const T& BasicString<T>::operator[] (const NUMERIC_TYPE i) const
+const T& BasicString2<T>::operator[] (const NUMERIC_TYPE i) const
 {
-	ASSERTF((usize)i > (usize)m_Length, "Bad usage of [] with BasicString class, given index out of bounds.");
+    ASSERTF((usize)i > (usize)m_Length, "Bad usage of [] with BasicString2 class, given index out of bounds.");
 	return this->Buffer()[i];
 }
 
 // The preprocessing function for Boyer Moore's  
 // bad character heuristic  
 template<typename T, usize NB_CHAR>
-void BadCharHeuristic(const BasicString<T>& str, ssize size, int32(&badchar)[NB_CHAR])
+void BadCharHeuristic(const BasicString2<T>& str, ssize size, int32(&badchar)[NB_CHAR])
 {
 	// Initialize all occurrences as -1  
 	for (usize i = 0; i < NB_CHAR; i++)
@@ -301,7 +301,7 @@ void BadCharHeuristic(const BasicString<T>& str, ssize size, int32(&badchar)[NB_
 /* A pattern searching function that uses Bad
 Character Heuristic of Boyer Moore Algorithm */
 template<typename T>
-ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat, uint32 start = 0)
+ssize SearchBoyerMoore(const BasicString2<T>& txt, const BasicString2<T>& pat, uint32 start = 0)
 {
 	CONSTEXPR usize NB_OF_CHARS = 2 * std::numeric_limits<uint16>::max() + 1;
 	int32 badchar[NB_OF_CHARS];
@@ -357,7 +357,7 @@ ssize SearchBoyerMoore(const BasicString<T>& txt, const BasicString<T>& pat, uin
 
 /********************NON CLASS OPS********************/
 template<typename T>
-static bool operator==(BasicString<T>&& a, BasicString<T>&& b)
+static bool operator==(BasicString2<T>&& a, BasicString2<T>&& b)
 {
 	usize alen = a.Length();
 	const T* a_buffer = a.Buffer();
@@ -372,13 +372,13 @@ static bool operator==(BasicString<T>&& a, BasicString<T>&& b)
 }
 
 template<typename T>
-static bool operator!=(BasicString<T>&& a, BasicString<T>&& b)
+static bool operator!=(BasicString2<T>&& a, BasicString2<T>&& b)
 {
 	return !(a == b);
 }
 
 template<typename T>
-static bool operator==(const BasicString<T>& a, const BasicString<T>& b)
+static bool operator==(const BasicString2<T>& a, const BasicString2<T>& b)
 {
 	usize alen = a.Length();
 	const T* a_buffer = a.Buffer();
@@ -395,41 +395,41 @@ static bool operator==(const BasicString<T>& a, const BasicString<T>& b)
 }
 
 template<typename T>
-static bool operator!=(const BasicString<T>& a, const BasicString<T>& b)
+static bool operator!=(const BasicString2<T>& a, const BasicString2<T>& b)
 {
 	return !(a == b);
 }
 
 template<typename T>
-static BasicString<T> operator+(const BasicString<T>& lhs, const BasicString<T>& rhs)
+static BasicString2<T> operator+(const BasicString2<T>& lhs, const BasicString2<T>& rhs)
 {
 	usize rlen = rhs.Length();
 
 	if (rlen == 0)
 		return lhs;
 
-	rlen = (lhs.Length() + rlen) * BasicString<T>::SPARE_RATE;
-	BasicString<T> res(rlen);
+    rlen = (lhs.Length() + rlen) * BasicString2<T>::SPARE_RATE;
+    BasicString2<T> res(rlen);
 	res = lhs;
 	res.Append(rhs);
 	return res;
 }
 
 template<typename T>
-static BasicString<T> operator+(const BasicString<T>& lhs, const char* rhs)
+static BasicString2<T> operator+(const BasicString2<T>& lhs, const char* rhs)
 {
 	if (rhs[0] == '\0')
 		return lhs;
 
-	usize rlen = (lhs.Length() + strlen(rhs) + 1) * BasicString<T>::SPARE_RATE;
-	BasicString<T> res(rlen);
+    usize rlen = (lhs.Length() + strlen(rhs) + 1) * BasicString2<T>::SPARE_RATE;
+    BasicString2<T> res(rlen);
 	res = lhs;
 	res.Append(rhs);
 	return res;
 }
 
 template<typename T>
-usize BasicString<T>::GetHash() const
+usize BasicString2<T>::GetHash() const
 {
 	const T* str = this->Buffer();
 	usize hash = 5381;
@@ -442,19 +442,19 @@ usize BasicString<T>::GetHash() const
 }
 
 template<typename T>
-static bool operator<(const BasicString<T>& lhs, const BasicString<T>& rhs)
+static bool operator<(const BasicString2<T>& lhs, const BasicString2<T>& rhs)
 {
 	return strcmp(lhs.Buffer(), rhs.Buffer()) > 0;
 }
 
 template<typename T>
-std::ostream& operator<<(std::ostream& os, const BasicString<T>& m) {
+std::ostream& operator<<(std::ostream& os, const BasicString2<T>& m) {
 	return os << m.Buffer();
 }
 
 // #include "String.inl"
 
-typedef BasicString<char> String;
+typedef BasicString2<char> String;
 
 TRE_NS_END
 
