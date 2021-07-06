@@ -1,5 +1,3 @@
-project(Core)
-
 SET(MODULE_FOLDER Core)
 SET(MODULE_NAME Core)
 
@@ -13,7 +11,6 @@ file(GLOB_RECURSE SOURCE CONFIGURE_DEPENDS
     "*.hpp"
     "*.cpp"
     "*.c"
-    "*.inl"
 )
 
 if (MSVC)

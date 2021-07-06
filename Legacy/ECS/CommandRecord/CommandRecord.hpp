@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/Memory/Allocators/LinearAlloc/LinearAllocator.hpp>
-#include <Core/ECS/Commands/Commands.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
+#include <Legacy/Memory/Allocators/LinearAllocator.hpp>
+#include <Legacy/ECS/Commands/Commands.hpp>
 
 TRE_NS_START
 

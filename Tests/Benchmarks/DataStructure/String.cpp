@@ -1,6 +1,6 @@
 #include <random>
 #include <benchmark/benchmark.h>
-#include <Core/DataStructure/String2.hpp>
+#include <Core/DataStructure/String.hpp>
 
 using namespace TRE;
 
@@ -27,7 +27,7 @@ std::string GenerateRandomString(usize len, usize start = 0)
 void StringEmptyDecl(benchmark::State& state)
 {
     for (auto _ : state) {
-        String2 str;
+        String str;
         benchmark::DoNotOptimize(str);
     }
 }
@@ -47,7 +47,7 @@ void StringSsoDecl(benchmark::State& state)
         auto s = GenerateRandomString(15);
         state.ResumeTiming();
 
-        String2 str(s);
+        String str(s);
         benchmark::DoNotOptimize(str);
     }
 }
@@ -71,7 +71,7 @@ void StringDecl(benchmark::State& state)
         auto s = GenerateRandomString(1024);
         state.ResumeTiming();
 
-        String2 str(s);
+        String str(s);
         benchmark::DoNotOptimize(str);
     }
 }
@@ -90,7 +90,7 @@ void StdStringDecl(benchmark::State& state)
 
 void StringAppend(benchmark::State& state)
 {
-    String2 str;
+    String str;
 
     for (auto _ : state) {
         state.PauseTiming();
@@ -121,7 +121,7 @@ void StringAppend2(benchmark::State& state)
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> dist(32, 127); // define the range
-    String2 str;
+    String str;
 
     for (auto _ : state) {
         state.PauseTiming();
@@ -155,7 +155,7 @@ void StringPopBack(benchmark::State& state)
 {
     const auto NB = state.max_iterations;
     auto s = GenerateRandomString(NB, NB);
-    String2 str(s);
+    String str(s);
 
     for (auto _ : state) {
         str.PopBack();
@@ -182,7 +182,7 @@ void StringInsertChar(benchmark::State& state)
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> dist2(0, NB); // define the range
-    String2 str;
+    String str;
     usize idx = 0;
 
     for (uint i = 0; i < NB; i++) {
@@ -223,7 +223,7 @@ void StringInsertString(benchmark::State& state)
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> dist2(0, NB); // define the range
-    String2 str;
+    String str;
     usize idx = 0;
     usize total = 0;
 
@@ -279,7 +279,7 @@ void StringErease(benchmark::State& state)
         state.PauseTiming();
         auto p = ereasePos[idx++];
         auto s = GenerateRandomString(NB, NB);
-        String2 str(s);
+        String str(s);
         state.ResumeTiming();
 
         str.Erase(p.first, p.second);

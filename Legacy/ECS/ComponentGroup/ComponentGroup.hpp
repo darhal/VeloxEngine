@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/DataStructure/Bitset/Bitset.hpp>
-#include <Core/DataStructure/Vector/Vector.hpp>
-#include <Core/ECS/ArchetypeQuerry/ArchetypeQuerry.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
+#include <Legacy/DataStructure/Bitset.hpp>
+#include <Legacy/DataStructure/Vector.hpp>
+#include <Legacy/ECS/ArchetypeQuerry/ArchetypeQuerry.hpp>
 
 TRE_NS_START
 

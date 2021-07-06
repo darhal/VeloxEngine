@@ -6,7 +6,7 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
-#include <Core/Utils/Memory.hpp>
+#include <Core/Memory/Memory.hpp>
 
 TRE_NS_START
 
@@ -393,7 +393,7 @@ template<typename T>
 template<typename... Args>
 T& Vector<T>::Emplace(usize i, Args&&... args)
 {
-    ASSERTF(i > m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
+    TRE_ASSERTF(i <= m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
 
     if (m_Length + 1 >= m_Capacity) {
         // usize nCap = m_Capacity ? m_Capacity * DEFAULT_GROW_SIZE : DEFAULT_CAPACITY;
@@ -428,7 +428,7 @@ template<typename T>
 template<typename... Args>
 T& Vector<T>::EmplaceFast(usize i, Args&&... args)
 {
-    ASSERTF(i > m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
+    TRE_ASSERTF(i <= m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
 
     if (m_Length + 1 >= m_Capacity) { // The default way might be faster as we have to reallocate the memory and copy the objects anyways
         return this->Emplace(i, std::forward<Args>(args)...);
@@ -490,8 +490,8 @@ FORCEINLINE Vector<T>& Vector<T>::operator+=(Vector<T>&& other)
 template<typename T>
 void Vector<T>::Erease(usize start, usize end) noexcept
 {
-    ASSERTF((start >= m_Length || end > m_Length), "[%" SZu "..%" SZu "] interval isn't included in the range [0..%" SZu "]", start, end, m_Length);
-    ASSERTF((end < start), "end must be greater than start");
+    TRE_ASSERTF(start < m_Length && end <= m_Length, "[%" SZu "..%" SZu "] interval isn't included in the range [0..%" SZu "]", start, end, m_Length);
+    TRE_ASSERTF(end >= start, "end must be greater than start");
     
     usize size = end - start;
     if (size == 0) 
@@ -509,7 +509,7 @@ template<typename T>
 void Vector<T>::Erease(Iterator itr) noexcept
 {
     T* itr_ptr = itr.GetPtr();
-    ASSERTF((itr_ptr >= m_Data + m_Length || itr_ptr < m_Data), "The given iterator doesn't belong to the Vector.");
+    TRE_ASSERTF((itr_ptr < m_Data + m_Length && itr_ptr >= m_Data), "The given iterator doesn't belong to the Vector.");
     
     (*itr_ptr).~T();
     usize start = usize(itr_ptr - m_Data);
@@ -528,7 +528,7 @@ template<typename T>
 FORCEINLINE void Vector<T>::EreaseFast(Iterator itr) noexcept
 {
     T* itr_ptr = itr.GetPtr();
-    ASSERTF((itr_ptr >= m_Data + m_Length || itr_ptr < m_Data), "The given iterator doesn't belong to the Vector.");
+    TRE_ASSERTF((itr_ptr < m_Data + m_Length && itr_ptr >= m_Data), "The given iterator doesn't belong to the Vector.");
     
     (*itr_ptr).~T();
     T* last_ptr = m_Data + m_Length - 1;
@@ -621,7 +621,7 @@ FORCEINLINE T& Vector<T>::Get(usize i) noexcept
 template<typename T>
 FORCEINLINE T& Vector<T>::At(usize i) noexcept
 {
-    ASSERTF((i >= m_Length), "Bad usage of vector function At index out of bounds");
+    TRE_ASSERTF(i < m_Length, "Bad usage of vector function At index out of bounds");
     return m_Data[i];
 }
 
@@ -634,7 +634,7 @@ FORCEINLINE T& Vector<T>::operator[](usize i) noexcept
 template<typename T>
 FORCEINLINE const T& Vector<T>::At(usize i) const noexcept
 {
-    ASSERTF((i >= m_Length), "Bad usage of vector function At index out of bounds");
+    TRE_ASSERTF((i < m_Length), "Bad usage of vector function At index out of bounds");
     return m_Data[i];
 }
 

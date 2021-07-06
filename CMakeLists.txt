@@ -83,9 +83,9 @@ set(MAIN_BINARY_DIR ${CMAKE_BINARY_DIR})
 link_directories(${CMAKE_BINARY_DIR}/Libs)
 
 add_subdirectory(Core)
+add_subdirectory(Legacy)
 add_subdirectory(Renderer)
 add_subdirectory(Engine)
-
 
 if (BUILD_BENCHMARKS)
 	add_subdirectory(Tests/Benchmarks)

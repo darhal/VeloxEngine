@@ -1,7 +1,7 @@
 #pragma once
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/DataStructure/Vector/Vector.hpp>
-#include <Core/ECS/System/BaseSystem.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
+#include <Legacy/DataStructure/Vector.hpp>
+#include <Legacy/ECS/System/BaseSystem.hpp>
 
 TRE_NS_START
 

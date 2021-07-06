@@ -1,6 +1,6 @@
 #include "EntityContainer.hpp"
-#include <Core/ECS/Entity/Entity.hpp>
-#include <Core/Memory/Utils/Utils.hpp>
+#include <Legacy/ECS/Entity/Entity.hpp>
+#include <Legacy/Memory/Utils/Utils.hpp>
 
 TRE_NS_START
 

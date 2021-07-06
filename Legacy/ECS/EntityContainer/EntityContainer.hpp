@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/Misc/Defines/Debug.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
+#include <Legacy/Misc/Defines/Debug.hpp>
 
 TRE_NS_START
 

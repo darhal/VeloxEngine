@@ -2,7 +2,7 @@
 #include <gmock/gmock.h>
 #include <random>
 #include <cstring>
-#include <Core/DataStructure/String2.hpp>
+#include <Core/DataStructure/String.hpp>
 
 using namespace TRE;
 
@@ -22,7 +22,7 @@ std::string GenerateRandomString(uint32 len, uint32 start = 0)
 }
 
 template<typename T>
-auto TestString(const BasicString2<T>& x, const std::basic_string<T>& y)
+auto TestString(const BasicString<T>& x, const std::basic_string<T>& y)
 {
     ASSERT_EQ(x.Size(), y.size());
 
@@ -32,7 +32,7 @@ auto TestString(const BasicString2<T>& x, const std::basic_string<T>& y)
 }
 
 template<typename T>
-auto TestCString(const BasicString2<T>& x, const T* str)
+auto TestCString(const BasicString<T>& x, const T* str)
 {
     usize sz = strlen(str);
     ASSERT_EQ(x.Size(), sz);
@@ -44,21 +44,21 @@ auto TestCString(const BasicString2<T>& x, const T* str)
 
 TEST(StringsTest, Declaration)
 {
-    String2 str1;
+    String str1;
     std::string str2;
     TestString(str1, str2);
 }
 
 TEST(StringsTest, Declaration2)
 {
-    String2 str1("Small String");
+    String str1("Small String");
     std::string str2("Small String");
     TestString(str1, str2);
 }
 
 TEST(StringsTest, Declaration3)
 {
-    String2 str1("Not so small String");
+    String str1("Not so small String");
     std::string str2("Not so small String");
     TestString(str1, str2);
 }
@@ -68,7 +68,7 @@ TEST(StringsTest, Append)
     const char* APPENDS[] = {"Hello ", ",", " World ! ", "Can we add more characters please ?"};
     const usize SIZE = sizeof(APPENDS) / sizeof(APPENDS[0]);
 
-    String2 str1;
+    String str1;
     std::string str2;
 
     for (uint i = 0; i < SIZE; i++) {
@@ -85,7 +85,7 @@ TEST(StringsTest, Append2)
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> dist(32, 127); // define the range
 
-    String2 str1;
+    String str1;
     std::string str2;
 
     for (uint i = 0; i < NB; i++) {
@@ -100,7 +100,7 @@ TEST(StringsTest, Append2)
 TEST(StringsTest, Append3)
 {
     constexpr auto NB = 1000;
-    String2 str1;
+    String str1;
     std::string str2;
 
     for (uint i = 0; i < NB; i++) {
@@ -118,7 +118,7 @@ TEST(StringsTest, PopBack)
 
     for (uint i = 0; i < NB; i++) {
         auto s = GenerateRandomString(1024, 1);
-        String2 str1(s);
+        String str1(s);
         std::string str2(s.c_str());
 
         for (usize i = 0; i < s.size(); i++) {
@@ -140,7 +140,7 @@ TEST(StringsTest, InsertChar)
     std::uniform_int_distribution<> dist(32, 127); // define the range
     std::uniform_int_distribution<> dist2(0, NB); // define the range
 
-    String2 str1;
+    String str1;
     std::string str2;
 
     for (uint i = 0; i < NB; i++) {
@@ -162,7 +162,7 @@ TEST(StringsTest, InsertString)
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> dist2(0, NB); // define the range
 
-    String2 str1;
+    String str1;
     std::string str2;
 
     for (uint i = 0; i < NB; i++) {
@@ -184,7 +184,7 @@ TEST(StringsTest, EraseString)
 
     for (uint i = 0; i < NB; i++) {
         auto s = GenerateRandomString(1024, 1);
-        String2 str1(s);
+        String str1(s);
         std::string str2(s.c_str());
 
         usize start = dist(gen) % s.size();
@@ -197,7 +197,7 @@ TEST(StringsTest, EraseString)
 
     for (uint i = 0; i < NB; i++) {
         auto s = GenerateRandomString(1024, 1);
-        String2 str1(s);
+        String str1(s);
         std::string str2(s.c_str());
 
         usize start = dist(gen) % s.size();
@@ -215,7 +215,7 @@ TEST(StringsTest, StartsWith)
 
     for (uint i = 0; i < NB; i++) {
         auto s = GenerateRandomString(1024);
-        String2 str1(s);
+        String str1(s);
 
         for (usize i = 0; i < s.size(); i++) {
             ASSERT_TRUE(str1.StartsWith(str1.Data(), i));
@@ -229,7 +229,7 @@ TEST(StringsTest, EndsWith)
 
     for (uint i = 0; i < NB; i++) {
         auto s = GenerateRandomString(1024);
-        String2 str1(s);
+        String str1(s);
 
         for (usize i = s.size(); i > 0; i--) {
             ASSERT_TRUE(str1.EndsWith(str1.Data() + i, s.size() - i));
@@ -246,7 +246,7 @@ TEST(StringsTest, SubString)
 
     for (uint i = 0; i < NB; i++) {
         auto s = GenerateRandomString(1024, 1);
-        String2 str1(s);
+        String str1(s);
         std::string str2(s.c_str());
 
         usize start = dist(gen) % s.size();
@@ -259,7 +259,7 @@ TEST(StringsTest, SubString)
 
     for (uint i = 0; i < NB; i++) {
         auto s = GenerateRandomString(1024, 1);
-        String2 str1(s);
+        String str1(s);
         std::string str2(s.c_str());
 
         usize start = dist(gen) % s.size();

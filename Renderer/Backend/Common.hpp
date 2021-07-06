@@ -23,7 +23,8 @@
 #endif
 
 #undef UNICODE 
-#include <Core/Core.hpp>
+// #include <Core/Core.hpp>
+#include <Legacy/Legacy.hpp>
 #include <Renderer/Backend/Core/Logs/Logs.hpp>
 
 #if defined(COMPILER_MSVC)

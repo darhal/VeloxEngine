@@ -1,5 +1,5 @@
 #include "ComponentGroup.hpp"
-#include <Core/ECS/EntityManager/EntityManager.hpp>
+#include <Legacy/ECS/EntityManager/EntityManager.hpp>
 
 TRE_NS_START
 

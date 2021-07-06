@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/DataStructure/Vector/Vector.hpp>
-#include <Core/Memory/Allocators/LinearAlloc/LinearAllocator.hpp>
-#include <Core/ECS/Common.hpp>
-#include <Core/ECS/Archetype/Chunk/ArchetypeChunkIterator.hpp>
-#include <Core/ECS/Archetype/Archetype.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
+#include <Legacy/DataStructure/Vector.hpp>
+#include <Legacy/Memory/Allocators/LinearAllocator.hpp>
+#include <Legacy/ECS/Common.hpp>
+#include <Legacy/ECS/Archetype/Chunk/ArchetypeChunkIterator.hpp>
+#include <Legacy/ECS/Archetype/Archetype.hpp>
 
 TRE_NS_START
 

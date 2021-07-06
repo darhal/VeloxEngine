@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Core/Misc/Defines/Common.hpp"
-#include <Core/DataStructure/Vector/Vector.hpp>
-#include <Core/DataStructure/Tuple/Pair.hpp>
-#include <Core/ECS/Common.hpp>
-#include <Core/ECS/EntityManager/EntityManager.hpp>
-#include <Core/ECS/Component/BaseComponent.hpp>
-#include <Core/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
+#include "Legacy/Misc/Defines/Common.hpp"
+#include <Legacy/DataStructure/Vector.hpp>
+#include <Legacy/DataStructure/Pair.hpp>
+#include <Legacy/ECS/Common.hpp>
+#include <Legacy/ECS/EntityManager/EntityManager.hpp>
+#include <Legacy/ECS/Component/BaseComponent.hpp>
+#include <Legacy/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
 
 TRE_NS_START
 

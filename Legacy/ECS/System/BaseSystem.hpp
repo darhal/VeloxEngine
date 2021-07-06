@@ -1,13 +1,13 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/DataStructure/HashMap/Map.hpp>
-#include <Core/DataStructure/Vector/Vector.hpp>
-#include <Core/ECS/Component/BaseComponent.hpp>
-#include <Core/DataStructure/Tuple/Pair.hpp>
-#include <Core/DataStructure/Bitset/Bitset.hpp>
-#include <Core/ECS/ComponentGroup/ComponentGroup.hpp>
-#include <Core/ECS/CommandRecord/CommandRecord.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
+#include <Legacy/DataStructure/Map.hpp>
+#include <Legacy/DataStructure/Vector.hpp>
+#include <Legacy/ECS/Component/BaseComponent.hpp>
+#include <Legacy/DataStructure/Pair.hpp>
+#include <Legacy/DataStructure/Bitset.hpp>
+#include <Legacy/ECS/ComponentGroup/ComponentGroup.hpp>
+#include <Legacy/ECS/CommandRecord/CommandRecord.hpp>
 
 TRE_NS_START
 

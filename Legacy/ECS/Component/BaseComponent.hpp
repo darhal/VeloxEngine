@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/DataStructure/Vector/Vector.hpp>
-#include <Core/DataStructure/Tuple/Tuple.hpp>
-#include <Core/ECS/Common.hpp>
-#include <Core/DataStructure/Utils/Utils.hpp>
-#include <Core/DataStructure/StaticBitset/StaticBitset.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
+#include <Legacy/DataStructure/Vector.hpp>
+#include <Legacy/DataStructure/Tuple.hpp>
+#include <Legacy/ECS/Common.hpp>
+#include <Legacy/DataStructure/Utils.hpp>
+#include <Legacy/DataStructure/StaticBitset.hpp>
 
 TRE_NS_START
 

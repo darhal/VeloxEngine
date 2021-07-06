@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
 
 TRE_NS_START
 

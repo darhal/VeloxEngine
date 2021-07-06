@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/DataStructure/Vector/Vector.hpp>
-#include <Core/ECS/Common.hpp>
-#include <Core/DataStructure/Bitset/Bitset.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
+#include <Legacy/DataStructure/Vector.hpp>
+#include <Legacy/ECS/Common.hpp>
+#include <Legacy/DataStructure/Bitset.hpp>
 
 TRE_NS_START
 

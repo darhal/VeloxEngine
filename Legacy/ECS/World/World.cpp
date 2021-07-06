@@ -1,8 +1,9 @@
 #include "World.hpp"
-#include <Core/DataStructure/Utils/Utils.hpp>
-#include <Core/ECS/ECS/ECS.hpp>
-#include <Core/ECS/System/BaseSystem.hpp>
-#include <Core/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
+
+#include <Legacy/DataStructure/Utils.hpp>
+#include <Legacy/ECS/ECS/ECS.hpp>
+#include <Legacy/ECS/System/BaseSystem.hpp>
+#include <Legacy/ECS/Archetype/Chunk/ArchetypeChunk.hpp>
 
 TRE_NS_START
 

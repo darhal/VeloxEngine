@@ -1,6 +1,6 @@
 #include "Entity.hpp"
-#include <Core/ECS/Archetype/Archetype.hpp>
-#include <Core/ECS/Entity/Entity.hpp>
+#include <Legacy/ECS/Archetype/Archetype.hpp>
+#include <Legacy/ECS/Entity/Entity.hpp>
 
 TRE_NS_START
 

@@ -9,13 +9,12 @@
 #endif
 
 #if !defined(_DEBUG) || defined(NDEBUG)
-	#define ASSERTF(condition, ...) {};
-	#define ASSERT(condition) {};
     #define TRE_ASSERTF(condition, ...) {};
     #define TRE_ASSERT(condition) {};
     #undef DEBUG
 #else
-	#include <Core/Utils/Logging.hpp>
+    #include <Core/Misc/Defines/Debug.hpp>
+    #include <Core/Misc/Logging.hpp>
 
 #if !defined(DEBUG)
     #define DEBUG
@@ -39,26 +38,12 @@
 		#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 	#endif
 
-	#if defined(assert)
-		#undef assert
+    #if defined(TRE_ASSERTF)
+        #undef TRE_ASSERTF
 	#endif
-	#if defined(ASSERT)
-		#undef ASSERT
-	#endif
-
-	#define ASSERTF(condition, ...) \
-		if ((bool)(condition)){ \
-			char assert_msg[215]; \
-			snprintf(assert_msg, 215, ##__VA_ARGS__); \
-			TRE::Log::Write(TRE::Log::ASSERT, "[%s::%d::%s] %s.", __FILENAME__, __LINE__, __FUNCTION__, assert_msg); \
-			DEBUG_BREAK(); \
-		}\
-
-	#define ASSERT(condition) \
-		if ((bool)(condition)){ \
-			TRE::Log::Write(TRE::Log::ASSERT, "[%s::%d::%s] Assert occured (Condition: %s).", __FILENAME__, __LINE__, __FUNCTION__, #condition); \
-			DEBUG_BREAK(); \
-		} \
+    #if defined(TRE_ASSERT)
+        #undef TRE_ASSERT
+    #endif
 
     #define TRE_ASSERTF(condition, ...) \
         if (!(bool)(condition)){ \

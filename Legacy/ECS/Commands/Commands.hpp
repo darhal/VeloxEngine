@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/ECS/CommandFunctions/CommandFunctions.hpp>
-#include <Core/ECS/Entity/Entity.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
+#include <Legacy/ECS/CommandFunctions/CommandFunctions.hpp>
+#include <Legacy/ECS/Entity/Entity.hpp>
 
 TRE_NS_START
 

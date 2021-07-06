@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/DataStructure/Bitset/Bitset.hpp>
-#include <Core/DataStructure/HashMap/Map.hpp>
-#include <Core/DataStructure/Utils/Utils.hpp>
-#include <Core/ECS/Component/BaseComponent.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
+#include <Legacy/DataStructure/Bitset.hpp>
+#include <Legacy/DataStructure/Map.hpp>
+#include <Legacy/DataStructure/Utils.hpp>
+#include <Legacy/ECS/Component/BaseComponent.hpp>
 
 TRE_NS_START
 

@@ -1,9 +1,9 @@
 #include "ArchetypeChunk.hpp"
-#include <Core/ECS/World/World.hpp>
-#include <Core/ECS/Archetype/Archetype.hpp>
-#include <Core/ECS/Component/BaseComponent.hpp>
-#include <Core/ECS/Entity/Entity.hpp>
-#include <Core/ECS/Archetype/Archetype.hpp>
+#include <Legacy/ECS/World/World.hpp>
+#include <Legacy/ECS/Archetype/Archetype.hpp>
+#include <Legacy/ECS/Component/BaseComponent.hpp>
+#include <Legacy/ECS/Entity/Entity.hpp>
+#include <Legacy/ECS/Archetype/Archetype.hpp>
 
 TRE_NS_START
 

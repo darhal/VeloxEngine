@@ -1,14 +1,14 @@
 #pragma once
 
-#include <Core/Misc/Defines/Common.hpp>
-#include <Core/DataStructure/Bitset/Bitset.hpp>
-#include <Core/DataStructure/Vector/Vector.hpp>
-#include <Core/DataStructure/PackedArray/PackedArray.hpp>
-#include <Core/DataStructure/HashMap/HashMap.hpp>
-#include <Core/ECS/Archetype/Archetype.hpp>
-// #include <Core/ECS/Entity/Entity.hpp>
-#include <Core/ECS/ArchetypeQuerry/ArchetypeQuerry.hpp>
-#include <Core/ECS/EntityContainer/EntityContainer.hpp>
+#include <Legacy/Misc/Defines/Common.hpp>
+#include <Legacy/DataStructure/Bitset.hpp>
+#include <Legacy/DataStructure/Vector.hpp>
+#include <Legacy/DataStructure/PackedArray.hpp>
+#include <Legacy/DataStructure/HashMap.hpp>
+#include <Legacy/ECS/Archetype/Archetype.hpp>
+// #include <Legacy/ECS/Entity/Entity.hpp>
+#include <Legacy/ECS/ArchetypeQuerry/ArchetypeQuerry.hpp>
+#include <Legacy/ECS/EntityContainer/EntityContainer.hpp>
 
 TRE_NS_START
 

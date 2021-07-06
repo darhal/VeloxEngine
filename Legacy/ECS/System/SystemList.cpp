@@ -1,5 +1,5 @@
 #include "SystemList.hpp"
-#include <Core/ECS/World/World.hpp>
+#include <Legacy/ECS/World/World.hpp>
 
 
 TRE_NS_START
