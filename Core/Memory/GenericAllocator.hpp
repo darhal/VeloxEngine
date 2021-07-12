@@ -12,7 +12,7 @@ public:
     using Traits = AllocTraits<true, 0>;
 
 public:
-    FORCEINLINE constexpr void* AllocateBytes(usize sz, usize al = 1)
+    constexpr FORCEINLINE void* AllocateBytes(usize sz, usize al = 1)
     {
         // FIXME : this is a temp hack
         if (al == 1)
@@ -21,29 +21,33 @@ public:
     }
 
     template<typename T>
-    FORCEINLINE constexpr T* Allocate(usize count)
+    constexpr FORCEINLINE T* Allocate(usize count)
     {
         void* data = this->AllocateBytes(sizeof(T) * count);
         return static_cast<T*>(data);
     }
 
-    FORCEINLINE constexpr void* ReallocateBytes(void* ptr, usize sz, usize al = 1)
+    constexpr FORCEINLINE void* ReallocateBytes(void* ptr, usize sz, usize al = 1)
     {
         return this->AllocateBytes(sz, al);
     }
 
     template<typename T>
-    FORCEINLINE constexpr T* Reallocate(T* ptr, usize count)
+    constexpr FORCEINLINE T* Reallocate(T* ptr, usize count)
     {
         void* data = this->AllocateBytes(sizeof(T) * count);
         return static_cast<T*>(data);
     }
 
-    FORCEINLINE constexpr void FreeMemory(void* ptr) noexcept
+    constexpr FORCEINLINE void FreeMemory(void* ptr) noexcept
     {
         return Utils::FreeMemory(ptr);
     }
 
+    constexpr FORCEINLINE friend void Swap(GenericAllocator& /*first*/, GenericAllocator& /*second*/) noexcept
+    {
+
+    }
 private:
 
 };

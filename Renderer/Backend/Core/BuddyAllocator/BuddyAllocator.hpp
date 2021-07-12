@@ -141,9 +141,9 @@ struct BuddyAllocator
         tree.Print();
     }
 
-    uint32                minSize;
-    uint32                maxSize;
-    BitmapTree            tree;
+    uint32     minSize;
+    uint32     maxSize;
+    BitmapTree tree;
 };
 
 

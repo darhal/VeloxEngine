@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <ctime>
-#include "Platform.hpp"
+#include <Core/Platform/Platform.hpp>
 
 #if defined(COMPILER_MSVC)
 	#pragma warning(disable:4996) // DISABLE VS WARNING

@@ -5,18 +5,26 @@
 
 using namespace TRE;
 
-template<typename T>
-using SmallVector = Vector<T, LocalAllocator<2 * 4096 * 4>>;
-
 //template<typename T>
-//using SmallVector = Vector<T>;
+//using SmallVector = Vector<T, LocalAllocator<2 * 4096 * 4>>;
+
+template<typename T>
+using SmallVector = Vector<T>;
 
 void VectorEmplaceBack(benchmark::State& state)
 {
     SmallVector<int> vec;
     // vec.Reserve(vec.DEFAULT_CAPACITY);
+    usize cap = vec.Capacity();
 
     for (auto _ : state) {
+        /*state.PauseTiming();
+        if (cap != vec.Capacity()) {
+            cap = vec.Capacity();
+            printf("Cap = %lu\n", cap);
+        }
+        state.ResumeTiming();*/
+
         // This code gets timed
         vec.EmplaceBack(5);
     }
@@ -26,8 +34,16 @@ void StdVectorEmplaceBack(benchmark::State& state)
 {
     state.iterations();
     std::vector<int> vec;
+    usize cap = vec.capacity();
 
     for (auto _ : state) {
+        /*state.PauseTiming();
+        if (cap != vec.capacity()) {
+            cap = vec.capacity();
+            printf("Cap = %lu\n", cap);
+        }
+        state.ResumeTiming();*/
+
         // This code gets timed
         vec.emplace_back(5);
     }
@@ -37,8 +53,16 @@ void VectorEmplaceFront(benchmark::State& state)
 {
     SmallVector<int> vec;
     // vec.Reserve(vec.DEFAULT_CAPACITY);
+    usize cap = vec.Capacity();
 
     for (auto _ : state) {
+        /*state.PauseTiming();
+        if (cap != vec.Capacity()) {
+            cap = vec.Capacity();
+            printf("Cap = %lu\n", cap);
+        }
+        state.ResumeTiming();*/
+
         // This code gets timed
         vec.EmplaceFront(5);
     }
@@ -48,8 +72,16 @@ void StdVectorEmplaceFront(benchmark::State& state)
 {
     state.iterations();
     std::vector<int> vec;
+    usize cap = vec.capacity();
 
     for (auto _ : state) {
+        /*state.PauseTiming();
+        if (cap != vec.capacity()) {
+            cap = vec.capacity();
+            printf("Cap = %lu\n", cap);
+        }
+        state.ResumeTiming();*/
+
         // This code gets timed
         vec.insert(vec.begin(), 5);
     }

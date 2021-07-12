@@ -29,7 +29,6 @@ auto TestVectors(const T1& x, const T2& y)
 TEST(VectorTests, EmplaceBack)
 {
     constexpr auto NB = TEST_ITERATIONS;
-
     SmallVector<int> x;
     std::vector<int> y;
 
@@ -43,7 +42,6 @@ TEST(VectorTests, EmplaceBack)
 TEST(VectorTests, PushBack)
 {
     constexpr auto NB = TEST_ITERATIONS;
-
     SmallVector<int> x;
     std::vector<int> y;
 

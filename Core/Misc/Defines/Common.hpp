@@ -1,10 +1,8 @@
 #pragma once
 
-#include "Platform.hpp"
+#include <Core/Platform/Platform.hpp>
 #include <inttypes.h>
 #include <limits.h>
-
-
 
 //Include known-size integer files, based on compiler. Some compilers do not have these
 //files, so they must be created manually.

@@ -6,6 +6,7 @@
 #include <new>
 #include <algorithm>
 #include <Core/Misc/Defines/Common.hpp>
+#include <Core/Misc/UtilityConcepts.hpp>
 
 namespace TRE::Utils
 {
@@ -52,9 +53,6 @@ namespace TRE::Utils
     }
 
 #if defined(COMPILER_MSVC) || __cplusplus >= 202002L
-    template<typename T>
-    concept POD = (std::is_standard_layout_v<T> && std::is_trivial_v<T>) || (std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>);
-
     // POD TYPES:
     template<POD T>
     FORCEINLINE constexpr void Copy(T* dst, const T* src, usize count = 1) noexcept

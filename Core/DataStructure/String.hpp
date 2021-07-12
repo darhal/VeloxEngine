@@ -6,6 +6,7 @@
 #include <Core/Memory/Memory.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
 #include <Core/DataStructure/RandomAccessIterator.hpp>
+#include <Core/DataStructure/Utils.hpp>
 
 TRE_NS_START
 
@@ -13,115 +14,151 @@ template<typename T>
 class BasicString
 {
 public:
-public:
-    using Iterator  = RandomAccessIterator<T>;
-    using CIterator = RandomAccessIterator<const T>;
-    using value_type = T;
+    using Iterator          = RandomAccessIterator<T>;
+    using CIterator         = RandomAccessIterator<const T>;
+    using value_type        = T;
+    using pointer           = value_type*;
+    using const_pointer     = const value_type*;
+    using reference         = value_type&;
+    using const_reference	= const value_type&;
+    using const_iterator	= CIterator;
+    using iterator          = const_iterator;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    using reverse_iterator  = const_reverse_iterator;
+    using size_type         = size_t;
+    using difference_type	= ptrdiff_t;
 
 public:
-    FORCEINLINE constexpr BasicString();
+    constexpr FORCEINLINE BasicString();
 
     constexpr BasicString(const T* data, usize size);
 
-    FORCEINLINE constexpr BasicString(const std::basic_string<T>& str);
+    constexpr FORCEINLINE BasicString(const std::basic_string<T>& str);
 
     template<usize S>
-    FORCEINLINE constexpr BasicString(const T(&str)[S]);
+    constexpr FORCEINLINE BasicString(const T(&str)[S]);
 
-    FORCEINLINE constexpr ~BasicString() noexcept;
+    constexpr FORCEINLINE ~BasicString() noexcept;
 
-    FORCEINLINE constexpr void Append(T ch);
+    constexpr FORCEINLINE BasicString(const BasicString<T>& other);
+
+    constexpr FORCEINLINE BasicString& operator=(const BasicString<T>& other);
+
+    constexpr FORCEINLINE BasicString(BasicString<T>&& other) noexcept;
+
+    constexpr FORCEINLINE BasicString& operator=(BasicString<T>&& other) noexcept;
+
+    constexpr FORCEINLINE void Append(T ch);
 
     constexpr void Append(const T* str, usize sz = 0);
 
-    FORCEINLINE constexpr void Append(const BasicString<T>& str);
+    constexpr FORCEINLINE void Append(const BasicString<T>& str);
 
     constexpr void PushBack(T ch);
 
-    FORCEINLINE constexpr void PopBack() noexcept;
+    constexpr FORCEINLINE void PopBack() noexcept;
 
     constexpr void Insert(usize pos, T ch);
 
     constexpr void Insert(usize pos, const T* str, usize sz = 0);
 
-    FORCEINLINE constexpr void Insert(usize pos, const BasicString<T>& str);
+    constexpr FORCEINLINE void Insert(usize pos, const BasicString<T>& str);
 
     constexpr void Erase(usize index, usize count) noexcept;
 
-    constexpr bool StartsWith(const T* str, usize sz = 0) noexcept;
+    constexpr bool StartsWith(const T* str, usize sz = 0) const noexcept;
 
-    constexpr bool StartsWith(const BasicString<T>& str) noexcept;
+    constexpr bool StartsWith(const BasicString<T>& str) const noexcept;
 
-    constexpr bool EndsWith(const T* str, usize sz = 0) noexcept;
+    constexpr bool EndsWith(const T* str, usize sz = 0) const noexcept;
 
-    constexpr bool EndsWith(const BasicString<T>& str) noexcept;
+    constexpr bool EndsWith(const BasicString<T>& str) const noexcept;
 
     constexpr bool Reserve(usize size);
 
-    FORCEINLINE constexpr BasicString<T> SubString(usize index, usize count);
+    constexpr FORCEINLINE BasicString<T> SubString(usize index, usize count) const;
 
-    FORCEINLINE constexpr T Front() const noexcept { return m_Data[0]; }
+    constexpr FORCEINLINE T Front() const noexcept { return m_Data[0]; }
 
-    FORCEINLINE constexpr T Back() const noexcept { return m_Data[m_Size - 1]; }
+    constexpr FORCEINLINE T Back() const noexcept { return m_Data[m_Size - 1]; }
 
-    FORCEINLINE constexpr usize Size() const noexcept{ return m_Size; }
+    constexpr FORCEINLINE usize Size() const noexcept{ return m_Size; }
 
-    FORCEINLINE constexpr bool IsSmall() const noexcept { return m_Data == m_Buffer; }
+    constexpr FORCEINLINE bool IsSmall() const noexcept { return m_Data == m_Buffer; }
 
-    FORCEINLINE constexpr usize Capacity() const noexcept { return this->IsSmall() ? NB_CHAR_SMALL : m_Capacity; }
+    constexpr FORCEINLINE usize Capacity() const noexcept { return this->IsSmall() ? NB_CHAR_SMALL : m_Capacity; }
 
-    FORCEINLINE constexpr T* Data() noexcept { return m_Data; }
+    constexpr FORCEINLINE T* Data() noexcept { return m_Data; }
 
-    FORCEINLINE constexpr const T* Data() const noexcept { return m_Data; }
+    constexpr FORCEINLINE const T* Data() const noexcept { return m_Data; }
 
-    FORCEINLINE constexpr T operator[](usize i) const noexcept { return m_Data[i]; }
+    constexpr FORCEINLINE T operator[](usize i) const noexcept { return m_Data[i]; }
 
-    FORCEINLINE constexpr bool Empty() const noexcept { return m_Size == 0; }
+    constexpr FORCEINLINE T& operator[](usize i) noexcept { return m_Data[i]; }
 
-    constexpr FORCEINLINE const Iterator begin() const noexcept
+    constexpr FORCEINLINE bool Empty() const noexcept { return m_Size == 0; }
+
+    constexpr iterator begin() const noexcept
     {
         return Iterator(m_Data);
     }
 
-    constexpr FORCEINLINE const Iterator end() const noexcept
+    constexpr iterator end() const noexcept
     {
         return Iterator(m_Data + m_Size);
     }
 
-    constexpr FORCEINLINE Iterator begin() noexcept
-    {
-        return Iterator(m_Data);
-    }
-
-    constexpr FORCEINLINE Iterator end() noexcept
-    {
-        return Iterator(m_Data + m_Size);
-    }
-
-    constexpr FORCEINLINE CIterator cbegin() const noexcept
+    constexpr const_iterator cbegin() const noexcept
     {
         return CIterator(m_Data);
     }
 
-    constexpr FORCEINLINE CIterator cend() const noexcept
+    constexpr const_iterator cend() const noexcept
     {
         return CIterator(m_Data + m_Size);
     }
 
-    constexpr FORCEINLINE friend void Swap(BasicString<T>& first, BasicString<T>& second) noexcept
+    constexpr const_reverse_iterator rbegin() const noexcept
+    {
+        return const_reverse_iterator(this->end());
+    }
+
+    constexpr const_reverse_iterator rend() const noexcept
+    {
+        return const_reverse_iterator(this->begin());
+    }
+
+    constexpr const_reverse_iterator crbegin() const noexcept
+    {
+        return const_reverse_iterator(this->end());
+    }
+
+    constexpr const_reverse_iterator  crend() const noexcept
+    {
+        return const_reverse_iterator(this->begin());
+    }
+
+    constexpr friend void Swap(BasicString<T>& first, BasicString<T>& second) noexcept
     {
         if (first.IsSmall() && second.IsSmall()) {
             T buffer[NB_ELEMENTS];
-            Utils::Copy(buffer, first.m_Buffer, NB_ELEMENTS);
-            Utils::Copy(first.m_Buffer, second.m_Buffer, NB_ELEMENTS);
-            Utils::Copy(second.m_Buffer, buffer, NB_ELEMENTS);
+            Utils::Copy(buffer, first.m_Data, NB_ELEMENTS);
+            Utils::Copy(first.m_Data, second.m_Data, NB_ELEMENTS);
+            Utils::Copy(second.m_Data, buffer, NB_ELEMENTS);
             std::swap(first.m_Size, second.m_Size);
-        }else if ((first.IsSmall() && !second.IsSmall()) || (first.IsSmall() && !second.IsSmall())) {
-
+        }else if ((first.IsSmall() && !second.IsSmall()) || (second.IsSmall() && !first.IsSmall())) {
+            BasicString<T>* small = first.IsSmall() ? &first : &second;
+            BasicString<T>* notSmall = small == &first ? &second : &first;
+            auto notSmallCap = notSmall->m_Capacity;
+            Utils::Copy(notSmall->m_Buffer, small->m_Data, small->m_Size);
+            small->m_Data = notSmall->m_Data;
+            small->m_Capacity = notSmallCap;
+            notSmall->m_Data = notSmall->m_Buffer;
+            std::swap(small->m_Size, notSmall->m_Size);
         }else{
             std::swap(first.m_Data, second.m_Data);
-            std::swap(first.m_Size, second.m_Size);
             std::swap(first.m_Capacity, second.m_Capacity);
+            std::swap(first.m_Size, second.m_Size);
         }
     }
 
@@ -134,11 +171,11 @@ private:
     constexpr void Reallocate(usize nCap);
 
 private:
-    CONSTEXPR static const auto SSO_SIZE        = 2 * sizeof(usize);
-    CONSTEXPR static const auto NB_CHAR_SMALL   = SSO_SIZE / sizeof(T) - 1;
-    CONSTEXPR static const auto NB_ELEMENTS     = NB_CHAR_SMALL + 1;
-    CONSTEXPR static const T NULL_TERMINATOR    = '\0';
-    CONSTEXPR static const T DEFAULT_GROW_SIZE  = 2;
+    constexpr static const auto SSO_SIZE        = 2 * sizeof(usize);
+    constexpr static const auto NB_CHAR_SMALL   = SSO_SIZE / sizeof(T) - 1;
+    constexpr static const auto NB_ELEMENTS     = NB_CHAR_SMALL + 1;
+    constexpr static const T NULL_TERMINATOR    = '\0';
+    constexpr static const T DEFAULT_GROW_SIZE  = 2;
 
 private:
 	T* m_Data;
@@ -151,7 +188,7 @@ private:
 };
 
 template<typename T>
-FORCEINLINE constexpr BasicString<T>::BasicString() : m_Data(m_Buffer), m_Size(0), m_Buffer{}
+constexpr FORCEINLINE BasicString<T>::BasicString() : m_Data(m_Buffer), m_Size(0), m_Buffer{}
 {
 
 }
@@ -171,7 +208,7 @@ constexpr BasicString<T>::BasicString(const T* data, usize size)
 }
 
 template<typename T>
-FORCEINLINE constexpr BasicString<T>::BasicString(const std::basic_string<T>& str)
+constexpr FORCEINLINE BasicString<T>::BasicString(const std::basic_string<T>& str)
     : BasicString(str.c_str(), str.size())
 {
 
@@ -179,22 +216,22 @@ FORCEINLINE constexpr BasicString<T>::BasicString(const std::basic_string<T>& st
 
 template<typename T>
 template<usize S>
-FORCEINLINE constexpr BasicString<T>::BasicString(const T(&str)[S])
+constexpr FORCEINLINE BasicString<T>::BasicString(const T(&str)[S])
     : BasicString(str, S - 1)
 {
 
 }
 
 template<typename T>
-FORCEINLINE constexpr BasicString<T>::~BasicString() noexcept
+constexpr FORCEINLINE BasicString<T>::~BasicString() noexcept
 {
-    if (!this->IsSmall()) {
+    if (m_Data && !this->IsSmall()) {
         Utils::FreeMemory(m_Data);
     }
 }
 
 template<typename T>
-FORCEINLINE constexpr void BasicString<T>::Append(T ch)
+constexpr FORCEINLINE void BasicString<T>::Append(T ch)
 {
     this->Reserve(m_Size + 2);
     m_Data[m_Size++] = ch;
@@ -217,19 +254,19 @@ constexpr void BasicString<T>::Append(const T* str, usize sz)
 }
 
 template<typename T>
-FORCEINLINE constexpr void BasicString<T>::Append(const BasicString<T>& str)
+constexpr FORCEINLINE void BasicString<T>::Append(const BasicString<T>& str)
 {
     return this->Append(str.Data(), str.Size());
 }
 
 template<typename T>
-FORCEINLINE constexpr void BasicString<T>::PushBack(T ch)
+constexpr FORCEINLINE void BasicString<T>::PushBack(T ch)
 {
     return this->Append(ch);
 }
 
 template<typename T>
-FORCEINLINE constexpr void BasicString<T>::PopBack() noexcept
+constexpr FORCEINLINE void BasicString<T>::PopBack() noexcept
 {
     if (m_Size)
         m_Data[--m_Size] = NULL_TERMINATOR;
@@ -299,7 +336,7 @@ constexpr void BasicString<T>::Insert(usize pos, const T* str, usize sz)
 }
 
 template<typename T>
-FORCEINLINE constexpr void BasicString<T>::Insert(usize pos, const BasicString<T>& str)
+constexpr FORCEINLINE void BasicString<T>::Insert(usize pos, const BasicString<T>& str)
 {
     return this->Insert(pos, str.Data(), str.Size());
 }
@@ -322,10 +359,10 @@ constexpr void BasicString<T>::Erase(usize index, usize count) noexcept
 }
 
 template<typename T>
-constexpr bool BasicString<T>::StartsWith(const T* str, usize sz) noexcept
+constexpr bool BasicString<T>::StartsWith(const T* str, usize sz) const noexcept
 {
     if (str != nullptr && sz == 0)
-        sz = strlen(str);
+        sz = Utils::Strlen(str);
 
     if (sz > m_Size)
         return false;
@@ -340,16 +377,16 @@ constexpr bool BasicString<T>::StartsWith(const T* str, usize sz) noexcept
 }
 
 template<typename T>
-FORCEINLINE constexpr bool BasicString<T>::StartsWith(const BasicString<T>& str) noexcept
+constexpr FORCEINLINE bool BasicString<T>::StartsWith(const BasicString<T>& str) const noexcept
 {
     return this->StartsWith(str.Data(), str.Size());
 }
 
 template<typename T>
-constexpr bool BasicString<T>::EndsWith(const T* str, usize sz) noexcept
+constexpr bool BasicString<T>::EndsWith(const T* str, usize sz) const noexcept
 {
     if (str != nullptr && sz == 0)
-        sz = strlen(str);
+        sz = Utils::Strlen(str);
 
     if (sz > m_Size)
         return false;
@@ -364,13 +401,13 @@ constexpr bool BasicString<T>::EndsWith(const T* str, usize sz) noexcept
 }
 
 template<typename T>
-FORCEINLINE constexpr bool BasicString<T>::EndsWith(const BasicString<T>& str) noexcept
+constexpr FORCEINLINE bool BasicString<T>::EndsWith(const BasicString<T>& str) const noexcept
 {
     return this->StartsWith(str.Data(), str.Size());
 }
 
 template<typename T>
-FORCEINLINE constexpr BasicString<T> BasicString<T>::SubString(usize index, usize count)
+constexpr FORCEINLINE BasicString<T> BasicString<T>::SubString(usize index, usize count) const
 {
     if (count > m_Size - index)
         count = m_Size - index;
@@ -401,6 +438,50 @@ constexpr void BasicString<T>::Reallocate(usize nCap)
 
     m_Data = newData;
     m_Capacity = nCap;
+}
+
+template<typename T>
+constexpr FORCEINLINE BasicString<T>::BasicString(const BasicString<T>& other)
+    : m_Size(other.m_Size)
+{
+    if (other.IsSmall()) {
+        Utils::Copy(m_Buffer, other.m_Buffer, m_Size);
+        m_Data = m_Buffer;
+    }else{
+        m_Capacity = other.m_Capacity;
+        m_Data = Utils::Allocate<T>(m_Capacity);
+        Utils::Copy(m_Data, other.m_Data, m_Size);
+    }
+}
+
+template<typename T>
+constexpr FORCEINLINE BasicString<T>& BasicString<T>::operator=(const BasicString<T>& other)
+{
+    BasicString<T> tmp(other);
+    Swap(*this, tmp);
+    return *this;
+}
+
+template<typename T>
+constexpr FORCEINLINE BasicString<T>::BasicString(BasicString<T>&& other) noexcept
+    : m_Size(other.m_Size)
+{
+    if (other.IsSmall()) {
+        Utils::Copy(m_Buffer, other.m_Buffer, m_Size);
+        m_Data = m_Buffer;
+    }else{
+        m_Capacity = other.m_Capacity;
+        m_Data = other.m_Data;
+        other.m_Data = nullptr;
+    }
+}
+
+template<typename T>
+constexpr FORCEINLINE BasicString<T>& BasicString<T>::operator=(BasicString<T>&& other) noexcept
+{
+    BasicString<T> tmp(std::move(other));
+    Swap(*this, tmp);
+    return *this;
 }
 
 using String = BasicString<char>;

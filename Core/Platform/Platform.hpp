@@ -6,7 +6,7 @@
 #define CPU_ARCH_x86    1
 #define CPU_ARCH_x86_64 2
 
-#define SIMD_LEVEL_NONE   0
+#define SIMD_LEVEL_NONE       0
 #define SIMD_LEVEL_x86_SSE    1
 #define SIMD_LEVEL_x86_SSE2   2
 #define SIMD_LEVEL_x86_SSE3   3
@@ -62,7 +62,7 @@
 
 // Detect operating system
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(WIN64)
-	#define OS_WINDOWS 0
+    #define OS_WINDOWS
 #elif defined(__linux__) || defined(__linux)
 	#define OS_LINUX
 #elif defined(__unix)

@@ -63,6 +63,110 @@ TEST(StringsTest, Declaration3)
     TestString(str1, str2);
 }
 
+TEST(StringsTest, CopyCtorSSO)
+{
+    String str1("Small String");
+    std::string str2("Small String");
+    String str3(str1);
+    TestString(str3, str2);
+}
+
+TEST(StringsTest, CopyCtorNoSSO)
+{
+    String str1("Not so small String");
+    std::string str2("Not so small String");
+    String str3(str1);
+    TestString(str3, str2);
+}
+
+TEST(StringsTest, CopyAssignementSSO)
+{
+    String str1("Small String");
+    std::string str2("Small String");
+    String str3("Dummy");
+    str3 = str1;
+    TestString(str3, str2);
+}
+
+TEST(StringsTest, CopyAssignementNoSSO)
+{
+    String str1("Not so small String");
+    std::string str2("Not so small String");
+    String str3("Dummy");
+    str3 = str1;
+    TestString(str3, str2);
+}
+
+TEST(StringsTest, CopyAssignement2SSO)
+{
+    String str1("Small String");
+    std::string str2("Small String");
+    String str3("Very very very very very very long string !!!!");
+    str3 = str1;
+    TestString(str3, str2);
+}
+
+TEST(StringsTest, CopyAssignement2NotSSO)
+{
+    String str1("Not so small String");
+    std::string str2("Not so small String");
+    String str3("Very very very very very very long string !!!!");
+    str3 = str1;
+    TestString(str3, str2);
+}
+
+TEST(StringsTest, MoveCtorSSO)
+{
+    String str1("Small String");
+    std::string str2("Small String");
+    String str3(std::move(str1));
+    TestString(str3, str2);
+}
+
+TEST(StringsTest, MoveCtorNoSSO)
+{
+    String str1("Not so small String");
+    std::string str2("Not so small String");
+    String str3(std::move(str1));
+    TestString(str3, str2);
+}
+
+TEST(StringsTest, MoveAssignementSSO)
+{
+    String str1("Small String");
+    std::string str2("Small String");
+    String str3("Dummy");
+    str3 = std::move(str1);
+    TestString(str3, str2);
+}
+
+TEST(StringsTest, MoveAssignementNoSSO)
+{
+    String str1("Not so small String");
+    std::string str2("Not so small String");
+    String str3("Dummy");
+    str3 = std::move(str1);
+    TestString(str3, str2);
+}
+
+TEST(StringsTest, MoveAssignement2SSO)
+{
+    String str1("Small String");
+    std::string str2("Small String");
+    String str3("Very very very very very very long string !!!!");
+    str3 = std::move(str1);
+    TestString(str3, str2);
+}
+
+TEST(StringsTest, MoveAssignement2NotSSO)
+{
+    String str1("Not so small String");
+    std::string str2("Not so small String");
+    String str3("Very very very very very very long string !!!!");
+    str3 = std::move(str1);
+    TestString(str3, str2);
+}
+
 TEST(StringsTest, Append)
 {
     const char* APPENDS[] = {"Hello ", ",", " World ! ", "Can we add more characters please ?"};

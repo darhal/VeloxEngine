@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Misc/Defines/Common.hpp>
 #include "Platform.hpp"
 
 // Include the appropriate header file for intrinsic functions
@@ -62,7 +63,6 @@
 	(uint8)((x) | ((y) << 2) | ((z) << 4) | ((w) << 6)) \
 
 #if SIMD_SUPPORTED_LEVEL >= 1
-
 	constexpr int32 ALIGN(16) __MASKSIGNs_[4] = { (int32) 0x80000000, (int32) 0x80000000, (int32) 0x80000000, (int32) 0x80000000 };
 	constexpr int32 ALIGN(16) _Sign_PNPN[4]   =	{ (int32) 0x00000000, (int32) 0x80000000, (int32) 0x00000000, (int32) 0x80000000 };
 	constexpr int32 ALIGN(16) _Sign_NPNP[4]   = { (int32) 0x80000000, (int32) 0x00000000, (int32) 0x80000000, (int32) 0x00000000 };

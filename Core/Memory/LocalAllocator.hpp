@@ -13,7 +13,7 @@ public:
     using Traits = AllocTraits<true, SIZE>;
 
 public:
-    FORCEINLINE constexpr void* AllocateBytes(usize sz, usize al = 1)
+    constexpr FORCEINLINE void* AllocateBytes(usize sz, usize al = 1)
     {
         // FIXME : this doesn't take into account alignement
         usize remaining = SIZE - m_Reserved;
@@ -28,13 +28,13 @@ public:
     }
 
     template<typename T>
-    FORCEINLINE constexpr T* Allocate(usize count)
+    constexpr FORCEINLINE T* Allocate(usize count)
     {
         void* data = this->AllocateBytes(sizeof(T) * count);
         return static_cast<T*>(data);
     }
 
-    FORCEINLINE constexpr void* ReallocateBytes(void* ptr, usize sz, usize al = 1)
+    constexpr FORCEINLINE void* ReallocateBytes(void* ptr, usize sz, usize al = 1)
     {
         uint8* oldPtr = m_Buffer - m_LatestSize;
         usize remaining = SIZE - m_Reserved;
@@ -49,17 +49,22 @@ public:
     }
 
     template<typename T>
-    FORCEINLINE constexpr T* Reallocate(T* ptr, usize count)
+    constexpr FORCEINLINE T* Reallocate(T* ptr, usize count)
     {
         void* data = this->ReallocateBytes(ptr, sizeof(T) * count);
         return static_cast<T*>(data);
     }
 
-    FORCEINLINE constexpr void FreeMemory(void* ptr) noexcept
+    constexpr FORCEINLINE void FreeMemory(void* ptr) noexcept
     {
         if (ptr < m_Buffer && ptr >= m_Buffer + SIZE)
             Utils::FreeMemory(ptr);
     }
+
+    constexpr LocalAllocator() = default;
+    constexpr LocalAllocator(LocalAllocator&& other) = delete;
+    constexpr LocalAllocator& operator=(LocalAllocator&& other) = delete;
+    constexpr friend void Swap(LocalAllocator& first, LocalAllocator& second) noexcept = delete;
 
 private:
     alignas(16) uint8 m_Buffer[SIZE];
