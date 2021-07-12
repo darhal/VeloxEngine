@@ -11,7 +11,7 @@
 #if defined(__GNUC__) || defined(__clang__) || (defined(_MSC_VER) && _MSC_VER >= 1600)
 	// Compilers supporting C99 or C++0x have stdint.h defining these integer types	
 	#include <stdint.h>
-	#include <cstddef>
+    #include <cstddef>
 #elif defined(_MSC_VER)
 	typedef signed   __int8  int8_t;
 	typedef unsigned __int8  uint8_t;

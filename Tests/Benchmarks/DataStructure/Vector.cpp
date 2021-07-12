@@ -6,7 +6,10 @@
 using namespace TRE;
 
 template<typename T>
-using SmallVector = Vector<T, LocalAllocator<100'000 * 4>>;
+using SmallVector = Vector<T, LocalAllocator<2 * 4096 * 4>>;
+
+//template<typename T>
+//using SmallVector = Vector<T>;
 
 void VectorEmplaceBack(benchmark::State& state)
 {
@@ -163,10 +166,11 @@ void VectorEreaseRange(benchmark::State& state)
     }
 
     pos1 = 0;
+    SmallVector<int> vec;
 
     for (auto _ : state) {
         state.PauseTiming();
-        SmallVector<int> vec;
+        vec.Clear();
         for (usize i = 0; i < NB; i++)
             vec.EmplaceBack(i);
         auto p = ereaseRange[pos1++];
@@ -180,10 +184,10 @@ void StdVectorEreaseRange(benchmark::State& state)
 {
     const auto NB = state.max_iterations;
     usize index = 0;
-
+    std::vector<int> vec;
     for (auto _ : state) {
         state.PauseTiming();
-        std::vector<int> vec;
+        vec.clear();
         for (usize i = 0; i < NB; i++)
             vec.emplace_back(i);
         auto p = ereaseRange[index++];
@@ -194,17 +198,17 @@ void StdVectorEreaseRange(benchmark::State& state)
 }
 
 // Register the function as a benchmark
-BENCHMARK(VectorEmplaceBack)->Iterations(5'000'000);
-BENCHMARK(StdVectorEmplaceBack)->Iterations(5'000'000);
+BENCHMARK(VectorEmplaceBack)        ->Iterations(1'000'000);
+BENCHMARK(StdVectorEmplaceBack)     ->Iterations(1'000'000);
 
-BENCHMARK(VectorEmplaceFront)->Iterations(250'000);
-BENCHMARK(StdVectorEmplaceFront)->Iterations(250'000);
+BENCHMARK(VectorEmplaceFront)       ->Iterations(250'000);
+BENCHMARK(StdVectorEmplaceFront)    ->Iterations(250'000);
 
-BENCHMARK(VectorInsert)->Iterations(500'000);
-BENCHMARK(StdVectorInsert)->Iterations(500'000);
+BENCHMARK(VectorInsert)             ->Iterations(200'000);
+BENCHMARK(StdVectorInsert)          ->Iterations(200'000);
 
-BENCHMARK(VectorErease)->Iterations(50'000);
-BENCHMARK(StdVectorErease)->Iterations(50'000);
+BENCHMARK(VectorErease)             ->Iterations(50'000);
+BENCHMARK(StdVectorErease)          ->Iterations(50'000);
 
-BENCHMARK(VectorEreaseRange)->Iterations(50'000);
-BENCHMARK(StdVectorEreaseRange)->Iterations(50'000);
+BENCHMARK(VectorEreaseRange)        ->Iterations(25'000);
+BENCHMARK(StdVectorEreaseRange)     ->Iterations(25'000);

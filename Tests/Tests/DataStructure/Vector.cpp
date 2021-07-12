@@ -6,8 +6,13 @@
 
 using namespace TRE;
 
+constexpr auto TEST_ITERATIONS = 1'500;
+
+//template<typename T>
+//using SmallVector = Vector<T, LocalAllocator<128 * 4>>;
+
 template<typename T>
-using SmallVector = Vector<T, LocalAllocator<512 * 4>>;
+using SmallVector = Vector<T>;
 
 template<typename T1, typename T2>
 auto TestVectors(const T1& x, const T2& y)
@@ -23,7 +28,7 @@ auto TestVectors(const T1& x, const T2& y)
 
 TEST(VectorTests, EmplaceBack)
 {
-    constexpr auto NB = 1'000;
+    constexpr auto NB = TEST_ITERATIONS;
 
     SmallVector<int> x;
     std::vector<int> y;
@@ -37,7 +42,7 @@ TEST(VectorTests, EmplaceBack)
 
 TEST(VectorTests, PushBack)
 {
-    constexpr auto NB = 1'000;
+    constexpr auto NB = TEST_ITERATIONS;
 
     SmallVector<int> x;
     std::vector<int> y;
@@ -51,7 +56,7 @@ TEST(VectorTests, PushBack)
 
 TEST(VectorTests, EmplaceFront)
 {
-    constexpr auto NB = 1'000;
+    constexpr auto NB = TEST_ITERATIONS;
     SmallVector<int> x;
     std::vector<int> y;
 
@@ -64,7 +69,7 @@ TEST(VectorTests, EmplaceFront)
 
 TEST(VectorTests, PushFront)
 {
-    constexpr auto NB = 1'000;
+    constexpr auto NB = TEST_ITERATIONS;
     SmallVector<int> x;
     std::vector<int> y;
 
@@ -77,7 +82,7 @@ TEST(VectorTests, PushFront)
 
 TEST(VectorTests, Insert)
 {
-    constexpr auto NB = 1'000;
+    constexpr auto NB = TEST_ITERATIONS;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
@@ -96,7 +101,7 @@ TEST(VectorTests, Insert)
 
 TEST(VectorTests, Emplace)
 {
-    constexpr auto NB = 1'000;
+    constexpr auto NB = TEST_ITERATIONS;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
@@ -115,7 +120,7 @@ TEST(VectorTests, Emplace)
 
 TEST(VectorTests, PopBack)
 {
-    constexpr auto NB = 1'000;
+    constexpr auto NB = TEST_ITERATIONS;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
@@ -141,7 +146,7 @@ TEST(VectorTests, PopBack)
 
 TEST(VectorTests, PopFront)
 {
-    constexpr auto NB = 1'000;
+    constexpr auto NB = TEST_ITERATIONS;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range
@@ -194,7 +199,7 @@ TEST(VectorTests, EreaseOne)
 
 TEST(VectorTests, EreaseRange)
 {
-    constexpr auto NB = 1'000;
+    constexpr auto NB = TEST_ITERATIONS;
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, NB); // define the range

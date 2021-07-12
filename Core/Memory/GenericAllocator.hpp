@@ -2,11 +2,15 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Memory/Memory.hpp>
+#include <Core/Memory/AllocatorMisc.hpp>
 
 TRE_NS_START
 
 class GenericAllocator
 {
+public:
+    using Traits = AllocTraits<true, 0>;
+
 public:
     FORCEINLINE constexpr void* AllocateBytes(usize sz, usize al = 1)
     {

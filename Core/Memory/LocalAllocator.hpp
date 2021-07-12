@@ -2,12 +2,16 @@
 
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Memory/Memory.hpp>
+#include <Core/Memory/AllocatorMisc.hpp>
 
 TRE_NS_START
 
 template<usize SIZE = 4096>
 class LocalAllocator
 {
+public:
+    using Traits = AllocTraits<true, SIZE>;
+
 public:
     FORCEINLINE constexpr void* AllocateBytes(usize sz, usize al = 1)
     {
@@ -58,7 +62,7 @@ public:
     }
 
 private:
-    uint8 m_Buffer[SIZE];
+    alignas(16) uint8 m_Buffer[SIZE];
     usize m_Reserved = 0;
     usize m_LatestSize = 0;
 };

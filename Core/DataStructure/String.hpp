@@ -5,12 +5,19 @@
 #include <Core/Misc/Defines/Common.hpp>
 #include <Core/Memory/Memory.hpp>
 #include <Core/Misc/Defines/Debug.hpp>
+#include <Core/DataStructure/RandomAccessIterator.hpp>
 
 TRE_NS_START
 
 template<typename T>
 class BasicString
 {
+public:
+public:
+    using Iterator  = RandomAccessIterator<T>;
+    using CIterator = RandomAccessIterator<const T>;
+    using value_type = T;
+
 public:
     FORCEINLINE constexpr BasicString();
 
@@ -71,12 +78,65 @@ public:
 
     FORCEINLINE constexpr bool Empty() const noexcept { return m_Size == 0; }
 
+    constexpr FORCEINLINE const Iterator begin() const noexcept
+    {
+        return Iterator(m_Data);
+    }
+
+    constexpr FORCEINLINE const Iterator end() const noexcept
+    {
+        return Iterator(m_Data + m_Size);
+    }
+
+    constexpr FORCEINLINE Iterator begin() noexcept
+    {
+        return Iterator(m_Data);
+    }
+
+    constexpr FORCEINLINE Iterator end() noexcept
+    {
+        return Iterator(m_Data + m_Size);
+    }
+
+    constexpr FORCEINLINE CIterator cbegin() const noexcept
+    {
+        return CIterator(m_Data);
+    }
+
+    constexpr FORCEINLINE CIterator cend() const noexcept
+    {
+        return CIterator(m_Data + m_Size);
+    }
+
+    constexpr FORCEINLINE friend void Swap(BasicString<T>& first, BasicString<T>& second) noexcept
+    {
+        if (first.IsSmall() && second.IsSmall()) {
+            T buffer[NB_ELEMENTS];
+            Utils::Copy(buffer, first.m_Buffer, NB_ELEMENTS);
+            Utils::Copy(first.m_Buffer, second.m_Buffer, NB_ELEMENTS);
+            Utils::Copy(second.m_Buffer, buffer, NB_ELEMENTS);
+            std::swap(first.m_Size, second.m_Size);
+        }else if ((first.IsSmall() && !second.IsSmall()) || (first.IsSmall() && !second.IsSmall())) {
+
+        }else{
+            std::swap(first.m_Data, second.m_Data);
+            std::swap(first.m_Size, second.m_Size);
+            std::swap(first.m_Capacity, second.m_Capacity);
+        }
+    }
+
+    constexpr FORCEINLINE friend void swap(BasicString<T>& first, BasicString<T>& second) noexcept
+    {
+        Swap(first, second);
+    }
+
 private:
     constexpr void Reallocate(usize nCap);
 
 private:
     CONSTEXPR static const auto SSO_SIZE        = 2 * sizeof(usize);
     CONSTEXPR static const auto NB_CHAR_SMALL   = SSO_SIZE / sizeof(T) - 1;
+    CONSTEXPR static const auto NB_ELEMENTS     = NB_CHAR_SMALL + 1;
     CONSTEXPR static const T NULL_TERMINATOR    = '\0';
     CONSTEXPR static const T DEFAULT_GROW_SIZE  = 2;
 
@@ -85,7 +145,7 @@ private:
     usize m_Size;
 
     union {
-        T m_Buffer[NB_CHAR_SMALL + 1];
+        T m_Buffer[NB_ELEMENTS];
         usize m_Capacity;
     };
 };
