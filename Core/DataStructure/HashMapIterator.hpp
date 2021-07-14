@@ -25,6 +25,7 @@ private:
     BlockPointer current;
     usize index;
 
+    friend HashMapType;
 public:
     TemplatedIterator() noexcept : TemplatedIterator{nullptr, 0}
     {
@@ -66,16 +67,16 @@ public:
     value_type operator*() const noexcept
     {
         usize idx = index % BLOCK_SIZE;
-        KeyType* key = reinterpret_cast<KeyType*>(current->keys + idx);
-        ValueType* value = reinterpret_cast<ValueType*>(current->values + idx);
+        KeyType* key = current->GetKey(idx);
+        ValueType* value = current->GetValue(idx);
         return { *key, *value };
     }
 
     value_type operator->() const noexcept
     {
         usize idx = index % BLOCK_SIZE;
-        KeyType* key = reinterpret_cast<KeyType*>(current->keys + idx);
-        KeyType* value = reinterpret_cast<ValueType*>(current->values + idx);
+        KeyType* key = current->GetKey(idx);
+        ValueType* value = current->GetValue(idx);
         return { *key, *value };
     }
 

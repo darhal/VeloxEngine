@@ -22,7 +22,7 @@ struct FibonacciHashPolicy
     uint8 NextSize(usize& size) const noexcept
     {
         size = std::max(usize(2), Math::NextPow2(size));
-        return 64 - Math::Log2OfPow2(size);
+        return (NB_BITS + 1) - Math::Log2OfPow2(size);
     }
 
     void Commit(uint8 shift) noexcept
@@ -32,11 +32,39 @@ struct FibonacciHashPolicy
 
     void Reset() noexcept
     {
-        shift = 63;
+        shift = NB_BITS;
     }
 
 private:
-    uint8 shift = 63;
+    constexpr static auto NB_BITS = sizeof(usize) * CHAR_BIT - 1;
+    uint8 shift = NB_BITS;
+};
+
+struct PowerOfTwoHashPolicy
+{
+    usize IndexForHash(usize hash, usize slotsCount) const
+    {
+        return hash & slotsCount;
+    }
+
+    usize KeepInRange(usize index, usize slotsCount) const
+    {
+        return IndexForHash(index, slotsCount);
+    }
+
+    uint8 NextSize(usize& size) const
+    {
+        size = Math::NextPow2(size);
+        return 0;
+    }
+
+    void Commit(uint8)
+    {
+    }
+
+    void Reset()
+    {
+    }
 };
 
 template<typename HashMapType>
@@ -50,15 +78,15 @@ struct LinkedListItr
     using Constants = typename HashMapType::Constants;
     constexpr static auto BLOCK_SIZE = HashMapType::BLOCK_SIZE;
 
-    usize index = 0;
     BlockPointer block = nullptr;
+    usize index = 0;
 
     LinkedListItr()
     {
     }
 
     LinkedListItr(usize index, BlockPointer block)
-        : index(index), block(block)
+        : block(block), index(index)
     {
     }
 
@@ -123,8 +151,8 @@ struct LinkedListItr
     value_type operator*() const
     {
         auto idx = this->IndexInBlock();
-        KeyType* key = reinterpret_cast<KeyType*>(block->keys + idx);
-        ValueType* value = reinterpret_cast<ValueType*>(block->values + idx);
+        KeyType* key = block->GetKey(idx);
+        ValueType* value = block->GetValue(idx);
         return { key, value };
     }
 
@@ -138,12 +166,12 @@ struct LinkedListItr
         return block != nullptr;
     }
 
-    bool operator==(const LinkedListItr & other) const
+    bool operator==(const LinkedListItr& other) const
     {
         return index == other.index;
     }
 
-    bool operator!=(const LinkedListItr & other) const
+    bool operator!=(const LinkedListItr& other) const
     {
         return !(*this == other);
     }

@@ -230,17 +230,17 @@ void StdVectorEreaseRange(benchmark::State& state)
 }
 
 // Register the function as a benchmark
-BENCHMARK(VectorEmplaceBack)        ->Iterations(1'000'000);
-BENCHMARK(StdVectorEmplaceBack)     ->Iterations(1'000'000);
+//BENCHMARK(VectorEmplaceBack)        ->Iterations(1'000'000);
+//BENCHMARK(StdVectorEmplaceBack)     ->Iterations(1'000'000);
 
-BENCHMARK(VectorEmplaceFront)       ->Iterations(250'000);
-BENCHMARK(StdVectorEmplaceFront)    ->Iterations(250'000);
+//BENCHMARK(VectorEmplaceFront)       ->Iterations(250'000);
+//BENCHMARK(StdVectorEmplaceFront)    ->Iterations(250'000);
 
-BENCHMARK(VectorInsert)             ->Iterations(200'000);
-BENCHMARK(StdVectorInsert)          ->Iterations(200'000);
+//BENCHMARK(VectorInsert)             ->Iterations(200'000);
+//BENCHMARK(StdVectorInsert)          ->Iterations(200'000);
 
-BENCHMARK(VectorErease)             ->Iterations(50'000);
-BENCHMARK(StdVectorErease)          ->Iterations(50'000);
+//BENCHMARK(VectorErease)             ->Iterations(50'000);
+//BENCHMARK(StdVectorErease)          ->Iterations(50'000);
 
-BENCHMARK(VectorEreaseRange)        ->Iterations(25'000);
-BENCHMARK(StdVectorEreaseRange)     ->Iterations(25'000);
+//BENCHMARK(VectorEreaseRange)        ->Iterations(25'000);
+//BENCHMARK(StdVectorEreaseRange)     ->Iterations(25'000);

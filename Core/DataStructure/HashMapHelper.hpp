@@ -19,7 +19,6 @@ public:
     using Hasher = H;
     using KeyEqual = KE;
 
-    // using ValueType = std::pair<K*, V*>;
     using KeyType = K;
     using ValueType = V;
     using value_type = std::pair<K*, V*>;
@@ -38,15 +37,16 @@ public:
 public:
     constexpr static usize BLOCK_SIZE = 16;
     constexpr static float MAX_LOAD_FACTOR = 0.9375f;
+    constexpr static usize INITIAL_SIZE = 32;
 
     struct Constants
-    {
-        static constexpr uint8 MAGIC_FOR_EMPTY      = int8_t(0b11111111);
-        static constexpr uint8 MAGIC_FOR_RESERVED   = int8_t(0b11111110);
-        static constexpr uint8 BITS_FOR_DIRECT_HIT  = int8_t(0b10000000);
-        static constexpr uint8 MAGIC_FOR_DIRECT_HIT = int8_t(0b00000000);
-        static constexpr uint8 MAGIC_FOR_LIST_ENTRY = int8_t(0b10000000);
-        static constexpr uint8 BITS_FOR_DISTANCE    = int8_t(0b01111111);
+    {        
+        static constexpr uint8 MAGIC_FOR_EMPTY      = uint8(0b11111111);
+        static constexpr uint8 MAGIC_FOR_RESERVED   = uint8(0b11111110);
+        static constexpr uint8 BITS_FOR_DIRECT_HIT  = uint8(0b10000000);
+        static constexpr uint8 MAGIC_FOR_DIRECT_HIT = uint8(0b00000000);
+        static constexpr uint8 MAGIC_FOR_LIST_ENTRY = uint8(0b10000000);
+        static constexpr uint8 BITS_FOR_DISTANCE    = uint8(0b01111111);
         static constexpr uint32 NUM_JUMP_DISTANCES  = 126;
 
         FORCEINLINE static uint8 DistanceFromMetadata(uint8 metadata)
@@ -84,12 +84,19 @@ public:
         };
     };
 
+    struct InlinePair
+    {
+        alignas(K) uint8 key[sizeof(K)];
+        alignas(V) uint8 value[sizeof(V)];
+    };
+
     template<usize BlockSize>
     struct Block
     {
         uint8 controlBytes[BlockSize];
-        alignas(K) uint8 keys[BlockSize];
-        alignas(V) uint8 values[BlockSize];
+        InlinePair pairs[BlockSize];
+        // alignas(K) uint8 keys[sizeof(K) * BlockSize];
+        // alignas(V) uint8 values[sizeof(V) * BlockSize];
 
         static Block* EmptyBlock()
         {
@@ -105,8 +112,8 @@ public:
 
         constexpr FORCEINLINE usize GetFirstEmptyIndex() const
         {
-            for (int i = 0; i < BlockSize; i++) {
-                if (controlBytes[i] == Constants::magic_for_empty)
+            for (uint32 i = 0; i < BlockSize; i++) {
+                if (controlBytes[i] == Constants::MAGIC_FOR_EMPTY)
                     return i;
             }
             return -1;
@@ -117,16 +124,42 @@ public:
             Utils::MemSet(controlBytes, value, BlockSize);
         }
 
-        constexpr FORCEINLINE void Destroy(uint32 idx)
+        constexpr FORCEINLINE K* GetKey(uint32 idx)
         {
-            Utils::Destroy(keys + idx);
-            Utils::Destroy(values + idx);
+            return reinterpret_cast<K*>(&pairs[idx].key);
         }
 
-        template<typename... Args>
-        constexpr static FORCEINLINE void Construct(const value_type& adr, K&& key, Args&&... args)
+        constexpr FORCEINLINE const K* GetKey(uint32 idx) const
         {
-            new (adr.first) K(std::forward<K>(key));
+            return reinterpret_cast<K*>(&pairs[idx].key);
+        }
+
+        constexpr FORCEINLINE V* GetValue(uint32 idx)
+        {
+            return reinterpret_cast<V*>(&pairs[idx].value);
+        }
+
+        constexpr FORCEINLINE const K* GetValue(uint32 idx) const
+        {
+            return reinterpret_cast<V*>(&pairs[idx].value);
+        }
+
+        constexpr FORCEINLINE void Destroy(uint32 idx)
+        {
+            Utils::Destroy(this->GetKey(idx));
+            Utils::Destroy(this->GetValue(idx));
+        }
+
+        constexpr static FORCEINLINE void Destroy(const value_type& adr)
+        {
+            Utils::Destroy(adr.first);
+            Utils::Destroy(adr.second);
+        }
+
+        template<typename Key, typename... Args>
+        constexpr static FORCEINLINE void Construct(const value_type& adr, Key&& key, Args&&... args)
+        {
+            new (adr.first) K(std::forward<Key>(key));
             new (adr.second) V(std::forward<Args>(args)...);
         }
     };
@@ -138,37 +171,69 @@ public:
     using LinkedList     = LinkedListItr<HashMapHelper>;
 
     friend LinkedList;
+
+    struct IteratorProxy
+    {
+        BlockPointer itr;
+        usize index;
+        constexpr FORCEINLINE operator iterator()
+        {
+            if (itr->control_bytes[index % BLOCK_SIZE] == Constants::MAGIC_FOR_EMPTY)
+                return ++iterator{itr, index};
+            else
+                return { itr, index };
+        }
+        constexpr FORCEINLINE operator const_iterator()
+        {
+            if (itr->control_bytes[index % BLOCK_SIZE] == Constants::MAGIC_FOR_EMPTY)
+                return ++iterator{itr, index};
+            else
+                return { itr, index };
+        }
+    };
 public:
     constexpr HashMapHelper();
 
     constexpr ~HashMapHelper();
 
-    template<typename... Args>
-    constexpr std::pair<iterator, bool> Emplace(K&& key, Args&&... args);
+    template<typename Key, typename... Args>
+    constexpr std::pair<iterator, bool> Emplace(Key&& key, Args&&... args);
 
-    template<typename... Args>
-    constexpr std::pair<iterator, bool> EmplaceDirectHit(LinkedList block, K&& key, Args&&... args);
+    template<typename Key, typename... Args>
+    constexpr FORCEINLINE std::pair<iterator, bool> Emplace(const Key& key, Args&&... args)
+    {
+        return this->Emplace(key, std::forward<Args>(args)...);
+    }
 
-    template<typename... Args>
-    constexpr std::pair<iterator, bool> EmplaceNewKey(LinkedList parent, K&& key, Args&&... args);
+    template<typename Key, typename... Args>
+    constexpr std::pair<iterator, bool> EmplaceDirectHit(LinkedList block, Key&& key, Args&&... args);
 
-    constexpr iterator Find(const K& key) const noexcept;
+    template<typename Key, typename... Args>
+    constexpr std::pair<iterator, bool> EmplaceNewKey(LinkedList parent, Key&& key, Args&&... args);
+
+    constexpr FORCEINLINE iterator Find(const K& key) const noexcept;
+
+    constexpr FORCEINLINE IteratorProxy Erase(const const_iterator& itr) noexcept;
+
+    constexpr FORCEINLINE bool Erase(const K& key) noexcept;
+
+    constexpr FORCEINLINE void Clear() noexcept;
 
     constexpr void Reinit(usize count);
 
     constexpr FORCEINLINE void Reserve(usize size);
 
-    FORCEINLINE constexpr usize Size() const noexcept { return m_ElementsCount; }
+    constexpr FORCEINLINE usize Size() const noexcept { return m_ElementsCount; }
 
-    FORCEINLINE constexpr usize BucketCount() const noexcept { return m_SlotsCount ? m_SlotsCount + 1 : 0 ; }
+    constexpr FORCEINLINE usize BucketCount() const noexcept { return m_SlotsCount ? m_SlotsCount + 1 : 0 ; }
 
-    FORCEINLINE constexpr float LoadFactor() const noexcept { return static_cast<float>(m_ElementsCount) / (m_SlotsCount + 1); }
+    constexpr FORCEINLINE float LoadFactor() const noexcept { return static_cast<float>(m_ElementsCount) / (m_SlotsCount + 1); }
 
-    FORCEINLINE constexpr float GetMaxLoadFactor() const noexcept { return MAX_LOAD_FACTOR; }
+    constexpr FORCEINLINE float GetMaxLoadFactor() const noexcept { return MAX_LOAD_FACTOR; }
 
-    FORCEINLINE constexpr bool Empty() const noexcept { return m_ElementsCount == 0; }
+    constexpr FORCEINLINE bool Empty() const noexcept { return m_ElementsCount == 0; }
 
-    FORCEINLINE constexpr bool IsFull() const noexcept
+    constexpr FORCEINLINE bool IsFull() const noexcept
     {
         if (!m_SlotsCount)
             return true;
@@ -176,34 +241,34 @@ public:
             return m_ElementsCount + 1 > (m_SlotsCount + 1) * static_cast<double>(MAX_LOAD_FACTOR);
     }
 
-    FORCEINLINE constexpr iterator begin() noexcept
+    constexpr FORCEINLINE iterator begin() noexcept
     {
         size_t slots = m_SlotsCount ? m_SlotsCount + 1 : 0;
         return ++iterator{ m_Entries + slots / BLOCK_SIZE, slots };
     }
 
-    FORCEINLINE constexpr iterator begin() const noexcept
+    constexpr FORCEINLINE iterator begin() const noexcept
     {
         size_t slots = m_SlotsCount ? m_SlotsCount + 1 : 0;
         return ++iterator{ m_Entries + slots / BLOCK_SIZE, slots };
     }
 
-    FORCEINLINE constexpr const_iterator cbegin() const noexcept
+    constexpr FORCEINLINE const_iterator cbegin() const noexcept
     {
         return this->begin();
     }
 
-    FORCEINLINE constexpr iterator end() noexcept
+    constexpr FORCEINLINE iterator end() noexcept
     {
         return { m_Entries - 1, std::numeric_limits<usize>::max() };
     }
 
-    FORCEINLINE constexpr iterator end() const noexcept
+    constexpr FORCEINLINE iterator end() const noexcept
     {
         return { m_Entries - 1, std::numeric_limits<usize>::max() };
     }
 
-    FORCEINLINE constexpr const_iterator cend() const noexcept
+    constexpr FORCEINLINE const_iterator cend() const noexcept
     {
         return this->end();
     }
@@ -213,46 +278,51 @@ private:
 
     constexpr FORCEINLINE void ResetToEmpty() noexcept;
 
+    constexpr FORCEINLINE void ReinitForOtherContainer(const HashMapHelper& other)
+    {
+        this->Reinit(std::min(this->NumBucketsForReserve(other.size()), other.BucketCount()));
+    }
+
     template<typename U>
-    FORCEINLINE constexpr usize HashObject(const U& key) noexcept
+    constexpr FORCEINLINE usize HashObject(const U& key) noexcept
     {
         return static_cast<Hasher&>(*this)(key);
     }
 
     template<typename U>
-    FORCEINLINE constexpr usize HashObject(const U& key) const noexcept
+    constexpr FORCEINLINE usize HashObject(const U& key) const noexcept
     {
         // return std::hash<U>{}(key);
         return static_cast<const Hasher&>(*this)(key);
     }
 
     template<typename L, typename R>
-    FORCEINLINE constexpr bool ComparesEqual(const L& lhs, const R& rhs) const noexcept
+    constexpr FORCEINLINE bool ComparesEqual(const L& lhs, const R& rhs) const noexcept
     {
         return lhs == rhs;
     }
 
-    FORCEINLINE constexpr void Grow()
+    constexpr FORCEINLINE void Grow()
     {
-        return this->Reinit(std::max(usize(10), 2 * this->BucketCount()));
+        return this->Reinit(std::max(INITIAL_SIZE, 2 * this->BucketCount()));
     }
 
-    FORCEINLINE constexpr usize NumBucketsForReserve(usize size) const noexcept
+    constexpr FORCEINLINE usize NumBucketsForReserve(usize size) const noexcept
     {
         return static_cast<usize>(std::ceil(size / static_cast<double>(MAX_LOAD_FACTOR)));
     }
 
-    FORCEINLINE constexpr usize CalculateMemorySize(usize blockCount) const noexcept
+    constexpr FORCEINLINE usize CalculateMemorySize(usize blockCount) const noexcept
     {
         usize memRequired = sizeof(BlockType) * blockCount;
         memRequired += BLOCK_SIZE; // for metadata of past-the-end pointer
         return memRequired;
     }
 
-    FORCEINLINE constexpr std::pair<uint8, LinkedList> FindFreeIndex(LinkedList parent) const noexcept
+    constexpr FORCEINLINE std::pair<uint8, LinkedList> FindFreeIndex(LinkedList parent) const noexcept
     {
         for (uint8 jumpIndex = 1; jumpIndex < Constants::NUM_JUMP_DISTANCES; ++jumpIndex) {
-            size_t index = m_HashPolicy.KeepInRange(parent.index + Constants::JUMP_DISTANCES[jumpIndex], m_SlotsCount);
+            auto index = m_HashPolicy.KeepInRange(parent.index + Constants::JUMP_DISTANCES[jumpIndex], m_SlotsCount);
             BlockPointer block = m_Entries + (index / BLOCK_SIZE);
 
             if (block->controlBytes[index % BLOCK_SIZE] == Constants::MAGIC_FOR_EMPTY)
@@ -262,15 +332,15 @@ private:
         return { 0, {} };
     }
 
-    FORCEINLINE constexpr LinkedList FindDirectHit(LinkedList child) const noexcept
+    constexpr FORCEINLINE LinkedList FindDirectHit(LinkedList child) const noexcept
     {
         auto keyValuePtr = *child;
-        usize toMoveHash = HashObject(*keyValuePtr.first);
+        usize toMoveHash = HashObject(*(keyValuePtr.first));
         usize toMoveIndex = m_HashPolicy.IndexForHash(toMoveHash, m_SlotsCount);
         return { toMoveIndex, m_Entries + toMoveIndex / BLOCK_SIZE };
     }
 
-    FORCEINLINE constexpr LinkedList FindParentBlock(LinkedList child) noexcept
+    constexpr FORCEINLINE LinkedList FindParentBlock(LinkedList child) noexcept
     {
         LinkedList parentBlock = FindDirectHit(child);
         while (1) {
@@ -297,13 +367,15 @@ constexpr HashMapHelper<K, V, H, HP , KE>::HashMapHelper()
 template<typename K, typename V, typename H, typename HP, typename KE>
 constexpr HashMapHelper<K, V, H, HP , KE>::~HashMapHelper()
 {
-
+    this->Clear();
+    this->DeallocateData(m_Entries, m_SlotsCount);
 }
 
 template<typename K, typename V, typename H, typename HP, typename KE>
-template<typename... Args>
-constexpr auto HashMapHelper<K, V, H, HP , KE>::Emplace(K&& key, Args&&... args) -> std::pair<iterator, bool>
+template<typename Key, typename... Args>
+constexpr auto HashMapHelper<K, V, H, HP , KE>::Emplace(Key&& key, Args&&... args) -> std::pair<iterator, bool>
 {
+    // printf("Inserting [%d] = %d\n", key, V(std::forward<Args>(args)...));
     usize index = this->HashObject(key);
     usize slots = this->m_SlotsCount;
     BlockPointer entries = this->m_Entries;
@@ -318,34 +390,37 @@ constexpr auto HashMapHelper<K, V, H, HP , KE>::Emplace(K&& key, Args&&... args)
 
         if (first) {
             if ((metadata & Constants::BITS_FOR_DIRECT_HIT) != Constants::MAGIC_FOR_DIRECT_HIT)
-                return EmplaceDirectHit({ index, block }, std::forward<K>(key), std::forward<Args>(args)...);
+                return EmplaceDirectHit({ index, block }, std::forward<Key>(key), std::forward<Args>(args)...);
             first = false;
         }
 
-        const K& inMemKey = *reinterpret_cast<const K*>(block->keys + indexInBlock);
+        const K& inMemKey = *block->GetKey(indexInBlock);
+        // printf("In mem key comparing to %d\n", inMemKey);
         if (ComparesEqual(key, inMemKey))
             return { { block, index }, false };
 
         uint8 toNextIndex = metadata & Constants::BITS_FOR_DISTANCE;
         if (toNextIndex == 0)
-            return EmplaceNewKey({ index, block }, std::forward<K>(key), std::forward<Args>(args)...);
+            return EmplaceNewKey({ index, block }, std::forward<Key>(key), std::forward<Args>(args)...);
+
         index += Constants::JUMP_DISTANCES[toNextIndex];
         index = m_HashPolicy.KeepInRange(index, slots);
     }
 }
 
 template<typename K, typename V, typename H, typename HP, typename KE>
-template<typename... Args>
-constexpr auto HashMapHelper<K, V, H, HP , KE>::EmplaceDirectHit(LinkedList block, K&& key, Args&&... args) -> std::pair<iterator, bool>
+template<typename Key, typename... Args>
+constexpr auto HashMapHelper<K, V, H, HP , KE>::EmplaceDirectHit(LinkedList block, Key&& key, Args&&... args) -> std::pair<iterator, bool>
 {
     if (this->IsFull()) {
         this->Grow();
-        return this->Emplace(std::forward<K>(key), std::forward<Args>(args)...);
+        return this->Emplace(std::forward<Key>(key), std::forward<Args>(args)...);
     }
 
+    // printf("Emplace direct hit %d\n", key);
     if (block.GetMetadata() == Constants::MAGIC_FOR_EMPTY){
         // AllocatorTraits::construct(*this, std::addressof(*block), std::forward<Args>(args)...);
-        BlockType::Construct(*block, std::forward<K>(key), std::forward<Args>(args)...);
+        BlockType::Construct(*block, std::forward<Key>(key), std::forward<Args>(args)...);
         block.SetMetadata(Constants::MAGIC_FOR_DIRECT_HIT);
         ++m_ElementsCount;
         return { block.Iterator(), true };
@@ -355,14 +430,13 @@ constexpr auto HashMapHelper<K, V, H, HP , KE>::EmplaceDirectHit(LinkedList bloc
 
         if (!freeBlock.first) {
             this->Grow();
-            return this->Emplace(std::forward<K>(key), std::forward<Args>(args)...);
+            return this->Emplace(std::forward<Key>(key), std::forward<Args>(args)...);
         } // ValueType newValue(std::forward<Args>(args)...);
 
         for (LinkedList it = block;;) {
-            // AllocatorTraits::construct(*this, std::addressof(*freeBlock.second), std::move(*it));
-            // AllocatorTraits::destroy(*this, std::addressof(*it));
             auto keyValuePairPtr = *it;
             BlockType::Construct(*freeBlock.second, std::move(*keyValuePairPtr.first), std::move(*keyValuePairPtr.second));
+            BlockType::Destroy(*it); // Should destroy the moved object
             parentBlock.SetNext(freeBlock.first);
             freeBlock.second.SetMetadata(Constants::MAGIC_FOR_LIST_ENTRY);
 
@@ -380,12 +454,11 @@ constexpr auto HashMapHelper<K, V, H, HP , KE>::EmplaceDirectHit(LinkedList bloc
 
             if (!freeBlock.first) {
                 this->Grow();
-                return this->Emplace(std::forward<K>(key), std::forward<Args>(args)...);
+                return this->Emplace(std::forward<Key>(key), std::forward<Args>(args)...);
             }
         }
 
-        // AllocatorTraits::construct(*this, std::addressof(*block), std::move(newValue));
-        BlockType::Construct(*block, std::forward<K>(key), std::forward<Args>(args)...);
+        BlockType::Construct(*block, std::forward<Key>(key), std::forward<Args>(args)...);
         block.SetMetadata(Constants::MAGIC_FOR_DIRECT_HIT);
         ++m_ElementsCount;
         return { block.Iterator(), true };
@@ -393,8 +466,8 @@ constexpr auto HashMapHelper<K, V, H, HP , KE>::EmplaceDirectHit(LinkedList bloc
 }
 
 template<typename K, typename V, typename H, typename HP, typename KE>
-template<typename... Args>
-constexpr auto HashMapHelper<K, V, H, HP , KE>::EmplaceNewKey(LinkedList parent, K&& key, Args&&... args) -> std::pair<iterator, bool>
+template<typename Key, typename... Args>
+constexpr auto HashMapHelper<K, V, H, HP , KE>::EmplaceNewKey(LinkedList parent, Key&& key, Args&&... args) -> std::pair<iterator, bool>
 {
     if (this->IsFull()) {
         this->Grow();
@@ -408,7 +481,7 @@ constexpr auto HashMapHelper<K, V, H, HP , KE>::EmplaceNewKey(LinkedList parent,
         return this->Emplace(std::forward<K>(key), std::forward<Args>(args)...);
     }
 
-    // AllocatorTraits::construct(*this, std::addressof(*freeBlock.second), std::forward<Args>(args)...);
+    // printf("Emplace new key : %d\n", key);
     BlockType::Construct(*freeBlock.second, std::forward<K>(key), std::forward<Args>(args)...);
     freeBlock.second.SetMetadata(Constants::MAGIC_FOR_LIST_ENTRY);
     parent.SetNext(freeBlock.first);
@@ -416,9 +489,8 @@ constexpr auto HashMapHelper<K, V, H, HP , KE>::EmplaceNewKey(LinkedList parent,
     return { freeBlock.second.Iterator(), true };
 }
 
-
 template<typename K, typename V, typename H, typename HP, typename KE>
-constexpr auto HashMapHelper<K, V, H, HP , KE>::Find(const K& key) const noexcept -> iterator
+constexpr FORCEINLINE auto HashMapHelper<K, V, H, HP , KE>::Find(const K& key) const noexcept -> iterator
 {
     usize index = HashObject(key);
     usize slots = this->m_SlotsCount;
@@ -438,13 +510,15 @@ constexpr auto HashMapHelper<K, V, H, HP , KE>::Find(const K& key) const noexcep
             first = false;
         }
 
-        const K& inMemKey = *reinterpret_cast<const K*>(block->keys + indexInBlock);
+        const K& inMemKey = *block->GetKey(indexInBlock);
+        // printf("[FIND] In mem key comparing to %d\n", inMemKey);
         if (this->ComparesEqual(key, inMemKey))
             return { block, index };
 
         uint8 toNextIndex = metadata & Constants::BITS_FOR_DISTANCE;
         if (toNextIndex == 0)
             return this->end();
+
         index += Constants::JUMP_DISTANCES[toNextIndex];
         index = m_HashPolicy.KeepInRange(index, slots);
     }
@@ -453,9 +527,75 @@ constexpr auto HashMapHelper<K, V, H, HP , KE>::Find(const K& key) const noexcep
 }
 
 template<typename K, typename V, typename H, typename HP, typename KE>
+constexpr FORCEINLINE auto HashMapHelper<K, V, H, HP , KE>::Erase(const const_iterator& toErase) noexcept -> IteratorProxy
+{
+    LinkedList current = { toErase.index, toErase.current };
+
+    if (current.HasNext()) {
+        LinkedList previous = current;
+        LinkedList next = current.Next(*this);
+        while (next.HasNext()){
+            previous = next;
+            next = next.Next(*this);
+        }
+
+        auto keyValuePairPtr = *next;
+        BlockType::Destroy(*current);
+        BlockType::Construct(*current, std::move(*keyValuePairPtr.first), std::move(*keyValuePairPtr.second));
+        BlockType::Destroy(*next); // Should destroy the moved object
+        next.SetMetadata(Constants::MAGIC_FOR_EMPTY);
+        previous.ClearNext();
+    }else{
+        if (!current.IsDirectHit())
+            this->FindParentBlock(current).ClearNext();
+        BlockType::Destroy(*current);
+        current.SetMetadata(Constants::MAGIC_FOR_EMPTY);
+    }
+    --m_ElementsCount;
+    return { toErase.current, toErase.index };
+}
+
+template<typename K, typename V, typename H, typename HP, typename KE>
+constexpr FORCEINLINE bool HashMapHelper<K, V, H, HP , KE>::Erase(const K& key) noexcept
+{
+    auto res = this->Find(key);
+
+    if (res == this->end())
+        return false;
+
+    this->Erase(res);
+    return true;
+}
+
+template<typename K, typename V, typename H, typename HP, typename KE>
+constexpr FORCEINLINE void HashMapHelper<K, V, H, HP , KE>::Clear() noexcept
+{
+    if (!m_SlotsCount)
+        return;
+
+    usize slotsCount = m_SlotsCount + 1;
+    usize blocksCount = slotsCount / BLOCK_SIZE;
+
+    if (slotsCount % BLOCK_SIZE)
+        ++blocksCount;
+
+    for (BlockPointer itr = m_Entries, end = itr + blocksCount; itr != end; ++itr) {
+        for (uint32 i = 0; i < BLOCK_SIZE; ++i) {
+            if (itr->controlBytes[i] != Constants::MAGIC_FOR_EMPTY) {
+                itr->Destroy(i);
+                itr->controlBytes[i] = Constants::MAGIC_FOR_EMPTY;
+            }
+        }
+    }
+
+    m_ElementsCount = 0;
+}
+
+template<typename K, typename V, typename H, typename HP, typename KE>
 constexpr void HashMapHelper<K, V, H, HP , KE>::Reinit(usize count)
 {
     count = std::max(count, static_cast<usize>(std::ceil(m_ElementsCount / static_cast<double>(MAX_LOAD_FACTOR))));
+
     if (count == 0) {
         this->ResetToEmpty();
         return;
@@ -467,6 +607,7 @@ constexpr void HashMapHelper<K, V, H, HP , KE>::Reinit(usize count)
     usize blocksCount = count / BLOCK_SIZE;
     if (count % BLOCK_SIZE)
         ++blocksCount;
+    // printf("Growing with size : %d\n", count);
     auto memSize = this->CalculateMemorySize(blocksCount);
     void* newMemory = Utils::AllocateBytes(memSize);
     BlockPointer newBuckets = reinterpret_cast<BlockPointer>(newMemory);
@@ -489,8 +630,8 @@ constexpr void HashMapHelper<K, V, H, HP , KE>::Reinit(usize count)
             uint8 metadata = itr->controlBytes[i];
 
             if (metadata != Constants::MAGIC_FOR_EMPTY && metadata != Constants::MAGIC_FOR_RESERVED) {
-                KeyType* key = reinterpret_cast<KeyType*>(itr->keys + i);
-                ValueType* value = reinterpret_cast<ValueType*>(itr->values + i);
+                KeyType* key = itr->GetKey(i);
+                ValueType* value = itr->GetValue(i);
                 this->Emplace(std::move(*key), std::move(*value));
                 itr->Destroy(i);
             }
