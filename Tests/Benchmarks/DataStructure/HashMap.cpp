@@ -12,8 +12,8 @@ using namespace TRE;
 
 template<typename K, typename V>
 using StdHashMap =
-    // std::unordered_map<K, V>;
-    ska::bytell_hash_map<K, V>;
+    std::unordered_map<K, V>;
+    // ska::bytell_hash_map<K, V>;
 
 
 int32 GetRandomInt(int32 start = 0, int32 end = INT32_MAX - 1)
