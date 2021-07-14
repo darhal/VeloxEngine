@@ -189,10 +189,7 @@ public:
         std::swap(first.m_Data, second.m_Data);
         std::swap(first.m_Length, second.m_Length);
         std::swap(first.m_Capacity, second.m_Capacity);
-
-        Alloc* firstAlloc = static_cast<Alloc*>(&first);
-        Alloc* secondAlloc = static_cast<Alloc*>(&second);
-        Swap(*firstAlloc, *secondAlloc);
+        Swap(static_cast<Alloc&>(first), static_cast<Alloc&>(second));
     }
 
     constexpr FORCEINLINE friend void swap(Vector<T, Alloc>& first, Vector<T, Alloc>& second) noexcept

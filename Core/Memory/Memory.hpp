@@ -105,17 +105,7 @@ namespace TRE::Utils
     template<POD T>
     FORCEINLINE constexpr void MemSet(T* dst, const T& src, usize count = 1) noexcept
     {
-        for (usize i = 0; i < count; i++) {
-            dst[i] = src;
-        }
-    }
-
-    template<POD T>
-    FORCEINLINE constexpr void MemSet(T* dst, T&& src, usize count = 1) noexcept
-    {
-        for (usize i = 0; i < count; i++) {
-            dst[i] = src;
-        }
+        std::fill(dst, dst + count, src);
     }
 
     template<POD T>
@@ -209,14 +199,6 @@ namespace TRE::Utils
     {
         for (usize i = 0; i < count; i++) {
             dst[i] = T(src);
-        }
-    }
-
-    template<typename T>
-    FORCEINLINE constexpr void MemSet(T* dst, T&& src, usize count = 1) noexcept
-    {
-        for (usize i = 0; i < count; i++) {
-            dst[i] = T(std::forward(src));
         }
     }
 
