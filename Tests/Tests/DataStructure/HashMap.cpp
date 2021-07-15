@@ -32,15 +32,15 @@ auto StrictTestHashmaps(const HM<K,V>& x, const std::unordered_map<K,V>& y)
         const auto& v = p.second;
         auto res = x.Find(k);
         SCOPED_TRACE(index); index++;
-        ASSERT_EQ((*res).first, k);
-        ASSERT_EQ((*res).second, v);
+        ASSERT_EQ(res->first(), k);
+        ASSERT_EQ(res->second(), v);
     }
 
     // Is X in Y
     index = 0;
     for (const auto& p : x) {
-        const auto& k = p.first;
-        const auto& v = p.second;
+        const auto& k = p.first();
+        const auto& v = p.second();
         auto res = y.find(k);
         SCOPED_TRACE(index); index++;
         ASSERT_EQ(res->first, k);
@@ -61,8 +61,8 @@ auto TestHashmaps(const HM<K,V>& x, const std::unordered_map<K,V>& y, usize test
 
         SCOPED_TRACE(k);
         if (res != y.end()) {
-            ASSERT_EQ(res->first, (*res2).first);
-            ASSERT_EQ(res->second, (*res2).second);
+            ASSERT_EQ(res->first, res2->first());
+            ASSERT_EQ(res->second, res2->second());
         }else{
             ASSERT_EQ(res2, x.end());
         }
@@ -82,11 +82,12 @@ TEST(HashMapTest, Insertion)
     std::unordered_map<int, int> map2;
 
     for (int i = 0; i < 1'000; i++){
-        auto i1 = map.Emplace(i, i);
-        auto i2 = map2.emplace(i, i);
+        auto n = GetRandomInt(0, 100);
+        auto i1 = map.Emplace(n, 2 * n);
+        auto i2 = map2.emplace(n, 2 * n);
         ASSERT_EQ(i1.second, i2.second);
-        ASSERT_EQ((i2.first).operator*().first, i);
-        ASSERT_EQ((i2.first).operator*().second, i);
+        ASSERT_EQ(i1.first->first(), n);
+        ASSERT_EQ(i1.first->second(), 2 * n);
     }
 
     TestHashmaps(map, map2);

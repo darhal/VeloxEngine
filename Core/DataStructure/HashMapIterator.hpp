@@ -10,6 +10,8 @@ template<typename HashMapType, typename VT>
 struct TemplatedIterator
 {
 private:
+    using KeyType = typename HashMapType::KeyType;
+    using ValueType = typename HashMapType::ValueType;
     using iterator_category = std::forward_iterator_tag;
     using value_type = VT;
     using difference_type = ptrdiff_t;
@@ -19,8 +21,8 @@ private:
     using Constants = typename HashMapType::Constants;
     constexpr static auto BLOCK_SIZE = HashMapType::BLOCK_SIZE;
 
-    using KeyType = std::remove_reference_t<typename value_type::first_type>;
-    using ValueType = std::remove_reference_t<typename value_type::second_type>;
+    // using KeyType = std::remove_reference_t<typename value_type::first_type>;
+    // using ValueType = std::remove_reference_t<typename value_type::second_type>;
 
     BlockPointer current;
     usize index;
@@ -64,20 +66,18 @@ public:
         return copy;
     }
 
-    value_type operator*() const noexcept
+    value_type& operator*() const noexcept
     {
         usize idx = index % BLOCK_SIZE;
-        KeyType* key = current->GetKey(idx);
-        ValueType* value = current->GetValue(idx);
-        return { *key, *value };
+        value_type* pair = current->GetPair(idx);
+        return *pair;
     }
 
-    value_type operator->() const noexcept
+    value_type* operator->() const noexcept
     {
         usize idx = index % BLOCK_SIZE;
-        KeyType* key = current->GetKey(idx);
-        ValueType* value = current->GetValue(idx);
-        return { *key, *value };
+        value_type* pair = current->GetPair(idx);
+        return pair;
     }
 
     operator TemplatedIterator<HashMapType, const value_type>() const noexcept

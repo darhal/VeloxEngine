@@ -8,6 +8,7 @@
 #include <Core/Misc/UtilityConcepts.hpp>
 #include <Core/DataStructure/HashMapIterator.hpp>
 #include <Core/DataStructure/HashMapLinkedList.hpp>
+#include <Core/DataStructure/HashPolicies.hpp>
 
 TRE_NS_START
 
@@ -15,16 +16,53 @@ template<typename K, typename V, typename H, typename HP, typename KE>
 class HashMapHelper : private H, private KE
 {
 public:
+    struct InlinePair
+    {
+        alignas(K) uint8 key[sizeof(K)];
+        alignas(V) uint8 value[sizeof(V)];
+
+        FORCEINLINE const K& Key() const {
+            return *reinterpret_cast<const K*>(key);
+        }
+
+        FORCEINLINE K& Key() {
+            return *reinterpret_cast<K*>(key);
+        }
+
+        FORCEINLINE const V& Value() const {
+            return *reinterpret_cast<const V*>(value);
+        }
+
+        FORCEINLINE V& Value() {
+            return *reinterpret_cast<V*>(value);
+        }
+
+        FORCEINLINE const K& first() const {
+            return *reinterpret_cast<const K*>(key);
+        }
+
+        FORCEINLINE K& first() {
+            return *reinterpret_cast<K*>(key);
+        }
+
+        FORCEINLINE const V& second() const {
+            return *reinterpret_cast<const V*>(value);
+        }
+
+        FORCEINLINE V& second() {
+            return *reinterpret_cast<V*>(value);
+        }
+    };
+
+public:
     using HashPolicy = HP;
     using Hasher = H;
     using KeyEqual = KE;
 
     using KeyType = K;
     using ValueType = V;
-    using value_type = std::pair<K*, V*>;
-    using value_ref  = std::pair<K&, V&>;
-    using const_value_type = std::pair<const K*, const V*>;
-    using const_value_ref  = std::pair<const K&, const V&>;
+    using value_type = InlinePair;
+    using const_value_type = const value_type;
     using size_type = size_t;
     using difference_type = std::ptrdiff_t;
     using hasher = H;
@@ -84,12 +122,6 @@ public:
         };
     };
 
-    struct InlinePair
-    {
-        alignas(K) uint8 key[sizeof(K)];
-        alignas(V) uint8 value[sizeof(V)];
-    };
-
     template<usize BlockSize>
     struct Block
     {
@@ -124,6 +156,16 @@ public:
             Utils::MemSet(controlBytes, value, BlockSize);
         }
 
+        constexpr FORCEINLINE value_type* GetPair(uint32 idx)
+        {
+            return reinterpret_cast<value_type*>(pairs[idx].key);
+        }
+
+        constexpr FORCEINLINE const value_type* GetPair(uint32 idx) const
+        {
+            return reinterpret_cast<const value_type*>(pairs[idx].key);
+        }
+
         constexpr FORCEINLINE K* GetKey(uint32 idx)
         {
             return reinterpret_cast<K*>(&pairs[idx].key);
@@ -152,22 +194,22 @@ public:
 
         constexpr static FORCEINLINE void Destroy(const value_type& adr)
         {
-            Utils::Destroy(adr.first);
-            Utils::Destroy(adr.second);
+            Utils::Destroy(&adr.Key());
+            Utils::Destroy(&adr.Value());
         }
 
         template<typename Key, typename... Args>
-        constexpr static FORCEINLINE void Construct(const value_type& adr, Key&& key, Args&&... args)
+        constexpr static FORCEINLINE void Construct(value_type& adr, Key&& key, Args&&... args)
         {
-            new (adr.first) K(std::forward<Key>(key));
-            new (adr.second) V(std::forward<Args>(args)...);
+            new (&adr.key) K(std::forward<Key>(key));
+            new (&adr.value) V(std::forward<Args>(args)...);
         }
     };
 
     using BlockType      = Block<BLOCK_SIZE>;
     using BlockPointer   = BlockType*;
-    using iterator       = TemplatedIterator<HashMapHelper, value_ref>;
-    using const_iterator = TemplatedIterator<HashMapHelper, const value_ref>;
+    using iterator       = TemplatedIterator<HashMapHelper, value_type>;
+    using const_iterator = TemplatedIterator<HashMapHelper, const value_type>;
     using LinkedList     = LinkedListItr<HashMapHelper>;
 
     friend LinkedList;
@@ -334,8 +376,8 @@ private:
 
     constexpr FORCEINLINE LinkedList FindDirectHit(LinkedList child) const noexcept
     {
-        auto keyValuePtr = *child;
-        usize toMoveHash = HashObject(*(keyValuePtr.first));
+        auto& keyValuePtr = *child;
+        usize toMoveHash = HashObject(keyValuePtr.first());
         usize toMoveIndex = m_HashPolicy.IndexForHash(toMoveHash, m_SlotsCount);
         return { toMoveIndex, m_Entries + toMoveIndex / BLOCK_SIZE };
     }
@@ -434,9 +476,9 @@ constexpr auto HashMapHelper<K, V, H, HP , KE>::EmplaceDirectHit(LinkedList bloc
         } // ValueType newValue(std::forward<Args>(args)...);
 
         for (LinkedList it = block;;) {
-            auto keyValuePairPtr = *it;
-            BlockType::Construct(*freeBlock.second, std::move(*keyValuePairPtr.first), std::move(*keyValuePairPtr.second));
-            BlockType::Destroy(*it); // Should destroy the moved object
+            auto& keyValuePairPtr = *it;
+            BlockType::Construct(*freeBlock.second, std::move(keyValuePairPtr.first()), std::move(keyValuePairPtr.second()));
+            BlockType::Destroy(keyValuePairPtr); // Should destroy the moved object
             parentBlock.SetNext(freeBlock.first);
             freeBlock.second.SetMetadata(Constants::MAGIC_FOR_LIST_ENTRY);
 
@@ -539,10 +581,10 @@ constexpr FORCEINLINE auto HashMapHelper<K, V, H, HP , KE>::Erase(const const_it
             next = next.Next(*this);
         }
 
-        auto keyValuePairPtr = *next;
+        auto& keyValuePairPtr = *next;
         BlockType::Destroy(*current);
-        BlockType::Construct(*current, std::move(*keyValuePairPtr.first), std::move(*keyValuePairPtr.second));
-        BlockType::Destroy(*next); // Should destroy the moved object
+        BlockType::Construct(*current, std::move(keyValuePairPtr.first()), std::move(keyValuePairPtr.second()));
+        BlockType::Destroy(keyValuePairPtr); // Should destroy the moved object
         next.SetMetadata(Constants::MAGIC_FOR_EMPTY);
         previous.ClearNext();
     }else{

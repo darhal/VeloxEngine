@@ -7,66 +7,6 @@
 
 TRE_NS_START
 
-struct FibonacciHashPolicy
-{
-    usize IndexForHash(usize hash, usize /*slotsCount*/) const noexcept
-    {
-        return (11400714819323198485ull * hash) >> shift;
-    }
-
-    usize KeepInRange(usize index, usize slotsCount) const noexcept
-    {
-        return index & slotsCount;
-    }
-
-    uint8 NextSize(usize& size) const noexcept
-    {
-        size = std::max(usize(2), Math::NextPow2(size));
-        return (NB_BITS + 1) - Math::Log2OfPow2(size);
-    }
-
-    void Commit(uint8 shift) noexcept
-    {
-        this->shift = shift;
-    }
-
-    void Reset() noexcept
-    {
-        shift = NB_BITS;
-    }
-
-private:
-    constexpr static auto NB_BITS = sizeof(usize) * CHAR_BIT - 1;
-    uint8 shift = NB_BITS;
-};
-
-struct PowerOfTwoHashPolicy
-{
-    usize IndexForHash(usize hash, usize slotsCount) const
-    {
-        return hash & slotsCount;
-    }
-
-    usize KeepInRange(usize index, usize slotsCount) const
-    {
-        return IndexForHash(index, slotsCount);
-    }
-
-    uint8 NextSize(usize& size) const
-    {
-        size = Math::NextPow2(size);
-        return 0;
-    }
-
-    void Commit(uint8)
-    {
-    }
-
-    void Reset()
-    {
-    }
-};
-
 template<typename HashMapType>
 struct LinkedListItr
 {
@@ -81,97 +21,96 @@ struct LinkedListItr
     BlockPointer block = nullptr;
     usize index = 0;
 
-    LinkedListItr()
+    FORCEINLINE LinkedListItr()
     {
     }
 
-    LinkedListItr(usize index, BlockPointer block)
+    FORCEINLINE LinkedListItr(usize index, BlockPointer block)
         : block(block), index(index)
     {
     }
 
-    iterator Iterator() const
+    FORCEINLINE iterator Iterator() const
     {
         return { block, index };
     }
 
-    uint32 IndexInBlock() const
+    FORCEINLINE uint32 IndexInBlock() const
     {
         return index % BLOCK_SIZE;
     }
 
-    bool IsDirectHit() const
+    FORCEINLINE bool IsDirectHit() const
     {
         return (this->GetMetadata() & Constants::BITS_FOR_DIRECT_HIT) == Constants::MAGIC_FOR_DIRECT_HIT;
     }
 
-    bool IsEmpty() const
+    FORCEINLINE bool IsEmpty() const
     {
         return this->GetMetadata() == Constants::MAGIC_FOR_EMPTY;
     }
 
-    bool HasNext() const
+    FORCEINLINE bool HasNext() const
     {
         return this->JumpIndex() != 0;
     }
 
-    uint8 JumpIndex() const
+    FORCEINLINE uint8 JumpIndex() const
     {
         return Constants::DistanceFromMetadata(this->GetMetadata());
     }
 
-    uint8 GetMetadata() const
+    FORCEINLINE uint8 GetMetadata() const
     {
         return block->controlBytes[this->IndexInBlock()];
     }
 
-    void SetMetadata(uint8 metadata)
+    FORCEINLINE void SetMetadata(uint8 metadata)
     {
         block->controlBytes[this->IndexInBlock()] = metadata;
     }
 
-    LinkedListItr Next(HashMapType& table) const
+    FORCEINLINE LinkedListItr Next(HashMapType& table) const
     {
         uint8 distance = this->JumpIndex();
         usize nextIdx = table.m_HashPolicy.KeepInRange(index + Constants::JUMP_DISTANCES[distance], table.m_SlotsCount);
         return { nextIdx, table.m_Entries + nextIdx / BLOCK_SIZE };
     }
 
-    void SetNext(uint8 jumpIdx)
+    FORCEINLINE void SetNext(uint8 jumpIdx)
     {
         uint8& metadata = block->controlBytes[this->IndexInBlock()];
         metadata = (metadata & ~Constants::BITS_FOR_DISTANCE) | jumpIdx;
     }
 
-    void ClearNext()
+    FORCEINLINE void ClearNext()
     {
         this->SetNext(0);
     }
 
-    value_type operator*() const
+    FORCEINLINE value_type& operator*() const
     {
-        auto idx = this->IndexInBlock();
-        KeyType* key = block->GetKey(idx);
-        ValueType* value = block->GetValue(idx);
-        return { key, value };
+        usize idx = this->IndexInBlock();
+        value_type* pair = block->GetPair(idx);
+        return *pair;
     }
 
-    bool operator!() const
+    FORCEINLINE bool operator!() const
     {
         return !block;
     }
 
-    explicit operator bool() const
+    FORCEINLINE explicit operator bool() const
     {
         return block != nullptr;
     }
 
-    bool operator==(const LinkedListItr& other) const
+    FORCEINLINE bool operator==(const LinkedListItr& other) const
     {
         return index == other.index;
     }
 
-    bool operator!=(const LinkedListItr& other) const
+    FORCEINLINE bool operator!=(const LinkedListItr& other) const
     {
         return !(*this == other);
     }
