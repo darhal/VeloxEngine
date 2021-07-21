@@ -33,8 +33,9 @@ TEST(VectorTests, EmplaceBack)
     std::vector<int> y;
 
     for (int i = 0; i < NB; i++) {
-        x.EmplaceBack(i);
-        y.emplace_back(i);
+        auto e1 = x.EmplaceBack(i);
+        auto e2 = y.emplace_back(i);
+        ASSERT_EQ(e1, e2);
         TestVectors(x, y);
     }
 }
@@ -46,8 +47,9 @@ TEST(VectorTests, PushBack)
     std::vector<int> y;
 
     for (int i = 0; i < NB; i++) {
-        x.PushBack(i);
+        auto e1 = x.PushBack(i);
         y.push_back(i);
+        ASSERT_EQ(e1, i);
         TestVectors(x, y);
     }
 }
@@ -59,8 +61,9 @@ TEST(VectorTests, EmplaceFront)
     std::vector<int> y;
 
     for (int i = 0; i < NB; i++) {
-        x.EmplaceFront(i);
+        auto e1 = x.EmplaceFront(i);
         y.emplace(y.begin(), i);
+        ASSERT_EQ(e1, i);
         TestVectors(x, y);
     }
 }
@@ -72,8 +75,9 @@ TEST(VectorTests, PushFront)
     std::vector<int> y;
 
     for (int i = 0; i < NB; i++) {
-        x.PushFront(i);
+        auto e1 = x.PushFront(i);
         y.insert(y.begin(), i);
+        ASSERT_EQ(e1, i);
         TestVectors(x, y);
     }
 }
@@ -90,9 +94,10 @@ TEST(VectorTests, Insert)
     int pos = 0;
 
     for (int i = 0; i < NB; i++) {
-        x.Insert(pos, i);
+        auto e1 = x.Insert(pos, i);
         y.insert(y.begin() + pos, i);
         pos = distr(gen) % x.Size();
+        ASSERT_EQ(e1, i);
         TestVectors(x, y);
     }
 }
@@ -109,9 +114,10 @@ TEST(VectorTests, Emplace)
     int pos = 0;
 
     for (int i = 0; i < NB; i++) {
-        x.Emplace(pos, i);
+        auto e1 =  x.Emplace(pos, i);
         y.emplace(y.begin() + pos, i);
         pos = distr(gen) % x.Size();
+        ASSERT_EQ(e1, i);
         TestVectors(x, y);
     }
 }

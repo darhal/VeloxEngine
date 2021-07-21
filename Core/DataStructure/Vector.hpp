@@ -232,6 +232,7 @@ private:
             }
         }else{
             HandleRealloc(newData, size);
+            m_Data = newData;
         }
     }
 
@@ -311,7 +312,7 @@ constexpr T& Vector<T, Alloc>::EmplaceBack(Args&&... args)
     auto newLen = m_Length + 1;
     this->Reserve(newLen);
     new (m_Data + (m_Length++)) T(std::forward<Args>(args)...);
-    return *(m_Data + newLen);
+    return *(m_Data + newLen - 1); // FIXME : this is bogus !
 }
 
 template<typename T, AllocConcept Alloc>
@@ -448,7 +449,7 @@ constexpr T& Vector<T, Alloc>::Emplace(usize i, Args&&... args)
     } else {
         T* dest = data + i;
         // shift all of this to keep place for the new element
-        Utils::MoveConstructBackward(m_Data + 1, data, len - 1, i);
+        Utils::MoveConstructBackward(data + 1, data, len - 1, i);
         new (dest) T(std::forward<Args>(args)...);
         m_Length++;
         return *(dest);

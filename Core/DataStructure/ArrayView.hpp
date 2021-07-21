@@ -31,8 +31,8 @@ public:
 
     constexpr FORCEINLINE ArrayView(T* data, usize size) noexcept;
 
-    template<ContainerConcept C>
-    constexpr FORCEINLINE ArrayView(const C& arr) noexcept;
+    template<ContainerConcept ContainerType>
+    constexpr FORCEINLINE ArrayView(const ContainerType& arr) noexcept;
 
     template<usize S>
     constexpr FORCEINLINE ArrayView(const T(&arr)[S]) noexcept;
@@ -122,8 +122,8 @@ constexpr FORCEINLINE ArrayView<T>::ArrayView(T* data, usize size) noexcept
 }
 
 template<typename T>
-template<ContainerConcept C>
-constexpr FORCEINLINE ArrayView<T>::ArrayView(const C& arr) noexcept
+template<ContainerConcept ContainerType>
+constexpr FORCEINLINE ArrayView<T>::ArrayView(const ContainerType& arr) noexcept
     : ArrayView(arr.Data(), arr.Size())
 {
 
