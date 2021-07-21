@@ -175,6 +175,7 @@ void StdStringPopBack(benchmark::State& state)
 
 std::vector<uint32> insertPosition;
 std::vector<std::pair<uint32, std::string>> insertStrPos;
+std::vector<std::pair<usize, usize>> ereasePos;
 
 void StringInsertChar(benchmark::State& state)
 {
@@ -258,8 +259,6 @@ void StdStringInsertString(benchmark::State& state)
         str.insert(p.first, p.second.c_str(), 0, p.second.size());
     }
 }
-
-std::vector<std::pair<usize, usize>> ereasePos;
 
 void StringErease(benchmark::State& state)
 {

@@ -200,20 +200,20 @@ void StdHashMapErease(benchmark::State& state)
     benchmark::DoNotOptimize(map);
 }
 
-BENCHMARK(HashMapEmptyDecl);
-BENCHMARK(StdHashMapEmptyDecl);
+//BENCHMARK(HashMapEmptyDecl);
+//BENCHMARK(StdHashMapEmptyDecl);
 
-BENCHMARK(HashMapInsertion);
-BENCHMARK(StdHashMapInsertion);
+//BENCHMARK(HashMapInsertion);
+//BENCHMARK(StdHashMapInsertion);
 
-BENCHMARK(HashMapSuccessfullLookUp);
-BENCHMARK(StdHashMapSuccessfullLookUp);
+//BENCHMARK(HashMapSuccessfullLookUp);
+//BENCHMARK(StdHashMapSuccessfullLookUp);
 
-BENCHMARK(HashMapUnsuccessfullLookUp);
-BENCHMARK(StdHashMapUnsuccessfullLookUp);
+//BENCHMARK(HashMapUnsuccessfullLookUp);
+//BENCHMARK(StdHashMapUnsuccessfullLookUp);
 
-BENCHMARK(HashMapErease);
-BENCHMARK(StdHashMapErease);
+//BENCHMARK(HashMapErease);
+//BENCHMARK(StdHashMapErease);
 
 /*std::vector<std::pair<int, int>> inserting;
 std::vector<std::pair<int, int>> okLookups;

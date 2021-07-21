@@ -29,7 +29,7 @@ public:
     DataType* operator->() noexcept { return m_Current; }
     const DataType* operator->() const noexcept { return m_Current; }
 
-    DataType* GetPtr() const noexcept { return m_Current; }
+    DataType* GetPointer() const noexcept { return m_Current; }
     const DataType* GetConstPtr() const noexcept { return m_Current; }
 
     RandomAccessIterator<DataType>& operator+=(const ptrdiff_t& movement) noexcept { m_Current += movement; return (*this); }
@@ -51,6 +51,10 @@ public:
         auto temp(*this);
         m_Current = oldPtr;
         return temp;
+    }
+
+    operator DataType*() {
+        return m_Current;
     }
 private:
     DataType* m_Current;

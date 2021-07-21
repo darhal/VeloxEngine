@@ -10,11 +10,12 @@
 #include <Core/Memory/Memory.hpp>
 #include <Core/Memory/GenericAllocator.hpp>
 #include <Core/DataStructure/RandomAccessIterator.hpp>
+#include <Core/DataStructure/BasicVector.hpp>
 
 TRE_NS_START
 
 template<typename T, AllocConcept Alloc = GenericAllocator>
-class Vector : public Alloc
+class Vector : public Alloc, public BasicVector<T>
 {
 public:
     using Iterator          = RandomAccessIterator<T>;
@@ -30,6 +31,7 @@ public:
     using reverse_iterator  = const_reverse_iterator;
     using size_type         = size_t;
     using difference_type	= ptrdiff_t;
+    using Base              = BasicVector<T>;
 
 public:
     CONSTEXPR const static usize DEFAULT_CAPACITY       = 8;
@@ -62,7 +64,7 @@ public:
     constexpr FORCEINLINE bool Reserve(usize sz);
 
     template<typename... Args>
-    constexpr T& EmplaceBack(Args&&... args);
+    constexpr FORCEINLINE T& EmplaceBack(Args&&... args);
 
     constexpr FORCEINLINE T& PushBack(const T& obj);
 
@@ -76,35 +78,17 @@ public:
 
     constexpr FORCEINLINE T& FastPushFront(const T& obj);
 
-    constexpr FORCEINLINE T& Insert(usize i, const T& obj);
-
     template<typename... Args>
     constexpr T& Emplace(usize i, Args&&... args);
+
+    constexpr FORCEINLINE T& Insert(usize i, const T& obj);
 
     constexpr FORCEINLINE T& FastInsert(usize i, const T& obj);
 
     template<typename... Args>
     constexpr T& FastEmplace(usize i, Args&&... args);
 
-    constexpr void Erease(usize start, usize end) noexcept;
-
-    constexpr void Erease(Iterator itr) noexcept;
-
-    constexpr FORCEINLINE void Erease(usize index) noexcept;
-
-    constexpr FORCEINLINE void FastErease(Iterator itr) noexcept;
-
-    constexpr FORCEINLINE void FastErease(usize index) noexcept;
-
-    constexpr FORCEINLINE void Clear() noexcept;
-
-    constexpr FORCEINLINE bool PopBack() noexcept;
-
-    constexpr bool PopFront() noexcept;
-
-    constexpr bool FastPopFront() noexcept;
-
-    constexpr void Fill(usize length, const T& obj = {});
+    constexpr FORCEINLINE void Fill(usize length, const T& obj = {}) noexcept;
 
     constexpr FORCEINLINE void Resize(usize newSize);
 
@@ -112,29 +96,7 @@ public:
 
     constexpr FORCEINLINE void Append(Vector<T, Alloc>&& other);
 
-    constexpr FORCEINLINE bool IsEmpty() const noexcept;
-
     constexpr FORCEINLINE usize Capacity() const noexcept;
-
-    constexpr FORCEINLINE usize Length() const noexcept;
-
-    constexpr FORCEINLINE usize Size() const noexcept;
-
-    constexpr FORCEINLINE T* Back() const noexcept;
-
-    constexpr FORCEINLINE T* Front() const noexcept;
-
-    constexpr FORCEINLINE T* Data() const noexcept { return this->Front(); };
-
-    constexpr FORCEINLINE T& Get(usize i) noexcept;
-
-    constexpr FORCEINLINE T& At(usize i) noexcept;
-
-    constexpr FORCEINLINE T& operator[](usize i) noexcept;
-
-    constexpr FORCEINLINE const T& At(usize i) const noexcept;
-
-    constexpr FORCEINLINE const T& operator[](usize i) const noexcept;
 
     constexpr FORCEINLINE Vector& operator+=(const Vector<T, Alloc>& other);
 
@@ -142,53 +104,11 @@ public:
 
     constexpr FORCEINLINE T* StealPtr() noexcept;
 
-    constexpr iterator begin() const noexcept
-    {
-        return Iterator(m_Data);
-    }
-
-    constexpr iterator end() const noexcept
-    {
-        return Iterator(m_Data + m_Length);
-    }
-
-    constexpr const_iterator cbegin() const noexcept
-    {
-        return CIterator(m_Data);
-    }
-
-    constexpr const_iterator cend() const noexcept
-    {
-        return CIterator(m_Data + m_Length);
-    }
-
-    constexpr const_reverse_iterator rbegin() const noexcept
-    {
-        return const_reverse_iterator(this->end());
-    }
-
-    constexpr const_reverse_iterator rend() const noexcept
-    {
-        return const_reverse_iterator(this->begin());
-    }
-
-    constexpr const_reverse_iterator crbegin() const noexcept
-    {
-        return const_reverse_iterator(this->end());
-    }
-
-    constexpr const_reverse_iterator  crend() const noexcept
-    {
-        return const_reverse_iterator(this->begin());
-    }
-
     constexpr FORCEINLINE friend void Swap(Vector<T, Alloc>& first, Vector<T, Alloc>& second) noexcept
     {
         static_assert(SwappableConcept<Alloc>, "Can't implement Vector::Swap because the underlying allocator provides no swap function");
-
-        std::swap(first.m_Data, second.m_Data);
-        std::swap(first.m_Length, second.m_Length);
         std::swap(first.m_Capacity, second.m_Capacity);
+        Swap(static_cast<BasicVector<T>&>(first), static_cast<BasicVector<T>&>(second));
         Swap(static_cast<Alloc&>(first), static_cast<Alloc&>(second));
     }
 
@@ -218,40 +138,36 @@ private:
         }
     }
 
-    constexpr FORCEINLINE void HandleMoveAfterRealloc(T* newData, usize size)
+    constexpr FORCEINLINE void HandleMoveAfterRealloc(T* oldData, usize size)
     {
-        auto HandleRealloc = [this](T* newData, usize size) {
-            Utils::MoveConstruct(newData, m_Data, size);
-            this->FreeMemory(m_Data);
+        auto HandleRealloc = [this](T* oldData, usize size) {
+            Utils::MoveConstruct(this->m_Data, oldData, size);
+            this->FreeMemory(oldData);
         };
 
         if constexpr (Alloc::Traits::HAVE_REALLOC) {
-            if (newData != m_Data) {
-                HandleRealloc(newData, size);
-                m_Data = newData;
+            if (oldData != this->m_Data) {
+                HandleRealloc(oldData, size);
             }
         }else{
-            HandleRealloc(newData, size);
-            m_Data = newData;
+            HandleRealloc(oldData, size);
         }
     }
 
 private:
-    T*    m_Data;
-    usize m_Length;
     usize m_Capacity;
 };
 
 template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE Vector<T, Alloc>::Vector() noexcept
-    : m_Data(GetInitialData()), m_Length(0), m_Capacity(STATIC_ELEMENTS_COUNT)
+    : Base(GetInitialData(), 0), m_Capacity(STATIC_ELEMENTS_COUNT)
 {
 
 }
 
 template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE Vector<T, Alloc>::Vector(usize sz)
-    : m_Data(this->template Allocate<T>(sz)), m_Length(0),
+    : Base(this->template Allocate<T>(sz), 0),
       m_Capacity(GetAllocCapIfSizeIsLessThan(sz))
 {
 
@@ -259,18 +175,17 @@ constexpr FORCEINLINE Vector<T, Alloc>::Vector(usize sz)
 
 template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE Vector<T, Alloc>::Vector(usize sz, const T& obj)
-    : m_Data(this->template Allocate<T>(sz)), m_Length(0),
-      m_Capacity(GetAllocCapIfSizeIsLessThan(sz))
+    : Vector(sz)
 {
     this->Fill(m_Capacity, obj);
 }
 
 template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE Vector<T, Alloc>::Vector(const T* data, usize size)
-    : m_Data(this->template Allocate<T>(size)), m_Length(size),
+    : Base(this->template Allocate<T>(size), size),
       m_Capacity(GetAllocCapIfSizeIsLessThan(size))
 {
-    Utils::CopyConstruct(m_Data, data, m_Length);
+    this->Base::CopyFrom(data, size);
 }
 
 template<typename T, AllocConcept Alloc>
@@ -281,78 +196,37 @@ constexpr FORCEINLINE Vector<T, Alloc>::Vector(const T(&arr)[S])
 
 }
 
-/*template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE Vector<T, Alloc>::Vector(const std::initializer_list<T>& list)
-    : Vector(list.begin(), list.size())
-{
-
-}*/
-
 template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE Vector<T, Alloc>::~Vector()
 {
-    if (m_Data != NULL) {
-        this->Free(m_Data, m_Length);
-        m_Data = NULL;
+    auto data = this->m_Data;
+
+    if (data != NULL) {
+        this->Free(data, this->m_Length);
+        this->m_Data = NULL;
     }
 }
 
 template<typename T, AllocConcept Alloc>
-constexpr void Vector<T, Alloc>::Fill(usize length, const T& obj)
+constexpr FORCEINLINE void Vector<T, Alloc>::Fill(usize length, const T& obj) noexcept
 {
     this->Reserve(length);
-    Utils::MemSet(m_Data, obj, length);
-    m_Length = length;
+    this->Base::Fill(length, obj);
 }
 
 template<typename T, AllocConcept Alloc>
 template<typename... Args>
-constexpr T& Vector<T, Alloc>::EmplaceBack(Args&&... args)
+constexpr FORCEINLINE T& Vector<T, Alloc>::EmplaceBack(Args&&... args)
 {
-    auto newLen = m_Length + 1;
+    auto newLen = this->m_Length + 1;
     this->Reserve(newLen);
-    new (m_Data + (m_Length++)) T(std::forward<Args>(args)...);
-    return *(m_Data + newLen - 1); // FIXME : this is bogus !
+    return this->Base::EmplaceBack(std::forward<Args>(args)...);
 }
 
 template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE T& Vector<T, Alloc>::PushBack(const T& obj)
 {
     return this->EmplaceBack(obj);
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE bool Vector<T, Alloc>::PopBack() noexcept
-{
-    if (m_Length <= 0)
-        return false;
-
-    m_Data[--m_Length].~T();
-    return m_Length;
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr bool Vector<T, Alloc>::PopFront() noexcept
-{
-    if (m_Length <= 0) 
-        return false;
-
-    m_Data[0].~T();
-    // This is safe slot 1 is moved to slot 0 and so on slot n+1 will be moved in slot n...
-    Utils::Move(m_Data, m_Data + 1, --m_Length);
-    return m_Length;
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr bool Vector<T, Alloc>::FastPopFront() noexcept
-{
-    if (m_Length <= 0)
-        return false;
-
-    m_Data[0].~T();
-    if (--m_Length != 0)
-        new (m_Data) T(std::move(m_Data[m_Length + 1]));
-    return false;
 }
 
 template<typename T, AllocConcept Alloc>
@@ -376,8 +250,9 @@ template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE void Vector<T, Alloc>::ReserveHelper(usize nCap)
 {
     // I think this can be optimized! to just copy and dont delete the thing or use move ctor.
-    T* newData = this->template Reallocate<T>(m_Data, nCap);
-    this->HandleMoveAfterRealloc(newData, m_Length);
+    T* newData = this->template Reallocate<T>(this->m_Data, nCap);
+    std::swap(this->m_Data, newData);
+    this->HandleMoveAfterRealloc(newData, this->m_Length);
     m_Capacity = nCap;
 }
 
@@ -389,15 +264,40 @@ constexpr FORCEINLINE void Vector<T, Alloc>::Free(T* data, usize sz)
 }
 
 template<typename T, AllocConcept Alloc>
-constexpr void Vector<T, Alloc>::Resize(usize newSize)
+constexpr FORCEINLINE void Vector<T, Alloc>::Resize(usize newSize)
 {
-    if (newSize < m_Length) {
-        usize offset = m_Length - newSize;
-        Utils::Destroy(m_Data + newSize, offset);
-        m_Length = newSize;
-    } else if (newSize > m_Length) {
+    auto len = this->m_Length;
+
+    if (newSize < len) {
+        usize offset = len - newSize;
+        Utils::Destroy(this->m_Data + newSize, offset);
+        this->m_Length = newSize;
+    } else if (newSize > len) {
         this->Reserve(newSize);
-        m_Length = newSize;
+        this->m_Length = newSize;
+    }
+}
+
+template<typename T, AllocConcept Alloc>
+template<typename... Args>
+constexpr FORCEINLINE T& Vector<T, Alloc>::Emplace(usize i, Args&&... args)
+{
+    auto len = this->m_Length;
+    TRE_ASSERTF(i <= len, "Given index is out of bound please choose from [0..%" SZu "].", len);
+    auto cap = m_Capacity;
+    auto data = this->m_Data;
+
+    if (len + 1 >= cap) {
+        // usize nCap = m_Capacity ? m_Capacity * DEFAULT_GROW_SIZE : DEFAULT_CAPACITY;
+        usize nCap = (cap << DEFAULT_GROW_SIZE) + DEFAULT_CAPACITY;
+        this->m_Data = this->template Reallocate<T>(data, nCap);
+        T& res = this->Base::Emplace(data, i, std::forward<Args>(args)...);
+        this->HandleMoveAfterRealloc(data, i);
+        m_Capacity = nCap;
+        return res;
+    } else {
+        T& res = this->Base::Emplace(i, std::forward<Args>(args)...);
+        return res;
     }
 }
 
@@ -405,6 +305,13 @@ template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE T& Vector<T, Alloc>::Insert(usize i, const T& obj)
 {
     return this->Emplace(i, obj);
+}
+
+template<typename T, AllocConcept Alloc>
+template<typename ...Args>
+constexpr FORCEINLINE T& Vector<T, Alloc>::EmplaceFront(Args&&... args)
+{
+    return this->Emplace(0, std::forward<Args>(args)...);
 }
 
 template<typename T, AllocConcept Alloc>
@@ -428,32 +335,13 @@ constexpr FORCEINLINE T& Vector<T, Alloc>::FastPushFront(const T& obj)
 
 template<typename T, AllocConcept Alloc>
 template<typename... Args>
-constexpr T& Vector<T, Alloc>::Emplace(usize i, Args&&... args)
+constexpr FORCEINLINE T& Vector<T, Alloc>::FastEmplace(usize i, Args&&... args)
 {
-    TRE_ASSERTF(i <= m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
-    auto cap = m_Capacity;
-    auto len = m_Length;
-    auto data = m_Data;
-
-    if (len + 1 >= cap) {
-        // usize nCap = m_Capacity ? m_Capacity * DEFAULT_GROW_SIZE : DEFAULT_CAPACITY;
-        usize nCap = (cap << DEFAULT_GROW_SIZE) + DEFAULT_CAPACITY;
-        T* newData = this->template Reallocate<T>(data, nCap);
-        T* dest = newData + i;
-        Utils::MoveConstructForward(newData + 1, data, i, len);
-        new (dest) T(std::forward<Args>(args)...);
-        this->HandleMoveAfterRealloc(newData, i);
-        m_Length++;
-        m_Capacity = nCap;
-        return *(dest);
-    } else {
-        T* dest = data + i;
-        // shift all of this to keep place for the new element
-        Utils::MoveConstructBackward(data + 1, data, len - 1, i);
-        new (dest) T(std::forward<Args>(args)...);
-        m_Length++;
-        return *(dest);
-    }
+    auto len = this->m_Length;
+    TRE_ASSERTF(i <= len, "Given index is out of bound please choose from [0..%" SZu "].", len);
+    if (len + 1 >= m_Capacity) // The default way might be faster as we have to reallocate the memory and copy the objects anyways
+        return this->Emplace(i, std::forward<Args>(args)...);
+    return this->Base::FastEmplace(i, std::forward<Args>(args)...);
 }
 
 template<typename T, AllocConcept Alloc>
@@ -463,52 +351,23 @@ constexpr FORCEINLINE T& Vector<T, Alloc>::FastInsert(usize i, const T& obj)
 }
 
 template<typename T, AllocConcept Alloc>
-template<typename... Args>
-constexpr T& Vector<T, Alloc>::FastEmplace(usize i, Args&&... args)
-{
-    TRE_ASSERTF(i <= m_Length, "Given index is out of bound please choose from [0..%" SZu "].", m_Length);
-
-    if (m_Length + 1 >= m_Capacity) // The default way might be faster as we have to reallocate the memory and copy the objects anyways
-        return this->Emplace(i, std::forward<Args>(args)...);
-
-    T* element = m_Data + i;
-    
-    if (i != m_Length) [[likely]] {
-        T* last = m_Data + m_Length;
-        T temp(std::move(*element));
-        new (element) T(std::forward<Args>(args)...);
-        new (last) T(std::move(temp));
-    } else [[unlikely]] {
-        new (element) T(std::forward<Args>(args)...);
-    }
-
-    m_Length++;
-    return *element;
-}
-
-template<typename T, AllocConcept Alloc>
-template<typename ...Args>
-constexpr FORCEINLINE T& Vector<T, Alloc>::EmplaceFront(Args&&... args)
-{
-    return this->Emplace(0, std::forward<Args>(args)...);
-}
-
-template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE void Vector<T, Alloc>::Append(const Vector<T, Alloc>& other)
 {
-    auto newLen = m_Length + other.m_Length;
+    auto len = this->m_Length;
+    auto newLen = len + other.m_Length;
     this->Reserve(newLen);
-    Utils::Copy(m_Data + m_Length, other.m_Data, other.m_Length);
-    m_Length = newLen;
+    Utils::Copy(this->m_Data + len, other.m_Data, other.m_Length);
+    this->m_Length = newLen;
 }
 
 template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE void Vector<T, Alloc>::Append(Vector<T, Alloc>&& other)
 {
-    auto newLen = m_Length + other.m_Length;
+    auto len = this->m_Length;
+    auto newLen = len + other.m_Length;
     this->Reserve(newLen);
-    Utils::Move(m_Data + m_Length, other.m_Data, other.m_Length);
-    m_Length = newLen;
+    Utils::Move(this->m_Data + len, other.m_Data, other.m_Length);
+    this->m_Length = newLen;
     other.m_Length = 0;
 }
 
@@ -527,75 +386,13 @@ constexpr FORCEINLINE Vector<T, Alloc>& Vector<T, Alloc>::operator+=(Vector<T, A
 }
 
 template<typename T, AllocConcept Alloc>
-constexpr void Vector<T, Alloc>::Erease(usize start, usize end) noexcept
-{
-    TRE_ASSERTF(start < m_Length && end <= m_Length, "[%" SZu "..%" SZu "] interval isn't included in the range [0..%" SZu "]", start, end, m_Length);
-    TRE_ASSERTF(end >= start, "end must be greater than start");
-    const usize size = end - start;
-    if (size == 0) 
-        return;
-
-    Utils::Destroy(m_Data + start, size);
-    Utils::MoveConstruct(m_Data + start, m_Data + end, m_Length - end);
-    m_Length -= size;
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr void Vector<T, Alloc>::Erease(Iterator itr) noexcept
-{
-    T* itr_ptr = itr.GetPtr();
-    TRE_ASSERTF((itr_ptr < m_Data + m_Length && itr_ptr >= m_Data), "The given iterator doesn't belong to the Vector.");
-    Utils::Destroy(itr_ptr, 1);
-    usize start = usize(itr_ptr - m_Data);
-    usize end = usize(m_Data + m_Length - itr_ptr);
-    Utils::MoveConstruct(m_Data + start, m_Data + start + 1, end - 1);
-    m_Length -= 1;
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE void Vector<T, Alloc>::Erease(usize index) noexcept
-{
-    return this->Erease(this->begin() + index);
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE void Vector<T, Alloc>::FastErease(Iterator itr) noexcept
-{
-    T* itr_ptr = itr.GetPtr();
-    TRE_ASSERTF((itr_ptr < m_Data + m_Length && itr_ptr >= m_Data), "The given iterator doesn't belong to the Vector.");
-    (*itr_ptr).~T();
-    T* last_ptr = m_Data + m_Length - 1;
-    new (itr_ptr) T(std::move(*last_ptr));
-    m_Length -= 1;
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE void Vector<T, Alloc>::FastErease(usize index) noexcept
-{
-    return this->FastErease(this->begin() + index);
-}
-
-template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE T* Vector<T, Alloc>::StealPtr() noexcept
 {
-    T* data_ptr = m_Data;
-    m_Length = 0;
+    T* data = this->m_Data;
     m_Capacity = 0;
-    m_Data = NULL;
-    return data_ptr;
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE void Vector<T, Alloc>::Clear() noexcept
-{
-    Utils::Destroy(m_Data, m_Length);
-    m_Length = 0;
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE bool Vector<T, Alloc>::IsEmpty() const noexcept
-{
-    return this->Size() == 0;
+    this->m_Length = 0;
+    this->m_Data = NULL;
+    return data;
 }
 
 template<typename T, AllocConcept Alloc>
@@ -605,87 +402,13 @@ constexpr FORCEINLINE usize Vector<T, Alloc>::Capacity() const noexcept
 }
 
 template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE usize Vector<T, Alloc>::Length() const noexcept
-{
-    return m_Length;
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE usize Vector<T, Alloc>::Size() const noexcept
-{
-    return m_Length;
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE T* Vector<T, Alloc>::Back() const noexcept
-{
-    if (m_Length == 0)
-        return NULL;
-
-    return m_Data + m_Length - 1;
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE T* Vector<T, Alloc>::Front() const noexcept
-{
-    return m_Data;
-}
-
-/*template<typename T, AllocConcept Alloc>
-const T* Vector<T, Alloc>::At(usize i)
-{
-    ASSERTF((i >= m_Length), "Bad usage of vector function At index out of bounds");
-    return &m_Data[i];
-}
-
-template<typename T, AllocConcept Alloc>
-const T* Vector<T, Alloc>::operator[](usize i)
-{
-    if (i >= m_Length) return NULL;
-    return At(i);
-}*/
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE T& Vector<T, Alloc>::Get(usize i) noexcept
-{
-    return this->At(i);
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE T& Vector<T, Alloc>::At(usize i) noexcept
-{
-    TRE_ASSERTF(i < m_Length, "Bad usage of vector function At index out of bounds");
-    return m_Data[i];
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE T& Vector<T, Alloc>::operator[](usize i) noexcept
-{
-    return this->At(i);
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE const T& Vector<T, Alloc>::At(usize i) const noexcept
-{
-    TRE_ASSERTF((i < m_Length), "Bad usage of vector function At index out of bounds");
-    return m_Data[i];
-}
-
-template<typename T, AllocConcept Alloc>
-constexpr FORCEINLINE const T& Vector<T, Alloc>::operator[](usize i) const noexcept
-{
-    return this->At(i);
-}
-
-template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE Vector<T, Alloc>::Vector(const Vector<T, Alloc>& other) :
-    Alloc(other), m_Data(nullptr), m_Length(other.m_Length), m_Capacity(other.m_Capacity)
+    Alloc(other), Base(nullptr, other.m_Length), m_Capacity(other.m_Capacity)
 {
     static_assert(CopyableConcept<Alloc>, "Can't implement Vector copy ctor because the underlying allocator provides no copy ctor");
-
     if (m_Capacity) {
-        m_Data = this->template Allocate<T>(m_Capacity);
-        Utils::Copy(other.m_Data, m_Data, m_Length);
+        this->m_Data = this->template Allocate<T>(m_Capacity);
+        this->Base::CopyFrom(other.m_Data, other.m_Length);
     }
 }
 
@@ -693,7 +416,6 @@ template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE Vector<T, Alloc>& Vector<T, Alloc>::operator=(const Vector<T, Alloc>& other)
 {
     static_assert(CopyableConcept<Alloc>, "Can't implement Vector copy assignement because the underlying allocator provides no copy assignement");
-
     Vector<T, Alloc> tmp(other);
     Swap(*this, tmp);
     return *this;
@@ -701,10 +423,9 @@ constexpr FORCEINLINE Vector<T, Alloc>& Vector<T, Alloc>::operator=(const Vector
 
 template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE Vector<T, Alloc>::Vector(Vector<T, Alloc>&& other) noexcept
-    : Alloc(std::move(other)), m_Data(other.m_Data), m_Length(other.m_Length), m_Capacity(other.m_Capacity)
+    : Alloc(std::move(other)), Base(std::move(other)), m_Capacity(other.m_Capacity)
 {
     static_assert(MoveableConcept<Alloc>, "Can't implement Vector move ctor because the underlying allocator provides no move ctor");
-
     other.m_Data = NULL;
 }
 
@@ -712,7 +433,6 @@ template<typename T, AllocConcept Alloc>
 constexpr FORCEINLINE Vector<T, Alloc>& Vector<T, Alloc>::operator=(Vector<T, Alloc>&& other) noexcept
 {
     static_assert(MoveableConcept<Alloc>, "Can't implement Vector move assignement because the underlying allocator provides no move assignement");
-
     Vector<T, Alloc> tmp(std::move(other));
     Swap(*this, tmp);
     return *this;

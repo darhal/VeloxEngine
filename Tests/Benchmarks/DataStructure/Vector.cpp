@@ -14,18 +14,8 @@ using SmallVector = Vector<T>;
 void VectorEmplaceBack(benchmark::State& state)
 {
     SmallVector<int> vec;
-    // vec.Reserve(vec.DEFAULT_CAPACITY);
-    usize cap = vec.Capacity();
 
     for (auto _ : state) {
-        /*state.PauseTiming();
-        if (cap != vec.Capacity()) {
-            cap = vec.Capacity();
-            printf("Cap = %lu\n", cap);
-        }
-        state.ResumeTiming();*/
-
-        // This code gets timed
         vec.EmplaceBack(5);
     }
 }
@@ -34,17 +24,8 @@ void StdVectorEmplaceBack(benchmark::State& state)
 {
     state.iterations();
     std::vector<int> vec;
-    usize cap = vec.capacity();
 
     for (auto _ : state) {
-        /*state.PauseTiming();
-        if (cap != vec.capacity()) {
-            cap = vec.capacity();
-            printf("Cap = %lu\n", cap);
-        }
-        state.ResumeTiming();*/
-
-        // This code gets timed
         vec.emplace_back(5);
     }
 }
@@ -53,17 +34,8 @@ void VectorEmplaceFront(benchmark::State& state)
 {
     SmallVector<int> vec;
     // vec.Reserve(vec.DEFAULT_CAPACITY);
-    usize cap = vec.Capacity();
 
     for (auto _ : state) {
-        /*state.PauseTiming();
-        if (cap != vec.Capacity()) {
-            cap = vec.Capacity();
-            printf("Cap = %lu\n", cap);
-        }
-        state.ResumeTiming();*/
-
-        // This code gets timed
         vec.EmplaceFront(5);
     }
 }
@@ -72,22 +44,160 @@ void StdVectorEmplaceFront(benchmark::State& state)
 {
     state.iterations();
     std::vector<int> vec;
-    usize cap = vec.capacity();
 
     for (auto _ : state) {
-        /*state.PauseTiming();
-        if (cap != vec.capacity()) {
-            cap = vec.capacity();
-            printf("Cap = %lu\n", cap);
-        }
-        state.ResumeTiming();*/
-
-        // This code gets timed
         vec.insert(vec.begin(), 5);
     }
 }
 
-std::vector<usize> insertPos;
+void VectorInsert(benchmark::State& state)
+{
+    const auto NB = state.max_iterations;
+    SmallVector<int> vec;
+    int f = 0;
+    int s = 1;
+    vec.Insert(f, f);
+
+    for (auto _ : state) {
+        auto idx = f % vec.Size();
+        vec.Insert(idx, idx);
+        f = s;
+        s = f + s;
+    }
+}
+
+void StdVectorInsert(benchmark::State& state)
+{
+    const auto NB = state.max_iterations;
+    std::vector<int> vec;
+    int f = 0;
+    int s = 1;
+    vec.insert(vec.begin() + f, f);
+
+    for (auto _ : state) {
+        auto idx = f % vec.size();
+        vec.insert(vec.begin() + idx, idx);
+        f = s;
+        s = f + s;
+    }
+}
+
+void VectorErease(benchmark::State& state)
+{
+    const auto NB = state.max_iterations;
+    SmallVector<int> vec;
+    int f = 0;
+    int s = 1;
+
+    for (usize i = 0; i < NB; i++) {
+        vec.EmplaceBack(f);
+        f = s;
+        s = f + s;
+    }
+
+    f = 0, s = 1;
+    for (auto _ : state) {
+        vec.Erease(f % vec.Size());
+        f = s;
+        s = f + s;
+    }
+}
+
+void StdVectorErease(benchmark::State& state)
+{
+    const auto NB = state.max_iterations;
+    std::vector<int> vec;
+    int f = 0;
+    int s = 1;
+
+    for (usize i = 0; i < NB; i++) {
+        vec.emplace_back(f);
+        f = s;
+        s = f + s;
+    }
+
+    f = 0, s = 1;
+    for (auto _ : state) {
+        vec.erase(vec.begin() + (f % vec.size()));
+        f = s;
+        s = f + s;
+    }
+}
+
+void VectorEreaseRange(benchmark::State& state)
+{
+    const auto NB = state.max_iterations;
+    SmallVector<int> vec;
+    int f = 0;
+    int s = 1;
+
+    for (usize i = 0; i < 10'000 * NB; i++) {
+        vec.EmplaceBack(f);
+        f = s;
+        s = f + s;
+    }
+
+    f = 0, s = 1;
+    for (auto _ : state) {
+        state.PauseTiming();
+        auto start = f % NB;
+        auto end = s % NB;
+        if (start > end)
+            std::swap(start, end);
+        f = s;
+        s = f + s;
+        state.ResumeTiming();
+
+        vec.Erease(start, end);
+    }
+}
+
+void StdVectorEreaseRange(benchmark::State& state)
+{
+    const auto NB = state.max_iterations;
+    std::vector<int> vec;
+    int f = 0;
+    int s = 1;
+
+    for (usize i = 0; i < 10'000 * NB; i++) {
+        vec.emplace_back(s);
+        f = s;
+        s = f + s;
+    }
+
+    f = 0, s = 1;
+    for (auto _ : state) {
+        state.PauseTiming();
+        auto start = f % NB;
+        auto end = s % NB;
+        if (start > end)
+            std::swap(start, end);
+        f = s;
+        s = f + s;
+        state.ResumeTiming();
+
+        vec.erase(vec.begin() + start, vec.begin() + end);
+    }
+}
+
+
+// Register the function as a benchmark
+BENCHMARK(VectorEmplaceBack)        ;//->Iterations(1'000'000);
+BENCHMARK(StdVectorEmplaceBack)     ;//->Iterations(1'000'000);
+                                    ;//
+BENCHMARK(VectorEmplaceFront)       ;//->Iterations(250'000);
+BENCHMARK(StdVectorEmplaceFront)    ;//->Iterations(250'000);
+                                    ;//
+BENCHMARK(VectorInsert)             ;//->Iterations(200'000);
+BENCHMARK(StdVectorInsert)          ;//->Iterations(200'000);
+                                    ;//
+BENCHMARK(VectorErease)             ;//->Iterations(50'000);
+BENCHMARK(StdVectorErease)          ;//->Iterations(50'000);
+                                    ;//
+BENCHMARK(VectorEreaseRange)        ;//->Iterations(25'000);
+BENCHMARK(StdVectorEreaseRange)     ;//->Iterations(25'000);
+
+/*std::vector<usize> insertPos;
 std::vector<usize> erasePos;
 std::vector<std::pair<usize, usize>> ereaseRange;
 
@@ -229,18 +339,4 @@ void StdVectorEreaseRange(benchmark::State& state)
     }
 }
 
-// Register the function as a benchmark
-//BENCHMARK(VectorEmplaceBack)        ->Iterations(1'000'000);
-//BENCHMARK(StdVectorEmplaceBack)     ->Iterations(1'000'000);
-
-//BENCHMARK(VectorEmplaceFront)       ->Iterations(250'000);
-//BENCHMARK(StdVectorEmplaceFront)    ->Iterations(250'000);
-
-//BENCHMARK(VectorInsert)             ->Iterations(200'000);
-//BENCHMARK(StdVectorInsert)          ->Iterations(200'000);
-
-//BENCHMARK(VectorErease)             ->Iterations(50'000);
-//BENCHMARK(StdVectorErease)          ->Iterations(50'000);
-
-//BENCHMARK(VectorEreaseRange)        ->Iterations(25'000);
-//BENCHMARK(StdVectorEreaseRange)     ->Iterations(25'000);
+*/

@@ -6,7 +6,7 @@
 
 using namespace TRE;
 
-constexpr auto TEST_ITERATIONS = 1'500;
+constexpr auto TEST_ITERATIONS = 2'000;
 
 //template<typename T>
 //using SmallVector = Vector<T, LocalAllocator<128 * 4>>;

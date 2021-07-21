@@ -1,5 +1,5 @@
-#ifndef VECTORBASE_HPP
-#define VECTORBASE_HPP
+#ifndef BASICVECTOR_HPP
+#define BASICVECTOR_HPP
 
 #include <initializer_list>
 #include <iterator>
@@ -15,7 +15,7 @@
 TRE_NS_START
 
 template<typename T>
-class VectorBase
+class BasicVector
 {
 public:
     using Iterator          = RandomAccessIterator<T>;
@@ -66,6 +66,12 @@ public:
         return m_Length;
     }
 
+    constexpr FORCEINLINE void FastErease(Iterator itr) noexcept;
+
+    constexpr FORCEINLINE void FastErease(usize index) noexcept;
+
+    constexpr FORCEINLINE bool FastPopFront() noexcept;
+
     constexpr FORCEINLINE usize Size() const noexcept
     {
         return m_Length;
@@ -83,13 +89,13 @@ public:
 
     constexpr FORCEINLINE T* Back() const noexcept
     {
-        ASSERTF(!this->IsEmpty(), "Can't access the last element while the container is empty !");
+        TRE_ASSERTF(!this->IsEmpty(), "Can't access the last element while the container is empty !");
         return &m_Data[m_Length - 1];
     }
 
     constexpr FORCEINLINE T* Front() const noexcept
     {
-        ASSERTF(!this->IsEmpty(), "Can't access the first element while the container is empty !");
+        TRE_ASSERTF(!this->IsEmpty(), "Can't access the first element while the container is empty !");
         return &m_Data[0];
     }
 
@@ -100,19 +106,19 @@ public:
 
     constexpr FORCEINLINE T Get(usize i) const noexcept
     {
-        ASSERTF(i < m_Size, "Can't access the %llu th element, out of range [0..%llu) !", i, m_Size);
+        TRE_ASSERTF(i < m_Length, "Can't access the %" SZu " th element, out of range [0..%" SZu ") !", i, m_Length);
         return m_Data[i];
     }
 
     constexpr FORCEINLINE T& At(usize i) noexcept
     {
-        ASSERTF(i < m_Size, "Can't access the %llu th element, out of range [0..%llu) !", i, m_Size);
+        TRE_ASSERTF(i < m_Length, "Can't access the %" SZu " th element, out of range [0..%" SZu ") !", i, m_Length);
         return m_Data[i];
     }
 
     constexpr FORCEINLINE const T& At(usize i) const noexcept
     {
-        ASSERTF(i < m_Size, "Can't access the %llu th element, out of range [0..%llu) !", i, m_Size);
+        TRE_ASSERTF(i < m_Length, "Can't access the %" SZu " th element, out of range [0..%" SZu ") !", i, m_Length);
         return m_Data[i];
     }
 
@@ -166,35 +172,43 @@ public:
         return const_reverse_iterator(this->begin());
     }
 
-    constexpr FORCEINLINE friend void Swap(VectorBase<T>& first, VectorBase<T>& second) noexcept
+    constexpr FORCEINLINE friend void Swap(BasicVector<T>& first, BasicVector<T>& second) noexcept
     {
         std::swap(first.m_Data, second.m_Data);
         std::swap(first.m_Length, second.m_Length);
     }
 
-    constexpr FORCEINLINE friend void swap(VectorBase<T>& first, VectorBase<T>& second) noexcept
+    constexpr FORCEINLINE friend void swap(BasicVector<T>& first, BasicVector<T>& second) noexcept
     {
         Swap(first, second);
     }
 
 protected:
-    constexpr FORCEINLINE VectorBase() noexcept
+    constexpr FORCEINLINE BasicVector() noexcept
         : m_Data(nullptr), m_Length(0)
     {
 
     }
 
-    constexpr FORCEINLINE VectorBase(T* data, usize sz = 0) noexcept
+    constexpr FORCEINLINE BasicVector(T* data, usize sz = 0) noexcept
         : m_Data(data), m_Length(sz)
     {
 
     }
 
-    constexpr VectorBase(VectorBase&& other) = default;
+    constexpr FORCEINLINE BasicVector(BasicVector&& other) = default;
 
-    constexpr VectorBase& operator=(VectorBase&& other) = default;
+    constexpr FORCEINLINE BasicVector& operator=(BasicVector&& other) = default;
 
-    constexpr ~VectorBase() = default;
+    constexpr FORCEINLINE ~BasicVector() = default;
+
+    template<typename... Args>
+    constexpr FORCEINLINE T& FastEmplace(usize i, Args&&... args) noexcept;
+
+    constexpr FORCEINLINE void Fill(usize length, const T& obj = {}) noexcept;
+
+    template<typename... Args>
+    constexpr FORCEINLINE T& Emplace(T* oldData, usize i, Args&&... args) noexcept;
 
     template<typename... Args>
     constexpr FORCEINLINE T& Emplace(usize i, Args&&... args) noexcept;
@@ -205,22 +219,6 @@ protected:
     constexpr FORCEINLINE T& PushBack(const T& obj) noexcept
     {
         return this->EmplaceBack(obj);
-    }
-
-    template<typename... Args>
-    constexpr FORCEINLINE T& EmplaceFront(Args&&... args) noexcept
-    {
-        return this->Emplace(0, std::forward<Args>(args)...);
-    }
-
-    constexpr FORCEINLINE T& PushFront(const T& obj) noexcept
-    {
-        return this->Insert(0, obj);
-    }
-
-    constexpr FORCEINLINE T& Insert(usize i, const T& obj) noexcept
-    {
-        return this->Emplace(i, obj);
     }
 
     constexpr FORCEINLINE void CopyFrom(const T* data, usize length)
@@ -247,7 +245,7 @@ protected:
 
 template<typename T>
 template<typename... Args>
-constexpr FORCEINLINE T& VectorBase<T>::EmplaceBack(Args&&... args) noexcept
+constexpr FORCEINLINE T& BasicVector<T>::EmplaceBack(Args&&... args) noexcept
 {
     T* data = m_Data;
     auto newLen = m_Length++;
@@ -257,61 +255,148 @@ constexpr FORCEINLINE T& VectorBase<T>::EmplaceBack(Args&&... args) noexcept
 
 template<typename T>
 template<typename... Args>
-constexpr FORCEINLINE T& VectorBase<T>::Emplace(usize i, Args&&... args) noexcept
+constexpr FORCEINLINE T& BasicVector<T>::Emplace(T* oldData, usize i, Args&&... args) noexcept
 {
     T* data = m_Data;
     T* dest = data + i;
-    // shift all of this to keep place for the new element
-    Utils::MoveConstructBackward(data + 1, data, m_Length - 1, i);
+
+    if (oldData == data){
+        // Shift all of this to keep place for the new element
+        Utils::MoveConstructBackward(data + 1, data, m_Length - 1, i);
+    }else{
+        // Copy all the the elements starting from i to the new buffer
+        Utils::MoveConstructForward(data + 1, oldData, i, m_Length);
+    }
+
     new (dest) T(std::forward<Args>(args)...);
     m_Length++;
     return *dest;
 }
 
 template<typename T>
-constexpr FORCEINLINE void VectorBase<T>::Erease(Iterator start, Iterator end) noexcept
+template<typename... Args>
+constexpr FORCEINLINE T& BasicVector<T>::Emplace(usize i, Args&&... args) noexcept
+{
+    T* data = m_Data;
+    T* dest = data + i;
+    // Shift all of this to keep place for the new element
+    // Utils::MoveConstructBackward(data + 1, data, m_Length - 1, i);
+    Utils::MoveConstructForward(data + 1, data, i, m_Length);
+    new (dest) T(std::forward<Args>(args)...);
+    m_Length++;
+    return *dest;
+}
+
+template<typename T>
+constexpr FORCEINLINE void BasicVector<T>::Erease(Iterator start, Iterator end) noexcept
 {
     auto len = m_Length;
     T* data = m_Data;
+    T* sentinel = data + len;
     TRE_ASSERTF(end >= start, "end must be greater than start");
-    TRE_ASSERTF(start < data + len && end <= data + len, "[%" SZu "..%" SZu "] interval isn't included in the range [0..%" SZu "]", start - data, end - data, len);
+    TRE_ASSERTF(start < sentinel && end <= sentinel, "[%" SZu "..%" SZu "] interval isn't included in the range [0..%" SZu "]", start - data, end - data, len);
     const usize size = usize(end - start);
     if (size == 0)
         return;
-    usize endIdx = usize(data + len - end);
-    Utils::Destroy(start, size);
-    Utils::MoveConstruct(start, end, len - endIdx);
+    T* startPtr = start.GetPointer();
+    T* endPtr = end.GetPointer();
+    usize count = usize(sentinel - endPtr);
+    Utils::Destroy(startPtr, size);
+    Utils::MoveConstruct(startPtr, endPtr, count);
     m_Length -= size;
 }
 
 template<typename T>
-constexpr FORCEINLINE void VectorBase<T>::Erease(usize start, usize end) noexcept
+constexpr FORCEINLINE void BasicVector<T>::Erease(usize start, usize end) noexcept
 {
     auto begin = this->begin();
     return this->Erease(begin + start, begin + end);
 }
 
 template<typename T>
-constexpr FORCEINLINE void VectorBase<T>::Erease(Iterator itr) noexcept
+constexpr FORCEINLINE void BasicVector<T>::Erease(Iterator itr) noexcept
 {
     auto len = m_Length;
     T* data = m_Data;
-    T* itrPtr = itr;
-    TRE_ASSERTF((itrPtr >= data && itrPtr < data + len), "The given iterator doesn't belong to the Vector.");
-
-    usize end = usize(data + len - itrPtr);
+    T* sentinel = data + len;
+    T* itrPtr = itr.GetPointer();
+    TRE_ASSERTF((itrPtr >= data && itrPtr < sentinel), "The given iterator doesn't belong to the Vector.");
+    usize end = usize(sentinel - itrPtr);
     Utils::Destroy(itrPtr, 1);
     Utils::MoveConstruct(itrPtr, itrPtr + 1, end - 1);
     m_Length -= 1;
 }
 
 template<typename T>
-constexpr FORCEINLINE void VectorBase<T>::Erease(usize index) noexcept
+constexpr FORCEINLINE void BasicVector<T>::Erease(usize index) noexcept
 {
     this->Erease(this->begin() + index);
+}
+
+template<typename T>
+template<typename... Args>
+constexpr FORCEINLINE T& BasicVector<T>::FastEmplace(usize i, Args&&... args) noexcept
+{
+    auto len = this->m_Length;
+    T* data = this->m_Data;
+    T* element = data + i;
+
+    if (i != len) [[likely]] {
+        T* last = data + len;
+        T temp(std::move(*element));
+        new (element) T(std::forward<Args>(args)...);
+        new (last) T(std::move(temp));
+    } else [[unlikely]] {
+        new (element) T(std::forward<Args>(args)...);
+    }
+
+    this->m_Length++;
+    return *element;
+}
+
+template<typename T>
+constexpr FORCEINLINE void BasicVector<T>::FastErease(Iterator itr) noexcept
+{
+    T* itrPtr = itr.GetPtr();
+    T* data = this->m_Data;
+    auto len = this->m_Length;
+    T* sentinel = data + len;
+    TRE_ASSERTF((itrPtr >= data && itrPtr < sentinel), "The given iterator doesn't belong to the Vector.");
+    itrPtr->~T();
+    T* lastPtr = sentinel - 1;
+    new (itrPtr) T(std::move(*lastPtr));
+    this->m_Length -= 1;
+}
+
+template<typename T>
+constexpr FORCEINLINE void BasicVector<T>::FastErease(usize index) noexcept
+{
+    return this->FastErease(this->begin() + index);
+}
+
+template<typename T>
+constexpr FORCEINLINE bool BasicVector<T>::FastPopFront() noexcept
+{
+    T* data = this->m_Data;
+    auto len = this->m_Length;
+
+    if (len <= 0)
+        return false;
+
+    data[0].~T();
+    if (--this->m_Length != 0)
+        new (data) T(std::move(data[len + 1]));
+    return false;
+}
+
+template<typename T>
+constexpr FORCEINLINE void BasicVector<T>::Fill(usize length, const T& obj) noexcept
+{
+    Utils::MemSet(m_Data, obj, length);
+    this->m_Length = length;
 }
 
 TRE_NS_END
 
 
-#endif // VECTORBASE_HPP
+#endif // BASICVECTOR_HPP
