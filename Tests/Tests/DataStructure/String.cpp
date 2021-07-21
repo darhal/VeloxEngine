@@ -294,7 +294,7 @@ TEST(StringsTest, EraseString)
         usize start = dist(gen) % s.size();
         usize count = dist(gen) % (s.size() - start);
 
-        str1.Erase(start, count);
+        str1.EraseRange(start, count);
         str2.erase(start, count);
         TestString(str1, str2);
     }
@@ -307,7 +307,7 @@ TEST(StringsTest, EraseString)
         usize start = dist(gen) % s.size();
         usize count = dist(gen) % s.size();
 
-        str1.Erase(start, count);
+        str1.EraseRange(start, count);
         str2.erase(start, count);
         TestString(str1, str2);
     }

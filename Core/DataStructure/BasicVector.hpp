@@ -72,37 +72,45 @@ public:
 
     constexpr FORCEINLINE bool FastPopFront() noexcept;
 
-    constexpr FORCEINLINE usize Size() const noexcept
-    {
-        return m_Length;
-    }
+    constexpr FORCEINLINE usize Size() const noexcept { return m_Length; }
 
-    constexpr FORCEINLINE usize Length() const noexcept
-    {
-        return this->Size();
-    }
+    constexpr FORCEINLINE usize Length() const noexcept { return this->Size(); }
 
-    constexpr FORCEINLINE bool IsEmpty() const noexcept
-    {
-        return this->Size() == 0;
-    }
+    constexpr FORCEINLINE bool IsEmpty() const noexcept { return this->Size() == 0; }
 
-    constexpr FORCEINLINE T* Back() const noexcept
+    constexpr FORCEINLINE T* Back() noexcept
     {
         TRE_ASSERTF(!this->IsEmpty(), "Can't access the last element while the container is empty !");
         return &m_Data[m_Length - 1];
     }
 
-    constexpr FORCEINLINE T* Front() const noexcept
+    constexpr FORCEINLINE T* Front() noexcept
     {
         TRE_ASSERTF(!this->IsEmpty(), "Can't access the first element while the container is empty !");
         return &m_Data[0];
     }
 
-    constexpr FORCEINLINE T* Data() const noexcept
+    constexpr FORCEINLINE const T* Back() const noexcept
     {
-        return this->Front();
+        TRE_ASSERTF(!this->IsEmpty(), "Can't access the last element while the container is empty !");
+        return &m_Data[m_Length - 1];
     }
+
+    constexpr FORCEINLINE const T* Front() const noexcept
+    {
+        TRE_ASSERTF(!this->IsEmpty(), "Can't access the first element while the container is empty !");
+        return &m_Data[0];
+    }
+
+    constexpr FORCEINLINE T& Last() noexcept { return *this->Back(); }
+
+    constexpr FORCEINLINE T& First() noexcept { return *this->Front(); }
+
+    constexpr FORCEINLINE const T& Last() const noexcept { return *this->Back(); }
+
+    constexpr FORCEINLINE const T& First() const noexcept { return *this->Front(); }
+
+    constexpr FORCEINLINE T* Data() noexcept { return this->Front(); }
 
     constexpr FORCEINLINE T Get(usize i) const noexcept
     {
@@ -224,13 +232,11 @@ protected:
     constexpr FORCEINLINE void CopyFrom(const T* data, usize length)
     {
         Utils::CopyConstruct(m_Data, data, length);
-        m_Length = length;
     }
 
     constexpr FORCEINLINE void MoveFrom(T* data, usize length) noexcept
     {
         Utils::MoveConstruct(m_Data, data, length);
-        m_Length = length;
     }
 
     constexpr FORCEINLINE void Destroy() noexcept
@@ -238,6 +244,15 @@ protected:
         Utils::Destroy(m_Data, m_Length);
     }
 
+    constexpr FORCEINLINE void SetLength(usize len) noexcept
+    {
+        m_Length = len;
+    }
+
+    constexpr FORCEINLINE void SetData(T* data) noexcept
+    {
+        m_Data = data;
+    }
 protected:
     T*    m_Data;
     usize m_Length;

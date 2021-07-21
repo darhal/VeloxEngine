@@ -281,7 +281,7 @@ void StringErease(benchmark::State& state)
         String str(s);
         state.ResumeTiming();
 
-        str.Erase(p.first, p.second);
+        str.EraseRange(p.first, p.second);
     }
 }
 
@@ -327,6 +327,3 @@ void StdStringErease(benchmark::State& state)
 
 //BENCHMARK(StringErease)->Iterations(10'000);
 //BENCHMARK(StdStringErease)->Iterations(10'000);
-
-//BENCHMARK(StringAppend2);
-//BENCHMARK(StdStringAppend2);
