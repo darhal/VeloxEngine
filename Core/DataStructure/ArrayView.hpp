@@ -2,6 +2,7 @@
 #define ARRAYVIEW_HPP
 
 #include <Core/Misc/Defines/Common.hpp>
+#include <Core/Misc/Defines/Debug.hpp>
 #include <Core/DataStructure/Utils.hpp>
 #include <Core/Misc/UtilityConcepts.hpp>
 #include <Core/DataStructure/RandomAccessIterator.hpp>
@@ -29,14 +30,6 @@ public:
 public:
     constexpr FORCEINLINE ArrayView() noexcept = default;
 
-    constexpr FORCEINLINE ArrayView(T* data, usize size) noexcept;
-
-    template<ContainerConcept ContainerType>
-    constexpr FORCEINLINE ArrayView(const ContainerType& arr) noexcept;
-
-    template<usize S>
-    constexpr FORCEINLINE ArrayView(const T(&arr)[S]) noexcept;
-
     constexpr FORCEINLINE ~ArrayView() = default;
 
     constexpr FORCEINLINE ArrayView(const ArrayView& other) noexcept = default;
@@ -47,27 +40,53 @@ public:
 
     constexpr FORCEINLINE ArrayView& operator=(ArrayView&& other) noexcept = default;
 
-    constexpr FORCEINLINE const T* Data() const { return m_Data; }
+    constexpr FORCEINLINE ArrayView(T* data, usize size) noexcept;
 
-    constexpr FORCEINLINE const T* Length() const { return m_Size; }
+    template<ContainerConcept ContainerType>
+    constexpr FORCEINLINE ArrayView(const ContainerType& arr) noexcept;
 
-    constexpr FORCEINLINE const T* Size() const { return m_Size; }
-
-    constexpr FORCEINLINE T operator[](usize idx) { return m_Data[idx]; }
-
-    constexpr FORCEINLINE const T& operator[](usize idx) const { return m_Data[idx]; }
-
-    constexpr FORCEINLINE T At(usize idx) const { return m_Data[idx]; }
-
-    constexpr FORCEINLINE T Front() const { return *m_Data; }
-
-    constexpr FORCEINLINE T Back() const { return m_Data[m_Size - 1]; }
+    template<usize S>
+    constexpr FORCEINLINE ArrayView(const T(&arr)[S]) noexcept;
 
     constexpr FORCEINLINE void RemovePrefix(usize skip) { m_Data += skip; }
 
     constexpr FORCEINLINE void RemoveSuffix(usize skip) { m_Size -= skip; }
 
     constexpr FORCEINLINE ArrayView SubArray(usize start, usize end) const noexcept;
+
+    constexpr FORCEINLINE const T* Data() const { return m_Data; }
+
+    constexpr FORCEINLINE usize Length() const { return m_Size; }
+
+    constexpr FORCEINLINE usize Size() const { return m_Size; }
+
+    constexpr FORCEINLINE T Get(usize i) const noexcept
+    {
+        TRE_ASSERTF(i < m_Size, "Can't access the %" SZu " th element, out of range [0..%" SZu ") !", i, m_Size);
+        return m_Data[i];
+    }
+
+    constexpr FORCEINLINE T& At(usize i) noexcept
+    {
+        TRE_ASSERTF(i < m_Size, "Can't access the %" SZu " th element, out of range [0..%" SZu ") !", i, m_Size);
+        return m_Data[i];
+    }
+
+    constexpr FORCEINLINE const T& At(usize i) const noexcept
+    {
+        TRE_ASSERTF(i < m_Size, "Can't access the %" SZu " th element, out of range [0..%" SZu ") !", i, m_Size);
+        return m_Data[i];
+    }
+
+    constexpr FORCEINLINE T& operator[](usize i) noexcept
+    {
+        return this->At(i);
+    }
+
+    constexpr FORCEINLINE const T& operator[](usize i) const noexcept
+    {
+        return this->At(i);
+    }
 
     constexpr iterator begin() const noexcept
     {
