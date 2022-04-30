@@ -28,24 +28,24 @@ namespace TRE::Utils
         return integral(x & ~integral(a - 1));
     }
 
-    FORCEINLINE constexpr void* AllocateBytes(usize sz)
+    FORCEINLINE void* AllocateBytes(usize sz)
     {
         return ::operator new(sz);
     }
 
-    FORCEINLINE constexpr void* AllocateBytes(usize sz, usize al)
+    FORCEINLINE void* AllocateBytes(usize sz, usize al)
     {
         return ::operator new(sz, static_cast<std::align_val_t>(al));
     }
 
     template<typename T>
-    FORCEINLINE constexpr T* Allocate(usize sz)
+    FORCEINLINE T* Allocate(usize sz)
     {
         // return static_cast<T*>(::operator new(sz * sizeof(T), static_cast<std::align_val_t>(alignof(T))));
         return static_cast<T*>(::operator new(sz * sizeof(T)));
     }
 
-    FORCEINLINE constexpr void FreeMemory(void* ptr) noexcept
+    FORCEINLINE void FreeMemory(void* ptr) noexcept
     {
         if (ptr)
             ::operator delete(ptr);

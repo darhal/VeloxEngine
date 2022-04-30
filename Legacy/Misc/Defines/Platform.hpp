@@ -61,18 +61,20 @@
 #endif
 
 // Detect operating system
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(WIN64)
-	#define OS_WINDOWS 0
-#elif defined(__linux__) || defined(__linux)
-	#define OS_LINUX
-#elif defined(__unix)
-	#define OS_UNIX
-#elif defined(__ANDROID__)
-	#define OS_ANDROID
-#elif defined(__APPLE__)
-	#define OS_APPLE
-#else
-	#define OPERATING_SYSTEM_OTHER
+#if !defined(OS_WINDOWS) || !defined(OS_LINUX) || !defined(OS_UNIX) || !defined(OS_ANDROID) || !defined(OS_APPLE) || !defined(OPERATING_SYSTEM_OTHER)
+	#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(WIN64)
+		#define OS_WINDOWS
+	#elif defined(__linux__) || defined(__linux)
+		#define OS_LINUX
+	#elif defined(__unix)
+		#define OS_UNIX
+	#elif defined(__ANDROID__)
+		#define OS_ANDROID
+	#elif defined(__APPLE__)
+		#define OS_APPLE
+	#else
+		#define OPERATING_SYSTEM_OTHER
+	#endif
 #endif
 
 // Detect compiler

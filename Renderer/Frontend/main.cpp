@@ -17,7 +17,7 @@ int main()
     using namespace TRE::Renderer;
     using namespace TRE;
 
-    TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Trikyta ENGINE 3 (Vulkan 1.2)", WindowStyle::Resize);
+    TRE::Window window(SCR_WIDTH, SCR_HEIGHT, "Velox Engine(Vulkan 1.2)", WindowStyle::Resize);
     RenderBackend backend{ &window };
     // backend.SetSamplerCount(2);
 

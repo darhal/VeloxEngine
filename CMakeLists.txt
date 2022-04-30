@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
-set(NAME TrikytaEngine3D)
-project(TrikytaEngine3D)
+set(NAME VeloxEngine)
+project(VeloxEngine)
 
 OPTION(BUILD_BENCHMARKS "Build the benchmarks" OFF)
 OPTION(BUILD_UNIT_TESTS "Build the unit tests" OFF)
